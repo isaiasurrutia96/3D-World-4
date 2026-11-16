@@ -48,3 +48,21 @@ Camera Mistakes", GDC 2014. Dynamic third-person cameras are the hardest kind.
    the lane; basketball/football — broadcast side view or behind the player.
 5. **First person (Call of Duty):** camera at eye height with subtle head bob,
    weapon drawn as a separate layer with its own sway and recoil animation.
+
+## D) Deep dive: framing like Cinemachine (Unity)
+
+1. **Screen position:** where on screen the target should sit (0.5, 0.5 is
+   centre; slightly below centre for third-person so the player sees ahead).
+2. **Dead zone:** a rectangle in the middle of the screen where the target can
+   move without the camera reacting at all. Removes jitter from small
+   movements.
+3. **Soft zone:** around the dead zone; when the target enters it the camera
+   eases to bring it back, with **damping** controlling how fast (small =
+   responsive, large = heavy camera).
+4. **Hard limit:** outside the soft zone the camera follows instantly so the
+   target never leaves the screen.
+5. **Look-ahead:** aim at where the target will be in N seconds based on its
+   velocity — helpful, but amplifies jittery animation, so smooth the
+   velocity first.
+6. **Separate position and rotation behaviour:** one component moves the
+   camera (follow distance, orbit), another rotates it (aim/composer).

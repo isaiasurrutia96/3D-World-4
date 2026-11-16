@@ -1,6 +1,7 @@
 # Game Development Knowledge Base
 
-Notes for building 3D-World-4. Each file is practical: what the technique is,
+Notes for building 3D-World-4 (deepened 16 Nov 2026: each file now ends with
+"Deep dive" sections). Each file is practical: what the technique is,
 how the big games do it, and how to build it here (TypeScript + Three.js in a
 browser). Open only the file the current task needs, to save usage.
 
@@ -20,6 +21,10 @@ browser). Open only the file the current task needs, to save usage.
 | `12-feel-audio-ui.md` | Juice, hit stop, screen shake, sound, menus, accessibility |
 | `13-production.md` | How studios work: prototyping, tuning, testing, scope |
 | `14-sources.md` | Where the information came from |
+| `15-level-design.md` | Nintendo's 4-step levels, teaching, worlds, venues |
+| `16-math-cheatsheet.md` | Vectors, rotations, smoothing, physics formulas, randomness |
+| `17-networking.md` | Lockstep, snapshots, prediction, rollback, browser options |
+| `18-recipes.md` | Step-by-step build plans for likely features |
 
 Rule of thumb from every source: **feel first, then looks.** Build the core
 action (moving, throwing, driving) as a rough prototype, tune it until it is

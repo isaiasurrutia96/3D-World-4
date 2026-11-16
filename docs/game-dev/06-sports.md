@@ -99,3 +99,66 @@ inputs, then show clear feedback on how well the player did.
 3. **Ratings/stats** scale timing windows and accuracy instead of changing
    controls.
 4. **Replays** and slow motion on great shots add excitement cheaply.
+
+## F) Deep dive: bowling ball motion (USBC research)
+
+1. The USBC Bowling Ball Motion Study found the phase order is **skid → hook →
+   roll** (not skid–roll–hook as people assumed).
+2. **Skid:** low friction on the oiled front of the lane; the ball keeps its
+   direction and spin.
+3. **Hook:** in the mid/back lane friction rises and the spin pulls the ball
+   sideways in an arc.
+4. **Roll:** about two-thirds down the lane the ball reaches full forward
+   rolling and travels in a straight line into the pins; maximum rev rate is at
+   the second transition.
+5. **The lane decides** when the hook starts (oil pattern), not only the ball.
+6. **Game recipe:** model friction as a function of distance down the lane
+   (low → high). While skidding, side force ≈ friction × spin; once rolling,
+   no more hook. The ideal strike enters the pocket at a few degrees of angle.
+
+## G) Deep dive: golf swing inputs in motion games
+
+1. The original Wii Remote only sensed linear acceleration, so a golf swing's
+   rotation couldn't be captured; Wii MotionPlus added a gyroscope for full
+   rotation (Iwata Asks).
+2. Wii Sports Resort used motion data for **direction and spin** but its own
+   speed model — the game deliberately did not map swing speed 1:1 to ball
+   speed (it would be frustrating).
+3. On phones the equivalents are touch-drag (power by drag length, direction
+   by drag angle) or tilt (DeviceOrientation API).
+
+## H) Deep dive: modern basketball shooting (NBA 2K25)
+
+1. **Green window:** the span of release time (e.g. ~50 ms) that produces a
+   perfect make; its size depends on shooting ratings, badges, shot difficulty
+   and defence.
+2. **Shot timing profiles:** high-risk (small window, big reward), normal,
+   low-risk (forgiving, lower ceiling). The gameplay director said low-risk
+   makes anyone competent on smart shots but limits good timers.
+3. **Visual cue setting** chooses when the release point is (at the set point,
+   at the top of the jump, etc.).
+4. **Rhythm shooting** (stick timing) reportedly widens the window versus a
+   button press (community testing).
+5. Design lesson: give players a choice between safe and risky input styles.
+
+## I) Deep dive: arcade sports exaggeration (NBA Jam)
+
+1. Most rules removed; turbo button; impossibly high dunks.
+2. **"On Fire":** three baskets in a row without the opponent scoring gives
+   unlimited turbo, near-certain shots and flaming visuals until the opponent
+   scores. A comeback-free streak reward that creates hype.
+3. Rubber-band AI kept games close (community observation).
+4. Lesson: for fun sports minigames, exaggerate and reward streaks rather than
+   simulate.
+
+## J) Deep dive: football play AI (Madden)
+
+1. Zone defenders follow **spot-drop** logic (cover an area) by default, with
+   "match" rules that pick up a receiver entering the zone; Madden 23 added
+   **drift** logic to react to receivers approaching sooner.
+2. Man defenders track one receiver; switching assignments during motion is a
+   classic AI failure point.
+3. Each zone assignment has its own rule set (EA Madden 17 notes).
+4. For a simple throwing minigame: receivers run predefined spline routes;
+   defenders pick the nearest receiver or a zone; the pass is judged by ball
+   arrival vs. receiver and defender positions.

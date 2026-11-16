@@ -74,3 +74,43 @@
 2. Speed sensation: FOV widening, camera pullback, motion blur/lines, roadside
    objects passing close, engine pitch rising.
 3. Countdown, lap counter, position, minimap, finish celebration.
+
+## G) Deep dive: raycast vehicle model (Very Very Valet, Toyful Games)
+
+1. The whole car is **one rigid body**; each wheel is a **raycast** downward
+   from its mount point — no wheel colliders.
+2. Per wheel, three forces at the contact point:
+   1. **Suspension:** spring force = stiffness × compression − damping ×
+      compression speed, applied upward along the car's up axis.
+   2. **Steering/side grip:** remove a fraction of the wheel's sideways
+      velocity (force = −side velocity × grip × mass share / dt). Lower grip
+      on rear wheels = drifts.
+   3. **Acceleration/rolling:** forward force from throttle along the
+      wheel's forward direction, using a torque curve over speed; rolling
+      resistance when coasting.
+3. Steering rotates the front wheels' forward direction.
+4. Toyful's point: write your own core mechanic (car physics) so you can tune
+   it, rather than fighting engine wheel colliders.
+
+## H) Deep dive: GTA V handling parameters (handling.meta, modding docs)
+
+GTA V describes every car with ~70 numbers. The important ideas:
+
+1. **Mass, drag, centre of mass offset.**
+2. **Drive force and drive bias** (front/rear power split), top speed, gears.
+3. **Brake force and brake bias.**
+4. **Traction curve max/min and lateral curve** — grip at the limit and how it
+   falls off when sliding; **traction loss multiplier** for grass/dirt (surface
+   grip from a materials table).
+5. **Suspension force, damping, raise, and anti-roll bars.** Weight transfer
+   means tyres on the side the car leans toward grip more.
+6. **Steering lock** angle. Lesson: a data table per vehicle lets designers
+   create many cars from one physics model.
+
+## I) Deep dive: Mario Kart item odds
+
+Community-mined tables (Mario Kart DS, Wii) list a separate item probability
+row for each race position, and different tables for CPU racers. Front
+positions mostly get bananas/green shells/coins; back positions get
+mushrooms, stars, bullet bills; blue shells only for mid/back. AI catch-up is
+hand-tuned per track so CPU drivers don't fall off narrow sections.

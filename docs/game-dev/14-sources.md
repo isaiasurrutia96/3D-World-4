@@ -54,3 +54,41 @@ numbers as starting points to tune.
 1. Three.js performance tips — https://www.utsubo.com/blog/threejs-best-practices-100-tips
 2. Physics engines for the web — https://developer.playcanvas.com/user-manual/physics/ammo-alternatives/
 3. C++ vs JavaScript for games (opinion) — https://discourse.threejs.org/t/why-isnt-threejs-considered-a-serious-game-development-option-main-shortcomings/63807
+
+## I) Added in the deep-research pass
+1. Celeste & TowerFall Physics (Maddy Thorson) — https://maddymakesgames.com/articles/celeste_and_towerfall_physics
+2. SM64 speeds and gravity (community) — https://ukikipedia.net/wiki/Speed ; https://tasvideos.org/GameResources/N64/SuperMario64
+3. Gaffer on Games, Networked Physics / Deterministic Lockstep — https://gafferongames.com/post/deterministic_lockstep/
+4. Rocket League physics (GDC 2018, Jared Cone) — https://www.gdcvault.com/play/1024972/
+5. Toyful Games raycast car (via open reimplementation) — https://awesome.ecosyste.ms/projects/github.com%2Femilymclean%2Funitycardemo
+6. Rapier character controller — https://rapier.rs/docs/user_guides/javascript/character_controller
+7. Unity CharacterController manual — https://docs.unity.com/en-us/engine/current/manual/physics-section/physics-overview/character-control-section/class-character-controller
+8. Cinemachine Composer docs — https://docs.unity3d.com/Packages/com.unity.cinemachine@2.7/manual/CinemachineAimComposer.html
+9. Allen Chou, numeric springing — https://allenchou.net/2015/04/game-math-precise-control-over-numeric-springing
+10. David Rosen, An Indie Approach to Procedural Animation (GDC 2014) — https://gdcvault.com/play/1020049/Animation-Bootcamp-An-Indie-Approach
+11. Power IK walk node (procedural stepping) — https://poweranimated.github.io/unreal/walk_node
+12. Halo "30 seconds of fun" — https://www.engadget.com/2011-07-14-half-minute-halo-an-interview-with-jaime-griesemer.html
+13. Steve Swink, Game Feel (summary) — https://arxiv.org/pdf/2011.09201
+14. Vlambeer, Art of Screenshake — https://gamedeveloper.com/design/vlambeer-co-founder-shares-advice-on-building-better-action-games
+15. Nintendo four-step level design — https://www.mcvuk.com/development/video-nintendos-level-design-secrets-in-four-steps ; https://kotaku.com/what-made-super-mario-3d-world-so-great-1691916400
+16. Breath of the Wild GDC 2017 — https://www.engadget.com/2017/03/12/breath-of-the-wild-gdc-talk/
+17. Super Mario Odyssey design analysis — https://gamedeveloper.com/design/mario-64-v-odyssey
+18. USBC bowling ball motion (skid-hook-roll) — https://www.bowlingball.com/BowlVersity/Bowling-Ball-Motion-Phases-And-Transition-Points
+19. Wii MotionPlus (Iwata Asks) — https://iwataasks.nintendo.com/interviews/wii/wiimotionplus/0/0
+20. NBA 2K25 shot timing — https://www.operationsports.com/nba-2k25-shot-timing-visual-cue-explained ; https://www.nba2klab.com/2k25-shot-profile
+21. NBA Jam — https://en.wikipedia.org/wiki/NBA_Jam_(1993_video_game)
+22. Madden zone logic — https://www.ea.com/inside-ea/news/gridiron-notes-madden-nfl-23-gameplay-foundational-football
+23. GTA V handling guide — https://eddlm.github.io/Handling-Tools/guide
+24. GTA V wanted level — https://gta.wiki/wiki/Wanted_Level_in_GTA_V
+25. Mario Kart item tables — https://www.mariowiki.com/Mario_Kart_Wii_item_probability_distributions ; MrL314 AI video — https://hackaday.com/2022/07/04/think-you-know-how-mario-kart-works
+26. CoD map design — https://news.xbox.com/en-us/2025/10/27/how-treyarch-crafts-multiplayer-maps-call-of-duty-black-ops-7/ ; spawn patent — https://www.patentarcade.com/video-game-patent/US10226701/system-and-method-for-identifying-spawn-locations-in-a-video-game
+27. Aim assist (Witchfire) — https://www.theastronauts.com/2019/02/witchfire-aim-assist
+28. Input latency research — https://arxiv.org/pdf/2506.19084
+29. Three.js toon material — https://threejs.org/docs/pages/MeshToonMaterial.html
+30. Web Audio for games — https://web.dev/articles/webaudio-games ; https://developer.mozilla.org/en-US/docs/Games/Techniques/Audio_for_Web_Games
+31. Red Blob Games, A* — https://www.redblobgames.com/pathfinding/a-star/introduction.html
+32. Object pooling in JS — https://www.abratabia.com/game-architecture/object-pooling.php
+
+Note: direct page reading was blocked by this session's network policy; this
+pass used search results, so details marked "community" should be verified
+before relying on exact numbers.

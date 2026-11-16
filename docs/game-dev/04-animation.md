@@ -57,3 +57,44 @@
 
 Procedural animation fits a stylized clay character and costs nothing to load.
 If clips are ever needed, use glTF files with an `AnimationMixer`.
+
+## G) Deep dive: springs ("second-order dynamics")
+
+1. A damped spring makes any value follow a target with natural motion:
+   overshoot, settle, react to interruption. Better than tweens for
+   interactive things (camera, UI, secondary motion like antennae, tails,
+   ears, squash).
+2. Designer-friendly parameters (popularised by the "Giving Personality to
+   Procedural Animations using Math" video and Allen Chou's "numeric
+   springing" articles):
+   1. **Frequency f** — how fast it responds/oscillates (Hz).
+   2. **Damping ζ** — 0 = wobbles forever, 0–1 = bouncy settle, 1 = critically
+      damped (fastest without overshoot), >1 = sluggish.
+   3. **Response r** — <0 anticipates (moves the wrong way first), 0 = eases
+      in, 1 = immediate, >1 = overshoots.
+3. Implementation (semi-implicit, stable with a clamped step):
+
+   ```ts
+   // k1 = ζ/(π f), k2 = 1/((2π f)²), k3 = r ζ/(2π f)
+   y  += dt * yd;
+   yd += dt * (x + k3 * xd - y - k1 * yd) / k2;   // x = target, xd = target velocity
+   ```
+
+4. Critically damped smoothing for cameras: `SmoothDamp` style (Game
+   Programming Gems 4) is the same idea with ζ = 1.
+
+## H) Deep dive: procedural walking with IK
+
+1. Each foot has a **target** on the ground found by a raycast ahead of the
+   body in the move direction.
+2. A planted foot stays put until it is farther than a **step distance** from
+   its target; then it lifts and moves to the target along an arc over a short
+   time.
+3. **Gait order:** legs are split into groups (alternating left/right, or
+   diagonal pairs for quadrupeds/spiders) — a group only steps when the other
+   group is planted.
+4. Body height and tilt follow the average of planted feet.
+5. **Foot locking** prevents sliding: a planted foot is pinned in world space.
+6. David Rosen (Overgrowth, GDC 2014 "An Indie Approach to Procedural
+   Animation"): very few key poses + procedural blending, springs and physics
+   produce fluid, responsive animation cheaply.

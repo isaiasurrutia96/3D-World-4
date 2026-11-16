@@ -92,3 +92,40 @@
    awkward), smaller memory budgets on phones, garbage-collection pauses
    (avoid creating new objects every frame: reuse vectors), and thermal
    throttling on phones.
+
+## E) Deep dive: latency budgets
+
+1. **Perception:** players feel the difference between ~50 ms and ~100 ms of
+   input delay; ~100 ms is noticeable in shooters, ~200 ms is annoying
+   (research summarised in an arXiv G-SYNC study). Steve Swink's rule of thumb
+   for real-time control: about 50 ms feels like an extension of the body,
+   above 100 ms lag is noticed, above ~240 ms control breaks down.
+2. **Touch is more sensitive than mouse:** dragging on phones is affected by as
+   little as ~25 ms; budget phones can already have 100 ms touch-to-screen.
+   Browsers add event-loop and compositor delay on top. Keep the browser
+   pipeline lean: no extra post-processing passes, react to input in the same
+   frame.
+3. **Consistency beats average:** uneven frame times feel worse than steady
+   slightly-higher latency. Aim for a steady 60 fps over a jittery 90.
+4. **Each buffered frame costs ~16.7 ms at 60 fps.** 30 fps games sit around
+   100 ms controller latency; 60 fps games can go below.
+
+## F) Deep dive: memory and allocation in JavaScript
+
+1. **Object pooling:** create bullets, particles and effects up front and
+   recycle them instead of `new` each time; this removes garbage-collection
+   stutter. Only worth it for short-lived, frequent objects.
+2. **Hidden allocations:** vector math that returns new objects, array
+   `map/filter` in the loop, closures created per frame, string building.
+   Use scratch vectors: `const tmp = new Vector3()` at module level.
+3. **Spatial hashing:** divide the world into cells (e.g. 2–4× the typical
+   object size); store objects per cell; only test collisions against objects
+   in the same and neighbouring cells. Turns O(n²) checks into ~O(n).
+4. **Profile first** (browser Performance tab) before optimizing.
+
+## G) The "30 seconds of fun" principle (Halo, Jaime Griesemer)
+
+Bungie's combat designer described Halo 1 as "maybe 30 seconds of fun that
+happened over and over" — then varied it with different environments, weapons,
+vehicles and enemies. Build and polish the core 30-second loop first; content
+is variation on that loop.

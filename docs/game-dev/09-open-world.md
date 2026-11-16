@@ -56,3 +56,23 @@
 2. Spawn life just out of view, remove it when out of view.
 3. Fake distance: low-detail silhouettes and fog hide the edge of the world.
 4. Small dense worlds feel bigger than large empty ones.
+
+## F) Deep dive: GTA V police and wanted system
+
+1. GTA IV used a fixed circular search zone, which players exploited by hiding
+   in the same alley. GTA V switched to **line-of-sight vision cones**: each
+   officer (and helicopter, with a wider cone) projects a cone shown on the
+   minimap.
+2. To lose the stars, stay out of every cone for a time that grows with the
+   wanted level; being seen again resets the timer; police search your last
+   known position.
+3. Helicopters navigate with a 3D navmesh of the airspace.
+4. Lesson: stealth/escape systems feel fair when perception is visible to the
+   player (cones, last-known-position markers).
+
+## G) Deep dive: population tiers (community analysis)
+
+1. Nearby NPCs: full agent AI (goals, schedules, reactions).
+2. Distant NPCs: cheap flow/ambient behaviour.
+3. Spawn by density rules just outside the streaming radius; despawn outside
+   it; traffic capped to keep streaming/physics cost stable on old consoles.

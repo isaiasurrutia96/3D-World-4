@@ -59,3 +59,31 @@
    animations). Compress with Draco or meshopt.
 2. Show a loading message immediately; load big assets progressively.
 3. Build tools (Vite) bundle code; keep the first download small.
+
+## F) Deep dive: stylized (toon) rendering in Three.js
+
+1. `MeshToonMaterial` with a **gradient map**: a tiny ramp texture (2–5
+   pixels) of light levels. Set `minFilter` and `magFilter` to
+   `THREE.NearestFilter` or the bands blur together.
+2. **Outlines:**
+   1. **Inverted hull:** draw the mesh again, scaled out slightly along normals,
+      black, with only back faces rendered. Cheap; gaps on hard edges and
+      concave parts.
+   2. **`OutlineEffect`** (three addons) does the hull trick for a whole
+      scene.
+   3. **Post-process edge detection** on depth/normals: accurate on any
+      shape, costs a full-screen pass.
+3. **Rim light** (fresnel term) adds the anime/clay edge glow.
+4. Breath of the Wild's art team chose an abstract painterly toon style partly
+   because realistic or Wind Waker HD styles clashed with its physics- and
+   chemistry-driven world (GDC 2017).
+
+## G) Deep dive: multiplicative gameplay (Zelda: Breath of the Wild)
+
+1. Nintendo moved from "additive" design (each puzzle authored) to
+   "multiplicative" design: objects follow general rules and interact with
+   each other and the player, so fun situations emerge.
+2. A **physics engine** governs motion; a separate **chemistry engine**
+   governs state (fire burns wood, ice freezes water, wind pushes, metal
+   conducts electricity).
+3. Lesson: a few consistent rules that combine beat many special cases.

@@ -64,3 +64,33 @@
    `t`). Used for football passes and AI aiming.
 3. With drag/spin, simulate the flight a few times and adjust (shooting
    method), or precompute a table.
+
+## F) Deep dive: real measurements (standard regulation values)
+
+Use these so objects feel right next to a ~1.8 m character. Values are the
+common rule-book figures; double-check a rulebook if exactness matters.
+
+| Object | Size | Mass |
+| --- | --- | --- |
+| Golf ball | 42.67 mm diameter | 45.93 g max |
+| Golf hole (cup) | 108 mm (4.25 in) diameter | — |
+| Basketball (men's size 7) | ~24 cm diameter | ~0.6 kg |
+| Basketball rim | 45.7 cm (18 in) inner diameter, 3.05 m (10 ft) high | — |
+| Bowling lane | 18.29 m (60 ft) foul line to head pin, ~1.05 m wide | — |
+| Bowling pins | 38.1 cm tall, 30.5 cm (12 in) apart in a triangle | ~1.5 kg |
+| Bowling ball | 21.8 cm diameter | up to 7.26 kg (16 lb) |
+| American football | ~28 cm long | ~0.41 kg |
+
+## G) Deep dive: rigid-body engine settings that matter
+
+1. **Fixed physics rate:** Rocket League simulates at **120 Hz** (Bullet) to
+   reduce discrete-collision errors with a fast ball and cars, and so every
+   step has the same delta (determinism for networking). The server sends
+   ~60 updates/s; clients predict.
+2. **Restitution** (bounciness) and **friction** per material pair.
+3. **Sleeping:** bodies at rest stop simulating until disturbed — keeps 10
+   bowling pins cheap.
+4. **Continuous collision detection** for fast small bodies (balls).
+5. **Mass ratios** above ~10:1 between touching bodies can get unstable;
+   tune or use kinematic bodies for very heavy things.
+6. **Solver iterations:** more iterations = stabler stacks, more CPU.

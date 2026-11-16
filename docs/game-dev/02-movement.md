@@ -79,3 +79,49 @@ The clay avatar from 3D-WORLD-3 already implements most of section C in
 TypeScript (capsule collision, quarter steps, the full move set, ledges,
 ladders, swimming, carrying). If movement is needed again, reuse or study it
 rather than starting from scratch — only when the owner asks.
+
+## F) Deep dive: Super Mario 64 numbers (Ukikipedia / TASVideos, community)
+
+SM64 runs at 30 frames per second; speeds are in game units per frame
+(roughly 1 m ≈ 100 units is a common rough conversion; Mario is ~160 units
+tall).
+
+1. **Jump velocity:** single jump starts at 42 + ¼ of horizontal speed
+   (units/frame); double jump uses 52 + ¼ horizontal speed. Running faster
+   makes jumps higher — momentum feeds the jump.
+2. **Gravity:** vertical speed falls by 4 units per frame in a normal fall;
+   terminal velocity −75 units/frame. Releasing A early during a rising jump
+   cuts the upward speed sharply (variable jump height; exact factor: check
+   the decompilation before copying).
+3. **Walking speed cap:** 48 units/frame on flat ground (running).
+4. **Quarter steps:** 4 collision sub-steps per frame on ground and in air.
+
+## G) Deep dive: Celeste/TowerFall movement (Maddy Thorson)
+
+1. Only two physics classes: **Solids** (level geometry, moving platforms) and
+   **Actors** (player, arrows, enemies). All boxes are axis-aligned with
+   integer positions.
+2. **Movement with remainders:** add the move amount to a fractional
+   remainder; move the whole-pixel part one pixel at a time, checking for a
+   Solid before each pixel; stop and call a collision callback on contact.
+   Pixel-perfect, never tunnels.
+3. **Riding and pushing:** a moving Solid carries Actors standing on it
+   (riding) and pushes Actors it overlaps; if an Actor is pushed into another
+   Solid it is **squished** (callback: die or nudge out).
+4. Lesson for 3D: simple, predictable, step-wise collision beats a general
+   physics engine for the player character.
+
+## H) Deep dive: character controllers in engines
+
+1. **Kinematic controller** (Unity CharacterController, Rapier's
+   KinematicCharacterController, OpenKCC): you set the desired move each step;
+   it slides along walls, climbs steps under a **step offset**, walks slopes
+   under a **slope limit**, and **snaps to ground** going down steps/slopes.
+   It does not react to forces by itself — gameplay code adds gravity, knock-
+   back, etc. This is what most games use for players.
+2. **Physics (dynamic) controller:** the character is a rigid body moved by
+   forces. Reacts naturally to the world but is harder to make tight.
+3. **Rapier for three.js** has a ready kinematic character controller with
+   autostep, snap-to-ground, max slope and sliding.
+4. **Moving platforms:** add the platform's movement this step to the
+   character before its own movement.

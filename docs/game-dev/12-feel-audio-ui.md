@@ -43,3 +43,37 @@ becomes fun just by adding feedback, without changing the rules.
    walls.
 5. **Accessibility:** remappable controls, subtitles, color-blind-safe
    colors, reduced motion/shake options, adjustable difficulty or assists.
+
+## D) Deep dive: "The Art of Screenshake" (Jan Willem Nijman, Vlambeer, 2013)
+
+He took a dull shooter and applied ~30 small tweaks, each making it feel
+better. Highlights:
+
+1. Basic animation and sound for everything; bigger bullets; faster shooting.
+2. Muzzle flash; impact effects; enemies flash and get knocked back.
+3. **Camera kick:** in Nuclear Throne a pistol shot pushes the camera ~6 px
+   away from the aim direction and adds 4 to a screenshake value that decays
+   quickly.
+4. Lower enemy health (more kills, more feedback); more enemies.
+5. Bigger explosions; smoke and debris that **stay** on the ground
+   (permanence shows impact).
+6. Sleep/hit stop on kills; slow motion moments; player knockback on firing.
+7. Camera leads toward where you aim.
+8. Too much becomes noise — tune down.
+
+## E) Deep dive: Web Audio for games (MDN, web.dev)
+
+1. Use **Web Audio API** (`AudioContext`, `AudioBufferSourceNode`) rather than
+   `<audio>` tags: precise timing, many overlapping sounds, effects, 3D panning.
+2. **Unlock on first gesture:** on the first tap/click call
+   `context.resume()` (and optionally play a silent buffer). Pick one clear
+   moment (e.g. a Start button). iPhone's silent switch mutes Web Audio and
+   can't be detected.
+3. **Audio sprites:** pack many short sounds in one file; play by offset and
+   duration — fewer downloads.
+4. **Limit voices:** cap simultaneous copies of the same sound (e.g. 4) and
+   recycle the oldest.
+5. **Positional audio:** `PannerNode` (Three.js `PositionalAudio` attaches it to
+   objects); units are arbitrary, so set distance model and ref distance to
+   match world scale.
+6. Bluetooth headphones add ~100–300 ms that can't be compensated.

@@ -78,3 +78,29 @@
 
 Instant feedback, readable hit confirmation, tight controls, 60 fps, short
 latency, sound layering, and simple aim assist on touch/controller.
+
+## G) Deep dive: map design and spawns
+
+1. **Three-lane maps** (Crossfire in CoD4, most Treyarch maps): two side lanes
+   and a middle lane connecting the two spawn areas. Easy to learn, natural
+   flow; each lane needs a purpose (long sightlines, close quarters,
+   flanking). Modern Warfare (2019) deliberately broke from this for more
+   realistic, irregular maps, which was controversial.
+2. **Spawn selection** (Black Ops 7 patch notes, secondary): candidate spawns
+   are scored by **enemy influence** (how close/many enemies are), **sight
+   distance checks** (could an enemy see it soon) and objective ownership. A
+   patent describes precomputing, per spawn point, the minimum distance an
+   enemy must travel to get line of sight — cheaper than ray traces at
+   runtime. Bad spawns (spawning in sight of your killer) are a top complaint.
+3. **Influence maps** in general: a grid where each cell stores a score (e.g.
+   enemy presence decaying with distance); pick the spawn cell with the best
+   score.
+
+## H) Deep dive: aim assist numbers in practice
+
+1. Witchfire's developers use two circles around the crosshair: slowdown
+   begins when the larger circle touches an enemy and reaches full strength
+   at the smaller one; values differ per weapon and distance.
+2. Halo applies magnetism only within a distance and only for controllers.
+3. Rotational assist only helps when the player moves the stick; holding still
+   gives nothing.
