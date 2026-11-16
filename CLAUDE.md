@@ -12,3 +12,5 @@
    decisions and workflows do not apply here.
 10. Game development notes are in `docs/game-dev/`. Read `README.md` there and
     open only the topic file the current task needs.
+11. When a task is done, reply with only the link. No summaries, no
+    descriptions of what was built, no screenshots.
