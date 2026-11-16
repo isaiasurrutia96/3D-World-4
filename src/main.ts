@@ -30,7 +30,7 @@ camera.position.set(2.2, 1.6, 3);
 // The object being examined: a plain block, 1 m on each side.
 const block = new Mesh(
   new BoxGeometry(1, 1, 1),
-  new MeshStandardMaterial({ color: '#b9b2a6', roughness: 0.8 }),
+  new MeshStandardMaterial({ color: '#f28c28', roughness: 0.8 }),
 );
 scene.add(block);
 
