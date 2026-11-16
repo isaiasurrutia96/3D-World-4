@@ -25,6 +25,8 @@ browser). Open only the file the current task needs, to save usage.
 | `16-math-cheatsheet.md` | Vectors, rotations, smoothing, physics formulas, randomness |
 | `17-networking.md` | Lockstep, snapshots, prediction, rollback, browser options |
 | `18-recipes.md` | Step-by-step build plans for likely features |
+| `19-legal.md` | Copyright, trademarks, licences, privacy, COPPA, loot boxes, business |
+| `20-app-store-blueprint.md` | Step-by-step plan to sell on the App Store (house analogy) |
 
 Rule of thumb from every source: **feel first, then looks.** Build the core
 action (moving, throwing, driving) as a rough prototype, tune it until it is

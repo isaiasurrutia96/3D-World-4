@@ -92,3 +92,20 @@ numbers as starting points to tune.
 Note: direct page reading was blocked by this session's network policy; this
 pass used search results, so details marked "community" should be verified
 before relying on exact numbers.
+
+## J) Legal and App Store pass
+1. Clone Wars: five key cases — https://www.gamedeveloper.com/business/clone-wars-the-five-most-important-cases-every-game-developer-should-know
+2. Tetris v. Xio — https://en.wikipedia.org/wiki/Tetris_Holding,_LLC_v._Xio_Interactive,_Inc. ; Spry Fox v. Lolapps — https://en.wikipedia.org/wiki/Spry_Fox,_LLC_v._Lolapps,_Inc.
+3. Apple App Review Guidelines — https://developer.apple.com/app-store/review/guidelines/
+4. FTC COPPA FAQ — https://www.ftc.gov/business-guidance/resources/complying-coppa-frequently-asked-questions
+5. Loot box compliance (EU/UK/US) — https://blog.promise.legal/lootbox-laws-game-developers/ ; FTC v. Genshin — https://esportslegal.news/2025/11/25/ftc-vs-genshin-impact-20-million/
+6. Apple age ratings 2025 — https://9to5mac.com/2025/07/24/apple-notifies-developers-of-new-app-store-age-rating-system/
+7. EU DSA trader status — https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-eu-digital-services-act-compliance-information
+8. Epic v. Apple anti-steering — https://www.macrumors.com/2025/04/30/apple-app-store-anti-steering-injunction-violation ; appeal — https://www.macrumors.com/2025/12/11/APPLE-APP-STORE-FEES-EXTERNAL-PAYMENT-LINKS/
+9. Google Play 12-tester rule — https://support.google.com/googleplay/android-developer/answer/14151465
+10. Three.js game on the App Store via Capacitor — https://raxxo.shop/blogs/lab/shipping-a-three-js-game-to-the-ios-app-store
+11. Building iOS without a Mac (Codemagic) — https://docs.codemagic.io/yaml-publishing/app-store-connect/
+12. App Store rejection reasons — https://www.revenuecat.com/blog/growth/the-ultimate-guide-to-app-store-rejections
+13. Indie legal basics — https://blog.promise.legal/indie-game-studio-legal-guide/
+14. GPL and the App Store — https://michelf.ca/blog/2011/gpl-ios-app-store
+15. Apple developer fees / D-U-N-S — https://magora-systems.com/duns-number-apple-developer/
