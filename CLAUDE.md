@@ -10,3 +10,5 @@
 8. Do not send screenshots unless asked.
 9. 3D-World-4 is the only workspace. 3D-WORLD-3 is reference only: its rules,
    decisions and workflows do not apply here.
+10. Game development notes are in `docs/game-dev/`. Read `README.md` there and
+    open only the topic file the current task needs.
