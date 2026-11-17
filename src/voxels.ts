@@ -72,15 +72,35 @@ export function addMergedBlocks(
       [at(x, y - 1, z), at(x, y + 1, z)],
       [at(x, y, z - 1), at(x, y, z + 1)],
     ];
-    // Top corners where both side neighbours are here but the diagonal is not.
-    const innerCorners: Array<[number, number]> = [];
-    if (!at(x, y + 1, z)) {
-      for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-        if (at(x + sx, y, z) && at(x, y, z + sz) && !at(x + sx, y, z + sz)) innerCorners.push([sx, sz]);
-      }
-    }
+    const has = (d: number[]): boolean => at(x + d[0], y + d[1], z + d[2]);
     for (const side of SIDES) {
-      if (at(x + side.n[0], y + side.n[1], z + side.n[2])) continue; // hidden inside the group
+      // Faces between blocks of the group are drawn too: they stay hidden
+      // inside the solid, except in the small slivers that a neighbour's
+      // rounded edge leaves open, which they fill so no gap shows through.
+      const exposed = !has(side.n);
+      // Only the faces under and over a neighbour are needed to fill gaps
+      // (where a block's rounded side edges sit on a square-edged block).
+      if (!exposed && side.n[1] === 0) continue;
+      const A = side.n.findIndex((v) => v !== 0);
+      const sa = side.n[A];
+      const [B, C] = [0, 1, 2].filter((i) => i !== A);
+      // Inner corners on this face: neighbours on two sides, the spot between
+      // them empty. Each neighbour's edge there is rounded only if the face
+      // beyond it (in this face's direction) is open.
+      const corners: Array<{ sb: number; sc: number; roundU: boolean; roundW: boolean }> = [];
+      if (exposed) {
+        for (const sb of [1, -1]) {
+          for (const sc of [1, -1]) {
+            const dB = [0, 0, 0]; dB[B] = sb;
+            const dC = [0, 0, 0]; dC[C] = sc;
+            const dD = [0, 0, 0]; dD[B] = sb; dD[C] = sc;
+            if (!has(dB) || !has(dC) || has(dD)) continue;
+            const upC = dC.slice(); upC[A] += sa;
+            const upB = dB.slice(); upB[A] += sa;
+            corners.push({ sb, sc, roundU: !has(upC), roundW: !has(upB) });
+          }
+        }
+      }
       const base = positions.length / 3;
       for (const b of steps) {
         for (const a of steps) {
@@ -92,36 +112,41 @@ export function addMergedBlocks(
           let off = p.map((value, i) => value - core[i]);
           let len = Math.hypot(off[0], off[1], off[2]) || 1;
           let n = off.map((value) => value / len);
-          // Inner corners on the top: where this block has neighbours on two
-          // sides but the spot between them is empty, the two rounded edges
-          // meeting there would leave a pointed notch. Round this block's top
-          // corner the same way, following whichever neighbour edge is higher,
-          // so the curves meet flush (like a picture-frame mitre).
-          if (side.n[1] === 1) {
-            for (const [sx, sz] of innerCorners) {
-              const u = p[0] * sx;
-              const w = p[2] * sz;
-              if (u <= 0.5 - R || w <= 0.5 - R) continue;
-              // Height of each neighbour's rounded edge at this spot; the
-              // surface is the higher of the two (the solids' union).
-              const tu = u - (0.5 - R);
-              const tw = w - (0.5 - R);
-              const hu = Math.sqrt(Math.max(0, R * R - tu * tu)); // edge running along z, rounding toward x
-              const hw = Math.sqrt(Math.max(0, R * R - tw * tw)); // edge running along x, rounding toward z
-              const fromW = hw >= hu;
-              const h = fromW ? hw : hu;
-              const nn = fromW ? [0, hw / R, (tw / R) * sz] : [(tu / R) * sx, hu / R, 0];
-              const local = [p[0], 0.5 - R + h, p[2]];
-              n = nn;
-              for (let i = 0; i < 3; i++) core[i] = local[i] - n[i] * R;
-              off = n.map((value) => value * R);
-              len = R;
-            }
+          // Inner corners: round this block's corner the same way as the two
+          // neighbouring edges meeting there, following whichever is higher,
+          // so the curves meet flush (a picture-frame mitre) with no notch.
+          for (const { sb, sc, roundU, roundW } of corners) {
+            const u = p[B] * sb;
+            const w = p[C] * sc;
+            if (u <= 0.5 - R || w <= 0.5 - R) continue;
+            const tu = u - (0.5 - R);
+            const tw = w - (0.5 - R);
+            const hu = roundU ? Math.sqrt(Math.max(0, R * R - tu * tu)) : R;
+            const hw = roundW ? Math.sqrt(Math.max(0, R * R - tw * tw)) : R;
+            const fromW = hw >= hu;
+            const h = fromW ? hw : hu;
+            const nn = [0, 0, 0];
+            nn[A] = (sa * h) / R;
+            if (fromW && roundW) nn[C] = (tw / R) * sc;
+            if (!fromW && roundU) nn[B] = (tu / R) * sb;
+            const l = Math.hypot(nn[0], nn[1], nn[2]) || 1;
+            n = nn.map((value) => value / l);
+            const local = p.slice();
+            local[A] = sa * (0.5 - R + h);
+            for (let i = 0; i < 3; i++) core[i] = local[i] - n[i] * R;
+            off = n.map((value) => value * R);
+            len = R;
           }
+          // Inside faces sit 4% in from the block's surface, so they can never
+          // show as lines along the seams; they only show through a gap.
+          const k = exposed ? 1 : 0.96;
+          // Snapped so edges shared by two blocks land on exactly the same
+          // numbers, leaving no hairline crack between them.
+          const snap = (v: number): number => (Math.round(v * 1e5) / 1e5) * size;
           positions.push(
-            (x + 0.5 + core[0] + n[0] * R) * size,
-            (y + 0.5 + core[1] + n[1] * R) * size,
-            (z + 0.5 + core[2] + n[2] * R) * size,
+            snap(x + 0.5 + (core[0] + n[0] * R) * k),
+            snap(y + 0.5 + (core[1] + n[1] * R) * k),
+            snap(z + 0.5 + (core[2] + n[2] * R) * k),
           );
           normals.push(n[0], n[1], n[2]);
           colours.push(tint.r, tint.g, tint.b);
