@@ -1,6 +1,6 @@
 import {
-  Mesh, MeshStandardMaterial, Object3D, OrthographicCamera, PerspectiveCamera,
-  PlaneGeometry, Scene, Vector3, WebGLRenderer,
+  BoxGeometry, Mesh, MeshStandardMaterial, Object3D, OrthographicCamera, PerspectiveCamera,
+  Scene, Vector3, WebGLRenderer,
 } from 'three';
 
 type Options = {
@@ -16,20 +16,36 @@ export function installTestLabScene(options: Options): void {
   const floors = options.floors ?? [];
   if (!floors.length) {
     const size = options.floorSize ?? 30;
-    const floor = new Mesh(new PlaneGeometry(size, size), new MeshStandardMaterial());
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = options.floorY ?? 0;
+    const floor = new Mesh(new BoxGeometry(size,.6,size), new MeshStandardMaterial());
+    floor.position.y = (options.floorY ?? 0)-.3;
     floor.receiveShadow = true;
     scene.add(floor);
     floors.push(floor);
   }
   const material = new MeshStandardMaterial({color:'#8f9295',roughness:1});
+  let floorRadius = 0;
   for (const floor of floors) {
     floor.name = 'test-lab-floor';
-    floor.traverse(object => { if (object instanceof Mesh) object.material = material; });
+    floor.traverse(object => {
+      if (!(object instanceof Mesh)) return;
+      object.material = material;
+      const old = object.geometry;
+      const parameters = old.parameters;
+      const wasPlane = old.type === 'PlaneGeometry';
+      const width = Math.max(40,parameters.width ?? 40);
+      const depth = Math.max(40,wasPlane ? parameters.height : parameters.depth ?? 40);
+      const thickness = wasPlane ? .6 : Math.max(.6,parameters.height ?? .6);
+      const top = object.position.y+(wasPlane ? 0 : (parameters.height ?? .6)/2);
+      object.geometry = new BoxGeometry(width,thickness,depth);
+      object.rotation.set(0,0,0);
+      object.position.y = top-thickness/2;
+      old.dispose();
+      floorRadius = Math.max(floorRadius,Math.hypot(width,depth,thickness));
+    });
   }
   const orthographic = new OrthographicCamera(-1,1,1,-1,camera.near,camera.far);
   const direction = new Vector3(1,1,1).normalize();
+  const lookOffset = new Vector3();
   let isometric = false, floorVisible = true;
   const render = renderer.render.bind(renderer);
   renderer.render = (renderScene, renderCamera) => {
@@ -42,7 +58,12 @@ export function installTestLabScene(options: Options): void {
     orthographic.right = halfHeight*camera.aspect;
     orthographic.top = halfHeight;
     orthographic.bottom = -halfHeight;
-    orthographic.position.copy(camera.position);
+    // Moving an orthographic camera back preserves framing while keeping the
+    // near plane clear of the foreground ground, including wide screens.
+    const renderDistance = distance+Math.hypot(halfHeight,halfHeight*camera.aspect)*2;
+    lookOffset.copy(camera.position).sub(target).normalize();
+    orthographic.position.copy(target).addScaledVector(lookOffset,renderDistance);
+    orthographic.far = Math.max(camera.far,renderDistance+floorRadius+20);
     orthographic.up.copy(camera.up);
     orthographic.lookAt(target);
     orthographic.updateProjectionMatrix();
