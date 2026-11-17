@@ -4,10 +4,10 @@
  */
 
 import {
-  AmbientLight, BoxGeometry, BufferGeometry, Color, DirectionalLight, EdgesGeometry,
-  Float32BufferAttribute, InstancedMesh, LineBasicMaterial, LineSegments, Matrix4,
+  AmbientLight, Color, DirectionalLight, InstancedMesh, Matrix4,
   MeshStandardMaterial, PerspectiveCamera, Scene, SRGBColorSpace, WebGLRenderer,
 } from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const stage = document.getElementById('stage') as HTMLElement;
@@ -42,7 +42,8 @@ for (let x = -RADIUS; x <= RADIUS; x++)
     for (let z = -RADIUS; z <= RADIUS; z++)
       if (Math.abs(x) + Math.abs(y) + Math.abs(z) <= RADIUS && !isTip(x, y, z)) cells.push([x, y, z]);
 
-const cube = new BoxGeometry(BLOCK, BLOCK, BLOCK);
+// Slightly rounded corners and edges (3.5 cm radius).
+const cube = new RoundedBoxGeometry(BLOCK, BLOCK, BLOCK, 4, 0.035);
 const diamond = new InstancedMesh(
   cube, new MeshStandardMaterial({ color: '#ffffff', roughness: 0.8 }), cells.length,
 );
@@ -57,15 +58,6 @@ cells.forEach(([x, y, z], i) => {
 });
 scene.add(diamond);
 
-// Thin dark outlines on every block edge.
-const edgePositions: number[] = [];
-const cubeEdges = new EdgesGeometry(cube).attributes.position;
-for (const [x, y, z] of cells)
-  for (let i = 0; i < cubeEdges.count; i++)
-    edgePositions.push(cubeEdges.getX(i) + x * BLOCK, cubeEdges.getY(i) + y * BLOCK, cubeEdges.getZ(i) + z * BLOCK);
-const edgeGeometry = new BufferGeometry();
-edgeGeometry.setAttribute('position', new Float32BufferAttribute(edgePositions, 3));
-scene.add(new LineSegments(edgeGeometry, new LineBasicMaterial({ color: '#5d5951', transparent: true, opacity: 0.45 })));
 
 // Soft fill, plus a light on the camera so the side being looked at is lit.
 scene.add(new AmbientLight('#ffffff', 0.55));
