@@ -1,5 +1,5 @@
 import {
-  BoxGeometry, Mesh, MeshStandardMaterial, Object3D, OrthographicCamera, PerspectiveCamera,
+  Box3, BoxGeometry, Mesh, MeshStandardMaterial, Object3D, OrthographicCamera, PerspectiveCamera,
   Scene, Vector3, WebGLRenderer,
 } from 'three';
 
@@ -23,7 +23,6 @@ export function installTestLabScene(options: Options): void {
     floors.push(floor);
   }
   const material = new MeshStandardMaterial({color:'#8f9295',roughness:1});
-  let floorRadius = 0;
   for (const floor of floors) {
     floor.name = 'test-lab-floor';
     floor.traverse(object => {
@@ -32,17 +31,20 @@ export function installTestLabScene(options: Options): void {
       const old = object.geometry;
       const parameters = old.parameters;
       const wasPlane = old.type === 'PlaneGeometry';
-      const width = Math.max(40,parameters.width ?? 40);
-      const depth = Math.max(40,wasPlane ? parameters.height : parameters.depth ?? 40);
+      const width = parameters.width;
+      const depth = wasPlane ? parameters.height : parameters.depth;
       const thickness = wasPlane ? .6 : Math.max(.6,parameters.height ?? .6);
       const top = object.position.y+(wasPlane ? 0 : (parameters.height ?? .6)/2);
       object.geometry = new BoxGeometry(width,thickness,depth);
       object.rotation.set(0,0,0);
       object.position.y = top-thickness/2;
       old.dispose();
-      floorRadius = Math.max(floorRadius,Math.hypot(width,depth,thickness));
     });
   }
+  const floorBounds = new Box3();
+  for (const floor of floors) floorBounds.expandByObject(floor);
+  const floorCenter = floorBounds.getCenter(new Vector3());
+  const floorRadius = floorBounds.getSize(new Vector3()).length()/2;
   const orthographic = new OrthographicCamera(-1,1,1,-1,camera.near,camera.far);
   const direction = new Vector3(1,1,1).normalize();
   const lookOffset = new Vector3();
@@ -58,12 +60,13 @@ export function installTestLabScene(options: Options): void {
     orthographic.right = halfHeight*camera.aspect;
     orthographic.top = halfHeight;
     orthographic.bottom = -halfHeight;
-    // Moving an orthographic camera back preserves framing while keeping the
-    // near plane clear of the foreground ground, including wide screens.
-    const renderDistance = distance+Math.hypot(halfHeight,halfHeight*camera.aspect)*2;
+    // Fit the entire slab between near/far planes, including its closest
+    // corner while orbiting on portrait screens. Orthographic framing stays fixed.
+    const groundReach = floorRadius+target.distanceTo(floorCenter);
+    const renderDistance = distance+Math.max(groundReach,Math.hypot(halfHeight,halfHeight*camera.aspect)*2);
     lookOffset.copy(camera.position).sub(target).normalize();
     orthographic.position.copy(target).addScaledVector(lookOffset,renderDistance);
-    orthographic.far = Math.max(camera.far,renderDistance+floorRadius+20);
+    orthographic.far = Math.max(camera.far,renderDistance+groundReach+20);
     orthographic.up.copy(camera.up);
     orthographic.lookAt(target);
     orthographic.updateProjectionMatrix();
