@@ -22,8 +22,8 @@ Recorded 17 November 2026.
 
 7. Claude's own movement test, to compare with Codex's `/movement/`:
    `/motion-lab/` (folder `motion-lab/`). Plan approved 17 Nov 2026, built
-   one stage at a time with owner approval: 1 standing (done, waiting for
-   approval), 2 slow walk, 3 run, 4 start/stop/turn/skid, 5 jump and other
+   one stage at a time with owner approval: 1 standing (approved), 2 slow walk
+   (built, waiting for approval), 3 run, 4 start/stop/turn/skid, 5 jump and other
    SM64 moves. Feet lead, planted feet never slide, knee solve, SM64 walk
    reference. Do not touch Codex's movement files.
 
