@@ -131,7 +131,8 @@ export function fitAnkleSocket(calf,foot){
   const normal=originalNormal(j,k);n.setXYZ(vertex(64+k-joinIndex,j),normal.x,normal.y,normal.z);
  }
  n.setXYZ(n.count-1,0,1,0);
- geometry.userData={socketDepth:SOCKET_DEPTH,socketClearance:SOCKET_CLEARANCE,footSeatCenter:section.center.toArray(),socketSeatCenter:[0,rimY,0],cavityVertexCount:1+24*segments,segments,joinY};
+ const lipTangents=rimNormals.map((n,j)=>{const a=j/segments*Math.PI*2,dx=Math.sin(a),dz=Math.cos(a);return [dx*.014,-(n.x*dx+n.z*dz)/n.y*.014,dz*.014];});
+ geometry.userData={socketDepth:SOCKET_DEPTH,socketClearance:SOCKET_CLEARANCE,footSeatCenter:section.center.toArray(),socketSeatCenter:[0,rimY,0],cavityVertexCount:1+24*segments,segments,joinY,lipRings:40,lipTangents};
  calf.geometry=geometry;calf.userData={socket:true,centered:true};
  original.dispose();source.dispose();
 }

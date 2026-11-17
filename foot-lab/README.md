@@ -10,7 +10,7 @@ The calf now cradles the foot in a centered ankle socket. Its shallow cavity fol
 
 The movement lab keeps the calf visible and adds Rest, Point, Flex, Toes and Tiptoe poses, ankle bend, side tilt, toe bend and heel-raise sliders, and a Play/Pause motion sequence. Phone sliders and touch orbit are supported. Rest restores the fitted foot and calf position/normal buffers exactly.
 
-The foot bends through a smooth arc across the ball, transporting its cross-sections around a middle-height curve. Tiptoe combines heel rotation with a counter-bend, leaving the front sole planted while the calf rises with the ankle. The seated cavity follows the ankle rigidly; the calf's lower section blends smoothly into its unchanged upper shape. The rig keeps the lowest foot surface on the floor for inspection. These are lab poses, not a walking or full-body foot-locking system.
+The foot bends through a smooth arc across the ball, transporting its cross-sections around a middle-height curve. Tiptoe combines heel rotation with a counter-bend, leaving the front sole planted while the calf rises with the ankle. The calf body stays rigid: its shaft and upper cap retain their exact shape and shading throughout every pose. Only the rounded socket lip flexes between the seated cavity and the rigid calf. The rig keeps the lowest foot surface on the floor for inspection. These are lab poses, not a walking or full-body foot-locking system.
 
 This does not replace the approved avatar or change the existing hand lab. Full-body walking, foot IK, jumping and landing still need development and testing.
 

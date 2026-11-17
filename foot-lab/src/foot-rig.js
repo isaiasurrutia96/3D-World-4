@@ -50,8 +50,9 @@ export function createFootRig(foot,calf){
  anchor.z=soleFront-.003;
  const maxZ=foot.geometry.boundingBox.max.z,point=new T.Vector3(),bent=new T.Vector3(),offset=new T.Vector3();
  const heelRotation=new T.Matrix4(),extraRotation=new T.Matrix4(),rigid=new T.Matrix4();
- const pivotNow=new T.Vector3(),pivotDelta=new T.Vector3(),residual=new T.Vector3();
- const colX=new T.Vector3(),colY=new T.Vector3(),colZ=new T.Vector3(),coX=new T.Vector3(),coY=new T.Vector3(),coZ=new T.Vector3(),normal=new T.Vector3();
+ const pivotNow=new T.Vector3(),pivotDelta=new T.Vector3(),normal=new T.Vector3(),tangent=new T.Vector3(),start=new T.Vector3(),end=new T.Vector3();
+ const rotation=new T.Matrix3(),socket=calf.geometry.userData,{segments,cavityVertexCount,lipRings,lipTangents}=socket;
+ const rimOffset=cavityVertexCount-segments,joinOffset=cavityVertexCount+(lipRings-1)*segments;
  let pose={...REST_POSE},updates=0;
  function setPose(input){
   pose=Object.fromEntries(MOTIONS.map(({id,min,max})=>[id,T.MathUtils.clamp(Number.isFinite(input[id])?input[id]:0,min,max)]));
@@ -75,21 +76,36 @@ export function createFootRig(foot,calf){
    }
    group.position.y=-lowest;
    calf.position.copy(calfPosition).add(pivotDelta);
-   const m=rigid.elements;
-   for(let i=0;i<cp.count;i++){
-    const x=restCalf[i*3],y=restCalf[i*3+1],z=restCalf[i*3+2];
-    point.set(x,y,z).add(calfPosition).sub(pivot);
-    residual.set(m[0]*point.x+m[4]*point.y+m[8]*point.z-point.x,m[1]*point.x+m[5]*point.y+m[9]*point.z-point.y,m[2]*point.x+m[6]*point.y+m[10]*point.z-point.z);
-    const t=T.MathUtils.clamp((y+.16)/.185,0,1),w=1-t*t*(3-2*t),dw=-6*t*(1-t)/.185;
-    cp.setXYZ(i,x+w*residual.x,y+w*residual.y,z+w*residual.z);
-    // Inverse-transpose Jacobian keeps the saved smooth shading through the
-    // socket's soft blend. The entire seated cavity follows the ankle rigidly.
-    colX.set(1-w+w*m[0],w*m[1],w*m[2]);
-    colY.set(w*m[4],1-w+w*m[5],w*m[6]).addScaledVector(residual,dw);
-    colZ.set(w*m[8],w*m[9],1-w+w*m[10]);
-    coX.crossVectors(colY,colZ);coY.crossVectors(colZ,colX);coZ.crossVectors(colX,colY);
-    normal.copy(coX).multiplyScalar(restCalfNormals[i*3]).addScaledVector(coY,restCalfNormals[i*3+1]).addScaledVector(coZ,restCalfNormals[i*3+2]).normalize();
-    cn.setXYZ(i,normal.x,normal.y,normal.z);
+   cp.array.set(restCalf);cn.array.set(restCalfNormals);
+   if(pose.ankle||pose.roll||pose.heel){
+    rotation.setFromMatrix4(rigid);
+    // The seated cavity follows the foot, while the complete calf shaft is
+    // rigid. Rebuild only the rounded socket lip between those two surfaces.
+    for(let i=0;i<cavityVertexCount;i++){
+     point.fromArray(restCalf,i*3).add(calfPosition).applyMatrix4(rigid).sub(calf.position);
+     cp.setXYZ(i,point.x,point.y,point.z);
+    }
+    for(let j=0;j<segments;j++){
+     start.fromBufferAttribute(cp,rimOffset+j);end.fromArray(restCalf,(joinOffset+j)*3);
+     tangent.fromArray(lipTangents[j]).applyMatrix3(rotation);
+     for(let k=1;k<lipRings;k++){
+      const t=k/lipRings,u=1-t;
+      point.copy(start).multiplyScalar(u*u*u+3*u*u*t).addScaledVector(tangent,3*u*u*t)
+       .addScaledVector(end,3*u*t*t+t*t*t);point.y-=.045*3*u*t*t;
+      cp.setXYZ(cavityVertexCount+(k-1)*segments+j,point.x,point.y,point.z);
+     }
+    }
+    calf.geometry.computeVertexNormals();const generated=cn.array.slice();
+    for(let k=1;k<lipRings;k++)for(let j=0;j<segments;j++){
+     normal.set(0,0,0);
+     for(let d=-8;d<=8;d++)normal.addScaledVector(point.fromArray(generated,(cavityVertexCount+(k-1)*segments+(j+d+segments)%segments)*3),Math.exp(-d*d/32));
+     normal.normalize().lerp(point.fromArray(restCalfNormals,(joinOffset+j)*3),T.MathUtils.smoothstep(k/lipRings,.65,1)).normalize();
+     cn.setXYZ(cavityVertexCount+(k-1)*segments+j,normal.x,normal.y,normal.z);
+    }
+    for(let i=0;i<cavityVertexCount;i++){
+     normal.fromArray(restCalfNormals,i*3).applyMatrix3(rotation).normalize();cn.setXYZ(i,normal.x,normal.y,normal.z);
+    }
+    cn.array.set(restCalfNormals.subarray(joinOffset*3),joinOffset*3);
    }
    foot.geometry.computeVertexNormals();
   }

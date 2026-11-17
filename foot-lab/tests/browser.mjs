@@ -73,12 +73,19 @@ for(const point of Object.values(foot.userData.contacts)){assert.equal(point[1],
 const approval=JSON.parse(await readFile(resolve(root,'avatar/APPROVED.json'),'utf8'));
 for(const [name,hash] of Object.entries(approval.sha256))assert.equal(createHash('sha256').update(await readFile(resolve(root,'avatar',name))).digest('hex'),hash,'Approved avatar changed: '+name);
 const savedFootNormals=g.attributes.normal.array.slice(),savedCalf=cp.array.slice(),savedCalfNormals=cg.attributes.normal.array.slice(),savedCalfPosition=calf.position.clone();
-const rig=createFootRig(foot,calf),world=new T.Vector3();let plantedError=0,heelHeight=0,minMovingGap=Infinity;
+const rig=createFootRig(foot,calf),world=new T.Vector3();let plantedError=0,heelHeight=0,minMovingGap=Infinity,maxCalfBodyDisplacement=0;
 const trials={...POSES,left:{roll:-10},right:{roll:10},combined:{heel:30,toes:25,ankle:24,roll:10}};
 for(const [name,pose] of Object.entries(trials)){
  rig.setPose(pose);assert.ok(calf.visible,'Calf disappeared during movement');
  assert.ok([...p.array,...cp.array,...g.attributes.normal.array,...cg.attributes.normal.array].every(Number.isFinite),'Invalid moving surface: '+name);
  assert.ok(Math.abs(g.boundingBox.min.y+rig.group.position.y)<1e-7,'Foot penetrates or floats above the floor: '+name);
+ for(let i=0;i<cp.count;i++)if(savedCalf[i*3+1]>=cg.userData.joinY-1e-7){
+  const displacement=Math.hypot(cp.getX(i)-savedCalf[i*3],cp.getY(i)-savedCalf[i*3+1],cp.getZ(i)-savedCalf[i*3+2]);
+  maxCalfBodyDisplacement=Math.max(maxCalfBodyDisplacement,displacement);
+  assert.equal(displacement,0,'Calf body bends during '+name);
+  for(let axis=0;axis<3;axis++)assert.equal(cg.attributes.normal.array[i*3+axis],savedCalfNormals[i*3+axis],'Rigid calf shading changes during '+name);
+ }
+ if(name==='toes')assert.deepEqual(cp.array,savedCalf,'Toe bending moves the calf');
  for(let i=0;i<cp.count;i+=37){
   world.fromBufferAttribute(cp,i);calf.localToWorld(world);if(world.y>g.boundingBox.max.y+rig.group.position.y+.002)continue;
   ray.ray.origin.set(world.x,2,world.z);const hit=ray.intersectObject(foot)[0];if(!hit)continue;
@@ -151,5 +158,5 @@ try{
  await page.goto(base+'/hand-lab/');await page.waitForFunction(()=>window.handLabReady);
  await page.goto(base+'/dist/');await page.waitForFunction(()=>window.__game);
  assert.deepEqual(errors,[]);
- console.log(JSON.stringify({size:foot.userData.size,bigToeLead:medial-lateral,socketDepth:SOCKET_DEPTH,socketClearance:SOCKET_CLEARANCE,measuredFit:[minFit,maxFit],minLipGap,minMovingGap,plantedError,heelHeight,exactRest:true,posesAndSliders:true,playPause:true,phoneHeel,centered:true,upperCalfPreserved:true,footShapeUnchanged:true,closedSocketCalf:true,closedSurface:true,soleFlat:true,soleVertices:foot.userData.soleVertices,vertices:p.count,approvedAvatarUnchanged:true,presetViews:true,mobileFraming:true,touchOrbit:true,handLabLoads:true,existingWorldLoads:true,errors}));
+ console.log(JSON.stringify({size:foot.userData.size,bigToeLead:medial-lateral,socketDepth:SOCKET_DEPTH,socketClearance:SOCKET_CLEARANCE,measuredFit:[minFit,maxFit],minLipGap,minMovingGap,maxCalfBodyDisplacement,plantedError,heelHeight,exactRest:true,posesAndSliders:true,playPause:true,phoneHeel,centered:true,upperCalfPreserved:true,footShapeUnchanged:true,closedSocketCalf:true,closedSurface:true,soleFlat:true,soleVertices:foot.userData.soleVertices,vertices:p.count,approvedAvatarUnchanged:true,presetViews:true,mobileFraming:true,touchOrbit:true,handLabLoads:true,existingWorldLoads:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));g.dispose();foot.material.dispose();}
