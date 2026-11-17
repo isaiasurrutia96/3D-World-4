@@ -65,6 +65,7 @@ async function start(){
   if(playing){
    const elapsed=time-playStart,v=.5-.5*Math.cos(elapsed/4*Math.PI*2);
    Object.assign(state.hands.target,HAND_REST);for(const finger of FINGERS)state.hands.target[finger.id]=.25+v*(finger.id==='thumb'?.35:.65);state.hands.target.opposition=v*.25;
+   state.hands.target.together=v*.6;
    Object.assign(state.feet.target,motionPose(elapsed));state.hands.pose=state.feet.pose='motion';refresh('hands');refresh('feet');
   }
   const a=reduced&&!playing?1:1-Math.exp(-dt*12);

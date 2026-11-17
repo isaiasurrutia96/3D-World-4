@@ -93,6 +93,8 @@ try{
  }
  await page.getByRole('button',{name:'Rest all',exact:true}).click();await settle(page);assert.deepEqual(await fingerprints(page),baseline);
  await page.getByRole('button',{name:'Play motion',exact:true}).click();const before=await page.evaluate(()=>avatarLab.getState().updates);await page.waitForFunction(before=>avatarLab.getState().updates>before+6,before,{timeout:60000});
+ await page.waitForFunction(()=>avatarLab.getState().hands.target.together>.1&&avatarLab.handRig.getPose().together>.08,undefined,{timeout:60000});
+ assert.ok(Number(await page.locator('#hands-together').inputValue())>10,'Playback leaves Fingers Together stuck at zero');
  assert.equal(await page.evaluate(()=>avatarLab.getState().playing),true);await page.getByRole('button',{name:'Pause motion',exact:true}).click();assert.equal(await page.evaluate(()=>avatarLab.getState().playing),false);
  await page.getByRole('button',{name:'Rest all',exact:true}).click();await settle(page);
  for(const name of ['Front','Side','Back','Top','Angle']){await page.getByRole('button',{name,exact:true}).click();if(shots)await page.screenshot({path:resolve(shots,'view-'+name.toLowerCase()+'.png')});}
@@ -114,5 +116,5 @@ try{
  await phone.getByRole('button',{name:'Rest all',exact:true}).click();await settle(phone);assert.deepEqual(await fingerprints(phone),baseline,'Mobile Rest changed shapes');await mobile.close();
  for(const [path,ready] of [['/hand-lab/','handLabReady'],['/foot-lab/','footLabReady'],['/dist/','__game']]){await page.goto(base+path);await page.waitForFunction(ready=>Boolean(window[ready]),ready,{timeout:60000});}
  assert.deepEqual(errors,[]);
- console.log(JSON.stringify({meshCount:15,savedUpperMeshesPreserved:11,standingHeight,maxKneeError,maxPlantedError,mirroredFeet:true,rigidCalves:true,handAndFootMotion:true,protectedPalms:true,exactRest:true,playPause:true,mobileViews:true,mobileOrbit:true,phoneHeel,savedCheckpointUnchanged:true,existingPagesLoad:true,errors}));
+ console.log(JSON.stringify({meshCount:15,savedUpperMeshesPreserved:11,standingHeight,maxKneeError,maxPlantedError,mirroredFeet:true,rigidCalves:true,handAndFootMotion:true,fingersTogetherPlayback:true,protectedPalms:true,exactRest:true,playPause:true,mobileViews:true,mobileOrbit:true,phoneHeel,savedCheckpointUnchanged:true,existingPagesLoad:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
