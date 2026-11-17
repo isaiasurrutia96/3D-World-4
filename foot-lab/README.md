@@ -8,7 +8,11 @@ Open `/foot-lab/` and drag to orbit, pinch/scroll to zoom, or use Angle, Front, 
 
 The calf now cradles the foot in a centered ankle socket. Its shallow cavity follows the actual foot surface with 0.6 mm clearance and a softly rolled lip. The seating contour is measured 24 mm below the foot's highest point; the calf is aligned to that contour's center. The foot geometry and the calf's upper profile stay unchanged. No separate ankle ball or connector is added.
 
-This is still a shape-review stage. It does not replace the approved avatar, change the existing hand lab or implement ankle animation, toe bending, walking or foot locking.
+The movement lab keeps the calf visible and adds Rest, Point, Flex, Toes and Tiptoe poses, ankle bend, side tilt, toe bend and heel-raise sliders, and a Play/Pause motion sequence. Phone sliders and touch orbit are supported. Rest restores the fitted foot and calf position/normal buffers exactly.
+
+The foot bends through a smooth arc across the ball, transporting its cross-sections around a middle-height curve. Tiptoe combines heel rotation with a counter-bend, leaving the front sole planted while the calf rises with the ankle. The seated cavity follows the ankle rigidly; the calf's lower section blends smoothly into its unchanged upper shape. The rig keeps the lowest foot surface on the floor for inspection. These are lab poses, not a walking or full-body foot-locking system.
+
+This does not replace the approved avatar or change the existing hand lab. Full-body walking, foot IK, jumping and landing still need development and testing.
 
 The mesh includes hidden heel, ball and toe contact locations on its flat sole, and a suggested ankle pivot for later work. These are model coordinates, not a claim of working foot IK.
 
