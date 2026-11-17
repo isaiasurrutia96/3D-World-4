@@ -1,3 +1,4 @@
+import {installTestLabScene} from './test-lab-scene.ts';
 /**
  * Island Lab: the slate blue test stage, showing a tiny floating island made
  * of 43 cm blocks (grass, dirt, stone underside). No plants yet.
@@ -79,3 +80,5 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 (window as unknown as Record<string, unknown>).__lab = { camera, controls };
+
+installTestLabScene({scene,camera,renderer,floorY:-5,floorSize:80,getTarget:()=>controls.target,updateControls:()=>controls.update()});

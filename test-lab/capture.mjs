@@ -10,7 +10,7 @@ function ffmpeg(args){const r=spawnSync('ffmpeg',['-hide_banner','-loglevel','er
 try{
  for(const gait of ['walk','run']){
   const folder='/tmp/test-lab-video/'+gait;await mkdir(folder,{recursive:true});const page=await browser.newPage({viewport:{width:640,height:800}});
-  await page.goto(`http://127.0.0.1:${server.address().port}/${gait}-test/`);await page.waitForFunction(()=>window.walkTestReady||window.runTestReady,undefined,{timeout:60000});
+  await page.goto(`http://127.0.0.1:${server.address().port}/${gait}-test/?lab=universal-2`);await page.waitForFunction(()=>window.walkTestReady||window.runTestReady,undefined,{timeout:60000});
   await page.addStyleTag({content:'header,#status,#joystick,.other-test,#loading{display:none!important}'});
   const cycle=await page.evaluate(()=>{const m=movement,p=m.player;m.renderer.setAnimationLoop(null);p.speed=p.maxSpeed;p.intentAmount=1;p.activity=1;m.camera.fov=36;m.camera.aspect=.8;m.camera.position.set(-4.6,1.02,0);m.camera.up.set(0,1,0);m.camera.lookAt(0,1.02,0);m.camera.updateProjectionMatrix();return p.cycle;});
   for(let f=0;f<77;f++){await page.evaluate(f=>{const m=movement,p=m.player;p.phase=f/77;p.anchor=null;p.plantKey=null;p.position.set(0,0,0);p.pendingTravel=0;p.pose(1/60);m.renderer.render(m.scene,m.camera);},f);await page.locator('canvas').first().screenshot({path:folder+'/'+String(f).padStart(3,'0')+'.png'});}

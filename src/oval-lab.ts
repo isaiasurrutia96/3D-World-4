@@ -1,3 +1,4 @@
+import {installTestLabScene} from './test-lab-scene.ts';
 /**
  * Oval Lab: the slate blue test stage, showing the banked NASCAR-style oval
  * from 3D-WORLD-3 with the grass and dirt blocks around it.
@@ -78,3 +79,5 @@ renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
 });
+
+installTestLabScene({scene,camera,renderer,floorY:-5,floorSize:80,getTarget:()=>controls.target,updateControls:()=>controls.update()});

@@ -1,3 +1,4 @@
+import {installTestLabScene} from '../../src/test-lab-scene.ts';
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {createForearmHandAssembly} from '../../avatar/src/hand-study/assembly.js';
@@ -66,6 +67,7 @@ async function start(){
  document.addEventListener('visibilitychange',()=>{if(document.hidden){stopMotion();markPose(activePose==='motion'?'custom':activePose);}lastTime=0;});
  window.handLab={scene,camera,controls,hand,rig,display,applyPose,getState:()=>({current:{...current},target:{...target},playing,poseUpdates,activePose})};
  if(new URLSearchParams(location.search).get('pose')==='relax')applyPose('relax');
+ installTestLabScene({scene,camera,renderer,floorY:new T.Box3().setFromObject(display).min.y-.03,floorSize:4,getTarget:()=>controls.target,updateControls:()=>controls.update()});
  loading.classList.add('hidden');window.handLabReady=true;
 }
 start().catch(error=>{console.error(error);loading.className='loading error';loading.textContent='The hand could not open. Please reload the page to try again.';});

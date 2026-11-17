@@ -1,3 +1,4 @@
+import {installTestLabScene} from '../src/test-lab-scene.ts';
 import * as T from 'three';
 import {PlayableWalk,TUNING} from './controller.js';
 import {MovementInput} from '../movement/input.js';
@@ -36,6 +37,7 @@ async function start(){
   renderer.render(scene,camera);
  });
  window.movement={player,input,scene,camera,slab,renderer,getState:()=>({...player.getState(),camera:{yaw,pitch,distance},stick:input.stick?{x:input.stick.x,y:input.stick.y}:null}),setIntent:(x,y)=>{override=x===null?null:{x,y};},setCamera:(y,p,d)=>{yaw=y;pitch=p;distance=d;}};
+ installTestLabScene({scene,camera,renderer,floors:[slab],shadows:[shadow],getTarget:()=>follow});
  document.querySelector('#loading').hidden=true;window.movementReady=true;window.walkTestReady=true;
 }
 start().catch(error=>{console.error(error);document.querySelector('#loading').textContent='The walking test could not open. Please reload to try again.';});
