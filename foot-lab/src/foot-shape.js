@@ -8,7 +8,7 @@ const originalSize=original.boundingBox.getSize(new T.Vector3()).multiply(new T.
 export const FOOT_SIZE=Object.freeze({width:originalSize.x,height:originalSize.y,length:originalSize.z});
 const signedPower=(x,p)=>Math.sign(x)*Math.pow(Math.abs(x),p);
 
-export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b2a6',roughness:.78,metalness:0}),{toeExtension=.022}={}){
+export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b2a6',roughness:.78,metalness:0}),{toeExtension=.022,toeLeftShift=.030}={}){
  const source=new T.SphereGeometry(1,128,96),p=source.attributes.position;
  for(let i=0;i<p.count;i++){
   const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
@@ -33,6 +33,8 @@ export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b
  // tip more definition without introducing a separate toe or a sharp point.
  for(let i=0;i<p.count;i++){
   const x=p.getX(i),z=p.getZ(i),front=T.MathUtils.smoothstep(z,.18,.30);
+  // Sweep only the toe area left in Top view; the heel and ankle stay put.
+  p.setX(i,x-toeLeftShift*T.MathUtils.smoothstep(z,.20,.32));
   p.setZ(i,z+toeExtension*front*Math.exp(-Math.pow((x+.055)/.064,2)));
  }
  source.deleteAttribute('normal');source.deleteAttribute('uv');
@@ -44,7 +46,7 @@ export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b
  const foot=new T.Mesh(geometry,material);foot.name='draft-rounded-foot';foot.castShadow=true;foot.receiveShadow=false;
  foot.userData={
   size:{width:geometry.boundingBox.max.x-geometry.boundingBox.min.x,height:geometry.boundingBox.max.y-geometry.boundingBox.min.y,length:geometry.boundingBox.max.z-geometry.boundingBox.min.z},baseSize:{...FOOT_SIZE},forward:'+Z',soleY:0,soleVertices,
-  bigToeSide:'-X (medial)',toeExtensionMax:toeExtension,
+  bigToeSide:'-X (medial)',toeExtensionMax:toeExtension,toeLeftShift,
   contacts:{heel:[0,0,T.MathUtils.lerp(minSoleZ,.09,.25)],ball:[0,0,T.MathUtils.lerp(.09,maxSoleZ,.6)],toe:[0,0,T.MathUtils.lerp(.09,maxSoleZ,.85)]},
   suggestedAnklePivot:[0,.15,-.035],
  };

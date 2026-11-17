@@ -13,14 +13,18 @@ const root=resolve(fileURLToPath(new URL('../../',import.meta.url))),foot=create
 const g=foot.geometry,p=g.attributes.position,size=g.boundingBox.getSize(foot.position.clone());
 assert.ok([size.x-FOOT_SIZE.width,size.y-FOOT_SIZE.height].every(d=>Math.abs(d)<1e-6),'Foot width or height changed');
 assert.ok(size.z>FOOT_SIZE.length&&size.z<FOOT_SIZE.length+.0221,'Toe extension is not slight');
-const baseline=createFootShape(undefined,{toeExtension:0}),bp=baseline.geometry.attributes.position;
-assert.equal(bp.count,p.count);let medial=-Infinity,lateral=-Infinity;
+const baseline=createFootShape(undefined,{toeExtension:0,toeLeftShift:0}),bp=baseline.geometry.attributes.position;
+assert.equal(bp.count,p.count);let medial=-Infinity,lateral=-Infinity,tipZ=-Infinity,tipX=0;
 for(let i=0;i<p.count;i++){
- assert.equal(p.getX(i),bp.getX(i));assert.equal(p.getY(i),bp.getY(i));
+ assert.equal(p.getY(i),bp.getY(i));
+ assert.ok(p.getX(i)<=bp.getX(i)+1e-7&&p.getX(i)>=bp.getX(i)-.030001,'Toe sweep changed direction or is excessive');
+ if(bp.getZ(i)<=.20)assert.equal(p.getX(i),bp.getX(i),'Heel or midfoot moved sideways');
  if(bp.getZ(i)<=.18)assert.equal(p.getZ(i),bp.getZ(i),'Heel or midfoot changed');
  if(p.getX(i)<-.025)medial=Math.max(medial,p.getZ(i));if(p.getX(i)>.025)lateral=Math.max(lateral,p.getZ(i));
+ if(p.getZ(i)>tipZ){tipZ=p.getZ(i);tipX=p.getX(i);}
 }
-assert.ok(medial-lateral>.004&&medial-lateral<.016,'Front has no subtle big-toe asymmetry');
+assert.ok(medial-lateral>.004&&medial-lateral<.040,'Front has no subtle big-toe asymmetry');
+assert.ok(tipX<-.055&&tipX>-.090,'Big-toe tip is not farther left in Top view');
 const calf=createCalf(foot),calfReference=createCharacterRig({plain:true}).kneeRight.children[0];
 assert.deepEqual(calf.geometry.attributes.position.array,calfReference.geometry.attributes.position.array,'Calf shape changed');
 assert.equal(calf.material.color.getHex(),foot.material.color.getHex());
