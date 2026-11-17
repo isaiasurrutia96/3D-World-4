@@ -1,4 +1,4 @@
-import {protectPage} from './interactions.js?v=devices-2';
+import {protectPage} from './interactions.js?v=appearance-3';
 protectPage(window);
 const $=selector=>document.querySelector(selector);
 const tests={
@@ -10,7 +10,7 @@ const tests={
  blocks:{name:'Blocks',path:'lab'},oval:{name:'Oval track',path:'oval'},island:{name:'Floating island',path:'island'},
  motion:{name:'Motion study',path:'motion-lab',ready:w=>!!w.motionLab,move:true},
 };
-const clips={walk:{src:'./media/walk.mp4?v=devices-2',poster:'./media/walk.jpg?v=devices-2'},run:{src:'./media/run.mp4?v=devices-2',poster:'./media/run.jpg?v=devices-2'},comparison:{src:'../references/motion-compare/side.mp4?v=run-grip-1',poster:'../references/motion-compare/side-poster.jpg?v=run-grip-1'}};
+const clips={walk:{src:'./media/walk.mp4?v=appearance-3',poster:'./media/walk.jpg?v=appearance-3'},run:{src:'./media/run.mp4?v=appearance-3',poster:'./media/run.jpg?v=appearance-3'},comparison:{src:'../references/motion-compare/side.mp4?v=run-grip-1',poster:'../references/motion-compare/side-poster.jpg?v=run-grip-1'}};
 const controls=$('#live-controls'),host=$('#frame-host'),loading=$('#loading'),video=$('#animation-video');
 let subject='avatar',mode='live',view='angle',frame=null,clock=null,syncControls=()=>{},generation=0,stageVisible=true,ready=false,videoRate=1,inspection=false;
 
@@ -34,7 +34,7 @@ async function setTest(id){
  if(!tests[id])return;subject=id;ready=false;window.testLabReady=false;const token=++generation;clock=null;syncControls=()=>{};controls.replaceChildren();loading.hidden=false;loading.textContent='Preparing '+tests[id].name.toLowerCase()+'…';$('#subject').value=id;$('#subject-status').textContent=tests[id].name;
  const url=new URL(location.href);if(id==='avatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
  if(id==='walk'||id==='run')$('#clip').value=id;
- const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=universal-2';frame=node;host.replaceChildren(node);
+ const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=universal-3';frame=node;host.replaceChildren(node);
  node.onload=async()=>{
   try{
    const w=node.contentWindow,doc=w.document,style=doc.createElement('style');style.textContent='html,body{height:100%!important;overflow:hidden!important;background:#405363!important}.app{display:block!important;height:100%!important}body>header,.app>header,nav.views,.stage-hint,.hint,.other-test,#status,aside,.floor-toggle{display:none!important}#stage{height:100%!important;width:100%!important;min-height:0!important}';doc.head.append(style);
@@ -65,7 +65,7 @@ function setView(name){
  const api=w.avatarLab||w.handLab||w.footLab,controls=api?.controls,camera=api?.camera;if(!controls||!camera)return;
  const target=controls.target,d=camera.position.distanceTo(target),offset={front:[0,0,d],side:[d,0,0],back:[0,0,-d],top:[0,d,.001],angle:[d*.6,d*.3,d*.8]}[name];camera.position.copy(target);camera.position.x+=offset[0];camera.position.y+=offset[1];camera.position.z+=offset[2];controls.update();
 }
-function setInspection(enabled){inspection=enabled;frame?.contentWindow.testLabScene?.setFloorVisible(!inspection);$('#visual-mode').setAttribute('aria-pressed',String(inspection));$('#visual-mode').title=inspection?'Show the light grey floor':'Hide the floor for a clear inspection';}
+function setInspection(enabled){inspection=enabled;frame?.contentWindow.testLabScene?.setFloorVisible(!inspection);$('#visual-mode').setAttribute('aria-pressed',String(inspection));$('#visual-mode').title=inspection?'Show the grey floor':'Hide the floor for a clear inspection';}
 function setMode(next){mode=next;for(const id of ['live','video']){$('#'+id+'-tab').setAttribute('aria-selected',String(id===mode));$('#'+id+'-panel').hidden=id!==mode;}if(mode==='live')video.pause();else{if(!video.getAttribute('src')||!video.getAttribute('src').includes($('#clip').value==='comparison'?'motion-compare':$('#clip').value+'.mp4'))loadClip($('#clip').value);video.play().catch(()=>{});}}
 function loadClip(id){const clip=clips[id];video.pause();video.src=clip.src;video.poster=clip.poster;video.defaultPlaybackRate=videoRate;video.playbackRate=videoRate;video.load();$('#download-video').href=clip.src;if(mode==='video')video.play().catch(()=>{});}
 function setRate(rate){videoRate=rate;video.defaultPlaybackRate=rate;video.playbackRate=rate;for(const b of document.querySelectorAll('[data-rate]'))b.setAttribute('aria-pressed',String(Number(b.dataset.rate)===rate));}

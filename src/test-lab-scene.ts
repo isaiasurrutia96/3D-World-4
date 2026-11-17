@@ -23,7 +23,7 @@ export function installTestLabScene(options: Options): void {
     scene.add(floor);
     floors.push(floor);
   }
-  const material = new MeshStandardMaterial({color:'#c9cdd1',roughness:1});
+  const material = new MeshStandardMaterial({color:'#8f9295',roughness:1});
   for (const floor of floors) {
     floor.name = 'test-lab-floor';
     floor.traverse(object => { if (object instanceof Mesh) object.material = material; });
@@ -37,7 +37,7 @@ export function installTestLabScene(options: Options): void {
     for (const floor of [...floors,...(options.shadows ?? [])]) floor.visible = floorVisible;
     if (!isometric) return render(scene,camera);
     const target = getTarget(), distance = camera.position.distanceTo(target);
-    const halfHeight = Math.tan(camera.fov*Math.PI/360)*distance;
+    const halfHeight = Math.tan(camera.fov*Math.PI/360)*distance*2.4;
     orthographic.left = -halfHeight*camera.aspect;
     orthographic.right = halfHeight*camera.aspect;
     orthographic.top = halfHeight;

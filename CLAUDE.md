@@ -23,6 +23,6 @@
 15. Avatar motion should feel coordinated and athletic, with deliberate
     weight placement and balance. See `docs/AVATAR-DIRECTION.md`.
 16. Use `/test-lab/` as the universal workspace for future tests by Codex and
-    Claude Code. Reuse its responsive toolbar, true isometric view, light-grey
-    floor and Inspection toggle. Integrate via `src/test-lab-scene.ts`;
+    Claude Code. Reuse its off-white responsive toolbar, wide isometric view,
+    neutral-grey floor and Inspection toggle. Integrate via `src/test-lab-scene.ts`;
     see `test-lab/README.md`. Wait for the owner's review before freezing a lab checkpoint.
