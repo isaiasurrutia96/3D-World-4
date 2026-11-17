@@ -23,15 +23,15 @@ try{
  await page.waitForFunction(()=>{const v=document.querySelector('video');return v.paused&&!v.seeking&&Math.abs(v.currentTime-.55)<.03;});
  for(const [label,view] of [['Front','front'],['Feet close-up','feet'],['Side','side'],['Front','front']]){
   await page.getByRole('button',{name:label,exact:true}).tap();
-  await page.waitForFunction(view=>{const v=document.querySelector('video');return v.currentSrc.endsWith('/'+view+'.mp4')&&v.readyState>=2&&!v.seeking&&v.paused&&Math.abs(v.currentTime-.55)<.03;},view);
-  assert.equal(await page.locator('video').evaluate(v=>v.playbackRate),.5);assert.equal(await page.locator('#gif').getAttribute('href'),view+'-slow.gif');
+  await page.waitForFunction(view=>{const v=document.querySelector('video');return new URL(v.currentSrc||v.src,location.href).pathname.endsWith('/'+view+'.mp4')&&v.readyState>=2&&!v.seeking&&v.paused&&Math.abs(v.currentTime-.55)<.03;},view);
+  assert.equal(await page.locator('video').evaluate(v=>v.playbackRate),.5);assert.equal(await page.locator('#gif').evaluate(a=>new URL(a.href).pathname.split('/').pop()),view+'-slow.gif');
  }
  await page.getByRole('button',{name:'Side',exact:true}).tap();await page.getByRole('button',{name:'Feet close-up',exact:true}).tap();
- await page.waitForFunction(()=>{const v=document.querySelector('video');return v.currentSrc.endsWith('/feet.mp4')&&v.readyState>=2&&!v.seeking&&v.paused&&Math.abs(v.currentTime-.55)<.03;});
+ await page.waitForFunction(()=>{const v=document.querySelector('video');return new URL(v.currentSrc||v.src,location.href).pathname.endsWith('/feet.mp4')&&v.readyState>=2&&!v.seeking&&v.paused&&Math.abs(v.currentTime-.55)<.03;});
  await page.getByRole('button',{name:'Normal',exact:true}).tap();await page.waitForFunction(()=>{const v=document.querySelector('video');return!v.paused&&v.currentTime>.57;});
  assert.equal(await page.locator('video').evaluate(v=>v.playbackRate),1);
  const before=await page.locator('video').evaluate(v=>v.currentTime);await page.getByRole('button',{name:'Front',exact:true}).tap();
- await page.waitForFunction(()=>{const v=document.querySelector('video');return v.currentSrc.endsWith('/front.mp4')&&v.readyState>=2&&!v.paused&&!v.seeking;});
+ await page.waitForFunction(()=>{const v=document.querySelector('video');return new URL(v.currentSrc||v.src,location.href).pathname.endsWith('/front.mp4')&&v.readyState>=2&&!v.paused&&!v.seeking;});
  assert(Math.abs(await page.locator('video').evaluate(v=>v.currentTime)-before)<.5,'Playing view changes must preserve cycle time');
  for(const viewport of [{width:390,height:844},{width:844,height:390}]){await page.setViewportSize(viewport);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);}
  assert.deepEqual(errors,[]);console.log('Phone: autoplay, three views, same-time switching, pause/seek, shared speed, rapid changes, portrait/landscape: pass.');

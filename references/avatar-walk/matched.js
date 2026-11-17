@@ -6,6 +6,11 @@ export {CYCLE};
 const UP=new T.Vector3(0,1,0),DOWN=new T.Vector3(0,-1,0);
 export const BONES={1:{hip:13,knee:14,ankle:15,shoulder:5,elbow:6,wrist:7},'-1':{hip:17,knee:18,ankle:19,shoulder:9,elbow:10,wrist:11}};
 const direction=(points,a,b)=>points[b].clone().sub(points[a]).normalize();
+function tuckArm(v,side,upper){
+ const sagittal=Math.hypot(v.y,v.z),outward=side*v.x/Math.max(sagittal,1e-8);
+ const slope=upper?T.MathUtils.clamp(outward*.4,.14,.22):T.MathUtils.clamp(outward*.25,-.10,.08);
+ return v.set(side*slope*sagittal,v.y,v.z).normalize();
+}
 
 // Pose-only retarget for a direct reference comparison: the SAME source frame
 // drives every limb. No independent step planner, phase offsets, softened knee
@@ -54,7 +59,7 @@ export class MatchedMotion{
    leg.calf.updateWorldMatrix(true,false);leg.foot.updateWorldMatrix(true,false);leg.socket.update(leg.foot,leg.motion.rear);
   }
   for(const arm of this.arms){
-   const b=arm.bones,parent=arm.shoulder.parent.getWorldQuaternion(new T.Quaternion()),upper=direction(p,b.shoulder,b.elbow).applyQuaternion(this.armLean),lower=direction(p,b.elbow,b.wrist).applyQuaternion(this.armLean);
+   const b=arm.bones,parent=arm.shoulder.parent.getWorldQuaternion(new T.Quaternion()),upper=tuckArm(direction(p,b.shoulder,b.elbow).applyQuaternion(this.armLean),arm.side,true),lower=tuckArm(direction(p,b.elbow,b.wrist).applyQuaternion(this.armLean),arm.side,false);
    arm.shoulder.quaternion.copy(parent.invert()).multiply(new T.Quaternion().setFromUnitVectors(DOWN,upper));arm.shoulder.updateWorldMatrix(true,false);
    arm.elbow.quaternion.copy(arm.shoulder.getWorldQuaternion(new T.Quaternion()).invert()).multiply(new T.Quaternion().setFromUnitVectors(DOWN,lower));
   }
