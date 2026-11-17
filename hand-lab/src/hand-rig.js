@@ -4,16 +4,16 @@ import {easeDigitSweep} from '../../avatar/src/hand-study/ease-digit-sweep.js';
 
 const STEPS=512,RANGE=1.6,REST=.25;
 export const FINGERS=[
- {id:'index',label:'Index',root:[225,199],tip:[260,79],radius:46,rest:[10,18,7],closed:[32,45,15],adduction:9},
+ {id:'index',label:'Index',root:[225,199],tip:[260,79],radius:46,rest:[10,18,7],closed:[32,45,15],adduction:4},
  {id:'middle',label:'Middle',root:[300,214],tip:[353,92],radius:46,rest:[13,23,8],closed:[35,50,18],adduction:0},
- {id:'ring',label:'Ring',root:[350,242],tip:[410,154],radius:43,rest:[16,28,10],closed:[38,55,20],adduction:-12},
- {id:'little',label:'Little',root:[371,287],tip:[438,249],radius:37,rest:[20,30,12],closed:[40,55,22],adduction:-28},
+ {id:'ring',label:'Ring',root:[350,242],tip:[410,154],radius:43,rest:[16,28,10],closed:[38,55,20],adduction:-4},
+ {id:'little',label:'Little',root:[371,287],tip:[438,249],radius:37,rest:[20,30,12],closed:[40,55,22],adduction:-6},
  {id:'thumb',label:'Thumb',root:[162,267],tip:[131,190],radius:45,rest:[8,10,0],closed:[20,18,0]},
 ];
 export const REST_POSE={index:REST,middle:REST,ring:REST,little:REST,thumb:REST,opposition:0,together:0};
 export const POSES={
  rest:{...REST_POSE},
- relax:{...REST_POSE,together:.8},
+ relax:{...REST_POSE,together:.6},
  open:{...REST_POSE,index:0,middle:0,ring:0,little:0,thumb:0},
  curl:{...REST_POSE,index:1,middle:1,ring:1,little:1,thumb:.6,opposition:.35},
  point:{...REST_POSE,index:0,middle:.9,ring:.9,little:.9,thumb:.45,opposition:.25},
@@ -65,7 +65,7 @@ export function createHandRig(hand){
    const a=i*(STEPS+1)+Math.max(0,j-1),b=i*(STEPS+1)+Math.min(STEPS,j+1),vx=jp.getX(b)-jp.getX(a),vy=jp.getY(b)-jp.getY(a),n=Math.hypot(vx,vy);
    axes[j*2]=vy/n;axes[j*2+1]=-vx/n;
   }
-  const digit={...d,length,ux:dx/length,uy:dy/length,centres,axes,rows:[],adductionRows:[],tipVertices:[]};
+  const digit={...d,length,ux:dx/length,uy:dy/length,centres,axes,rows:[],adductionRows:[],tipVertices:[],rigidVertices:[]};
   digit.restCurve=curve(digit,REST);return digit;
  });
  joints.dispose();
@@ -82,13 +82,21 @@ export function createHandRig(hand){
    total+=weight;matches.push({along,weight});
   }
   if(total<1e-8)continue;
-  const thumbOwnsVertex=matches[4].weight>=Math.max(...matches.slice(0,4).map(m=>m.weight));
+  const owner=matches.reduce((best,m,j)=>m.weight>matches[best].weight?j:best,0);
+  // Use a smooth partition at the webs, with a solid 100% plateau on each
+  // finger body. A hard ownership border produces creases at the knuckles.
+  const ownership=matches.map((m,j)=>smooth(-.2,.2,(m.weight-Math.max(...matches.filter((_,k)=>k!==j).map(other=>other.weight)))/total));
+  const ownershipTotal=ownership.reduce((sum,w)=>sum+w,0);
   for(let j=0;j<digits.length;j++){
    const d=digits[j],{along,weight}=matches[j];if(along<=0||weight<1e-10)continue;
    const w=weight/total*guard;if(w<1e-7)continue;
-   if(j<4&&!thumbOwnsVertex){
-    d.adductionRows.push(i,w*smooth(0,.30,along/d.length));
-    if(along/d.length>.92&&weight===Math.max(...matches.map(m=>m.weight)))d.tipVertices.push(i);
+   if(j<4&&ownership[j]>0){
+    // Full influence beyond the attachment keeps the finger body rigid;
+    // smooth transitions are confined to the knuckle/web region.
+    const movement=ownership[j]/ownershipTotal*guard*smooth(0,.30,along/d.length);
+    d.adductionRows.push(i,movement);
+    if(movement===1)d.rigidVertices.push(i);
+    if(j===owner&&along/d.length>.92)d.tipVertices.push(i);
    }
    const t=T.MathUtils.clamp(along/d.length/RANGE*STEPS,0,STEPS),index=Math.min(STEPS-1,Math.floor(t)),f=t-index;
    const k=index*3,ak=index*2,ck=index*5;
@@ -154,5 +162,6 @@ export function createHandRig(hand){
  }
  return {setPose,getPose:()=>({...pose}),approvedPositions:approved,approvedNormals,vertexCount,
   fingerTipVertices:digits.slice(0,4).map(d=>d.tipVertices),
+  rigidFingerVertices:digits.slice(0,4).map(d=>d.rigidVertices),
   protectedVertices:Array.from({length:vertexCount},(_,i)=>i).filter(i=>original[i*3+1]/.0008+285>=300)};
 }

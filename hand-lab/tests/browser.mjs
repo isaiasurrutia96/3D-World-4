@@ -36,7 +36,7 @@ try{
  assert.equal((await page.goto(base+'/hand-lab/')).status(),200);await page.waitForFunction(()=>window.handLabReady,undefined,{timeout:60000});
  const initial=await fingerprint('lab');assert.deepEqual(initial,approved,'Lab must start with the exact approved hand');
  if(shots)await page.screenshot({path:resolve(shots,'rest.png')});
- const settle=async()=>{await page.waitForFunction(()=>{const {current,target}=handLab.getState();return Object.keys(target).every(id=>Math.abs(current[id]-target[id])<1e-8);});await page.waitForTimeout(80);};
+ const settle=async()=>{await page.waitForFunction(()=>{const {current,target}=handLab.getState(),applied=handLab.rig.getPose();return Object.keys(target).every(id=>current[id]===target[id]&&applied[id]===target[id]);});};
  for(const name of ['Relax','Open','Curl','Point']){
   await page.getByRole('button',{name,exact:true}).click();await settle();
   const check=await page.evaluate(()=>{
@@ -52,10 +52,24 @@ try{
     const centres=values=>rig.fingerTipVertices.map(ids=>{const c=[0,0,0];for(const i of ids)for(let d=0;d<3;d++)c[d]+=values[i*3+d]/ids.length;return c;});
     const gaps=c=>c.slice(0,3).map((v,i)=>Math.hypot(...v.map((x,d)=>x-c[i+1][d])));
     let depthChanges=0;for(let i=2;i<p.length;i+=3)if(p[i]!==rig.approvedPositions[i])depthChanges++;
-    return {before:gaps(centres(rig.approvedPositions)),after:gaps(centres(p)),depthChanges,target:handLab.getState().target};
+    // Independent distance checks catch stretching or squeezing of a finger,
+    // even when the tips have moved in the requested direction.
+    const rigidity=rig.rigidFingerVertices.map(ids=>{
+   const tips=rig.fingerTipVertices[rig.rigidFingerVertices.indexOf(ids)],body=ids.concat(tips);
+   const sample=Array.from({length:24},(_,i)=>body[Math.floor(i*(body.length-1)/23)]);let error=0;
+     for(let i=0;i<sample.length;i++)for(let j=i+1;j<sample.length;j++){
+      const a=sample[i]*3,b=sample[j]*3;
+      const before=Math.hypot(...[0,1,2].map(d=>rig.approvedPositions[a+d]-rig.approvedPositions[b+d]));
+      const after=Math.hypot(...[0,1,2].map(d=>p[a+d]-p[b+d]));error=Math.max(error,Math.abs(after-before));
+     }
+     return error;
+    });
+    return {before:gaps(centres(rig.approvedPositions)),after:gaps(centres(p)),depthChanges,rigidity,target:handLab.getState().target};
    });
    assert.ok(spacing.before.every((gap,i)=>spacing.after[i]<gap),'Relax must bring every neighbouring pair closer');
    assert.equal(spacing.depthChanges,0,'Relax must preserve the existing curl depth');
+   assert.ok(spacing.rigidity.every(error=>error<5e-8),'Relax distorted a finger body');
+   assert.ok(spacing.before.every((gap,i)=>gap-spacing.after[i]<.009),'The resting movement is too large');
    for(const id of ['index','middle','ring','little','thumb'])assert.equal(spacing.target[id],.25,'Relax changed the resting curl');
    console.log(JSON.stringify({relaxSpacing:spacing}));
   }
@@ -78,7 +92,7 @@ try{
  assert.equal(stress.finite,true);assert.deepEqual(await fingerprint('lab'),initial,'Repeated motion accumulated shape changes');
  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const phone=await mobile.newPage();phone.on('pageerror',e=>errors.push(e.message));
  await phone.goto(base+'/hand-lab/?pose=relax');await phone.waitForFunction(()=>window.handLabReady,undefined,{timeout:60000});
- assert.equal(await phone.evaluate(()=>handLab.getState().target.together),.8,'Relax preview link did not select the new motion');
+ assert.equal(await phone.evaluate(()=>handLab.getState().target.together),.6,'Relax preview link did not select the new motion');
  assert.equal(await phone.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Mobile horizontal overflow');
  const box=await phone.locator('#stage').boundingBox(),cdp=await mobile.newCDPSession(phone),cameraBefore=await phone.evaluate(()=>handLab.camera.position.toArray());
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width*.35,y:box.y+box.height*.5}]});

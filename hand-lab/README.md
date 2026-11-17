@@ -10,4 +10,4 @@ The lab build observes the original generator's pre-rest data through `capture-r
 
 These are movement controls, not completed object-specific grips or physical grasp simulation. Later work can build club, ball, trigger and steering poses on this movement layer.
 
-Relax is a separate resting pose that brings the four fingers inward at their knuckles without changing their curl, scale, or the saved hand. The Fingers together slider controls this movement. Open `/hand-lab/?pose=relax` to preview the transition directly.
+Relax is a separate resting pose with a very slight inward movement: index 2.4°, ring 2.4°, and little finger 3.6°, with the middle finger as the anchor. Each finger body rotates rigidly; only the knuckle attachment blends. Finger widths, lengths, resting curl, and the saved hand are preserved. The Fingers together slider controls this movement. Open `/hand-lab/?pose=relax` to preview the transition directly.

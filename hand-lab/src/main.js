@@ -34,7 +34,7 @@ async function start(){
  }
  const sliders=Object.fromEntries(Object.keys(REST_POSE).map(id=>[id,document.getElementById(id)]));
  function refreshInputs(){for(const id of Object.keys(sliders)){sliders[id].value=Math.round(target[id]*100);document.getElementById(id+'-value').textContent=Math.round(target[id]*100)+'%';}}
- function markPose(name){activePose=name;for(const button of document.querySelectorAll('[data-pose]'))button.setAttribute('aria-pressed',String(button.dataset.pose===name));poseLabel.textContent=({rest:'Saved rest pose',relax:'Resting with fingers closer',open:'Open hand',curl:'Relaxed curl',point:'Pointing',custom:'Your pose',motion:'Motion test'})[name];}
+ function markPose(name){activePose=name;for(const button of document.querySelectorAll('[data-pose]'))button.setAttribute('aria-pressed',String(button.dataset.pose===name));poseLabel.textContent=({rest:'Saved rest pose',relax:'Fingers slightly closer at rest',open:'Open hand',curl:'Relaxed curl',point:'Pointing',custom:'Your pose',motion:'Motion test'})[name];}
  function stopMotion(){playing=false;document.querySelector('#play').setAttribute('aria-pressed','false');document.querySelector('#play').textContent='▶︎ Play motion';}
  for(const [id,input] of Object.entries(sliders))input.addEventListener('input',()=>{stopMotion();target[id]=Number(input.value)/100;markPose('custom');refreshInputs();});
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
