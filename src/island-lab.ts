@@ -39,13 +39,13 @@ controls.enablePan = false;
 controls.minDistance = 2;
 controls.maxDistance = 35;
 
-const D = 12;
+const D = 14;
 const views: Record<string, [number, number, number]> = {
   front: [0, 0, D],
   side: [D, 0, 0],
   back: [0, 0, -D],
   top: [0, D * 1.1, 0.001],
-  angled: [7, 5.5, 9],
+  angled: [8, 6, 10.5],
 };
 const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-view]')];
 function setView(name: string): void {

@@ -43,12 +43,14 @@ const mergedMaterial = new MeshStandardMaterial({ vertexColors: true, roughness:
  * rounded (3.5 cm) only where they face the open air. The group reads as one
  * big rounded block. Each block is still its own grid cube underneath.
  */
-export function addMergedBlocks(root: Group, list: Array<[number, number, number, string]>, name: string): void {
+export function addMergedBlocks(
+  root: Group, list: Array<[number, number, number, string]>, name: string, size = BLOCK,
+): void {
   if (list.length === 0) return;
   const cells = new Map<string, Color>();
   for (const [x, y, z, colour] of list) cells.set(`${x},${y},${z}`, new Color(colour));
   const at = (x: number, y: number, z: number): boolean => cells.has(`${x},${y},${z}`);
-  const R = 0.035 / BLOCK; // rounding, as a part of one block
+  const R = 0.035 / BLOCK; // rounding, as a part of one block (same look at every size)
   const steps = [-0.5, -0.5 + R * 0.3, -0.5 + R, 0.5 - R, 0.5 - R * 0.3, 0.5];
   const SIDES: Array<{ n: number[]; u: number[]; v: number[] }> = [
     { n: [1, 0, 0], u: [0, 0, -1], v: [0, 1, 0] },
@@ -84,9 +86,9 @@ export function addMergedBlocks(root: Group, list: Array<[number, number, number
           const len = Math.hypot(off[0], off[1], off[2]) || 1;
           const n = off.map((value) => value / len);
           positions.push(
-            (x + 0.5 + core[0] + n[0] * R) * BLOCK,
-            (y + 0.5 + core[1] + n[1] * R) * BLOCK,
-            (z + 0.5 + core[2] + n[2] * R) * BLOCK,
+            (x + 0.5 + core[0] + n[0] * R) * size,
+            (y + 0.5 + core[1] + n[1] * R) * size,
+            (z + 0.5 + core[2] + n[2] * R) * size,
           );
           normals.push(n[0], n[1], n[2]);
           colours.push(tint.r, tint.g, tint.b);

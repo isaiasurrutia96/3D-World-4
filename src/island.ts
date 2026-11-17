@@ -2,11 +2,13 @@
  * A tiny floating island, 14 × 14 blocks of 43 cm: one layer of grass on
  * top, two layers of dirt, then a stone underside shaped like a perfect
  * upside-down diamond, flat on top. Each material merges into one shape,
- * rounded only on its outside edges. No plants or objects yet.
+ * rounded only on its outside edges. On top: a pond, a tree, a bush, a rock
+ * and three flowers.
  */
 
 import { Color, Group, Scene, Vector3 } from 'three';
 import { BLOCK, addMergedBlocks } from './voxels.ts';
+import { Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
 
 const SIZE = 14;
 const GRASS = '#93d91e';
@@ -41,7 +43,7 @@ export function buildIsland(scene: Scene): { root: Group; centre: Vector3 } {
   // Top: grass, then two dirt layers, all the full 14 × 14.
   for (let x = -half; x < half; x++) {
     for (let z = -half; z < half; z++) {
-      grass.push([x, 0, z, grassColour(x, z)]);
+      if (!isPond(x, z)) grass.push([x, 0, z, grassColour(x, z)]);
       dirt.push([x, -1, z, DIRT]);
       dirt.push([x, -2, z, DIRT]);
     }
@@ -60,8 +62,113 @@ export function buildIsland(scene: Scene): { root: Group; centre: Vector3 } {
   addMergedBlocks(root, grass, 'grass');
   addMergedBlocks(root, dirt, 'dirt');
   addMergedBlocks(root, stone, 'stone');
+  addNature(root);
   scene.add(root);
-  return { root, centre: new Vector3(0, -1.3, 0) };
+  return { root, centre: new Vector3(0, 0.2, 0) };
 }
 
 export const ISLAND_WIDTH = SIZE * BLOCK;
+
+// ---------------------------------------------------------------------------
+// Nature: a pond (cut into the grass), a tree, a bush, a rock and flowers.
+// Tree leaves, the trunk, the bush and the rock use 21.5 cm blocks (half the
+// 43 cm terrain block); flowers use 10.75 cm blocks. Everything sits on the
+// same grid, so every piece lines up with the terrain blocks.
+// ---------------------------------------------------------------------------
+
+const SMALL = BLOCK / 2; // 21.5 cm
+const TINY = BLOCK / 4; // 10.75 cm
+/** Height of the grass top, in small and tiny block steps. */
+const TOP_SMALL = 2;
+const TOP_TINY = 4;
+
+/** The pond: a rounded 4 × 3 patch of terrain cells at the front right. */
+function isPond(x: number, z: number): boolean {
+  const inBox = x >= 2 && x <= 5 && z >= 1 && z <= 3;
+  const corner = (x === 2 || x === 5) && (z === 1 || z === 3);
+  return inBox && !corner;
+}
+
+type Cell = [number, number, number, string];
+
+function addNature(root: Group): void {
+  // ---- Pond water, a little below the grass top ----
+  const water = new MeshStandardMaterial({
+    color: '#3f9fd6', roughness: 0.15, metalness: 0, transparent: true, opacity: 0.82,
+  });
+  for (let x = 2; x <= 5; x++) {
+    for (let z = 1; z <= 3; z++) {
+      if (!isPond(x, z)) continue;
+      const tile = new Mesh(new PlaneGeometry(BLOCK, BLOCK), water);
+      tile.rotation.x = -Math.PI / 2;
+      tile.position.set((x + 0.5) * BLOCK, BLOCK * 0.72, (z + 0.5) * BLOCK);
+      tile.name = 'pond-water';
+      root.add(tile);
+    }
+  }
+
+  // ---- Tree: trunk 2 × 2 small blocks (43 cm wide), leafy crown on top ----
+  const trunk: Cell[] = [];
+  const leaves: Cell[] = [];
+  const tx = -7; // small-block grid: back left of the island
+  const tz = -7;
+  const trunkTop = TOP_SMALL + 7;
+  for (let y = TOP_SMALL; y < trunkTop; y++) {
+    for (const [dx, dz] of [[0, 0], [1, 0], [0, 1], [1, 1]]) trunk.push([tx + dx, y, tz + dz, '#7a5434']);
+  }
+  const cx = tx + 1;
+  const cz = tz + 1;
+  const cy = trunkTop + 1.5;
+  for (let x = cx - 5; x <= cx + 4; x++) {
+    for (let y = trunkTop - 2; y <= trunkTop + 5; y++) {
+      for (let z = cz - 5; z <= cz + 4; z++) {
+        const d = Math.hypot((x + 0.5 - cx) / 4.6, (y + 0.5 - cy) / 3.6, (z + 0.5 - cz) / 4.6);
+        const nibble = hash(x * 3.1 + y, z * 1.7 - y) * 0.22;
+        if (d + nibble <= 1.02) leaves.push([x, y, z, hash(x + 9, z + y * 5) < 0.12 ? '#3d9a2e' : '#47ad35']);
+      }
+    }
+  }
+  addMergedBlocks(root, trunk, 'tree-trunk', SMALL);
+  addMergedBlocks(root, leaves, 'tree-leaves', SMALL);
+
+  // ---- Bush: a small rounded mound of leafy small blocks, back right ----
+  const bush: Cell[] = [];
+  const bx = 7;
+  const bz = -8;
+  for (let x = bx - 2; x <= bx + 2; x++) {
+    for (let y = TOP_SMALL; y <= TOP_SMALL + 2; y++) {
+      for (let z = bz - 2; z <= bz + 2; z++) {
+        const d = Math.hypot((x + 0.5 - (bx + 0.5)) / 2.6, (y - TOP_SMALL + 0.3) / 2.4, (z + 0.5 - (bz + 0.5)) / 2.3);
+        if (d <= 1) bush.push([x, y, z, '#3f9c32']);
+      }
+    }
+  }
+  addMergedBlocks(root, bush, 'bush', SMALL);
+
+  // ---- Rock: a lumpy grey cluster of small blocks, front left ----
+  const rock: Cell[] = [];
+  const rockShape: Array<[number, number, number]> = [
+    [0, 0, 0], [1, 0, 0], [2, 0, 0], [0, 0, 1], [1, 0, 1], [2, 0, 1], [1, 0, 2], [3, 0, 1],
+    [0, 1, 0], [1, 1, 0], [1, 1, 1], [2, 1, 1], [1, 2, 1],
+  ];
+  for (const [dx, dy, dz] of rockShape) rock.push([-9 + dx, TOP_SMALL + dy, 6 + dz, '#9a958d']);
+  addMergedBlocks(root, rock, 'rock', SMALL);
+
+  // ---- Flowers: three small flowers near the middle, in tiny blocks ----
+  const stems: Cell[] = [];
+  const petals: Cell[] = [];
+  const centres: Cell[] = [];
+  const flowers: Array<[number, number, string]> = [
+    [-2, 3, '#e8475f'], [1, 5, '#f4f1ea'], [-4, 7, '#9a6ee0'],
+  ];
+  for (const [fx, fz, colour] of flowers) {
+    for (let y = TOP_TINY; y < TOP_TINY + 3; y++) stems.push([fx, y, fz, '#3e8f2c']);
+    const head = TOP_TINY + 3;
+    centres.push([fx, head, fz, '#f2c230']);
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) petals.push([fx + dx, head, fz + dz, colour]);
+  }
+  addMergedBlocks(root, stems, 'flower-stems', TINY);
+  addMergedBlocks(root, centres, 'flower-centres', TINY);
+  // Each petal is its own group so neighbouring flowers never merge.
+  addMergedBlocks(root, petals, 'flower-petals', TINY);
+}
