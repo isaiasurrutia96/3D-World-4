@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {createFootShape} from './foot-shape.js';
+import {createCalf} from './calf.js';
 
 const stage=document.querySelector('#stage'),loading=document.querySelector('#loading');
 try{
@@ -8,6 +9,7 @@ try{
  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;stage.prepend(renderer.domElement);
  const scene=new T.Scene();scene.background=new T.Color('#405363');
  const foot=createFootShape();scene.add(foot);
+ const calf=createCalf(foot);scene.add(calf);
  const ground=new T.Mesh(new T.PlaneGeometry(20,20),new T.MeshStandardMaterial({color:'#405363',roughness:1,metalness:0}));
  ground.name='inspection-floor';ground.rotation.x=-Math.PI/2;ground.position.set(0,-.001,.09);ground.receiveShadow=true;scene.add(ground);
  scene.add(new T.HemisphereLight(0xffffff,0xa8a89c,1.9));
@@ -16,9 +18,9 @@ try{
  scene.add(key,key.target);
  const fill=new T.DirectionalLight(0xffffff,.9);fill.position.set(.8,.4,-.7);scene.add(fill);
  const lower=new T.DirectionalLight(0xffffff,.8);lower.position.set(-.3,-1,.4);scene.add(lower);
- const target=new T.Vector3(0,.075,.09),camera=new T.PerspectiveCamera(38,1,.01,10);
- const views={angle:[.64,.42,.76],front:[0,.16,1.12],side:[1.12,.16,0],top:[0,1.15,.001],sole:[0,-1.05,.001]};
- const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=.63;controls.maxDistance=2;controls.target.copy(target);
+ const target=new T.Vector3(0,.32,.09),camera=new T.PerspectiveCamera(38,1,.01,10);
+ const views={angle:[.82,.52,1.0],front:[0,.16,1.5],side:[1.5,.16,0],top:[0,1.5,.001],sole:[0,-1.5,.001]};
+ const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=.63;controls.maxDistance=2.5;controls.target.copy(target);
  let currentView='angle',floorVisible=true;
  function view(name){currentView=name;camera.up.set(0,1,0);camera.position.copy(target).add(new T.Vector3(...views[name]));controls.target.copy(target);controls.update();ground.visible=floorVisible&&name!=='sole';for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed',String(b.dataset.view===name));camera.updateMatrixWorld(true);renderer.render(scene,camera);}
  for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>view(button.dataset.view);
@@ -27,5 +29,5 @@ try{
  function resize(){const {width,height}=stage.getBoundingClientRect();camera.aspect=width/height;camera.fov=camera.aspect<.7?52:38;camera.updateProjectionMatrix();renderer.setSize(width,height);}
  new ResizeObserver(resize).observe(stage);resize();view('angle');
  renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
- window.footLab={foot,scene,camera,controls,ground,view};window.footLabReady=true;loading.hidden=true;
+ window.footLab={foot,calf,scene,camera,controls,ground,view};window.footLabReady=true;loading.hidden=true;
 }catch(error){console.error(error);loading.textContent='The foot could not open. Please reload to try again.';}

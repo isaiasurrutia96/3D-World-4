@@ -8,7 +8,7 @@ const originalSize=original.boundingBox.getSize(new T.Vector3()).multiply(new T.
 export const FOOT_SIZE=Object.freeze({width:originalSize.x,height:originalSize.y,length:originalSize.z});
 const signedPower=(x,p)=>Math.sign(x)*Math.pow(Math.abs(x),p);
 
-export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b2a6',roughness:.78,metalness:0})){
+export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b2a6',roughness:.78,metalness:0}),{toeExtension=.014}={}){
  const source=new T.SphereGeometry(1,128,96),p=source.attributes.position;
  for(let i=0;i<p.count;i++){
   const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
@@ -29,6 +29,12 @@ export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b
  source.scale(FOOT_SIZE.width/size.x,FOOT_SIZE.height/size.y,FOOT_SIZE.length/size.z);
  source.computeBoundingBox();
  source.translate(-source.boundingBox.getCenter(new T.Vector3()).x,-source.boundingBox.min.y,.09-source.boundingBox.getCenter(new T.Vector3()).z);
+ // A small, continuous forward extension on the medial side suggests the
+ // big toe without introducing a separate toe or changing the heel/sole.
+ for(let i=0;i<p.count;i++){
+  const x=p.getX(i),z=p.getZ(i),front=T.MathUtils.smoothstep(z,.18,.30);
+  p.setZ(i,z+toeExtension*front*Math.exp(-Math.pow((x+.055)/.08,2)));
+ }
  source.deleteAttribute('normal');source.deleteAttribute('uv');
  const geometry=mergeVertices(source,1e-6),faces=[];
  for(let i=0;i<geometry.index.count;i+=3){const a=geometry.index.array[i],b=geometry.index.array[i+1],c=geometry.index.array[i+2];if(a!==b&&b!==c&&c!==a)faces.push(a,b,c);}
@@ -37,7 +43,8 @@ export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b
  for(let i=0;i<position.count;i++)if(position.getY(i)<1e-7){minSoleZ=Math.min(minSoleZ,position.getZ(i));maxSoleZ=Math.max(maxSoleZ,position.getZ(i));soleVertices++;}
  const foot=new T.Mesh(geometry,material);foot.name='draft-rounded-foot';foot.castShadow=true;foot.receiveShadow=false;
  foot.userData={
-  size:{...FOOT_SIZE},forward:'+Z',soleY:0,soleVertices,
+  size:{width:geometry.boundingBox.max.x-geometry.boundingBox.min.x,height:geometry.boundingBox.max.y-geometry.boundingBox.min.y,length:geometry.boundingBox.max.z-geometry.boundingBox.min.z},baseSize:{...FOOT_SIZE},forward:'+Z',soleY:0,soleVertices,
+  bigToeSide:'-X (medial)',toeExtensionMax:toeExtension,
   contacts:{heel:[0,0,T.MathUtils.lerp(minSoleZ,.09,.25)],ball:[0,0,T.MathUtils.lerp(.09,maxSoleZ,.6)],toe:[0,0,T.MathUtils.lerp(.09,maxSoleZ,.85)]},
   suggestedAnklePivot:[0,.15,-.035],
  };

@@ -6,10 +6,26 @@ import {resolve,extname,sep} from 'node:path';
 import {createHash} from 'node:crypto';
 import {chromium} from 'playwright';
 import {createFootShape,FOOT_SIZE} from '../src/foot-shape.js';
+import {createCalf,CALF_GAP} from '../src/calf.js';
+import {createCharacterRig} from '../../avatar/src/reference/PlayerModel.ts';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url))),foot=createFootShape();
 const g=foot.geometry,p=g.attributes.position,size=g.boundingBox.getSize(foot.position.clone());
-assert.ok([size.x-FOOT_SIZE.width,size.y-FOOT_SIZE.height,size.z-FOOT_SIZE.length].every(d=>Math.abs(d)<1e-6),'Foot size changed');
+assert.ok([size.x-FOOT_SIZE.width,size.y-FOOT_SIZE.height].every(d=>Math.abs(d)<1e-6),'Foot width or height changed');
+assert.ok(size.z>FOOT_SIZE.length&&size.z<FOOT_SIZE.length+.0141,'Toe extension is not slight');
+const baseline=createFootShape(undefined,{toeExtension:0}),bp=baseline.geometry.attributes.position;
+assert.equal(bp.count,p.count);let medial=-Infinity,lateral=-Infinity;
+for(let i=0;i<p.count;i++){
+ assert.equal(p.getX(i),bp.getX(i));assert.equal(p.getY(i),bp.getY(i));
+ if(bp.getZ(i)<=.18)assert.equal(p.getZ(i),bp.getZ(i),'Heel or midfoot changed');
+ if(p.getX(i)<-.025)medial=Math.max(medial,p.getZ(i));if(p.getX(i)>.025)lateral=Math.max(lateral,p.getZ(i));
+}
+assert.ok(medial-lateral>.004&&medial-lateral<.016,'Front has no subtle big-toe asymmetry');
+const calf=createCalf(foot),calfReference=createCharacterRig({plain:true}).kneeRight.children[0];
+assert.deepEqual(calf.geometry.attributes.position.array,calfReference.geometry.attributes.position.array,'Calf shape changed');
+assert.equal(calf.material.color.getHex(),foot.material.color.getHex());
+assert.ok(Math.abs(calf.position.y+calf.geometry.boundingBox.min.y-g.boundingBox.max.y-CALF_GAP)<1e-7,'Calf is connected or gap is wrong');
+assert.equal(calf.userData.socket,false);
 assert.ok(Math.abs(g.boundingBox.min.y)<1e-7,'Sole is not on the floor');
 assert.ok(foot.userData.soleVertices/p.count>.12,'The flat contact patch is too small');
 assert.ok([...p.array,...g.attributes.normal.array].every(Number.isFinite),'Invalid foot geometry');
@@ -42,7 +58,7 @@ try{
  assert.equal(await phone.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Phone overflow');
  for(const name of ['Angle','Side','Top','Sole']){
   await phone.getByRole('button',{name,exact:true}).click();await phone.waitForTimeout(150);
-  const projected=await phone.evaluate(()=>{const {foot,camera}=footLab,p=foot.geometry.attributes.position,v=foot.position.clone();let minX=1,maxX=-1,minY=1,maxY=-1;for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);foot.localToWorld(v);v.project(camera);minX=Math.min(minX,v.x);maxX=Math.max(maxX,v.x);minY=Math.min(minY,v.y);maxY=Math.max(maxY,v.y);}return {minX,maxX,minY,maxY};});
+  const projected=await phone.evaluate(()=>{const {foot,calf,camera}=footLab,v=foot.position.clone();let minX=1,maxX=-1,minY=1,maxY=-1;for(const part of [foot,calf]){const p=part.geometry.attributes.position;for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);part.localToWorld(v);v.project(camera);minX=Math.min(minX,v.x);maxX=Math.max(maxX,v.x);minY=Math.min(minY,v.y);maxY=Math.max(maxY,v.y);}}return {minX,maxX,minY,maxY};});
   assert.ok(projected.minX>-.98&&projected.maxX<.98&&projected.minY>-.9&&projected.maxY<.9,'Phone view clips the foot: '+name+' '+JSON.stringify(projected));
   if(shots)await phone.screenshot({path:resolve(shots,'mobile-'+name.toLowerCase()+'.png')});
  }
@@ -53,5 +69,5 @@ try{
  await page.goto(base+'/hand-lab/');await page.waitForFunction(()=>window.handLabReady);
  await page.goto(base+'/dist/');await page.waitForFunction(()=>window.__game);
  assert.deepEqual(errors,[]);
- console.log(JSON.stringify({size:FOOT_SIZE,closedSurface:true,soleFlat:true,soleVertices:foot.userData.soleVertices,vertices:p.count,approvedAvatarUnchanged:true,presetViews:true,mobileFraming:true,touchOrbit:true,handLabLoads:true,existingWorldLoads:true,errors}));
+ console.log(JSON.stringify({size:foot.userData.size,bigToeLead:medial-lateral,calfGap:CALF_GAP,calfShapeUnchanged:true,noSocket:true,closedSurface:true,soleFlat:true,soleVertices:foot.userData.soleVertices,vertices:p.count,approvedAvatarUnchanged:true,presetViews:true,mobileFraming:true,touchOrbit:true,handLabLoads:true,existingWorldLoads:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));g.dispose();foot.material.dispose();}
