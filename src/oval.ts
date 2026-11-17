@@ -3,7 +3,7 @@
  * claude/intelligent-clarke-occyfc, commit 17d170b), copied unchanged:
  * banked turns built up from 43 cm blocks, a smooth road over them, a smooth
  * grass-to-concrete edge, an outside wall, and the grass and dirt blocks
- * around the track.
+ * around the track. Change since: every block is now individually rounded.
  */
 
 import {
@@ -12,15 +12,16 @@ import {
   Color,
   DoubleSide,
   Group,
+  InstancedMesh,
+  Matrix4,
   Mesh,
   MeshStandardMaterial,
   Scene,
   Vector3,
 } from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 export const TERRAIN = 0.43;
-/** How round each block's edges are, as a part of the block. */
-const ROUND = 0.1;
 
 /** A fixed lighter-or-darker amount per block, the same every time. */
 function shade(x: number, y: number, z: number): number {
@@ -30,91 +31,32 @@ function shade(x: number, y: number, z: number): number {
 
 
 
-const merged = new MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 });
-merged.toneMapped = false;
+const blockMaterial = new MeshStandardMaterial({ color: '#ffffff', roughness: 0.86, metalness: 0 });
 
 /**
- * Blocks of one size, each [x, y, z, colour] in steps of that size, merged
- * into one solid shape: faces between blocks are left out, and edges and
- * corners are rounded only where they face the open air, so the blocks read
- * as one big rounded block, each still its own slight shade.
+ * Blocks of one size, each [x, y, z, colour] in steps of that size. Every
+ * block is drawn on its own as a cube with slightly rounded corners and
+ * edges (3.5 cm on a 43 cm block, the same as the Test Lab blocks), each a
+ * fixed slight shade lighter or darker. For collisions each block still
+ * counts as a full square cube, so the grooves between blocks are only looks.
  */
 function blocks(
   root: Group,
   size: number,
   list: Array<[number, number, number, string]>,
   name: string,
-  /** What these blocks sit on: it counts as there underneath, so they sit flat and square on it. */
-  restsOn?: (x: number, y: number, z: number) => boolean,
+  _restsOn?: (x: number, y: number, z: number) => boolean,
 ): void {
-  const cells = new Map<string, Color>();
-  for (const [x, y, z, colour] of list) cells.set(`${x},${y},${z}`, new Color(colour).multiplyScalar(shade(x, y, z)));
-  const at = (x: number, y: number, z: number) => cells.has(`${x},${y},${z}`);
-  const below = (x: number, y: number, z: number) => at(x, y - 1, z) || (restsOn?.(x, y - 1, z) ?? false);
-  const R = ROUND;
-  const steps = [-0.5, -0.5 + R * 0.35, -0.5 + R, 0.5 - R, 0.5 - R * 0.35, 0.5];
-  const SIDES: Array<{ n: [number, number, number]; u: [number, number, number]; v: [number, number, number] }> = [
-    { n: [1, 0, 0], u: [0, 0, -1], v: [0, 1, 0] },
-    { n: [-1, 0, 0], u: [0, 0, 1], v: [0, 1, 0] },
-    { n: [0, 1, 0], u: [1, 0, 0], v: [0, 0, -1] },
-    { n: [0, -1, 0], u: [1, 0, 0], v: [0, 0, 1] },
-    { n: [0, 0, 1], u: [1, 0, 0], v: [0, 1, 0] },
-    { n: [0, 0, -1], u: [-1, 0, 0], v: [0, 1, 0] },
-  ];
-  const positions: number[] = [];
-  const normals: number[] = [];
-  const colours: number[] = [];
-  const indices: number[] = [];
-  for (const [key, tint] of cells) {
-    const [x, y, z] = key.split(',').map(Number);
-    const occupied = [
-      [at(x - 1, y, z), at(x + 1, y, z)],
-      [below(x, y, z), at(x, y + 1, z)],
-      [at(x, y, z - 1), at(x, y, z + 1)],
-    ];
-    for (const side of SIDES) {
-      if (at(x + side.n[0], y + side.n[1], z + side.n[2])) continue;
-      // Its underside, where it sits on what it rests on, is not seen.
-      if (side.n[1] === -1 && below(x, y, z)) continue;
-      const base = positions.length / 3;
-      for (const b of steps) {
-        for (const a of steps) {
-          const p = [0, 1, 2].map((i) => side.n[i] * 0.5 + side.u[i] * a + side.v[i] * b);
-          // Toward a neighbour the edge stays square, so the blocks meet flush.
-          const core = p.map((value, i) =>
-            Math.max(occupied[i][0] ? -0.5 : -0.5 + R, Math.min(occupied[i][1] ? 0.5 : 0.5 - R, value)),
-          );
-          const off = p.map((value, i) => value - core[i]);
-          const len = Math.hypot(off[0], off[1], off[2]) || 1;
-          const n = off.map((value) => value / len);
-          positions.push(
-            (x + 0.5 + core[0] + n[0] * R) * size,
-            (y + 0.5 + core[1] + n[1] * R) * size,
-            (z + 0.5 + core[2] + n[2] * R) * size,
-          );
-          normals.push(n[0], n[1], n[2]);
-          const light =
-            Math.max(0, n[0]) * 0.86 + Math.max(0, -n[0]) * 0.93 + Math.max(0, n[1]) * 1 +
-            Math.max(0, -n[1]) * 0.6 + Math.max(0, n[2]) * 0.88 + Math.max(0, -n[2]) * 0.8;
-          const l = light / (Math.abs(n[0]) + Math.abs(n[1]) + Math.abs(n[2]) || 1);
-          colours.push(tint.r * l, tint.g * l, tint.b * l);
-        }
-      }
-      const row = steps.length;
-      for (let j = 0; j < row - 1; j += 1) {
-        for (let i = 0; i < row - 1; i += 1) {
-          const k = base + j * row + i;
-          indices.push(k, k + 1, k + row + 1, k, k + row + 1, k + row);
-        }
-      }
-    }
-  }
-  const geometry = new BufferGeometry();
-  geometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
-  geometry.setAttribute('normal', new BufferAttribute(new Float32Array(normals), 3));
-  geometry.setAttribute('color', new BufferAttribute(new Float32Array(colours), 3));
-  geometry.setIndex(indices);
-  const mesh = new Mesh(geometry, merged);
+  if (list.length === 0) return;
+  const geometry = new RoundedBoxGeometry(size, size, size, 2, size * (0.035 / 0.43));
+  const mesh = new InstancedMesh(geometry, blockMaterial, list.length);
+  const matrix = new Matrix4();
+  const tint = new Color();
+  list.forEach(([x, y, z, colour], i) => {
+    matrix.makeTranslation((x + 0.5) * size, (y + 0.5) * size, (z + 0.5) * size);
+    mesh.setMatrixAt(i, matrix);
+    mesh.setColorAt(i, tint.set(colour).multiplyScalar(shade(x, y, z)));
+  });
   mesh.name = name;
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -349,6 +291,12 @@ export function buildOvalScene(scene: Scene): OvalScene {
     wall.name = 'wall';
     wall.castShadow = true;
     root.add(wall);
+  }
+
+  // The blocks are now rounded one by one; lift the road surfaces 2.5 cm so
+  // they never flicker against the block tops beneath them.
+  for (const child of root.children) {
+    if (child.name === 'road' || child.name === 'road-line' || child.name === 'concrete-edge') child.position.y += 0.025;
   }
 
   scene.add(root);

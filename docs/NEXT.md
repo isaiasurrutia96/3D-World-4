@@ -11,3 +11,8 @@ Recorded 17 November 2026.
    natural foot movement; foot locking should work with those feet.
 4. Status: a first foot-locking attempt was deleted at the owner's request.
    Start fresh when asked.
+
+## Owner favourite (remember)
+
+5. The owner **really likes the banked NASCAR-style oval** (Oval Lab,
+   `src/oval.ts`, from 3D-WORLD-3 commit 17d170b). Keep it; build on it.
