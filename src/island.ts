@@ -5,13 +5,30 @@
  * rounded only on its outside edges. No plants or objects yet.
  */
 
-import { Group, Scene, Vector3 } from 'three';
+import { Color, Group, Scene, Vector3 } from 'three';
 import { BLOCK, addMergedBlocks } from './voxels.ts';
 
 const SIZE = 14;
 const GRASS = '#93d91e';
 const DIRT = '#da965a';
 const STONE = '#8f8a84';
+
+/** A fixed pseudo-random number 0..1 for a grid spot. */
+function hash(x: number, z: number): number {
+  const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+/**
+ * Grass colour for a block: mostly the plain green, but about one block in
+ * ten is a very slightly lighter or darker green, picked the same every time.
+ */
+function grassColour(x: number, z: number): string {
+  const h = hash(x, z);
+  if (h < 0.05) return '#' + new Color(GRASS).multiplyScalar(0.965).getHexString();
+  if (h < 0.1) return '#' + new Color(GRASS).multiplyScalar(1.04).getHexString();
+  return GRASS;
+}
 
 export function buildIsland(scene: Scene): { root: Group; centre: Vector3 } {
   const root = new Group();
@@ -24,7 +41,7 @@ export function buildIsland(scene: Scene): { root: Group; centre: Vector3 } {
   // Top: grass, then two dirt layers, all the full 14 × 14.
   for (let x = -half; x < half; x++) {
     for (let z = -half; z < half; z++) {
-      grass.push([x, 0, z, GRASS]);
+      grass.push([x, 0, z, grassColour(x, z)]);
       dirt.push([x, -1, z, DIRT]);
       dirt.push([x, -2, z, DIRT]);
     }
