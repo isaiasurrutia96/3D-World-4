@@ -8,7 +8,7 @@ async function start(){
  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
  const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));stage.prepend(renderer.domElement);
- const scene=new T.Scene();scene.background=new T.Color('#f1f1ee');
+ const scene=new T.Scene();scene.background=new T.Color('#405363');
  const material=new T.MeshStandardMaterial({color:'#b9b2a6',roughness:.78,metalness:0});
  const {assembly,hand,forearm}=createForearmHandAssembly(material);
  assembly.remove(hand);forearm.geometry.dispose();material.dispose();
