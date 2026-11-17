@@ -20,3 +20,5 @@
     task and report the real difference, never a guess), and the link.
 14. Use slate blue `#405363` for every live test lab's 3D background,
     loading stage and browser theme color. Keep archived checkpoints intact.
+15. Avatar motion should feel coordinated and athletic, with deliberate
+    weight placement and balance. See `docs/AVATAR-DIRECTION.md`.

@@ -2,6 +2,8 @@
 
 Current avatar: **Checkpoint 2**, saved on 17 November 2026.
 
+[Open Test Lab](https://isaiasurrutia96.github.io/3D-World-4/test-lab/): one workspace for the avatar, walking, running, hands, feet and world studies. View buttons sit below the model; scroll down for test controls and walking/running videos with slow playback. The avatar's athletic movement direction is saved in [AVATAR-DIRECTION.md](docs/AVATAR-DIRECTION.md).
+
 [Try the walking test](https://isaiasurrutia96.github.io/3D-World-4/walk-test/) or the separate [running test](https://isaiasurrutia96.github.io/3D-World-4/run-test/) on the slate-blue stage and dark-grey slab. Mobile: drag anywhere on the left to move; push farther for more speed. Drag the right side to look around. Walking uses its own gait, with no airborne phases. The [earlier prototype](https://isaiasurrutia96.github.io/3D-World-4/movement/) remains available.
 
 The current run uses the reviewed motion, adapted to floor contact. [Compare Mario and our avatar performing the same motion](https://isaiasurrutia96.github.io/3D-World-4/references/motion-compare/) side by side, frame for frame, with shared Normal/Slow playback. The comparison preserves the earlier pose study; the walking and running links above are interactive tests. The [original SM64 reference](https://isaiasurrutia96.github.io/3D-World-4/references/sm64-walk/) and [earlier avatar preview](https://isaiasurrutia96.github.io/3D-World-4/references/avatar-walk/) remain available.
