@@ -29,10 +29,13 @@ scene.add(camera);
 const BLOCK = 0.43;
 const RADIUS = 4; // blocks from the centre to each point (9 blocks tall)
 const cells: [number, number, number][] = [];
-/** The single block at each of the 6 points (top, bottom, front, back, left, right) is removed. */
+/**
+ * Layers trimmed off each of the 6 points (top, bottom, front, back, left,
+ * right): 1 removes the tip block, 2 also removes the layer under it.
+ */
+const TRIM = 2;
 function isTip(x: number, y: number, z: number): boolean {
-  const a = [Math.abs(x), Math.abs(y), Math.abs(z)].sort((p, q) => q - p);
-  return a[0] === RADIUS && a[1] === 0 && a[2] === 0;
+  return Math.max(Math.abs(x), Math.abs(y), Math.abs(z)) > RADIUS - TRIM;
 }
 for (let x = -RADIUS; x <= RADIUS; x++)
   for (let y = -RADIUS; y <= RADIUS; y++)
