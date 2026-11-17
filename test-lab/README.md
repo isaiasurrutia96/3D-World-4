@@ -15,3 +15,7 @@ The toolbar wraps into two rows on small phones and respects safe areas in portr
 The video panel plays avatar-only walking and running captures, plus the earlier side-by-side reference comparison. Videos have native pause/seeking, three playback rates and downloads. Regenerate the avatar clips with `npm run build` followed by `node test-lab/capture.mjs` (requires Chromium and ffmpeg). The capture renders the existing motion through one whole cycle and encodes three cycles at the gait's normal speed; it does not author another animation.
 
 After building, run `node test-lab/test.mjs` for phone layout, view selection, mirrored hand controls, native touch movement, off-screen pause, video playback/seeking and all subject loading checks. The browser harness uses `/usr/bin/chromium` and saves inspection screenshots only under `/tmp`.
+
+The Motion button opens hand/foot presets, Play/Pause and Rest alongside the visible model. On phones the panel docks above the toolbar and reserves viewer space; on larger screens it docks at the right and reserves viewer width. It forwards the existing native pose controls and stays synchronized with controls below the viewer. Escape or Close dismisses it. Motion is disabled for subjects without pose controls. New pose labs should expose native preset buttons and a play control so the same panel can be reused.
+
+Run `node test-lab/motion-test.mjs` after building to verify pose/play/rest forwarding, model visibility, six screen layouts, dismissal and standalone hand/foot integration.
