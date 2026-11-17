@@ -1,11 +1,12 @@
 /**
  * A tiny floating island, 14 × 14 blocks of 43 cm: one layer of grass on
  * top, two layers of dirt, then a stone underside shaped like a perfect
- * upside-down diamond, flat on top. No plants or objects yet.
+ * upside-down diamond, flat on top. Each material merges into one shape,
+ * rounded only on its outside edges. No plants or objects yet.
  */
 
 import { Group, Scene, Vector3 } from 'three';
-import { BLOCK, addBlocks } from './voxels.ts';
+import { BLOCK, addMergedBlocks } from './voxels.ts';
 
 const SIZE = 14;
 const GRASS = '#93d91e';
@@ -39,9 +40,9 @@ export function buildIsland(scene: Scene): { root: Group; centre: Vector3 } {
     }
   }
 
-  addBlocks(root, grass, 'grass');
-  addBlocks(root, dirt, 'dirt');
-  addBlocks(root, stone, 'stone');
+  addMergedBlocks(root, grass, 'grass');
+  addMergedBlocks(root, dirt, 'dirt');
+  addMergedBlocks(root, stone, 'stone');
   scene.add(root);
   return { root, centre: new Vector3(0, -1.3, 0) };
 }
