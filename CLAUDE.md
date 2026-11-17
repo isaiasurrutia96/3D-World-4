@@ -16,4 +16,5 @@
     (e.g. "**Time: about 3 minutes**").
 12. No live updates while working, and no screenshots.
 13. When done, give a short summary in simple English words, how long it
-    actually took, and the link.
+    actually took (measure it: run `date` at the start and at the end of the
+    task and report the real difference, never a guess), and the link.
