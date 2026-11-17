@@ -18,3 +18,5 @@
 13. When done, give a short summary in simple English words, how long it
     actually took (measure it: run `date` at the start and at the end of the
     task and report the real difference, never a guess), and the link.
+14. Use slate blue `#405363` for every live test lab's 3D background,
+    loading stage and browser theme color. Keep archived checkpoints intact.

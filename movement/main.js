@@ -5,7 +5,7 @@ import {MovementInput} from './input.js';
 async function start(){
  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
  const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;document.body.prepend(renderer.domElement);
- const scene=new T.Scene();scene.background=new T.Color('#cbd0d4');scene.fog=new T.Fog('#cbd0d4',38,85);
+ const scene=new T.Scene();scene.background=new T.Color('#405363');scene.fog=new T.Fog('#405363',38,85);
  // A single, stationary dark-grey slab. Very faint metre lines make planted
  // feet readable without adding any objects to the running area.
  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const ctx=canvas.getContext('2d');ctx.fillStyle='#484a4e';ctx.fillRect(0,0,128,128);ctx.strokeStyle='#434549';ctx.lineWidth=1;ctx.strokeRect(.5,.5,127,127);

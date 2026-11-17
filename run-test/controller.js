@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {MatchedMotion,CYCLE} from '../references/avatar-walk/matched.js';
 import {solveLeg} from '../movement/controller.js';
+import {createPoseCache} from './pose-cache.js';
 export const TUNING={slabSize:60};
 const UP=new T.Vector3(0,1,0),DOWN=new T.Vector3(0,-1,0),mod=(x,n)=>((x%n)+n)%n;
 function footInfo(leg){
@@ -10,8 +11,8 @@ function footInfo(leg){
 }
 export class PlayableRun{
  constructor(){
-  this.motion=new MatchedMotion();this.legs=this.motion.legs;this.rig=this.motion.rig;this.handLayer=this.motion.handLayer;
-  this.samples=Array.from({length:77},(_,f)=>{this.motion.setFrame(f);return this.legs.map(footInfo);});
+  this.motion=new MatchedMotion({thighSwingGain:.94});this.legs=this.motion.legs;this.rig=this.motion.rig;this.handLayer=this.motion.handLayer;this.cache=createPoseCache(this.motion);
+  this.samples=Array.from({length:77},(_,f)=>{this.motion.setFrame(f);this.cache.capture(f);return this.legs.map(footInfo);});
   const minima=this.legs.map((_,i)=>Math.min(...this.samples.map(s=>s[i].low)));
   this.contacts=this.samples.map((s,f)=>{
    const candidates=[0,1].filter(i=>this.samples[mod(f-1,77)][i].probe.z-this.samples[(f+1)%77][i].probe.z>.012&&s[i].low<minima[i]+.13&&s[i].low<=s[1-i].low+.004&&s[i].pitch>-.3&&s[i].pitch<1.4);
@@ -39,16 +40,21 @@ export class PlayableRun{
   m.root.updateMatrixWorld(true);
   for(let i=0;i<this.legs.length;i++){
    const l=this.legs[i],A=ankles[i].lerp(l.restAnkle,weight),H=l.hip.getWorldPosition(new T.Vector3()),pole=l.knee.getWorldPosition(new T.Vector3()).sub(H).normalize();
-   l.motion.setPose(l.toeBend*this.activity,0);l.foot.position.copy(A).sub(l.motion.anklePoint(new T.Vector3()).multiply(new T.Vector3(l.side,1,1)).applyQuaternion(l.foot.quaternion)).sub(m.root.position);
+   const geometry=l.foot.geometry,positions=geometry.attributes.position.array,normals=geometry.attributes.normal.array,rest=l.motion.restPositions;
+   for(let j=0;j<positions.length;j++)positions[j]=T.MathUtils.lerp(positions[j],rest[j],weight);
+   for(let j=0;j<normals.length;j++)normals[j]=T.MathUtils.lerp(normals[j],l.motion.restNormals[j],weight);
+   for(let j=0;j<16;j++)l.motion.rear.elements[j]=T.MathUtils.lerp(l.motion.rear.elements[j],j%5===0?1:0,weight);
+   geometry.attributes.position.needsUpdate=geometry.attributes.normal.needsUpdate=true;l.foot.position.copy(A).sub(l.motion.anklePoint(new T.Vector3()).multiply(new T.Vector3(l.side,1,1)).applyQuaternion(l.foot.quaternion)).sub(m.root.position);
    const K=solveLeg(H,A,l.upper,l.lower,pole),parent=l.hip.parent.getWorldQuaternion(new T.Quaternion());l.hip.quaternion.copy(parent.invert()).multiply(new T.Quaternion().setFromUnitVectors(DOWN,K.clone().sub(H).normalize()));
    l.calf.quaternion.setFromUnitVectors(UP,K.clone().sub(A).normalize());l.calf.position.copy(K).sub(new T.Vector3(0,.17,0).applyQuaternion(l.calf.quaternion)).sub(m.root.position);
-   m.root.updateMatrixWorld(true);l.socket.update(l.foot,l.motion.rear);this.metrics.maxBoneError=Math.max(this.metrics.maxBoneError,Math.abs(K.distanceTo(A)-l.lower));
+   m.root.updateMatrixWorld(true);l.socket.update(l.foot,l.motion.rear,weight);this.metrics.maxBoneError=Math.max(this.metrics.maxBoneError,Math.abs(K.distanceTo(A)-l.lower));
   }
  }
  pose(dt){
+  if(this.idlePose&&this.activity===0&&this.speed===0&&this.intentAmount===0){this.pendingTravel=0;return;}
   this.activity=T.MathUtils.damp(this.activity,this.speed>.02||this.intentAmount>.01?1:0,11,dt);if(this.activity>.999)this.activity=1;if(this.activity<.001){this.activity=0;if(!this.speed)this.phase=0;}
   // Source poses are evaluated at the origin before applying world movement.
-  this.root.position.set(0,0,0);this.root.quaternion.identity();this.root.updateMatrixWorld(true);this.motion.setFrame(mod(this.phase,1)*77);this.blendStanding();this.root.updateMatrixWorld(true);
+  this.root.position.set(0,0,0);this.root.quaternion.identity();this.root.updateMatrixWorld(true);this.cache.sample(mod(this.phase,1)*77);this.blendStanding();this.root.updateMatrixWorld(true);
   const info=this.legs.map(footInfo),frame=mod(this.phase,1)*77,index=Math.floor(frame),support=this.activity>.05?this.contacts[index]:-1,q=new T.Quaternion().setFromAxisAngle(UP,this.facing),forward=new T.Vector3(0,0,1).applyQuaternion(q);
   this.position.addScaledVector(forward,this.pendingTravel);this.pendingTravel=0;
   const key=support<0?null:support+':'+Math.floor((this.phase*77-index+this.contactCycleOffset(index,support))/77);
@@ -63,6 +69,7 @@ export class PlayableRun{
   const sole=lowest+this.root.position.y;this.metrics.minSoleHeight=Math.min(this.metrics.minSoleHeight,sole);
   if(this.anchor&&support>=0){const actual=this.legs[support].foot.localToWorld(new T.Vector3().fromBufferAttribute(this.legs[support].foot.geometry.attributes.position,this.legs[support].motion.probe));this.metrics.maxPlantedSlide=Math.max(this.metrics.maxPlantedSlide,Math.hypot(actual.x-this.anchor.x,actual.z-this.anchor.z));}
   if(this.activity>.99){const hip=this.rig.hipRight.getWorldPosition(new T.Vector3()).y;this.metrics.minHip=Math.min(this.metrics.minHip,hip);this.metrics.maxHip=Math.max(this.metrics.maxHip,hip);}
+  this.idlePose=this.activity===0&&this.speed===0&&this.intentAmount===0;
  }
  contactCycleOffset(index,support){let start=index;while(start>0&&this.contacts[start-1]===support)start--;return start;}
  getState(){return {position:this.position.toArray(),speed:this.speed,maxSpeed:this.maxSpeed,phase:this.phase,facing:this.facing,activity:this.activity,steps:this.steps,contacts:this.contacts,metrics:{...this.metrics}};}

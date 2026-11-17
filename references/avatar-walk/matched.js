@@ -18,7 +18,8 @@ function tuckArm(v,side,upper){
 // curves, or new hip-bob curve can change the movement being compared.
 // Requested refinements: forward torso lean and articulated toe push-off.
 export class MatchedMotion{
- constructor(){
+ constructor({thighSwingGain=1}={}){
+  this.thighSwingGain=thighSwingGain;
   this.avatar=createAssembledAvatar();this.handLayer=createRunningHandLayer(this.avatar);this.rig=this.avatar.rig;this.root=this.rig.root;this.root.updateMatrixWorld(true);
   const r=this.rig;this.restBody=r.body.position.clone();this.spine=new T.Group();const children=r.torso.children.filter(c=>c!==r.hipLeft&&c!==r.hipRight);r.torso.add(this.spine);children.forEach(c=>this.spine.add(c));
   this.legs=this.avatar.lowerLegs.map(leg=>{
@@ -31,7 +32,7 @@ export class MatchedMotion{
   const p=sourcePose(0),b=BONES[1];this.sourceLeg=p[b.hip].distanceTo(p[b.knee])+p[b.knee].distanceTo(p[b.ankle]);this.heightScale=(this.legs[0].upper+this.legs[0].lower)/this.sourceLeg;
   this.meanHip=Array.from({length:77},(_,f)=>{const p=sourcePose(f);return(p[13].y+p[17].y)/2;}).reduce((a,b)=>a+b)/77;
   this.sourceLeanMean=Array.from({length:77},(_,f)=>{const p=sourcePose(f),d=direction(p,1,2);return Math.atan2(d.z,d.y);}).reduce((a,b)=>a+b)/77;
-  for(const leg of this.legs)leg.minSourceAnkleY=Math.min(...Array.from({length:77},(_,f)=>sourcePose(f)[leg.bones.ankle].y));
+  for(const leg of this.legs){leg.minSourceAnkleY=Math.min(...Array.from({length:77},(_,f)=>sourcePose(f)[leg.bones.ankle].y));leg.swingMean=Array.from({length:77},(_,f)=>{const d=direction(sourcePose(f),leg.bones.hip,leg.bones.knee);return Math.atan2(d.z,-d.y);}).reduce((a,b)=>a+b)/77;}
   this.restTransforms=[];this.root.traverse(object=>this.restTransforms.push({object,position:object.position.clone(),quaternion:object.quaternion.clone()}));
   this.offset=0;let low=Infinity;
   for(let f=0;f<77;f++){this.setFrame(f);for(const l of this.legs){const p=l.foot.geometry.attributes.position,v=new T.Vector3();for(let i=0;i<p.count;i++)low=Math.min(low,l.foot.localToWorld(v.fromBufferAttribute(p,i)).y);}}
@@ -47,6 +48,7 @@ export class MatchedMotion{
   this.armLean=this.spine.quaternion.clone().multiply(sourceSpine.invert());this.root.updateMatrixWorld(true);
   for(const leg of this.legs){
    const b=leg.bones,upper=direction(p,b.hip,b.knee),lower=direction(p,b.knee,b.ankle);
+   const reduction=(Math.atan2(upper.z,-upper.y)-leg.swingMean)*(1-this.thighSwingGain),axis=new T.Vector3(1,0,0);upper.applyAxisAngle(axis,reduction);lower.applyAxisAngle(axis,reduction);
    leg.hip.getWorldPosition(leg.H);leg.K.copy(leg.H).addScaledVector(upper,leg.upper);leg.A.copy(leg.K).addScaledVector(lower,leg.lower);
    leg.hip.quaternion.setFromUnitVectors(DOWN,upper);leg.calf.quaternion.setFromUnitVectors(UP,lower.clone().negate());
    leg.calf.position.copy(leg.K).sub(new T.Vector3(0,.17,0).applyQuaternion(leg.calf.quaternion)).sub(this.root.position);
