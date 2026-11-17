@@ -78,3 +78,4 @@ renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
 });
+(window as unknown as Record<string, unknown>).__lab = { camera, controls };

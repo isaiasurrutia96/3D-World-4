@@ -72,6 +72,13 @@ export function addMergedBlocks(
       [at(x, y - 1, z), at(x, y + 1, z)],
       [at(x, y, z - 1), at(x, y, z + 1)],
     ];
+    // Top corners where both side neighbours are here but the diagonal is not.
+    const innerCorners: Array<[number, number]> = [];
+    if (!at(x, y + 1, z)) {
+      for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        if (at(x + sx, y, z) && at(x, y, z + sz) && !at(x + sx, y, z + sz)) innerCorners.push([sx, sz]);
+      }
+    }
     for (const side of SIDES) {
       if (at(x + side.n[0], y + side.n[1], z + side.n[2])) continue; // hidden inside the group
       const base = positions.length / 3;
@@ -79,12 +86,38 @@ export function addMergedBlocks(
         for (const a of steps) {
           const p = [0, 1, 2].map((i) => side.n[i] * 0.5 + side.u[i] * a + side.v[i] * b);
           // Toward a neighbour the edge stays square, so the blocks join flush.
-          const core = p.map((value, i) =>
+          const core: number[] = p.map((value, i) =>
             Math.max(occupied[i][0] ? -0.5 : -0.5 + R, Math.min(occupied[i][1] ? 0.5 : 0.5 - R, value)),
           );
-          const off = p.map((value, i) => value - core[i]);
-          const len = Math.hypot(off[0], off[1], off[2]) || 1;
-          const n = off.map((value) => value / len);
+          let off = p.map((value, i) => value - core[i]);
+          let len = Math.hypot(off[0], off[1], off[2]) || 1;
+          let n = off.map((value) => value / len);
+          // Inner corners on the top: where this block has neighbours on two
+          // sides but the spot between them is empty, the two rounded edges
+          // meeting there would leave a pointed notch. Round this block's top
+          // corner the same way, following whichever neighbour edge is higher,
+          // so the curves meet flush (like a picture-frame mitre).
+          if (side.n[1] === 1) {
+            for (const [sx, sz] of innerCorners) {
+              const u = p[0] * sx;
+              const w = p[2] * sz;
+              if (u <= 0.5 - R || w <= 0.5 - R) continue;
+              // Height of each neighbour's rounded edge at this spot; the
+              // surface is the higher of the two (the solids' union).
+              const tu = u - (0.5 - R);
+              const tw = w - (0.5 - R);
+              const hu = Math.sqrt(Math.max(0, R * R - tu * tu)); // edge running along z, rounding toward x
+              const hw = Math.sqrt(Math.max(0, R * R - tw * tw)); // edge running along x, rounding toward z
+              const fromW = hw >= hu;
+              const h = fromW ? hw : hu;
+              const nn = fromW ? [0, hw / R, (tw / R) * sz] : [(tu / R) * sx, hu / R, 0];
+              const local = [p[0], 0.5 - R + h, p[2]];
+              n = nn;
+              for (let i = 0; i < 3; i++) core[i] = local[i] - n[i] * R;
+              off = n.map((value) => value * R);
+              len = R;
+            }
+          }
           positions.push(
             (x + 0.5 + core[0] + n[0] * R) * size,
             (y + 0.5 + core[1] + n[1] * R) * size,
