@@ -37,7 +37,7 @@ try{
  const initial=await fingerprint('lab');assert.deepEqual(initial,approved,'Lab must start with the exact approved hand');
  if(shots)await page.screenshot({path:resolve(shots,'rest.png')});
  const settle=async()=>{await page.waitForFunction(()=>{const {current,target}=handLab.getState();return Object.keys(target).every(id=>Math.abs(current[id]-target[id])<1e-8);});await page.waitForTimeout(80);};
- for(const name of ['Open','Curl','Point']){
+ for(const name of ['Relax','Open','Curl','Point']){
   await page.getByRole('button',{name,exact:true}).click();await settle();
   const check=await page.evaluate(()=>{
    const {hand,rig}=handLab,p=hand.geometry.attributes.position.array,n=hand.geometry.attributes.normal.array;let protectedChanges=0;
@@ -46,10 +46,23 @@ try{
   });
   assert.equal(check.finite,true,name+' produced invalid geometry');assert.equal(check.protectedChanges,0,name+' moved the palm attachment');assert.notEqual((await fingerprint('lab')).positions,initial.positions,name+' must visibly move');
   if(shots)await page.screenshot({path:resolve(shots,name.toLowerCase()+'.png')});
+  if(name==='Relax'){
+   const spacing=await page.evaluate(()=>{
+    const {rig,hand}=handLab,p=hand.geometry.attributes.position.array;
+    const centres=values=>rig.fingerTipVertices.map(ids=>{const c=[0,0,0];for(const i of ids)for(let d=0;d<3;d++)c[d]+=values[i*3+d]/ids.length;return c;});
+    const gaps=c=>c.slice(0,3).map((v,i)=>Math.hypot(...v.map((x,d)=>x-c[i+1][d])));
+    let depthChanges=0;for(let i=2;i<p.length;i+=3)if(p[i]!==rig.approvedPositions[i])depthChanges++;
+    return {before:gaps(centres(rig.approvedPositions)),after:gaps(centres(p)),depthChanges,target:handLab.getState().target};
+   });
+   assert.ok(spacing.before.every((gap,i)=>spacing.after[i]<gap),'Relax must bring every neighbouring pair closer');
+   assert.equal(spacing.depthChanges,0,'Relax must preserve the existing curl depth');
+   for(const id of ['index','middle','ring','little','thumb'])assert.equal(spacing.target[id],.25,'Relax changed the resting curl');
+   console.log(JSON.stringify({relaxSpacing:spacing}));
+  }
   if(name==='Curl'){await page.getByRole('button',{name:'Side',exact:true}).click();if(shots)await page.screenshot({path:resolve(shots,'curl-side.png')});await page.getByRole('button',{name:'Palm',exact:true}).click();}
  }
  await page.getByRole('button',{name:'Rest',exact:true}).click();await settle();assert.deepEqual(await fingerprint('lab'),initial,'Rest must restore geometry and normals exactly');
- for(const id of ['index','middle','ring','little','thumb','opposition']){
+ for(const id of ['index','middle','ring','little','thumb','opposition','together']){
   const input=page.locator('#'+id);await input.evaluate(e=>{e.value='75';e.dispatchEvent(new Event('input',{bubbles:true}));});await settle();assert.equal(await page.evaluate(id=>handLab.getState().target[id],id),.75);
   assert.notEqual((await fingerprint('lab')).positions,initial.positions,id+' control did not move the hand');
   if(id==='opposition'&&shots)await page.screenshot({path:resolve(shots,'thumb-across.png')});
@@ -64,7 +77,8 @@ try{
  });
  assert.equal(stress.finite,true);assert.deepEqual(await fingerprint('lab'),initial,'Repeated motion accumulated shape changes');
  const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});const phone=await mobile.newPage();phone.on('pageerror',e=>errors.push(e.message));
- await phone.goto(base+'/hand-lab/');await phone.waitForFunction(()=>window.handLabReady,undefined,{timeout:60000});
+ await phone.goto(base+'/hand-lab/?pose=relax');await phone.waitForFunction(()=>window.handLabReady,undefined,{timeout:60000});
+ assert.equal(await phone.evaluate(()=>handLab.getState().target.together),.8,'Relax preview link did not select the new motion');
  assert.equal(await phone.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Mobile horizontal overflow');
  const box=await phone.locator('#stage').boundingBox(),cdp=await mobile.newCDPSession(phone),cameraBefore=await phone.evaluate(()=>handLab.camera.position.toArray());
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width*.35,y:box.y+box.height*.5}]});

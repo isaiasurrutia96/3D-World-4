@@ -34,7 +34,7 @@ async function start(){
  }
  const sliders=Object.fromEntries(Object.keys(REST_POSE).map(id=>[id,document.getElementById(id)]));
  function refreshInputs(){for(const id of Object.keys(sliders)){sliders[id].value=Math.round(target[id]*100);document.getElementById(id+'-value').textContent=Math.round(target[id]*100)+'%';}}
- function markPose(name){activePose=name;for(const button of document.querySelectorAll('[data-pose]'))button.setAttribute('aria-pressed',String(button.dataset.pose===name));poseLabel.textContent=({rest:'Saved rest pose',open:'Open hand',curl:'Relaxed curl',point:'Pointing',custom:'Your pose',motion:'Motion test'})[name];}
+ function markPose(name){activePose=name;for(const button of document.querySelectorAll('[data-pose]'))button.setAttribute('aria-pressed',String(button.dataset.pose===name));poseLabel.textContent=({rest:'Saved rest pose',relax:'Resting with fingers closer',open:'Open hand',curl:'Relaxed curl',point:'Pointing',custom:'Your pose',motion:'Motion test'})[name];}
  function stopMotion(){playing=false;document.querySelector('#play').setAttribute('aria-pressed','false');document.querySelector('#play').textContent='▶︎ Play motion';}
  for(const [id,input] of Object.entries(sliders))input.addEventListener('input',()=>{stopMotion();target[id]=Number(input.value)/100;markPose('custom');refreshInputs();});
  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -51,9 +51,10 @@ async function start(){
  renderer.setAnimationLoop(ms=>{
   const time=ms/1000,dt=Math.min(.1,lastTime?time-lastTime:1/60);lastTime=time;
   if(playing){
-   const phase=(time-playStart)%12;
-   if(phase<6){const v=.5-.5*Math.cos(phase/6*Math.PI*2);for(const d of FINGERS)target[d.id]=v*(d.id==='thumb'?.65:1);target.opposition=v*.3;}
-   else{Object.assign(target,REST_POSE);const i=Math.min(4,Math.floor((phase-6)/1.2)),local=(phase-6)%1.2;target[FINGERS[i].id]=REST_POSE[FINGERS[i].id]+.65*Math.sin(local/1.2*Math.PI);}
+   const phase=(time-playStart)%15;
+   if(phase<3){Object.assign(target,REST_POSE);target.together=.5-.5*Math.cos(phase/3*Math.PI*2);}
+   else if(phase<9){const v=.5-.5*Math.cos((phase-3)/6*Math.PI*2);Object.assign(target,REST_POSE);for(const d of FINGERS)target[d.id]=v*(d.id==='thumb'?.65:1);target.opposition=v*.3;}
+   else{Object.assign(target,REST_POSE);const i=Math.min(4,Math.floor((phase-9)/1.2)),local=(phase-9)%1.2;target[FINGERS[i].id]=REST_POSE[FINGERS[i].id]+.65*Math.sin(local/1.2*Math.PI);}
    refreshInputs();
   }
   let dirty=false;const a=reduced&&!playing?1:1-Math.exp(-dt*12);
@@ -64,6 +65,7 @@ async function start(){
  });
  document.addEventListener('visibilitychange',()=>{if(document.hidden){stopMotion();markPose(activePose==='motion'?'custom':activePose);}lastTime=0;});
  window.handLab={scene,camera,controls,hand,rig,display,applyPose,getState:()=>({current:{...current},target:{...target},playing,poseUpdates,activePose})};
+ if(new URLSearchParams(location.search).get('pose')==='relax')applyPose('relax');
  loading.classList.add('hidden');window.handLabReady=true;
 }
 start().catch(error=>{console.error(error);loading.className='loading error';loading.textContent='The hand could not open. Please reload the page to try again.';});

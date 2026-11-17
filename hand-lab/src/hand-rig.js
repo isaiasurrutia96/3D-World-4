@@ -4,18 +4,19 @@ import {easeDigitSweep} from '../../avatar/src/hand-study/ease-digit-sweep.js';
 
 const STEPS=512,RANGE=1.6,REST=.25;
 export const FINGERS=[
- {id:'index',label:'Index',root:[225,199],tip:[260,79],radius:46,rest:[10,18,7],closed:[32,45,15]},
- {id:'middle',label:'Middle',root:[300,214],tip:[353,92],radius:46,rest:[13,23,8],closed:[35,50,18]},
- {id:'ring',label:'Ring',root:[350,242],tip:[410,154],radius:43,rest:[16,28,10],closed:[38,55,20]},
- {id:'little',label:'Little',root:[371,287],tip:[438,249],radius:37,rest:[20,30,12],closed:[40,55,22]},
+ {id:'index',label:'Index',root:[225,199],tip:[260,79],radius:46,rest:[10,18,7],closed:[32,45,15],adduction:9},
+ {id:'middle',label:'Middle',root:[300,214],tip:[353,92],radius:46,rest:[13,23,8],closed:[35,50,18],adduction:0},
+ {id:'ring',label:'Ring',root:[350,242],tip:[410,154],radius:43,rest:[16,28,10],closed:[38,55,20],adduction:-12},
+ {id:'little',label:'Little',root:[371,287],tip:[438,249],radius:37,rest:[20,30,12],closed:[40,55,22],adduction:-28},
  {id:'thumb',label:'Thumb',root:[162,267],tip:[131,190],radius:45,rest:[8,10,0],closed:[20,18,0]},
 ];
-export const REST_POSE={index:REST,middle:REST,ring:REST,little:REST,thumb:REST,opposition:0};
+export const REST_POSE={index:REST,middle:REST,ring:REST,little:REST,thumb:REST,opposition:0,together:0};
 export const POSES={
  rest:{...REST_POSE},
- open:{index:0,middle:0,ring:0,little:0,thumb:0,opposition:0},
- curl:{index:1,middle:1,ring:1,little:1,thumb:.6,opposition:.35},
- point:{index:0,middle:.9,ring:.9,little:.9,thumb:.45,opposition:.25},
+ relax:{...REST_POSE,together:.8},
+ open:{...REST_POSE,index:0,middle:0,ring:0,little:0,thumb:0},
+ curl:{...REST_POSE,index:1,middle:1,ring:1,little:1,thumb:.6,opposition:.35},
+ point:{...REST_POSE,index:0,middle:.9,ring:.9,little:.9,thumb:.45,opposition:.25},
 };
 const clamp=v=>T.MathUtils.clamp(v,0,1);
 const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a));return t*t*(3-2*t);};
@@ -64,7 +65,7 @@ export function createHandRig(hand){
    const a=i*(STEPS+1)+Math.max(0,j-1),b=i*(STEPS+1)+Math.min(STEPS,j+1),vx=jp.getX(b)-jp.getX(a),vy=jp.getY(b)-jp.getY(a),n=Math.hypot(vx,vy);
    axes[j*2]=vy/n;axes[j*2+1]=-vx/n;
   }
-  const digit={...d,length,ux:dx/length,uy:dy/length,centres,axes,rows:[]};
+  const digit={...d,length,ux:dx/length,uy:dy/length,centres,axes,rows:[],adductionRows:[],tipVertices:[]};
   digit.restCurve=curve(digit,REST);return digit;
  });
  joints.dispose();
@@ -81,9 +82,14 @@ export function createHandRig(hand){
    total+=weight;matches.push({along,weight});
   }
   if(total<1e-8)continue;
+  const thumbOwnsVertex=matches[4].weight>=Math.max(...matches.slice(0,4).map(m=>m.weight));
   for(let j=0;j<digits.length;j++){
    const d=digits[j],{along,weight}=matches[j];if(along<=0||weight<1e-10)continue;
    const w=weight/total*guard;if(w<1e-7)continue;
+   if(j<4&&!thumbOwnsVertex){
+    d.adductionRows.push(i,w*smooth(0,.30,along/d.length));
+    if(along/d.length>.92&&weight===Math.max(...matches.map(m=>m.weight)))d.tipVertices.push(i);
+   }
    const t=T.MathUtils.clamp(along/d.length/RANGE*STEPS,0,STEPS),index=Math.min(STEPS-1,Math.floor(t)),f=t-index;
    const k=index*3,ak=index*2,ck=index*5;
    const bx=T.MathUtils.lerp(d.centres[k],d.centres[k+3],f),by=T.MathUtils.lerp(d.centres[k+1],d.centres[k+4],f),bz=T.MathUtils.lerp(d.centres[k+2],d.centres[k+5],f);
@@ -95,7 +101,7 @@ export function createHandRig(hand){
    if(j===4)thumbWeights[i]=w*smooth(0,.25,along/d.length);
   }
  }
- for(const d of digits)d.rows=new Float64Array(d.rows);
+ for(const d of digits){d.rows=new Float64Array(d.rows);d.adductionRows=new Float64Array(d.adductionRows);}
  delete geometry.userData.labBind;
  const accumulation=new Float64Array(approved.length),position=geometry.attributes.position;
  position.setUsage(T.DynamicDrawUsage);geometry.attributes.normal.setUsage(T.DynamicDrawUsage);
@@ -128,10 +134,25 @@ export function createHandRig(hand){
      position.array[k]+=(rx-x)*w;position.array[k+1]+=(ry-y)*w;position.array[k+2]+=(zz-z)*w;
     }
    }
+   if(pose.together>0){
+    // Rotate each finger toward the middle finger, rather than squeezing
+    // or rescaling its surface. Blend only near the knuckle attachment.
+    accumulation.fill(0);
+    for(const d of digits){
+     if(!d.adduction)continue;
+     const angle=side*T.MathUtils.degToRad(d.adduction)*pose.together,c=Math.cos(angle),s=Math.sin(angle),rows=d.adductionRows;
+     for(let j=0;j<rows.length;j+=2){
+      const k=rows[j]*3,w=rows[j+1],x=position.array[k]-d.centres[0],y=position.array[k+1]-d.centres[1];
+      accumulation[k]+=(c*x-s*y-x)*w;accumulation[k+1]+=(s*x+c*y-y)*w;
+     }
+    }
+    for(let i=0;i<position.array.length;i++)position.array[i]+=accumulation[i];
+   }
    geometry.computeVertexNormals();
   }
   position.needsUpdate=true;geometry.attributes.normal.needsUpdate=true;
  }
  return {setPose,getPose:()=>({...pose}),approvedPositions:approved,approvedNormals,vertexCount,
+  fingerTipVertices:digits.slice(0,4).map(d=>d.tipVertices),
   protectedVertices:Array.from({length:vertexCount},(_,i)=>i).filter(i=>original[i*3+1]/.0008+285>=300)};
 }
