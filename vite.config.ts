@@ -10,6 +10,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         lab: resolve(__dirname, 'lab/index.html'),
         oval: resolve(__dirname, 'oval/index.html'),
+        island: resolve(__dirname, 'island/index.html'),
       },
     },
   },
