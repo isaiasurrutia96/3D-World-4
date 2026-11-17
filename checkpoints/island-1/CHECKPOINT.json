@@ -1,0 +1,18 @@
+{
+  "name": "Island checkpoint 1",
+  "approved": true,
+  "saved_on": "2026-11-17",
+  "tag": "island-checkpoint-1-2026-11-17",
+  "source_commit": "a9b6eaeebe67f5f8dda8db61a5374da7010ebdb0",
+  "preview_url": "https://isaiasurrutia96.github.io/3D-World-4/checkpoints/island-1/",
+  "editable_source": ["src/island.ts", "src/island-lab.ts", "src/voxels.ts", "island/index.html"],
+  "viewer_sha256": "925c0737ad2c54d0ef7936d4b1e68cc586db030c3711c9f75577e95d4d34835d",
+  "design": {
+    "size": "14 x 14 blocks of 43 cm",
+    "layers": "grass, two dirt layers, upside-down stone diamond underneath",
+    "raised_corner": "5 x 5 blocks, one block higher, under the tree",
+    "tree": "2 x 2 merged trunk, 21.5 cm leaf blocks, 8 root stumps of 6 tiny blocks (3-2-1 staircase)",
+    "nature": "pond, bush, rock, three flowers",
+    "build_rule": "large/flat or big regular shapes merged; small detail as separate blocks; flowers unchanged"
+  }
+}
