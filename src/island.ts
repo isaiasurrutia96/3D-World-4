@@ -155,7 +155,8 @@ function addNature(root: Group): void {
       for (let z = cz - 5; z <= cz + 4; z++) {
         const d = Math.hypot((x + 0.5 - cx) / 4.6, (y + 0.5 - cy) / 3.6, (z + 0.5 - cz) / 4.6);
         const nibble = hash(x * 3.1 + y, z * 1.7 - y) * 0.22;
-        if (d + nibble <= 1.02) leaves.push([x, y, z, hash(x + 9, z + y * 5) < 0.12 ? '#3d9a2e' : '#47ad35']);
+        const inTrunk = y < trunkTop && x >= tx && x <= tx + 1 && z >= tz && z <= tz + 1;
+        if (d + nibble <= 1.02 && !inTrunk) leaves.push([x, y, z, hash(x + 9, z + y * 5) < 0.12 ? '#3d9a2e' : '#47ad35']);
       }
     }
   }
