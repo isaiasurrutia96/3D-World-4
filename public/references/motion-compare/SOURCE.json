@@ -1,0 +1,30 @@
+{
+  "sourceAnimation": "Same original SM64 animation 0x48 as the existing Mario reference",
+  "revision": "9921382a68bb0c865e5e45eb594d9c64db59b1af",
+  "avatarCheckpoint": "avatar-checkpoint-2-2026-11-17",
+  "sync": "Both views burned into a single video, source frame f paired with source frame f, no phase offsets. One shared player controls both.",
+  "sourceFrames": 77,
+  "cycleSeconds": 0.8555555555555555,
+  "sampledPoses": 154,
+  "maxDirectionError": 1.0053497077208614e-15,
+  "maxBoneError": 2.7755575615628914e-16,
+  "heightScale": 0.020666666532174135,
+  "measuredBones": [
+    {
+      "side": -1,
+      "upper": 0.42000000000000004,
+      "lower": 0.3859999947547912
+    },
+    {
+      "side": 1,
+      "upper": 0.42000000000000004,
+      "lower": 0.3859999947547912
+    }
+  ],
+  "mode": "Same source frame for both sides and all limbs; original hip-bounce curve; comparison in place, without a locomotion or foot-lock solver.",
+  "sha256": {
+    "comparison.mp4": "d07371862785476085c398bc648f50684818fd46eb236053f851c561dd16da5a",
+    "comparison-slow.gif": "83ae18026aef18082a143cf89abaee69f2361c3188d569658682a7a1410309ea",
+    "poster.jpg": "fbd427926e5412fc3ef54627414d34ee3f5b85d12e1abcd9f83fed759c0ba654"
+  }
+}

@@ -11,7 +11,7 @@ const mod=(x,n)=>((x%n)+n)%n;
 const SIDES={1:{hip:13,knee:14,ankle:15,shoulder:5,elbow:6,wrist:7},'-1':{hip:17,knee:18,ankle:19,shoulder:9,elbow:10,wrist:11}};
 
 // Decode the original channel order and N64 rotation convention once.
-export function sourcePose(frame){
+export function sourcePose(frame,withMatrices=false){
  const {indices,values,frames}=source.animation;frame=mod(frame,frames);
  function sample(c,angle=false){const count=indices[c*2],base=indices[c*2+1],f=Math.floor(frame),t=frame-f,a=values[base+Math.min(f,count-1)],b=values[base+Math.min((f+1)%frames,count-1)];let d=b-a;if(angle){if(d>32767)d-=65536;if(d<-32768)d+=65536;}return a+d*t;}
  const matrices=[],points=[];
@@ -21,7 +21,7 @@ export function sourcePose(frame){
   const m=new T.Matrix4().set(cy*cz,sx*sy*cz-cx*sz,cx*sy*cz+sx*sz,p[0],cy*sz,sx*sy*sz+cx*cz,cx*sy*sz-sx*cz,p[1],-sy,sx*cy,cx*cy,p[2],0,0,0,1);
   if(bone.parent>=0)m.premultiply(matrices[bone.parent]);matrices.push(m);points.push(new T.Vector3().setFromMatrixPosition(m).multiplyScalar(source.scale));
  }
- return points;
+ return withMatrices?{points,matrices}:points;
 }
 function features(points,side){
  const b=SIDES[side],h=points[b.hip],k=points[b.knee],a=points[b.ankle],s=points[b.shoulder],e=points[b.elbow],w=points[b.wrist],upper=e.clone().sub(s).normalize();
