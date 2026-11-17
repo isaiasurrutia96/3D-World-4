@@ -2,6 +2,7 @@ import * as T from 'three';
 import {sourcePose,CYCLE} from './retarget.js';
 import {createAssembledAvatar} from '../../avatar-lab/src/avatar.js';
 import {createFootMotion,createSocketMotion} from '../../movement/ankle.js';
+import {createRunningHandLayer} from './hand-layer.js';
 export {CYCLE};
 const UP=new T.Vector3(0,1,0),DOWN=new T.Vector3(0,-1,0);
 export const BONES={1:{hip:13,knee:14,ankle:15,shoulder:5,elbow:6,wrist:7},'-1':{hip:17,knee:18,ankle:19,shoulder:9,elbow:10,wrist:11}};
@@ -18,7 +19,7 @@ function tuckArm(v,side,upper){
 // Requested refinements: forward torso lean and articulated toe push-off.
 export class MatchedMotion{
  constructor(){
-  this.avatar=createAssembledAvatar();this.rig=this.avatar.rig;this.root=this.rig.root;this.root.updateMatrixWorld(true);
+  this.avatar=createAssembledAvatar();this.handLayer=createRunningHandLayer(this.avatar);this.rig=this.avatar.rig;this.root=this.rig.root;this.root.updateMatrixWorld(true);
   const r=this.rig;this.restBody=r.body.position.clone();this.spine=new T.Group();const children=r.torso.children.filter(c=>c!==r.hipLeft&&c!==r.hipRight);r.torso.add(this.spine);children.forEach(c=>this.spine.add(c));
   this.legs=this.avatar.lowerLegs.map(leg=>{
    const hip=leg.side<0?r.hipLeft:r.hipRight,knee=leg.side<0?r.kneeLeft:r.kneeRight,H=hip.getWorldPosition(new T.Vector3()),K=knee.getWorldPosition(new T.Vector3());
@@ -26,6 +27,7 @@ export class MatchedMotion{
    return {...leg,hip,knee,motion,socket:createSocketMotion(leg.calf,leg.restCalfPosition),upper:H.distanceTo(K),lower:K.distanceTo(A),bones:BONES[leg.side],H:new T.Vector3(),K:new T.Vector3(),A:new T.Vector3()};
   });
   this.arms=[-1,1].map(side=>({side,bones:BONES[side],shoulder:side<0?r.shoulderLeft:r.shoulderRight,elbow:side<0?r.elbowLeft:r.elbowRight}));
+  for(const arm of this.arms)arm.swingMean=Array.from({length:77},(_,f)=>{const d=direction(sourcePose(f),arm.bones.shoulder,arm.bones.elbow);return Math.atan2(d.z,-d.y);}).reduce((a,b)=>a+b)/77;
   const p=sourcePose(0),b=BONES[1];this.sourceLeg=p[b.hip].distanceTo(p[b.knee])+p[b.knee].distanceTo(p[b.ankle]);this.heightScale=(this.legs[0].upper+this.legs[0].lower)/this.sourceLeg;
   this.meanHip=Array.from({length:77},(_,f)=>{const p=sourcePose(f);return(p[13].y+p[17].y)/2;}).reduce((a,b)=>a+b)/77;
   this.sourceLeanMean=Array.from({length:77},(_,f)=>{const p=sourcePose(f),d=direction(p,1,2);return Math.atan2(d.z,d.y);}).reduce((a,b)=>a+b)/77;
@@ -59,7 +61,8 @@ export class MatchedMotion{
    leg.calf.updateWorldMatrix(true,false);leg.foot.updateWorldMatrix(true,false);leg.socket.update(leg.foot,leg.motion.rear);
   }
   for(const arm of this.arms){
-   const b=arm.bones,parent=arm.shoulder.parent.getWorldQuaternion(new T.Quaternion()),upper=tuckArm(direction(p,b.shoulder,b.elbow).applyQuaternion(this.armLean),arm.side,true),lower=tuckArm(direction(p,b.elbow,b.wrist).applyQuaternion(this.armLean),arm.side,false);
+   const b=arm.bones,parent=arm.shoulder.parent.getWorldQuaternion(new T.Quaternion()),nativeUpper=direction(p,b.shoulder,b.elbow),reduction=(Math.atan2(nativeUpper.z,-nativeUpper.y)-arm.swingMean)*.15,axis=new T.Vector3(1,0,0);
+   const upper=tuckArm(nativeUpper.applyQuaternion(this.armLean).applyAxisAngle(axis,reduction),arm.side,true),lower=tuckArm(direction(p,b.elbow,b.wrist).applyQuaternion(this.armLean).applyAxisAngle(axis,reduction),arm.side,false);
    arm.shoulder.quaternion.copy(parent.invert()).multiply(new T.Quaternion().setFromUnitVectors(DOWN,upper));arm.shoulder.updateWorldMatrix(true,false);
    arm.elbow.quaternion.copy(arm.shoulder.getWorldQuaternion(new T.Quaternion()).invert()).multiply(new T.Quaternion().setFromUnitVectors(DOWN,lower));
   }
