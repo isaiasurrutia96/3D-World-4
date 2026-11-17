@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f1f1ee">
+ <title>Foot Lab</title>
+ <style>
+  *{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#343b40;background:#405363}button{font:inherit;cursor:pointer;touch-action:manipulation}button:focus-visible{outline:3px solid #b36338;outline-offset:3px}.app{height:100dvh;display:flex;flex-direction:column}header{height:76px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:15px 28px;background:#f1f1ee;gap:12px}h1{font-size:22px;font-weight:650;line-height:1.2;letter-spacing:-.6px;margin:0}.subtitle{font-size:12px;color:#73796f;margin:5px 0 0}.badge{font-size:12px;border:1px solid #d9d9d1;border-radius:20px;padding:7px 11px;white-space:nowrap;background:#ffffff70}
+  #stage{position:relative;flex:1;min-height:0}canvas{display:block;touch-action:none}.hint{position:absolute;left:26px;top:19px;color:#d1dbe3;font-size:12px;pointer-events:none}.floor-toggle{position:absolute;right:25px;top:13px;min-height:40px;border:1px solid #ffffff35;border-radius:11px;padding:0 15px;background:#ffffff14;color:#e4eaf0;font-size:12px}.floor-toggle[aria-pressed=true]{background:#ffffffdc;color:#46524b;border-color:transparent}.views{position:absolute;bottom:max(24px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;gap:5px;padding:6px;background:#ffffffdf;border-radius:14px;box-shadow:0 3px 18px #0001}.views button{min-height:44px;padding:0 18px;border:0;border-radius:10px;background:transparent;color:#565c5d;font-size:13px}.views button[aria-pressed=true]{background:#dce1d6;color:#394334}.loading{position:absolute;inset:0;display:grid;place-items:center;color:#d1dbe3;background:#405363;font-size:13px}.loading[hidden]{display:none}
+  @media(max-width:600px){header{height:69px;padding:12px 18px}h1{font-size:20px}.subtitle{font-size:11px}.badge{font-size:10px;padding:6px 9px}.hint{left:18px;top:16px;font-size:11px;max-width:calc(100% - 125px);line-height:1.5}.floor-toggle{right:16px;top:10px;padding:0 12px}.views{display:grid;grid-template-columns:repeat(3,1fr);width:280px;bottom:max(18px,env(safe-area-inset-bottom))}.views button{padding:0 10px;font-size:12px}.views button:last-child{grid-column:span 2}}
+ </style>
+</head>
+<body>
+ <main class="app">
+  <header><div><h1>Foot Lab</h1><p class="subtitle">A soft, rounded shape for your avatar.</p></div><span class="badge">Shape study</span></header>
+  <section id="stage" aria-label="Interactive 3D foot">
+   <div class="hint">Drag to rotate · Pinch or scroll to zoom</div>
+   <button id="floor" class="floor-toggle" aria-pressed="true">Floor</button>
+   <nav class="views" aria-label="Foot views"><button data-view="angle" aria-pressed="true">Angle</button><button data-view="front" aria-pressed="false">Front</button><button data-view="side" aria-pressed="false">Side</button><button data-view="top" aria-pressed="false">Top</button><button data-view="sole" aria-pressed="false">Sole</button></nav>
+   <div id="loading" class="loading" role="status">Preparing your foot…</div>
+  </section>
+ </main>
+ <script>/*FOOT_LAB_BUNDLE*/</script>
+</body>
+</html>

@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && npm run build:hand-lab",
+    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab",
     "preview": "vite preview",
     "build:hand-lab": "node hand-lab/build.mjs",
-    "test:hand-lab": "node hand-lab/tests/browser.mjs"
+    "test:hand-lab": "node hand-lab/tests/browser.mjs",
+    "build:foot-lab": "node foot-lab/build.mjs",
+    "test:foot-lab": "node foot-lab/tests/browser.mjs"
   },
   "dependencies": {
     "three": "0.180.0"
