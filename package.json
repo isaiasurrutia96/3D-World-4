@@ -13,7 +13,8 @@
     "test:foot-lab": "node foot-lab/tests/browser.mjs",
     "build:avatar-lab": "node avatar-lab/build.mjs",
     "test:avatar-lab": "node avatar-lab/tests/browser.mjs",
-    "build:checkpoints": "node scripts/build-checkpoints.mjs"
+    "build:checkpoints": "node scripts/build-checkpoints.mjs",
+    "test:movement": "node movement/tests/run.mjs"
   },
   "dependencies": {
     "three": "0.180.0"

@@ -11,6 +11,7 @@ export default defineConfig({
         lab: resolve(__dirname, 'lab/index.html'),
         oval: resolve(__dirname, 'oval/index.html'),
         island: resolve(__dirname, 'island/index.html'),
+        movement: resolve(__dirname, 'movement/index.html'),
       },
     },
   },

@@ -1,4 +1,4 @@
-# Owner's requests to remember (not built yet)
+# Movement roadmap and saved requests
 
 Recorded 17 November 2026.
 
@@ -9,8 +9,12 @@ Recorded 17 November 2026.
    gets too far ahead. No gliding or sliding.
 3. Focus on the feet. The owner may build new feet (with Claude Code) for
    natural foot movement; foot locking should work with those feet.
-4. Status: a first foot-locking attempt was deleted at the owner's request.
-   Start fresh when asked.
+4. Status: the earlier foot-locking attempt was deleted at the owner's request.
+   A fresh flat-floor walking/running test now lives under `movement/`, using
+   the Checkpoint 2 assembly, world-space planted contacts, leg IK, foot roll,
+   analogue floating joystick and independent right-side camera touch.
+   This stage covers the flat slab; terrain, jumping and the remaining SM64
+   actions still need development. Keep the frozen checkpoint intact.
 
 ## Owner favourite (remember)
 
