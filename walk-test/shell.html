@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta name="theme-color" content="#405363"><title>Walking test</title>
+ <style>
+  *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}body{background:#405363;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#edf2f6}canvas{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none}header{position:fixed;top:max(20px,env(safe-area-inset-top));left:max(22px,env(safe-area-inset-left));pointer-events:none;max-width:calc(100% - 44px)}h1{margin:0 0 6px;font-weight:600;font-size:19px;letter-spacing:-.4px}.hint{margin:0;font-size:12px;line-height:1.6;color:#d1dbe3}.touch-hint{display:none}@media(pointer:coarse){.touch-hint{display:block}.desktop-hint{display:none}}#status{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);font-size:11px;color:#e8e9e8;background:#282b2f90;border:1px solid #ffffff18;border-radius:20px;padding:7px 13px;pointer-events:none;letter-spacing:.3px}#joystick{position:fixed;width:112px;height:112px;transform:translate(-50%,-50%);border-radius:50%;border:2px solid #ffffff80;background:#ffffff18;pointer-events:none;box-shadow:0 0 0 1px #1f252533;z-index:3}#joystick .knob{position:absolute;left:50%;top:50%;width:46px;height:46px;transform:translate(-50%,-50%);border-radius:50%;background:#ffffffb8;box-shadow:0 2px 9px #0002}#loading{position:fixed;inset:0;display:grid;place-items:center;background:#405363;font-size:13px;z-index:5}[hidden]{display:none!important}@media(max-width:600px){header{left:18px;top:max(18px,env(safe-area-inset-top))}h1{font-size:17px}.hint{font-size:11px}}
+ a.other-test{position:fixed;right:16px;top:max(18px,env(safe-area-inset-top));z-index:4;color:#edf2f6;text-decoration:none;font-size:11px;padding:12px;border:1px solid #ffffff45;border-radius:10px;background:#405363dc}header{max-width:calc(100% - 125px)}</style>
+</head>
+<body>
+ <a class="other-test" href="../run-test/?v=walk-1">Run test</a>
+ <header><h1>Walking test</h1><p class="hint touch-hint">Left side: drag to walk · Push farther for speed<br>Right side: look around</p><p class="hint desktop-hint">WASD / arrows: move · Shift: full walking speed<br>Drag: look around · Scroll: zoom</p></header>
+ <div id="status" aria-live="polite">Standing</div><div id="loading" role="status">Preparing your avatar…</div>
+ <script>/*WALK_TEST_BUNDLE*/</script>
+</body>
+</html>

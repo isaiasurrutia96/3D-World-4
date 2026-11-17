@@ -10,18 +10,19 @@ function footInfo(leg){
  return {low,probe:leg.foot.localToWorld(new T.Vector3().fromBufferAttribute(p,leg.motion.probe)),pitch:leg.foot.rotation.x+T.MathUtils.degToRad(leg.toeBend)};
 }
 export class PlayableRun{
- constructor(){
-  this.motion=new MatchedMotion({thighSwingGain:.94});this.legs=this.motion.legs;this.rig=this.motion.rig;this.handLayer=this.motion.handLayer;this.cache=createPoseCache(this.motion);
+ constructor({motionFactory=()=>new MatchedMotion({thighSwingGain:.94}),cycle=CYCLE,contactAt=null}={}){
+  this.motion=motionFactory();this.legs=this.motion.legs;this.rig=this.motion.rig;this.handLayer=this.motion.handLayer;this.cache=createPoseCache(this.motion);this.cycle=cycle;
   this.samples=Array.from({length:77},(_,f)=>{this.motion.setFrame(f);this.cache.capture(f);return this.legs.map(footInfo);});
   const minima=this.legs.map((_,i)=>Math.min(...this.samples.map(s=>s[i].low)));
   this.contacts=this.samples.map((s,f)=>{
+   if(contactAt)return contactAt(f);
    const candidates=[0,1].filter(i=>this.samples[mod(f-1,77)][i].probe.z-this.samples[(f+1)%77][i].probe.z>.012&&s[i].low<minima[i]+.13&&s[i].low<=s[1-i].low+.004&&s[i].pitch>-.3&&s[i].pitch<1.4);
    return candidates.length?candidates[0]:-1;
   });
   const steps=this.samples.map((s,f)=>{const i=this.contacts[f];return i>=0&&this.contacts[(f+1)%77]===i?Math.max(.001,s[i].probe.z-this.samples[(f+1)%77][i].probe.z):null;});
   const valid=steps.filter(v=>v!==null),average=valid.reduce((a,b)=>a+b,0)/valid.length;
   if(!Number.isFinite(average))throw Error('No source foot contacts found');
-  this.track=[0];steps.forEach(v=>this.track.push(this.track.at(-1)+(v??average)));this.stride=this.track[77];this.maxSpeed=this.stride/CYCLE;
+  this.track=[0];steps.forEach(v=>this.track.push(this.track.at(-1)+(v??average)));this.stride=this.track[77];this.maxSpeed=this.stride/cycle;
   this.heights=this.samples.map((s,f)=>this.contacts[f]<0?null:-s[this.contacts[f]].low);
   for(let f=0;f<77;f++)if(this.heights[f]===null){let a=1,b=1;while(this.contacts[mod(f-a,77)]<0)a++;while(this.contacts[(f+b)%77]<0)b++;const t=a/(a+b);this.heights[f]=T.MathUtils.lerp(-this.samples[mod(f-a,77)][this.contacts[mod(f-a,77)]].low,-this.samples[(f+b)%77][this.contacts[(f+b)%77]].low,t)+.02*Math.sin(Math.PI*t);}
   this.root=new T.Group();this.root.add(this.motion.root);this.position=new T.Vector3();this.velocity=new T.Vector3();this.speed=0;this.facing=0;this.phase=0;this.activity=0;this.runBlend=0;this.pendingTravel=0;this.intentAmount=0;this.anchor=null;this.plantKey=null;this.steps=0;
