@@ -1,0 +1,41 @@
+{
+  "repository": "n64decomp/sm64",
+  "revision": "9921382a68bb0c865e5e45eb594d9c64db59b1af",
+  "files_sha256": {
+    "actors/mario/model.inc.c": "226ed415bb0d6eaffbde76a5274e7983f2df5d44e03db0987e9a8ff818c718cc",
+    "assets/anims/anim_48.inc.c": "8666b39539b7a88150b129118783376abefa1a63ff1247224c128bcd2407720d",
+    "actors/mario/geo.inc.c": "5c1190829eb3ddaeef3b7209afd47c1182d2db539ec5b977755380001b0db0e0"
+  },
+  "animation": "MARIO_ANIM_WALKING (0x48)",
+  "frame_count": 77,
+  "game_fps": 30,
+  "reference_forward_speed": 12,
+  "animation_frames_per_game_frame": 3,
+  "render_note": "Original geometry and walk joint channels. Face texture graphics are simplified for this reference.",
+  "character": "Mario, Nintendo",
+  "render": "New side-view in-place animation reference; not gameplay footage",
+  "animated_joints": 20,
+  "visible_body_parts": 15,
+  "triangles": 752,
+  "translation_multiplier": 1,
+  "video": {
+    "width": 720,
+    "height": 900,
+    "fps": 60,
+    "cycles": 5,
+    "duration_seconds": 4.283333,
+    "codec": "H.264",
+    "default_playback_rate": 0.5
+  },
+  "gif": {
+    "width": 540,
+    "height": 675,
+    "playback_rate": 0.5,
+    "loop": true
+  },
+  "sha256": {
+    "poster.jpg": "c79ed9181f364c359dc6d7c396e9d775dd86ddadb3e5d4e99635362b60a3569d",
+    "walk-slow.gif": "d22d36392ee6e2eb60927ed3cc0dea92fb00b17654c92471caade70c1c0a63b7",
+    "walk.mp4": "8f0d33539ad50bc10540aae4a7db73b33d49494d707475cb4844d284a0771e60"
+  }
+}

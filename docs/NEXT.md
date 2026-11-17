@@ -15,6 +15,10 @@ Recorded 17 November 2026.
    analogue floating joystick and independent right-side camera touch.
    This stage covers the flat slab; terrain, jumping and the remaining SM64
    actions still need development. Keep the frozen checkpoint intact.
+   The owner rejected the current walking look: excessive hip drops and knee
+   bends resemble descending imaginary stairs. Numeric foot-locking checks
+   alone do not establish a convincing gait. Use the original SM64 walk-pose
+   reference at `/references/sm64-walk/` before rebuilding the walk cycle.
 
 ## Owner favourite (remember)
 
