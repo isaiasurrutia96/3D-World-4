@@ -13,6 +13,11 @@ The source of truth for Claude's movement work. Codex builds all visuals
 4. Goal feel: an athletic person fully in tune with their body; every
    movement purposeful. No clumsy leaning or tripping.
 5. Code lives in `motion-core/`, separate from Codex's lab files.
+7. Controls must work the same on every device: keyboard, phone touch, and
+   game controllers (Xbox, PlayStation, Nintendo Switch) through the
+   browser's Gamepad API, with real analog stick strength. The movement code
+   only takes a direction and a strength, so every device feeds it the same
+   way; a shared input layer (built later) will translate each device.
 6. Codex is building the universal test lab and will save it as a
    checkpoint; Claude then connects this code to it (a marker to steer
    during sections 1 to 3).
