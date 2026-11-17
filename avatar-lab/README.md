@@ -1,5 +1,7 @@
 # Assembled avatar
 
+Saved as **Checkpoint 2** on 17 November 2026: `avatar-checkpoint-2-2026-11-17`. [Frozen preview](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/avatar-2/) · [Manifest](../checkpoints/avatar-2/CHECKPOINT.json).
+
 The saved clay avatar, assembled with the latest rounded feet, fitted calf sockets, and hand/foot movement from the two labs. Open `/avatar-lab/` on desktop or phone. Use Hands and Feet to switch controls, Play motion to animate both, or Rest all to restore the saved shapes. Drag to orbit, pinch/scroll to zoom, and use Angle, Front, Side, Back or Top.
 
 `src/avatar.js` reuses `createApprovedAvatar` without editing the approved checkpoint. All 11 upper-body, thigh, arm and hand meshes keep their geometry, material, poses and relative transforms. Only the original calves and feet are replaced. The model still has exactly 15 visible body meshes, with no extra joint balls. Feet retain their authored size; the opposite foot is mirrored so both big toes face inward.
