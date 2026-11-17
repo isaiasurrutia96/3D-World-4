@@ -7,13 +7,41 @@
  */
 
 import { Color, Group, Scene, Vector3 } from 'three';
-import { BLOCK, addMergedBlocks } from './voxels.ts';
+import { BLOCK, addBlocks, addMergedBlocks } from './voxels.ts';
 import { Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
 
 const SIZE = 14;
 const GRASS = '#93d91e';
 const DIRT = '#da965a';
 const STONE = '#8f8a84';
+
+/**
+ * THE BUILD RULE. Every material is set once and behaves the same everywhere:
+ *  - 'merged': anything large and flat (grass, dirt) or a big, regular,
+ *    perfectly shaped object (tree trunk) is one solid shape, rounded only on
+ *    its outside edges.
+ *  - 'blocks': natural detail (stone, rock, leaves, bush) shows every block
+ *    as its own rounded cube.
+ * New materials get a setting here when they are added to the world.
+ * (Flowers are built separately and are left exactly as approved.)
+ */
+const MATERIAL_STYLE: Record<string, 'merged' | 'blocks'> = {
+  grass: 'merged',
+  dirt: 'merged',
+  'tree-trunk': 'merged',
+  stone: 'blocks',
+  rock: 'blocks',
+  'tree-leaves': 'blocks',
+  bush: 'blocks',
+};
+
+function build(
+  root: Group, list: Array<[number, number, number, string]>, material: string, size = BLOCK,
+  restsOn?: (x: number, y: number, z: number) => boolean,
+): void {
+  if (MATERIAL_STYLE[material] === 'blocks') addBlocks(root, list, material, size);
+  else addMergedBlocks(root, list, material, size, restsOn);
+}
 
 /** A fixed pseudo-random number 0..1 for a grid spot. */
 function hash(x: number, z: number): number {
@@ -59,9 +87,9 @@ export function buildIsland(scene: Scene): { root: Group; centre: Vector3 } {
     }
   }
 
-  addMergedBlocks(root, grass, 'grass');
-  addMergedBlocks(root, dirt, 'dirt');
-  addMergedBlocks(root, stone, 'stone');
+  build(root, grass, 'grass');
+  build(root, dirt, 'dirt');
+  build(root, stone, 'stone');
   addNature(root);
   scene.add(root);
   return { root, centre: new Vector3(0, 0.2, 0) };
@@ -131,8 +159,8 @@ function addNature(root: Group): void {
       }
     }
   }
-  addMergedBlocks(root, trunk, 'tree-trunk', SMALL, onGround, true);
-  addMergedBlocks(root, leaves, 'tree-leaves', SMALL);
+  build(root, trunk, 'tree-trunk', SMALL, onGround);
+  build(root, leaves, 'tree-leaves', SMALL);
 
   // ---- Bush: a small rounded mound of leafy small blocks, back right ----
   const bush: Cell[] = [];
@@ -146,7 +174,7 @@ function addNature(root: Group): void {
       }
     }
   }
-  addMergedBlocks(root, bush, 'bush', SMALL, onGround, true);
+  build(root, bush, 'bush', SMALL, onGround);
 
   // ---- Rock: a lumpy grey cluster of small blocks, front left ----
   const rock: Cell[] = [];
@@ -155,7 +183,7 @@ function addNature(root: Group): void {
     [0, 1, 0], [1, 1, 0], [1, 1, 1], [2, 1, 1], [1, 2, 1],
   ];
   for (const [dx, dy, dz] of rockShape) rock.push([-9 + dx, TOP_SMALL + dy, 6 + dz, '#9a958d']);
-  addMergedBlocks(root, rock, 'rock', SMALL, onGround, true);
+  build(root, rock, 'rock', SMALL, onGround);
 
   // ---- Flowers: three small flowers near the middle, in tiny blocks ----
   const stems: Cell[] = [];
@@ -170,8 +198,8 @@ function addNature(root: Group): void {
     centres.push([fx, head, fz, '#f2c230']);
     for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) petals.push([fx + dx, head, fz + dz, colour]);
   }
-  addMergedBlocks(root, stems, 'flower-stems', TINY, (_x, y) => y < TOP_TINY);
-  addMergedBlocks(root, centres, 'flower-centres', TINY);
+  addMergedBlocks(root, stems, 'flower-stems', TINY, (_x, y) => y < TOP_TINY, true);
+  addMergedBlocks(root, centres, 'flower-centres', TINY, undefined, true);
   // Each petal is its own group so neighbouring flowers never merge.
-  addMergedBlocks(root, petals, 'flower-petals', TINY);
+  addMergedBlocks(root, petals, 'flower-petals', TINY, undefined, true);
 }

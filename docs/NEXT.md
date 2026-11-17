@@ -24,3 +24,14 @@ Recorded 17 November 2026.
 
 5. The owner **really likes the banked NASCAR-style oval** (Oval Lab,
    `src/oval.ts`, from 3D-WORLD-3 commit 17d170b). Keep it; build on it.
+
+## Build rule for blocks (approved 17 Nov 2026)
+
+6. Every material has one fixed style, used everywhere in the world:
+   - **Merged** (one solid shape, rounded only on outside edges): large and
+     flat materials (grass, dirt) and big, regular, perfectly shaped objects
+     (tree trunk).
+   - **Separate blocks** (each block its own rounded cube): natural detail
+     (stone, rock, leaves, bush).
+   - Flowers stay exactly as approved.
+   - New materials get a style once, in `MATERIAL_STYLE` in `src/island.ts`.

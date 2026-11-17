@@ -19,15 +19,20 @@ export function shade(x: number, y: number, z: number): number {
 
 const material = new MeshStandardMaterial({ color: '#ffffff', roughness: 0.86, metalness: 0 });
 
-/** Adds blocks [x, y, z, colour] (grid steps; block x spans x..x+1). */
-export function addBlocks(root: Group, list: Array<[number, number, number, string]>, name: string): void {
+/**
+ * Adds separate blocks [x, y, z, colour] (grid steps; block x spans x..x+1),
+ * each its own rounded cube, the same look at every size.
+ */
+export function addBlocks(
+  root: Group, list: Array<[number, number, number, string]>, name: string, size = BLOCK,
+): void {
   if (list.length === 0) return;
-  const geometry = new RoundedBoxGeometry(BLOCK, BLOCK, BLOCK, 2, 0.035);
+  const geometry = new RoundedBoxGeometry(size, size, size, 2, 0.035 * (size / BLOCK));
   const mesh = new InstancedMesh(geometry, material, list.length);
   const matrix = new Matrix4();
   const tint = new Color();
   list.forEach(([x, y, z, colour], i) => {
-    matrix.makeTranslation((x + 0.5) * BLOCK, (y + 0.5) * BLOCK, (z + 0.5) * BLOCK);
+    matrix.makeTranslation((x + 0.5) * size, (y + 0.5) * size, (z + 0.5) * size);
     mesh.setMatrixAt(i, matrix);
     mesh.setColorAt(i, tint.set(colour).multiplyScalar(shade(x, y, z)));
   });
@@ -47,8 +52,8 @@ export function addMergedBlocks(
   root: Group, list: Array<[number, number, number, string]>, name: string, size = BLOCK,
   /** Solid ground these blocks sit on: they sit flat and square on it. */
   restsOn?: (x: number, y: number, z: number) => boolean,
-  /** Also fill side faces between blocks (for objects with stepped shapes). */
-  fillSides = false,
+  /** Thin cores where blocks touch only along an edge (kept for the flowers). */
+  edgeCores = false,
 ): void {
   if (list.length === 0) return;
   const cells = new Map<string, Color>();
@@ -84,17 +89,7 @@ export function addMergedBlocks(
       const exposed = !has(side.n);
       // Only the faces under and over a neighbour are needed to fill gaps
       // (where a block's rounded side edges sit on a square-edged block).
-      if (!exposed && side.n[1] === 0 && !fillSides) continue;
-      // A side face between two blocks of the group: only worth drawing where
-      // the neighbour has a block on top (its top edge there is square while
-      // ours may be rounded, leaving a sliver). It sits exactly on the shared
-      // plane, so it only shows through that sliver.
-      if (!exposed && side.n[1] === 0) {
-        const nx = x + side.n[0];
-        const nz = z + side.n[2];
-        if (!at(nx, y + 1, nz) && !at(nx, y - 1, nz)) continue;
-      }
-      const sideFill = !exposed && side.n[1] === 0;
+      if (!exposed && side.n[1] === 0) continue;
       const A = side.n.findIndex((v) => v !== 0);
       const sa = side.n[A];
       const [B, C] = [0, 1, 2].filter((i) => i !== A);
@@ -157,7 +152,7 @@ export function addMergedBlocks(
           // Snapped so edges shared by two blocks land on exactly the same
           // numbers, leaving no hairline crack between them.
           const snap = (v: number): number => (Math.round(v * 1e5) / 1e5) * size;
-          const pos = [0, 1, 2].map((i) => (core[i] + n[i] * R) * (sideFill && i === A ? 1 : k));
+          const pos = [0, 1, 2].map((i) => (core[i] + n[i] * R) * k);
           positions.push(snap(x + 0.5 + pos[0]), snap(y + 0.5 + pos[1]), snap(z + 0.5 + pos[2]));
           normals.push(n[0], n[1], n[2]);
           colours.push(tint.r, tint.g, tint.b);
@@ -228,7 +223,7 @@ export function addMergedBlocks(
     }
   };
   const w = 0.55 * R;
-  for (const [key, tint] of cells) {
+  if (edgeCores) for (const [key, tint] of cells) {
     const [x, y, z] = key.split(',').map(Number);
     // Each pair once: look only in the + direction of the first axis.
     for (const [axisA, axisB] of [[0, 2], [0, 1], [2, 1]]) {
