@@ -12,7 +12,7 @@ import {createCharacterRig} from '../../avatar/src/reference/PlayerModel.ts';
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url))),foot=createFootShape();
 const g=foot.geometry,p=g.attributes.position,size=g.boundingBox.getSize(foot.position.clone());
 assert.ok([size.x-FOOT_SIZE.width,size.y-FOOT_SIZE.height].every(d=>Math.abs(d)<1e-6),'Foot width or height changed');
-assert.ok(size.z>FOOT_SIZE.length&&size.z<FOOT_SIZE.length+.0141,'Toe extension is not slight');
+assert.ok(size.z>FOOT_SIZE.length&&size.z<FOOT_SIZE.length+.0221,'Toe extension is not slight');
 const baseline=createFootShape(undefined,{toeExtension:0}),bp=baseline.geometry.attributes.position;
 assert.equal(bp.count,p.count);let medial=-Infinity,lateral=-Infinity;
 for(let i=0;i<p.count;i++){

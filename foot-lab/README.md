@@ -1,6 +1,6 @@
 # Foot Lab
 
-A separate foot-shape study for the approved clay avatar. It keeps the measured original foot's width and height, with a broader rounded front, a softly narrowed heel, a continuous raised ankle area and a flatter sole with rolled edges. A smooth medial toe extension (up to 14 mm) suggests the big-toe side. The foot remains one closed surface in the same clay material.
+A separate foot-shape study for the approved clay avatar. It keeps the measured original foot's width and height, with a broader rounded front, a softly narrowed heel, a continuous raised ankle area and a flatter sole with rolled edges. A smooth medial toe extension (up to 22 mm) gives the big-toe side a slightly more pointed, softly rounded tip. The foot remains one closed surface in the same clay material.
 
 Open `/foot-lab/` and drag to orbit, pinch/scroll to zoom, or use Angle, Front, Side, Top and Sole. Floor toggles the inspection floor. Phone controls are supported.
 

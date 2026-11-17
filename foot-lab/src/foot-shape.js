@@ -8,7 +8,7 @@ const originalSize=original.boundingBox.getSize(new T.Vector3()).multiply(new T.
 export const FOOT_SIZE=Object.freeze({width:originalSize.x,height:originalSize.y,length:originalSize.z});
 const signedPower=(x,p)=>Math.sign(x)*Math.pow(Math.abs(x),p);
 
-export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b2a6',roughness:.78,metalness:0}),{toeExtension=.014}={}){
+export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b2a6',roughness:.78,metalness:0}),{toeExtension=.022}={}){
  const source=new T.SphereGeometry(1,128,96),p=source.attributes.position;
  for(let i=0;i<p.count;i++){
   const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
@@ -29,11 +29,11 @@ export function createFootShape(material=new T.MeshStandardMaterial({color:'#b9b
  source.scale(FOOT_SIZE.width/size.x,FOOT_SIZE.height/size.y,FOOT_SIZE.length/size.z);
  source.computeBoundingBox();
  source.translate(-source.boundingBox.getCenter(new T.Vector3()).x,-source.boundingBox.min.y,.09-source.boundingBox.getCenter(new T.Vector3()).z);
- // A small, continuous forward extension on the medial side suggests the
- // big toe without introducing a separate toe or changing the heel/sole.
+ // A slightly narrower, softly tapered extension gives the medial big-toe
+ // tip more definition without introducing a separate toe or a sharp point.
  for(let i=0;i<p.count;i++){
   const x=p.getX(i),z=p.getZ(i),front=T.MathUtils.smoothstep(z,.18,.30);
-  p.setZ(i,z+toeExtension*front*Math.exp(-Math.pow((x+.055)/.08,2)));
+  p.setZ(i,z+toeExtension*front*Math.exp(-Math.pow((x+.055)/.064,2)));
  }
  source.deleteAttribute('normal');source.deleteAttribute('uv');
  const geometry=mergeVertices(source,1e-6),faces=[];
