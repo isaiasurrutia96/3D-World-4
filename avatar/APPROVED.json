@@ -1,0 +1,42 @@
+{
+  "name": "Our approved clay avatar",
+  "approved": true,
+  "approved_on": "2026-11-17",
+  "checkpoint": "avatar-approved-2026-11-17",
+  "preview_commit": "e0232300ade6b4a0f7452adb944bb497ffa88e5a",
+  "preview_url": "https://isaiasurrutia96.github.io/3D-WORLD-3/avatar-preview/?v=e023230",
+  "viewer_sha256": "543f56020210ee26e948263abeb8b471a6bfe2b5f4f8a5b26dac6d01f6eef81f",
+  "portable_build_sha256": "cee50b355f90984953e7b285cffa7fc471445a2520550ad20fa1f6315df3d81d",
+  "validation": {
+    "portable_source_matches_approved_geometry_transforms_and_materials": true,
+    "mesh_count": 15,
+    "node_count": 34
+  },
+  "design": {
+    "color": "#b9b2a6",
+    "forearms": "rounded cylinders",
+    "hands": "uniformly enlarged, relaxed finger curl, palms inward, thumbs forward",
+    "hand_enlargement_factor": 1.113,
+    "socket_depth_m": 0.006,
+    "socket_radial_clearance_m": 0.00035
+  },
+  "sha256": {
+    "README.md": "dc3bdf3fbbf4e446aad8035fd5f8d1d5bd22b6df20e65e5b2058c74a921aeb59",
+    "build.mjs": "6130fe9a7977b631d8bbfb93df7910559449e6e47dbd21d0e1a536eee3e3c41d",
+    "index.html": "543f56020210ee26e948263abeb8b471a6bfe2b5f4f8a5b26dac6d01f6eef81f",
+    "package-lock.json": "ee8d63422739a16e84f8ffabc07a3bfb70c71c8b12341c2119e4c3905da7b035",
+    "package.json": "5070e63293b29b07938b7ef30394833a618e80d301548de27fbf945ce968b47a",
+    "src/avatar-viewer/main.js": "6606a3c53c79c86212e9c6e52208726ee5a78c22e387e0542f54223afd6e0087",
+    "src/avatar-viewer/shell.html": "282990ac28c86ff3907c022a7cd1e50bf99cde882e63aeced90b0ea9f3bdf209",
+    "src/hand-study/assembly.js": "a931c87ad8b14249f20a680bb3112616f2260b4249be2697f621b0c5518eccc9",
+    "src/hand-study/ease-digit-sweep.js": "029a24a67cb949d54f5592467c6e8a75b518fcb99914199684cc9f1f1acbca33",
+    "src/hand-study/fit-socket.js": "83920ec28dbe806f054260788e5ab6b69e784fe64c0368fc6630f748a62d02c9",
+    "src/hand-study/hand.js": "9da9c72cd97b75d4f7b525a590d94757d5c49c5aa29c88840ca028f72ae5e2dd",
+    "src/hand-study/lengthen-digits.js": "5822568132beb054d495da419cb9f08ddb892dd96f9619e7905d13cf7dc301be",
+    "src/hand-study/reference-outline.js": "4da4457387cdbbf2b8d678670547c4f10a3fb2017888ac9c620dedc24080b2c4",
+    "src/hand-study/resting-digits.js": "1825634f09f1f637c04fcc97336ca0cb99aed665912c96a9274b975011523660",
+    "src/hand-study/soften-thumb.js": "9cc5e0ef1e6a53930840c25bcf6c41162779967ecf9ad0bc50b0fd800c79df25",
+    "src/hand-study/surface.js": "12ee4d8545acc787536d611ef18e95d5f5f9e2435197cf90e162c689623ccf5a",
+    "src/reference/PlayerModel.ts": "91fa642b962d78c1e0e294b1f7bdb1b77d932df0bfe5ece4034de4c1ba72c470"
+  }
+}
