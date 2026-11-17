@@ -28,7 +28,7 @@ export function createFootMotion(foot,calf){
  }
  foot.geometry.boundingSphere=new T.Sphere(new T.Vector3(0,.15,.1),.6);
  setPose();
- return {setPose,rear,pivot,probe,restPositions:rest,get lowest(){return lowest;},anklePoint(out){return out.copy(pivot).applyMatrix4(rear);}};
+ return {setPose,rear,pivot,probe,restPositions:rest,restNormals:normals,get lowest(){return lowest;},anklePoint(out){return out.copy(pivot).applyMatrix4(rear);}};
 }
 
 // The calf shaft is one rigid bone. Only the original rounded socket lip
@@ -38,7 +38,7 @@ export function createSocketMotion(calf,referenceCalfPosition){
  const {segments,cavityVertexCount,lipRings,lipTangents}=g.userData,rim=cavityVertexCount-segments,join=cavityVertexCount+(lipRings-1)*segments;
  const relative=new T.Matrix4(),previous=new T.Matrix4(),translation=new T.Matrix4().makeTranslation(...referenceCalfPosition.toArray()),normalMatrix=new T.Matrix3(),linear=new T.Matrix3(),v=new T.Vector3(),start=new T.Vector3(),end=new T.Vector3(),tangent=new T.Vector3(),normal=new T.Vector3(),generated=new Float32Array(n.array.length);let initialized=false;
  p.setUsage(T.DynamicDrawUsage);n.setUsage(T.DynamicDrawUsage);
- function update(foot,rear){
+ function update(foot,rear,normalBlend){
   calf.updateWorldMatrix(true,false);foot.updateWorldMatrix(true,false);
   relative.copy(calf.matrixWorld).invert().multiply(foot.matrixWorld).multiply(rear).multiply(translation);
   if(initialized&&relative.elements.every((v,i)=>Math.abs(v-previous.elements[i])<1e-8))return;previous.copy(relative);initialized=true;
@@ -49,10 +49,16 @@ export function createSocketMotion(calf,referenceCalfPosition){
    start.fromBufferAttribute(p,rim+j);end.fromArray(rest,(join+j)*3);tangent.fromArray(lipTangents[j]).applyMatrix3(linear);
    for(let k=1;k<lipRings;k++){const t=k/lipRings,u=1-t;v.copy(start).multiplyScalar(u*u*u+3*u*u*t).addScaledVector(tangent,3*u*u*t).addScaledVector(end,3*u*t*t+t*t*t);v.y-=.045*3*u*t*t;p.setXYZ(cavityVertexCount+(k-1)*segments+j,v.x,v.y,v.z);}
   }
-  g.computeVertexNormals();generated.set(n.array);
+  // Live playback already supplies cached smooth normals. During a short
+  // start/stop blend, blend those with rest normals instead of rebuilding
+  // and filtering the complete surface again. Offline/lab posing stays exact.
+  const cachedNormals=Number.isFinite(normalBlend);
+  if(!cachedNormals)g.computeVertexNormals();generated.set(n.array);
   for(let k=1;k<lipRings;k++)for(let j=0;j<segments;j++){
-   let x=0,y=0,z=0;for(let d=-8;d<=8;d++){const i=(cavityVertexCount+(k-1)*segments+(j+d+segments)%segments)*3,w=kernel[d+8];x+=generated[i]*w;y+=generated[i+1]*w;z+=generated[i+2]*w;}
-   normal.set(x,y,z).normalize().lerp(v.fromArray(normals,(join+j)*3),T.MathUtils.smoothstep(k/lipRings,.65,1)).normalize();n.setXYZ(cavityVertexCount+(k-1)*segments+j,normal.x,normal.y,normal.z);
+   const at=(cavityVertexCount+(k-1)*segments+j)*3;
+   if(cachedNormals)normal.fromArray(generated,at).lerp(v.fromArray(normals,at),normalBlend).normalize();
+   else{let x=0,y=0,z=0;for(let d=-8;d<=8;d++){const i=(cavityVertexCount+(k-1)*segments+(j+d+segments)%segments)*3,w=kernel[d+8];x+=generated[i]*w;y+=generated[i+1]*w;z+=generated[i+2]*w;}normal.set(x,y,z).normalize();}
+   normal.lerp(v.fromArray(normals,(join+j)*3),T.MathUtils.smoothstep(k/lipRings,.65,1)).normalize();n.setXYZ(cavityVertexCount+(k-1)*segments+j,normal.x,normal.y,normal.z);
   }
   for(let i=0;i<cavityVertexCount;i++){normal.fromArray(normals,i*3).applyMatrix3(normalMatrix).normalize();n.setXYZ(i,normal.x,normal.y,normal.z);}
   n.array.set(normals.subarray(join*3),join*3);p.needsUpdate=true;n.needsUpdate=true;

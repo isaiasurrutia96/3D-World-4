@@ -4,9 +4,16 @@ import {readFile,mkdir} from 'node:fs/promises';
 import {createServer} from 'node:http';
 import {resolve} from 'node:path';
 import {chromium} from 'playwright';
+import {Vector3} from 'three';
+import {sourcePose} from '../references/avatar-walk/retarget.js';
 import {handBindPlugin} from '../references/motion-compare/hand-bind.mjs';
 await build({entryPoints:['run-test/controller.js'],bundle:true,platform:'node',format:'esm',plugins:[handBindPlugin()],outfile:'/tmp/run-test-unit.mjs'});
 const {PlayableRun}=await import('/tmp/run-test-unit.mjs');
+// Compare real source work with the cached playback on the same CPU.
+const bench=new PlayableRun(),sourceTimes=[],cachedTimes=[];
+for(let i=0;i<55;i++){let t=performance.now();bench.motion.setFrame(i%77);if(i>9)sourceTimes.push(performance.now()-t);t=performance.now();bench.cache.sample(i%77);if(i>9)cachedTimes.push(performance.now()-t);}
+const mean=a=>a.reduce((x,y)=>x+y)/a.length,sourceMs=mean(sourceTimes),cachedMs=mean(cachedTimes);assert(cachedMs<sourceMs*.65,'Cached playback must substantially reduce CPU work');assert(bench.cache.bytes()<40*1024*1024,'Cache must fit the phone memory budget');console.log('pose performance',JSON.stringify({sourceMs,cachedMs,ratio:cachedMs/sourceMs,cacheMB:bench.cache.bytes()/1048576}));
+const thighRatios=bench.legs.map((l,j)=>{const actual=[],source=[];for(let f=0;f<77;f++){const v=new Vector3(0,-1,0).applyQuaternion(bench.cache.frames[f].nodes[2+j*3].q),p=sourcePose(f),d=p[l.bones.knee].clone().sub(p[l.bones.hip]);actual.push(Math.atan2(v.z,-v.y));source.push(Math.atan2(d.z,-d.y));}return(Math.max(...actual)-Math.min(...actual))/(Math.max(...source)-Math.min(...source));});thighRatios.forEach(r=>assert(r>.935&&r<.945,'Thigh swing must be only 6% smaller'));console.log('thigh amplitude ratios',thighRatios);
 for(const scenario of ['straight','turn','reverse']){
  const p=new PlayableRun();let hipSum=0,hipCount=0;
  for(let i=0;i<180;i++){
@@ -20,6 +27,7 @@ const server=createServer(async(req,res)=>{try{let p=new URL(req.url,'http://loc
 const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 try{
  const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(`http://127.0.0.1:${server.address().port}/run-test/`);await page.waitForFunction(()=>window.runTestReady,undefined,{timeout:60000});
+ assert.equal(await page.evaluate(()=>movement.scene.background.getHexString()),'405363');assert.equal(await page.evaluate(()=>movement.renderer.shadowMap.enabled),false);
  const cdp=await page.context().newCDPSession(page),touch=async(type,points)=>cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points.map(([id,x,y])=>({id,x,y,radiusX:1,radiusY:1,force:1}))});
  await touch('touchStart',[[1,90,650]]);await page.waitForFunction(()=>movement.input.stick!==null);assert.deepEqual(await page.evaluate(()=>[movement.input.stick.x,movement.input.stick.y]),[90,650]);
  await touch('touchMove',[[1,90,570]]);await page.waitForFunction(()=>movement.player.speed>2&&movement.player.phase>.1,undefined,{timeout:60000});
