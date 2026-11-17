@@ -2,12 +2,22 @@
   "sourceAnimation": "Same original SM64 animation 0x48 as the existing Mario reference",
   "revision": "9921382a68bb0c865e5e45eb594d9c64db59b1af",
   "avatarCheckpoint": "avatar-checkpoint-2-2026-11-17",
-  "sync": "Both views burned into a single video, source frame f paired with source frame f, no phase offsets. One shared player controls both.",
+  "sync": "Each angle uses a single composite video pairing frame f with frame f; camera switching preserves time, pause state and playback rate. Avatar refinements: forward lean, closer arm swing and articulated toe push-off.",
   "sourceFrames": 77,
   "cycleSeconds": 0.8555555555555555,
   "sampledPoses": 154,
-  "maxDirectionError": 1.0053497077208614e-15,
+  "maxLegDirectionError": 7.217200222535609e-16,
+  "maxArmSagittalErrorRadians": 1.3322676295501878e-15,
+  "meanArmSpreadRatio": 0.33615605866087017,
   "maxBoneError": 2.7755575615628914e-16,
+  "maxToeBendDegrees": [
+    30,
+    30
+  ],
+  "forwardLeanDegrees": [
+    7.591736634339842,
+    8.41790850562583
+  ],
   "heightScale": 0.020666666532174135,
   "measuredBones": [
     {
@@ -21,10 +31,16 @@
       "lower": 0.3859999947547912
     }
   ],
-  "mode": "Same source frame for both sides and all limbs; original hip-bounce curve; comparison in place, without a locomotion or foot-lock solver.",
+  "mode": "Same source timing and leg poses, with forward torso lean and arms tucked closer to the sides while keeping their forward/back rhythm. Ball-of-foot bend during push-off; original hip-bounce curve. In-place comparison before locomotion integration.",
   "sha256": {
-    "comparison.mp4": "d07371862785476085c398bc648f50684818fd46eb236053f851c561dd16da5a",
-    "comparison-slow.gif": "83ae18026aef18082a143cf89abaee69f2361c3188d569658682a7a1410309ea",
-    "poster.jpg": "fbd427926e5412fc3ef54627414d34ee3f5b85d12e1abcd9f83fed759c0ba654"
+    "side.mp4": "8ccf5afda17ebd540f3dd5c06fcf8efa20cead75c601c9a438d03efb4ac8b7cc",
+    "side-slow.gif": "ca5de4e0d52f382798e1933277f703edd7355404242b529881d46ef0e2c186e3",
+    "side-poster.jpg": "d2f591bd916fc3d3be36e06fa71a1395f6825ec8660a92623bd87f7580dc0187",
+    "front.mp4": "6f77203d87681d1c7422b1fcf75ebcb60925af4d8d4d16388428f3c35a804d2b",
+    "front-slow.gif": "526e714bd3fdbca37a90133a221dc0f2dacb3ecc34b150fd23f91a66a19f4f0a",
+    "front-poster.jpg": "69dcb8d5672d97474d3ddd4b050bbaf1bdacdc8daf8818a627e9afa07e14bc95",
+    "feet.mp4": "290fa8dbad3b221f9ace15c808ed9b095754374905401b133af5576a188cb944",
+    "feet-slow.gif": "715870bf886774eff6994448322c45fb763f0208b16198d6a657f2abfc38a074",
+    "feet-poster.jpg": "0899863a790bd5451f59973939878673bcdf10e342e12c0e715ffdc9a0ae69d8"
   }
 }
