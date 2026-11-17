@@ -2,6 +2,8 @@
 
 Current avatar: **Checkpoint 2**, saved on 17 November 2026.
 
+[Open Motion Lab](https://isaiasurrutia96.github.io/3D-World-4/motion-lab/): the code-first movement test template, using one keyboard/mouse/touch/gamepad input module and Claude's unmodified motion core. It currently shows a marker, with placeholder visuals. [Motion Lab checkpoint 1](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/motion-lab-1/) preserves this working baseline.
+
 [Open Test Lab](https://isaiasurrutia96.github.io/3D-World-4/test-lab/): one workspace for the avatar, walking, running, hands, feet and world studies. View buttons sit below the model; scroll down for test controls and walking/running videos with slow playback. The avatar's athletic movement direction is saved in [AVATAR-DIRECTION.md](docs/AVATAR-DIRECTION.md).
 
 Approved lab baseline: [Test Lab checkpoint 1](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/test-lab-1/), with its own frozen tests and videos. Restore editable sources from tag `test-lab-checkpoint-1-2026-11-17`.

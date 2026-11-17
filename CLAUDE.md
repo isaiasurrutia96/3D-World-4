@@ -22,8 +22,10 @@
     loading stage and browser theme color. Keep archived checkpoints intact.
 15. Avatar motion should feel coordinated and athletic, with deliberate
     weight placement and balance. See `docs/AVATAR-DIRECTION.md`.
-16. Use `/test-lab/` as the universal workspace for future tests by Codex and
-    Claude Code. Reuse its off-white responsive toolbar, wide isometric view,
-    neutral-grey floor and Inspection toggle. Integrate via `src/test-lab-scene.ts`;
-    see `test-lab/README.md`. Approved baseline: `checkpoints/test-lab-1/`,
-    tag `test-lab-checkpoint-1-2026-11-17`. Keep it frozen; edit the live lab for future work.
+16. Universal movement tests use `/motion-lab/`: follow `motion-lab/README.md`,
+    work code first, and keep visuals as placeholders until controls pass tests.
+    Every future page shares `motion-lab/src/page.js` and `src/input.js`; change
+    only title, section and videos. Do not edit `motion-core/` from lab work.
+17. Preserve both approved baselines: `checkpoints/test-lab-1/` for the general
+    object lab, and `checkpoints/motion-lab-1/` for the new marker/input lab.
+    Keep frozen files and checkpoint tags unchanged; continue work on live pages.
