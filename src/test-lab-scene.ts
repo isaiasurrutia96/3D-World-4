@@ -15,7 +15,11 @@ export function installTestLabScene(options: Options): void {
   const {scene, camera, renderer, getTarget, updateControls} = options;
   const floors = options.floors ?? [];
   if (!floors.length) {
-    const size = options.floorSize ?? 30;
+    // No floor of its own: make one sized to the subject (its widest
+    // footprint × 1.6, at least 3 m), unless a size is given.
+    const subject = new Box3().setFromObject(scene);
+    const footprint = subject.isEmpty() ? 0 : Math.max(subject.max.x-subject.min.x, subject.max.z-subject.min.z);
+    const size = options.floorSize ?? Math.max(3, Math.round(footprint*1.6*10)/10);
     const floor = new Mesh(new BoxGeometry(size,.6,size), new MeshStandardMaterial());
     floor.position.y = (options.floorY ?? 0)-.3;
     floor.receiveShadow = true;

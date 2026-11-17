@@ -81,4 +81,4 @@ renderer.setAnimationLoop(() => {
 });
 (window as unknown as Record<string, unknown>).__lab = { camera, controls };
 
-installTestLabScene({scene,camera,renderer,floorY:-5,floorSize:80,getTarget:()=>controls.target,updateControls:()=>controls.update()});
+installTestLabScene({scene,camera,renderer,floorY:-5,getTarget:()=>controls.target,updateControls:()=>controls.update()});
