@@ -1,4 +1,4 @@
-import {protectPage} from './interactions.js?v=appearance-3';
+import {protectPage} from './interactions.js?v=orbit-4';
 protectPage(window);
 const $=selector=>document.querySelector(selector);
 const tests={
@@ -34,7 +34,7 @@ async function setTest(id){
  if(!tests[id])return;subject=id;ready=false;window.testLabReady=false;const token=++generation;clock=null;syncControls=()=>{};controls.replaceChildren();loading.hidden=false;loading.textContent='Preparing '+tests[id].name.toLowerCase()+'…';$('#subject').value=id;$('#subject-status').textContent=tests[id].name;
  const url=new URL(location.href);if(id==='avatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
  if(id==='walk'||id==='run')$('#clip').value=id;
- const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=universal-3';frame=node;host.replaceChildren(node);
+ const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=universal-4';frame=node;host.replaceChildren(node);
  node.onload=async()=>{
   try{
    const w=node.contentWindow,doc=w.document,style=doc.createElement('style');style.textContent='html,body{height:100%!important;overflow:hidden!important;background:#405363!important}.app{display:block!important;height:100%!important}body>header,.app>header,nav.views,.stage-hint,.hint,.other-test,#status,aside,.floor-toggle{display:none!important}#stage{height:100%!important;width:100%!important;min-height:0!important}';doc.head.append(style);
@@ -43,7 +43,7 @@ async function setTest(id){
    if(token!==generation)return;clock=frameClock(w);mirrorControls(doc);
    setInspection(inspection);
    $('#live-help').textContent=tests[id].move?'Left side: move · Right side: look around. Use a light joystick push to slow the motion.':'Drag the model to look around. Use the view buttons for a fixed angle.';
-   doc.querySelector('canvas')?.addEventListener('pointerdown',event=>{if(!tests[id].move||event.clientX>w.innerWidth/2){w.testLabScene.setIsometric(false);for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed','false');}});
+   doc.querySelector('canvas')?.addEventListener('pointerdown',event=>{if(w.testLabScene.getState().isometric)return;if(!tests[id].move||event.clientX>w.innerWidth/2)for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed','false');});
    setView('angle');clock.setActive(stageVisible);loading.hidden=true;ready=true;window.testLabReady=true;
   }catch(error){if(token===generation){loading.textContent='This test could not open. Choose Reset to try again.';console.error(error);}}
  };

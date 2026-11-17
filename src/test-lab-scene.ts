@@ -42,8 +42,8 @@ export function installTestLabScene(options: Options): void {
     orthographic.right = halfHeight*camera.aspect;
     orthographic.top = halfHeight;
     orthographic.bottom = -halfHeight;
-    orthographic.position.copy(target).addScaledVector(direction,distance);
-    orthographic.up.set(0,1,0);
+    orthographic.position.copy(camera.position);
+    orthographic.up.copy(camera.up);
     orthographic.lookAt(target);
     orthographic.updateProjectionMatrix();
     render(scene,orthographic);
