@@ -72,7 +72,11 @@ export function buildIsland(scene: Scene): { root: Group; centre: Vector3 } {
   // Top: grass, then two dirt layers, all the full 14 × 14.
   for (let x = -half; x < half; x++) {
     for (let z = -half; z < half; z++) {
-      if (!isPond(x, z)) grass.push([x, 0, z, grassColour(x, z)]);
+      if (isRaised(x, z)) {
+        // The raised tree corner: grass one block higher, dirt under it.
+        grass.push([x, 1, z, grassColour(x, z)]);
+        dirt.push([x, 0, z, DIRT]);
+      } else if (!isPond(x, z)) grass.push([x, 0, z, grassColour(x, z)]);
       dirt.push([x, -1, z, DIRT]);
       dirt.push([x, -2, z, DIRT]);
     }
@@ -120,6 +124,14 @@ function isPond(x: number, z: number): boolean {
 
 type Cell = [number, number, number, string];
 
+/** The raised corner under the tree: 5 × 5 terrain cells at the back left. */
+function isRaised(x: number, z: number): boolean {
+  return x <= -3 && z <= -3;
+}
+/** Ground height under the tree, one block above the main grass. */
+const TREE_SMALL = TOP_SMALL + 2;
+const TREE_TINY = TOP_TINY + 4;
+
 /** Below the grass top (in small-block steps) is solid ground to sit on. */
 const onGround = (_x: number, y: number): boolean => y < TOP_SMALL;
 
@@ -144,8 +156,8 @@ function addNature(root: Group): void {
   const leaves: Cell[] = [];
   const tx = -7; // small-block grid: back left of the island
   const tz = -7;
-  const trunkTop = TOP_SMALL + 7;
-  for (let y = TOP_SMALL; y < trunkTop; y++) {
+  const trunkTop = TREE_SMALL + 7;
+  for (let y = TREE_SMALL; y < trunkTop; y++) {
     for (const [dx, dz] of [[0, 0], [1, 0], [0, 1], [1, 1]]) trunk.push([tx + dx, y, tz + dz, '#7a5434']);
   }
   const cx = tx + 1;
@@ -161,7 +173,7 @@ function addNature(root: Group): void {
       }
     }
   }
-  build(root, trunk, 'tree-trunk', SMALL, onGround);
+  build(root, trunk, 'tree-trunk', SMALL, (_x, y) => y < TREE_SMALL);
 
   // Root stumps: 10.75 cm blocks, 6 each as a 3-2-1 staircase stepping away
   // from the trunk, two on each side, each next to a corner of the trunk.
@@ -170,13 +182,13 @@ function addNature(root: Group): void {
   const stair = (x: number, z: number, dx: number, dz: number): void => {
     for (let step = 0; step < 3; step++) {
       for (let h = 0; h < 3 - step; h++) {
-        roots.push([x + dx * step, TOP_TINY + h, z + dz * step, '#7a5434']);
+        roots.push([x + dx * step, TREE_TINY + h, z + dz * step, '#7a5434']);
       }
     }
   };
   for (const z of [z0, z1]) { stair(x0 - 1, z, -1, 0); stair(x1 + 1, z, 1, 0); }
   for (const x of [x0, x1]) { stair(x, z0 - 1, 0, -1); stair(x, z1 + 1, 0, 1); }
-  build(root, roots, 'tree-roots', TINY, (_x, y) => y < TOP_TINY);
+  build(root, roots, 'tree-roots', TINY, (_x, y) => y < TREE_TINY);
   build(root, leaves, 'tree-leaves', SMALL);
 
   // ---- Bush: a small rounded mound of leafy small blocks, back right ----
