@@ -45,11 +45,15 @@ const mergedMaterial = new MeshStandardMaterial({ vertexColors: true, roughness:
  */
 export function addMergedBlocks(
   root: Group, list: Array<[number, number, number, string]>, name: string, size = BLOCK,
+  /** Solid ground these blocks sit on: they sit flat and square on it. */
+  restsOn?: (x: number, y: number, z: number) => boolean,
+  /** Also fill side faces between blocks (for objects with stepped shapes). */
+  fillSides = false,
 ): void {
   if (list.length === 0) return;
   const cells = new Map<string, Color>();
   for (const [x, y, z, colour] of list) cells.set(`${x},${y},${z}`, new Color(colour));
-  const at = (x: number, y: number, z: number): boolean => cells.has(`${x},${y},${z}`);
+  const at = (x: number, y: number, z: number): boolean => cells.has(`${x},${y},${z}`) || (restsOn?.(x, y, z) ?? false);
   const R = 0.035 / BLOCK; // rounding, as a part of one block (same look at every size)
   const steps = [-0.5, -0.5 + R * 0.3, -0.5 + R, 0.5 - R, 0.5 - R * 0.3, 0.5];
   const SIDES: Array<{ n: number[]; u: number[]; v: number[] }> = [
@@ -80,7 +84,17 @@ export function addMergedBlocks(
       const exposed = !has(side.n);
       // Only the faces under and over a neighbour are needed to fill gaps
       // (where a block's rounded side edges sit on a square-edged block).
-      if (!exposed && side.n[1] === 0) continue;
+      if (!exposed && side.n[1] === 0 && !fillSides) continue;
+      // A side face between two blocks of the group: only worth drawing where
+      // the neighbour has a block on top (its top edge there is square while
+      // ours may be rounded, leaving a sliver). It sits exactly on the shared
+      // plane, so it only shows through that sliver.
+      if (!exposed && side.n[1] === 0) {
+        const nx = x + side.n[0];
+        const nz = z + side.n[2];
+        if (!at(nx, y + 1, nz) && !at(nx, y - 1, nz)) continue;
+      }
+      const sideFill = !exposed && side.n[1] === 0;
       const A = side.n.findIndex((v) => v !== 0);
       const sa = side.n[A];
       const [B, C] = [0, 1, 2].filter((i) => i !== A);
@@ -143,11 +157,8 @@ export function addMergedBlocks(
           // Snapped so edges shared by two blocks land on exactly the same
           // numbers, leaving no hairline crack between them.
           const snap = (v: number): number => (Math.round(v * 1e5) / 1e5) * size;
-          positions.push(
-            snap(x + 0.5 + (core[0] + n[0] * R) * k),
-            snap(y + 0.5 + (core[1] + n[1] * R) * k),
-            snap(z + 0.5 + (core[2] + n[2] * R) * k),
-          );
+          const pos = [0, 1, 2].map((i) => (core[i] + n[i] * R) * (sideFill && i === A ? 1 : k));
+          positions.push(snap(x + 0.5 + pos[0]), snap(y + 0.5 + pos[1]), snap(z + 0.5 + pos[2]));
           normals.push(n[0], n[1], n[2]);
           colours.push(tint.r, tint.g, tint.b);
         }
@@ -161,6 +172,83 @@ export function addMergedBlocks(
       }
     }
   }
+  // Safety net: a solid core inside every block, in the block's own colour.
+  // It reaches right up to touching neighbours and stops just inside the
+  // rounded skin on open sides, so it never shows, except through a tiny
+  // pinhole the rounding might leave, which then shows the block's colour
+  // instead of whatever is behind it.
+  const inset = 0.5 - 0.4 * R;
+  for (const [key, tint] of cells) {
+    const [x, y, z] = key.split(',').map(Number);
+    const lo = [at(x - 1, y, z) ? -0.5 : -inset, at(x, y - 1, z) ? -0.5 : -inset, at(x, y, z - 1) ? -0.5 : -inset];
+    const hi = [at(x + 1, y, z) ? 0.5 : inset, at(x, y + 1, z) ? 0.5 : inset, at(x, y, z + 1) ? 0.5 : inset];
+    for (const side of SIDES) {
+      if (at(x + side.n[0], y + side.n[1], z + side.n[2])) continue; // inside the group: not needed
+      const A = side.n.findIndex((v) => v !== 0);
+      const plane = side.n[A] > 0 ? hi[A] : lo[A];
+      const base = positions.length / 3;
+      for (const [a, b] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
+        const q = [0, 0, 0];
+        for (let i = 0; i < 3; i++) {
+          if (i === A) q[i] = plane;
+          else {
+            const t = side.u[i] !== 0 ? (side.u[i] > 0 ? a : 1 - a) : side.v[i] !== 0 ? (side.v[i] > 0 ? b : 1 - b) : 0;
+            q[i] = lo[i] + (hi[i] - lo[i]) * t;
+          }
+        }
+        positions.push((x + 0.5 + q[0]) * size, (y + 0.5 + q[1]) * size, (z + 0.5 + q[2]) * size);
+        normals.push(side.n[0], side.n[1], side.n[2]);
+        colours.push(tint.r, tint.g, tint.b);
+      }
+      indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    }
+  }
+
+  // Where two blocks touch only along one edge (diagonal, with both blocks
+  // beside them empty), their rounded edges leave a thin slot you could see
+  // through. A thin core along that shared edge closes it.
+  const box = (c: number[], h: number[], tint: Color): void => {
+    for (const side of SIDES) {
+      const A = side.n.findIndex((v) => v !== 0);
+      const base = positions.length / 3;
+      for (const [a, b] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
+        const q = [0, 0, 0];
+        for (let i = 0; i < 3; i++) {
+          if (i === A) q[i] = c[i] + side.n[A] * h[i];
+          else {
+            const t = side.u[i] !== 0 ? (side.u[i] > 0 ? a : 1 - a) : side.v[i] !== 0 ? (side.v[i] > 0 ? b : 1 - b) : 0;
+            q[i] = c[i] - h[i] + 2 * h[i] * t;
+          }
+        }
+        positions.push(q[0] * size, q[1] * size, q[2] * size);
+        normals.push(side.n[0], side.n[1], side.n[2]);
+        colours.push(tint.r, tint.g, tint.b);
+      }
+      indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+    }
+  };
+  const w = 0.55 * R;
+  for (const [key, tint] of cells) {
+    const [x, y, z] = key.split(',').map(Number);
+    // Each pair once: look only in the + direction of the first axis.
+    for (const [axisA, axisB] of [[0, 2], [0, 1], [2, 1]]) {
+      for (const sb of [1, -1]) {
+        const d = [0, 0, 0]; d[axisA] = 1; d[axisB] = sb;
+        const sideA = [0, 0, 0]; sideA[axisA] = 1;
+        const sideB = [0, 0, 0]; sideB[axisB] = sb;
+        if (!at(x + d[0], y + d[1], z + d[2])) continue;
+        if (at(x + sideA[0], y + sideA[1], z + sideA[2]) || at(x + sideB[0], y + sideB[1], z + sideB[2])) continue;
+        const c = [x + 0.5, y + 0.5, z + 0.5];
+        c[axisA] += 0.5;
+        c[axisB] += 0.5 * sb;
+        const h = [0.5, 0.5, 0.5];
+        h[axisA] = w;
+        h[axisB] = w;
+        box(c, h, tint);
+      }
+    }
+  }
+
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
   geometry.setAttribute('normal', new BufferAttribute(new Float32Array(normals), 3));

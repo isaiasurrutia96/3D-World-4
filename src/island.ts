@@ -91,6 +91,9 @@ function isPond(x: number, z: number): boolean {
 
 type Cell = [number, number, number, string];
 
+/** Below the grass top (in small-block steps) is solid ground to sit on. */
+const onGround = (_x: number, y: number): boolean => y < TOP_SMALL;
+
 function addNature(root: Group): void {
   // ---- Pond water, a little below the grass top ----
   const water = new MeshStandardMaterial({
@@ -128,7 +131,7 @@ function addNature(root: Group): void {
       }
     }
   }
-  addMergedBlocks(root, trunk, 'tree-trunk', SMALL);
+  addMergedBlocks(root, trunk, 'tree-trunk', SMALL, onGround, true);
   addMergedBlocks(root, leaves, 'tree-leaves', SMALL);
 
   // ---- Bush: a small rounded mound of leafy small blocks, back right ----
@@ -143,7 +146,7 @@ function addNature(root: Group): void {
       }
     }
   }
-  addMergedBlocks(root, bush, 'bush', SMALL);
+  addMergedBlocks(root, bush, 'bush', SMALL, onGround, true);
 
   // ---- Rock: a lumpy grey cluster of small blocks, front left ----
   const rock: Cell[] = [];
@@ -152,7 +155,7 @@ function addNature(root: Group): void {
     [0, 1, 0], [1, 1, 0], [1, 1, 1], [2, 1, 1], [1, 2, 1],
   ];
   for (const [dx, dy, dz] of rockShape) rock.push([-9 + dx, TOP_SMALL + dy, 6 + dz, '#9a958d']);
-  addMergedBlocks(root, rock, 'rock', SMALL);
+  addMergedBlocks(root, rock, 'rock', SMALL, onGround, true);
 
   // ---- Flowers: three small flowers near the middle, in tiny blocks ----
   const stems: Cell[] = [];
@@ -167,7 +170,7 @@ function addNature(root: Group): void {
     centres.push([fx, head, fz, '#f2c230']);
     for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) petals.push([fx + dx, head, fz + dz, colour]);
   }
-  addMergedBlocks(root, stems, 'flower-stems', TINY);
+  addMergedBlocks(root, stems, 'flower-stems', TINY, (_x, y) => y < TOP_TINY);
   addMergedBlocks(root, centres, 'flower-centres', TINY);
   // Each petal is its own group so neighbouring flowers never merge.
   addMergedBlocks(root, petals, 'flower-petals', TINY);
