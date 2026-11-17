@@ -1,4 +1,4 @@
-import {protectPage} from './interactions.js?v=motion-7';
+import {protectPage} from './interactions.js?v=toggle-8';
 protectPage(window);
 const $=selector=>document.querySelector(selector);
 const tests={
@@ -13,23 +13,24 @@ const tests={
 const clips={walk:{src:'./media/walk.mp4?v=appearance-3',poster:'./media/walk.jpg?v=appearance-3'},run:{src:'./media/run.mp4?v=appearance-3',poster:'./media/run.jpg?v=appearance-3'},comparison:{src:'../references/motion-compare/side.mp4?v=run-grip-1',poster:'../references/motion-compare/side-poster.jpg?v=run-grip-1'}};
 const controls=$('#live-controls'),host=$('#frame-host'),loading=$('#loading'),video=$('#animation-video');
 let subject='avatar',mode='live',view='angle',frame=null,clock=null,syncControls=()=>{},generation=0,stageVisible=true,ready=false,videoRate=1,inspection=false;
-let motionOpen=false,syncMotion=()=>{};
+let motionOpen=false,syncMotion=()=>{},resetMotion=()=>{};
 
 function setMotionOpen(open){
- motionOpen=Boolean(open&&!$('#motion-toggle').disabled);$('#motion-panel').hidden=!motionOpen;$('#viewer').classList.toggle('motion-open',motionOpen);$('#motion-toggle').setAttribute('aria-expanded',String(motionOpen));
+ const next=Boolean(open&&!$('#motion-toggle').disabled);if(motionOpen&&!next){resetMotion();syncControls();syncMotion();}motionOpen=next;$('#motion-panel').hidden=!motionOpen;$('#viewer').classList.toggle('motion-open',motionOpen);$('#motion-toggle').setAttribute('aria-expanded',String(motionOpen));
 }
 function buildMotionControls(doc){
  const groups=subject==='avatar'?[{name:'Hands',tab:doc.querySelector('#hands-tab'),selector:'[data-hand-pose]'},{name:'Feet',tab:doc.querySelector('#feet-tab'),selector:'[data-foot-pose]'}]:['hands','feet'].includes(subject)?[{name:subject==='hands'?'Hands':'Feet',selector:'[data-pose]'}]:[];
- $('#motion-toggle').disabled=!groups.length;$('#motion-tabs').replaceChildren();$('#motion-presets').replaceChildren();syncMotion=()=>{};
+ $('#motion-toggle').disabled=!groups.length;$('#motion-tabs').replaceChildren();$('#motion-presets').replaceChildren();syncMotion=()=>{};resetMotion=()=>{};
  if(!groups.length){setMotionOpen(false);return;}
  let current=null,copies=[];
  function show(group){
   current=group;$('#motion-presets').setAttribute('aria-label',group.name+' poses');$('#motion-presets').replaceChildren();copies=[];
-  for(const native of doc.querySelectorAll(group.selector)){const button=document.createElement('button');button.textContent=native.textContent;button.dataset.motionPose=native.dataset.handPose||native.dataset.footPose||native.dataset.pose;button.onclick=()=>{native.click();syncControls();syncMotion();};$('#motion-presets').append(button);copies.push({native,button});}
+  const presets=[...doc.querySelectorAll(group.selector)],rest=presets.find(button=>(button.dataset.handPose||button.dataset.footPose||button.dataset.pose)==='rest');
+  for(const native of presets){const button=document.createElement('button');button.textContent=native.textContent;button.dataset.motionPose=native.dataset.handPose||native.dataset.footPose||native.dataset.pose;button.onclick=()=>{if(native.getAttribute('aria-pressed')==='true')rest?.click();else native.click();syncControls();syncMotion();};$('#motion-presets').append(button);copies.push({native,button});}
  }
  for(const group of groups){const button=document.createElement('button');button.textContent=group.name;button.setAttribute('role','tab');button.onclick=()=>{group.tab?.click();show(group);syncControls();syncMotion();};group.button=button;$('#motion-tabs').append(button);}
- const play=doc.querySelector('#play'),restAll=doc.querySelector('#rest-all');$('#motion-play').hidden=!play;$('#motion-play').onclick=()=>{play?.click();syncControls();syncMotion();};$('#motion-rest').textContent=restAll?'Rest all':'Rest';$('#motion-rest').onclick=()=>{if(restAll)restAll.click();else doc.querySelector(current.selector+'[data-pose="rest"]')?.click();syncControls();syncMotion();};
- syncMotion=()=>{const active=groups.find(group=>group.tab?.getAttribute('aria-selected')==='true')||groups[0];if(current!==active)show(active);for(const group of groups)group.button.setAttribute('aria-selected',String(group===current));for(const {native,button} of copies)button.setAttribute('aria-pressed',native.getAttribute('aria-pressed')||'false');if(play){$('#motion-play').textContent=play.textContent;$('#motion-play').setAttribute('aria-pressed',play.getAttribute('aria-pressed')||'false');}};syncMotion();
+ const play=doc.querySelector('#play'),restAll=doc.querySelector('#rest-all');resetMotion=()=>{if(restAll)restAll.click();else doc.querySelector('[data-pose="rest"]')?.click();};$('#motion-play').hidden=!play;$('#motion-play').onclick=()=>{if(play?.getAttribute('aria-pressed')==='true')resetMotion();else play?.click();syncControls();syncMotion();};
+ syncMotion=()=>{const active=groups.find(group=>group.tab?.getAttribute('aria-selected')==='true')||groups[0];if(current!==active)show(active);for(const group of groups)group.button.setAttribute('aria-selected',String(group===current));for(const {native,button} of copies)button.setAttribute('aria-pressed',native.getAttribute('aria-pressed')||'false');if(play){const playing=play.getAttribute('aria-pressed')==='true';$('#motion-play').textContent=playing?'Stop motion':'Play motion';$('#motion-play').setAttribute('aria-pressed',String(playing));}};syncMotion();
 }
 
 // Each live test keeps its existing model and controls. Pause its frame clock
