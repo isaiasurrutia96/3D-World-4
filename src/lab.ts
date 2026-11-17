@@ -29,10 +29,15 @@ scene.add(camera);
 const BLOCK = 0.43;
 const RADIUS = 4; // blocks from the centre to each point (9 blocks tall)
 const cells: [number, number, number][] = [];
+/** The single block at each of the 6 points (top, bottom, front, back, left, right) is removed. */
+function isTip(x: number, y: number, z: number): boolean {
+  const a = [Math.abs(x), Math.abs(y), Math.abs(z)].sort((p, q) => q - p);
+  return a[0] === RADIUS && a[1] === 0 && a[2] === 0;
+}
 for (let x = -RADIUS; x <= RADIUS; x++)
   for (let y = -RADIUS; y <= RADIUS; y++)
     for (let z = -RADIUS; z <= RADIUS; z++)
-      if (Math.abs(x) + Math.abs(y) + Math.abs(z) <= RADIUS) cells.push([x, y, z]);
+      if (Math.abs(x) + Math.abs(y) + Math.abs(z) <= RADIUS && !isTip(x, y, z)) cells.push([x, y, z]);
 
 const cube = new BoxGeometry(BLOCK, BLOCK, BLOCK);
 const diamond = new InstancedMesh(
