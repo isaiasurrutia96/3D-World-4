@@ -19,7 +19,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = SRGBColorSpace;
 stage.prepend(renderer.domElement);
 
-const camera = new PerspectiveCamera(40, 1, 0.05, 200);
+const camera = new PerspectiveCamera(40, 1, 0.3, 200);
 scene.add(camera);
 
 // The oval track and the grass and dirt blocks around it.

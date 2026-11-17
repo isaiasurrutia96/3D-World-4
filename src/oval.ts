@@ -173,6 +173,13 @@ export function buildOvalScene(scene: Scene): OvalScene {
         for (const p of [pts[0], pts[t + 1], pts[t]]) positions.push(p[0] * B, 0.003, p[1] * B);
       }
     }
+    // The fully concrete blocks get the same flat top, so the whole concrete
+    // band is one smooth surface: the grooves between the rounded blocks
+    // underneath (which showed thin green lines) are covered.
+    for (const [i, , k, colour] of ground) {
+      if (colour !== CONCRETE) continue;
+      for (const [a, c] of [[0, 0], [1, 1], [1, 0], [0, 0], [0, 1], [1, 1]]) positions.push((i + a) * B, 0.003, (k + c) * B);
+    }
     const g = new BufferGeometry();
     g.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
     const normals = new Float32Array(positions.length);
@@ -296,7 +303,8 @@ export function buildOvalScene(scene: Scene): OvalScene {
   // The blocks are now rounded one by one; lift the road surfaces 2.5 cm so
   // they never flicker against the block tops beneath them.
   for (const child of root.children) {
-    if (child.name === 'road' || child.name === 'road-line' || child.name === 'concrete-edge') child.position.y += 0.025;
+    if (child.name === 'concrete-edge') child.position.y += 0.025;
+    if (child.name === 'road' || child.name === 'road-line') child.position.y += 0.045;
   }
 
   scene.add(root);
