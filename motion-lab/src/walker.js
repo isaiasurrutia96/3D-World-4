@@ -9,11 +9,13 @@ export const TUNING={
  walkSpeed:1.25,   // m/s, top speed for stage 2 (slow walk only)
  accel:3.5,        // m/s^2 speeding up
  brake:5,          // m/s^2 slowing down
- turnRate:7,       // rad/s the body turns toward travel
+ turnRate:5,       // how quickly the body turns toward travel
+ maxTurn:4,        // rad/s at most, so the feet can keep up
+ footWidth:.2,     // m the feet always stay apart, side to side
  swingTime:.3,    // s a foot is in the air at walking speed
  stepHeight:.07,   // m the foot lifts mid-step
  heelRaise:12,     // degrees the back heel lifts before toe-off
- armSwing:.24,     // radians the arms swing at walking speed
+ armSwing:.1,      // radians the arms swing at walking speed (slight)
 };
 
 const TAU=Math.PI*2,deg=T.MathUtils.radToDeg,clamp=T.MathUtils.clamp,smooth=(a,b,x)=>T.MathUtils.smoothstep(x,a,b);
@@ -46,7 +48,7 @@ export function createWalker(avatar){
    pos:new T.Vector3(A0.x,0,A0.z),yaw:0,heel:0,pitch:0,swing:null,last:{ankle:0,roll:0,heel:0}};
  });
 
- const state={pos:new T.Vector3(0,0,0),vel:new T.Vector3(),facing:0,speed:0,idle:1,time:0,lastStep:1,steps:0};
+ const state={pos:new T.Vector3(0,0,0),vel:new T.Vector3(),facing:0,speed:0,idle:1,time:0,lastStep:1,steps:0,arm:0};
  const tmp={a:new T.Vector3(),b:new T.Vector3(),c:new T.Vector3(),u:new T.Vector3(),w:new T.Vector3(),J:new T.Vector3(),H:new T.Vector3(),
   q:new T.Quaternion(),q2:new T.Quaternion(),rf:new T.Quaternion(),rb:new T.Quaternion(),p:new T.Quaternion(),e:new T.Euler()};
 
@@ -107,7 +109,7 @@ export function createWalker(avatar){
   const dv=tmp.b.copy(target).sub(state.vel),rate=(amount>0&&state.vel.dot(target)>=0?TUNING.accel:TUNING.brake)*dt;
   if(dv.length()>rate)dv.setLength(rate);state.vel.add(dv);if(amount===0&&state.vel.length()<.02)state.vel.set(0,0,0);
   state.speed=state.vel.length();
-  if(amount>0){const want=Math.atan2(wishX,wishZ);state.facing+=angleTo(state.facing,want)*Math.min(1,TUNING.turnRate*dt);}
+  if(amount>0){const want=Math.atan2(wishX,wishZ);state.facing+=clamp(angleTo(state.facing,want)*Math.min(1,TUNING.turnRate*dt),-TUNING.maxTurn*dt,TUNING.maxTurn*dt);}
   state.pos.addScaledVector(state.vel,dt);
   const s=state.speed,sn=s/TUNING.walkSpeed,T_=TUNING.swingTime;
 
@@ -138,7 +140,14 @@ export function createWalker(avatar){
     const left=(1-S.t)*S.dur,goal=homeOf(L,tmp.a.copy(state.pos).addScaledVector(state.vel,left+S.dur*.35),state.facing,tmp.b);
     const k=smooth(0,1,S.t);
     L.pos.set(T.MathUtils.lerp(S.from.x,goal.x,k),S.height*Math.sin(Math.PI*S.t),T.MathUtils.lerp(S.from.z,goal.z,k));
-    L.yaw=S.fromYaw+angleTo(S.fromYaw,state.facing)*k;
+    // Turn the foot toward travel, but not more than a comfortable angle from the other foot.
+    const yawGoal=partner.yaw+clamp(angleTo(partner.yaw,state.facing),-.8,.8);
+    // Never cross or crowd the standing foot: keep it on its own side,
+    // measured across the direction both feet are pointing.
+    const mid=partner.yaw+angleTo(partner.yaw,yawGoal)*.5,right=tmp.c.set(Math.cos(mid),0,-Math.sin(mid));
+    const lat=(L.pos.x-partner.pos.x)*right.x+(L.pos.z-partner.pos.z)*right.z,short=TUNING.footWidth-L.side*lat;
+    if(short>0){L.pos.x+=right.x*L.side*short;L.pos.z+=right.z*L.side*short;}
+    L.yaw=S.fromYaw+angleTo(S.fromYaw,yawGoal)*k;
     L.heel=S.heel*(1-smooth(0,.35,S.t));                    // toe leaves the ground, foot levels out
     L.pitch=-6*smooth(.45,.8,S.t)*(1-smooth(.85,1,S.t))*sn; // toes lift a little before landing
     L.pos.y+=Math.abs(Math.sin(T.MathUtils.degToRad(L.pitch)))*.09;
@@ -170,13 +179,14 @@ export function createWalker(avatar){
 
   // ---- Upper body: arms swing opposite the legs, from where the feet really are.
   const fwd=tmp.a.set(Math.sin(state.facing),0,Math.cos(state.facing));
-  const lead=clamp((fwd.dot(legs[1].pos)-fwd.dot(legs[0].pos))/(TUNING.walkSpeed*T_),-1,1); // + right foot ahead
+  const leadNow=clamp((fwd.dot(legs[1].pos)-fwd.dot(legs[0].pos))/(TUNING.walkSpeed*T_),-1,1); // + right foot ahead
+  state.arm+=(leadNow-state.arm)*Math.min(1,dt*3.5);const lead=state.arm; // arms follow gently, a little behind the feet
   const h=base.get(rig.head);rig.head.rotation.set(h.r.x-.006*breath*id-.03*sn,h.r.y,h.r.z-.0065*weight*id);
   for(const [sh,el,sd] of [[rig.shoulderLeft,rig.elbowLeft,-1],[rig.shoulderRight,rig.elbowRight,1]]){
    const b=base.get(sh),be=base.get(el),swing=TUNING.armSwing*lead*sd*sn;
    sh.position.y=b.p.y+.0025*(breath*.5+.5)*id;
    sh.rotation.set(b.r.x+swing+.012*Math.sin(t*TAU/5.3+.6)*id,b.r.y,b.r.z-sd*.006*(breath*.5+.5)*id-.008*weight*id);
-   el.rotation.set(be.r.x-.18*sn-Math.max(0,-swing)*.3,be.r.y,be.r.z);
+   el.rotation.set(be.r.x-.12*sn-Math.max(0,-swing)*.2,be.r.y,be.r.z);
   }
   rig.root.updateMatrixWorld(true);
   return state;
