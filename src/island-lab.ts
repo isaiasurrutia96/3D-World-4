@@ -7,7 +7,7 @@ import {installTestLabScene} from './test-lab-scene.ts';
 import {
   AmbientLight, Color, DirectionalLight, PerspectiveCamera, Scene, SRGBColorSpace, WebGLRenderer,
 } from 'three';
-import { buildIsland } from './island.ts';
+import { buildIsland } from './world/island/index.ts';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const stage = document.getElementById('stage') as HTMLElement;
