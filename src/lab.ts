@@ -1,11 +1,12 @@
 /**
  * Test Lab: a slate blue stage for examining one object from every side.
- * For now the object is a plain block in the avatar's clay colour.
+ * Now showing a 3D diamond built from 43 cm voxel blocks.
  */
 
 import {
-  AmbientLight, BoxGeometry, CanvasTexture, Color, DirectionalLight, Mesh, MeshStandardMaterial,
-  PerspectiveCamera, Scene, SRGBColorSpace, WebGLRenderer,
+  AmbientLight, BoxGeometry, BufferGeometry, Color, DirectionalLight, EdgesGeometry,
+  Float32BufferAttribute, InstancedMesh, LineBasicMaterial, LineSegments, Matrix4,
+  MeshStandardMaterial, PerspectiveCamera, Scene, SRGBColorSpace, WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
@@ -22,27 +23,41 @@ stage.prepend(renderer.domElement);
 const camera = new PerspectiveCamera(40, 1, 0.05, 100);
 scene.add(camera);
 
-// The block, in the avatar's clay colour, with a number on each side.
-// 1 is the front; opposite sides add up to 7, like a die.
-function numberedFace(n: number): MeshStandardMaterial {
-  const c = document.createElement('canvas');
-  c.width = c.height = 256;
-  const g = c.getContext('2d') as CanvasRenderingContext2D;
-  g.fillStyle = '#b9b2a6';
-  g.fillRect(0, 0, 256, 256);
-  g.fillStyle = '#4a4640';
-  g.font = '700 150px system-ui, -apple-system, sans-serif';
-  g.textAlign = 'center';
-  g.textBaseline = 'middle';
-  g.fillText(String(n), 128, 138);
-  const map = new CanvasTexture(c);
-  map.colorSpace = SRGBColorSpace;
-  map.anisotropy = 4;
-  return new MeshStandardMaterial({ map, roughness: 0.8 });
-}
-// Box face order: right, left, top, bottom, front, back.
-const block = new Mesh(new BoxGeometry(1, 1, 1), [2, 5, 3, 4, 1, 6].map(numberedFace));
-scene.add(block);
+// A 3D diamond (gem shape) built from 43 cm voxel blocks: every block whose
+// grid position satisfies |x| + |y| + |z| <= RADIUS. Pointy at the top and
+// bottom, widest at the middle layer.
+const BLOCK = 0.43;
+const RADIUS = 4; // blocks from the centre to each point (9 blocks tall)
+const cells: [number, number, number][] = [];
+for (let x = -RADIUS; x <= RADIUS; x++)
+  for (let y = -RADIUS; y <= RADIUS; y++)
+    for (let z = -RADIUS; z <= RADIUS; z++)
+      if (Math.abs(x) + Math.abs(y) + Math.abs(z) <= RADIUS) cells.push([x, y, z]);
+
+const cube = new BoxGeometry(BLOCK, BLOCK, BLOCK);
+const diamond = new InstancedMesh(
+  cube, new MeshStandardMaterial({ color: '#ffffff', roughness: 0.8 }), cells.length,
+);
+const matrix = new Matrix4();
+const shade = new Color();
+cells.forEach(([x, y, z], i) => {
+  matrix.makeTranslation(x * BLOCK, y * BLOCK, z * BLOCK);
+  diamond.setMatrixAt(i, matrix);
+  // Clay colour, alternating very slightly so single blocks are visible.
+  shade.set('#b9b2a6').multiplyScalar((x + y + z) % 2 === 0 ? 1 : 0.93);
+  diamond.setColorAt(i, shade);
+});
+scene.add(diamond);
+
+// Thin dark outlines on every block edge.
+const edgePositions: number[] = [];
+const cubeEdges = new EdgesGeometry(cube).attributes.position;
+for (const [x, y, z] of cells)
+  for (let i = 0; i < cubeEdges.count; i++)
+    edgePositions.push(cubeEdges.getX(i) + x * BLOCK, cubeEdges.getY(i) + y * BLOCK, cubeEdges.getZ(i) + z * BLOCK);
+const edgeGeometry = new BufferGeometry();
+edgeGeometry.setAttribute('position', new Float32BufferAttribute(edgePositions, 3));
+scene.add(new LineSegments(edgeGeometry, new LineBasicMaterial({ color: '#5d5951', transparent: true, opacity: 0.45 })));
 
 // Soft fill, plus a light on the camera so the side being looked at is lit.
 scene.add(new AmbientLight('#ffffff', 0.55));
@@ -54,16 +69,16 @@ headlight.target.position.set(0, 0, -1);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.enablePan = false;
-controls.minDistance = 1.2;
-controls.maxDistance = 10;
+controls.minDistance = 2.5;
+controls.maxDistance = 25;
 
-const D = 3.6;
+const D = 8.5;
 const views: Record<string, [number, number, number]> = {
   front: [0, 0, D],
   side: [D, 0, 0],
   back: [0, 0, -D],
   top: [0, D, 0.001],
-  angled: [1.9, 1.5, 2.7],
+  angled: [4.5, 3.6, 6.4],
 };
 const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-view]')];
 function setView(name: string): void {
