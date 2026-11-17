@@ -24,7 +24,7 @@ export class MatchedMotion{
   this.legs=this.avatar.lowerLegs.map(leg=>{
    const hip=leg.side<0?r.hipLeft:r.hipRight,knee=leg.side<0?r.kneeLeft:r.kneeRight,H=hip.getWorldPosition(new T.Vector3()),K=knee.getWorldPosition(new T.Vector3());
    this.root.attach(leg.foot);this.root.attach(leg.calf);leg.mount.removeFromParent();const motion=createFootMotion(leg.foot,leg.calf),A=leg.foot.localToWorld(motion.anklePoint(new T.Vector3()));
-   return {...leg,hip,knee,motion,socket:createSocketMotion(leg.calf,leg.restCalfPosition),upper:H.distanceTo(K),lower:K.distanceTo(A),bones:BONES[leg.side],H:new T.Vector3(),K:new T.Vector3(),A:new T.Vector3()};
+   return {...leg,hip,knee,motion,socket:createSocketMotion(leg.calf,leg.restCalfPosition),upper:H.distanceTo(K),lower:K.distanceTo(A),restAnkle:A.clone(),bones:BONES[leg.side],H:new T.Vector3(),K:new T.Vector3(),A:new T.Vector3()};
   });
   this.arms=[-1,1].map(side=>({side,bones:BONES[side],shoulder:side<0?r.shoulderLeft:r.shoulderRight,elbow:side<0?r.elbowLeft:r.elbowRight}));
   for(const arm of this.arms)arm.swingMean=Array.from({length:77},(_,f)=>{const d=direction(sourcePose(f),arm.bones.shoulder,arm.bones.elbow);return Math.atan2(d.z,-d.y);}).reduce((a,b)=>a+b)/77;
@@ -32,6 +32,7 @@ export class MatchedMotion{
   this.meanHip=Array.from({length:77},(_,f)=>{const p=sourcePose(f);return(p[13].y+p[17].y)/2;}).reduce((a,b)=>a+b)/77;
   this.sourceLeanMean=Array.from({length:77},(_,f)=>{const p=sourcePose(f),d=direction(p,1,2);return Math.atan2(d.z,d.y);}).reduce((a,b)=>a+b)/77;
   for(const leg of this.legs)leg.minSourceAnkleY=Math.min(...Array.from({length:77},(_,f)=>sourcePose(f)[leg.bones.ankle].y));
+  this.restTransforms=[];this.root.traverse(object=>this.restTransforms.push({object,position:object.position.clone(),quaternion:object.quaternion.clone()}));
   this.offset=0;let low=Infinity;
   for(let f=0;f<77;f++){this.setFrame(f);for(const l of this.legs){const p=l.foot.geometry.attributes.position,v=new T.Vector3();for(let i=0;i<p.count;i++)low=Math.min(low,l.foot.localToWorld(v.fromBufferAttribute(p,i)).y);}}
   this.offset=-low;this.setFrame(0);

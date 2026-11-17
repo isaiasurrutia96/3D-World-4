@@ -2,9 +2,9 @@
 
 Current avatar: **Checkpoint 2**, saved on 17 November 2026.
 
-[Try walking and running](https://isaiasurrutia96.github.io/3D-World-4/movement/) on the dark-grey test slab. Mobile: touch the left side to move, push farther to run, and drag the right side to look around.
+[Try the current run](https://isaiasurrutia96.github.io/3D-World-4/run-test/) on the dark-grey test slab. Mobile: touch anywhere on the left side and drag to run; push farther for more speed. Drag the right side to look around. The [earlier walking/running prototype](https://isaiasurrutia96.github.io/3D-World-4/movement/) remains available.
 
-That locomotion prototype is under review: its hip/knee motion needs rebuilding. [Compare Mario and our avatar performing the same motion](https://isaiasurrutia96.github.io/3D-World-4/references/motion-compare/) side by side, frame for frame, with shared Normal/Slow playback. This is a pose preview pending review before joystick integration. The [original SM64 reference](https://isaiasurrutia96.github.io/3D-World-4/references/sm64-walk/) and [earlier avatar preview](https://isaiasurrutia96.github.io/3D-World-4/references/avatar-walk/) remain available.
+The current run uses the reviewed motion, adapted to floor contact. [Compare Mario and our avatar performing the same motion](https://isaiasurrutia96.github.io/3D-World-4/references/motion-compare/) side by side, frame for frame, with shared Normal/Slow playback. This is a pose preview pending review before joystick integration. The [original SM64 reference](https://isaiasurrutia96.github.io/3D-World-4/references/sm64-walk/) and [earlier avatar preview](https://isaiasurrutia96.github.io/3D-World-4/references/avatar-walk/) remain available.
 
 [Open the frozen checkpoint](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/avatar-2/).
 

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints",
+    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints && npm run build:run-test",
     "preview": "vite preview",
     "build:hand-lab": "node hand-lab/build.mjs",
     "test:hand-lab": "node hand-lab/tests/browser.mjs",
@@ -16,7 +16,8 @@
     "build:avatar-test": "node avatar-test/build.mjs",
     "build:motion-lab": "node motion-lab/build.mjs",
     "build:checkpoints": "node scripts/build-checkpoints.mjs",
-    "test:movement": "node movement/tests/run.mjs"
+    "test:movement": "node movement/tests/run.mjs",
+    "build:run-test": "node run-test/build.mjs"
   },
   "dependencies": {
     "three": "0.180.0"
