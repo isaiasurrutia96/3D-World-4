@@ -154,8 +154,8 @@ function addNature(root: Group): void {
   // ---- Tree: trunk 2 × 2 small blocks (43 cm wide), leafy crown on top ----
   const trunk: Cell[] = [];
   const leaves: Cell[] = [];
-  const tx = -7; // small-block grid: back left of the island
-  const tz = -7;
+  const tx = -8; // small-block grid: back left of the island
+  const tz = -8;
   const trunkTop = TREE_SMALL + 7;
   for (let y = TREE_SMALL; y < trunkTop; y++) {
     for (const [dx, dz] of [[0, 0], [1, 0], [0, 1], [1, 1]]) trunk.push([tx + dx, y, tz + dz, '#7a5434']);
