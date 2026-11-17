@@ -32,6 +32,7 @@ const MATERIAL_STYLE: Record<string, 'merged' | 'blocks'> = {
   stone: 'blocks',
   rock: 'blocks',
   'tree-leaves': 'blocks',
+  'tree-roots': 'blocks',
   bush: 'blocks',
 };
 
@@ -161,6 +162,21 @@ function addNature(root: Group): void {
     }
   }
   build(root, trunk, 'tree-trunk', SMALL, onGround);
+
+  // Root stumps: 10.75 cm blocks, 6 each as a 3-2-1 staircase stepping away
+  // from the trunk, two on each side, each next to a corner of the trunk.
+  const roots: Cell[] = [];
+  const x0 = tx * 2, x1 = tx * 2 + 3, z0 = tz * 2, z1 = tz * 2 + 3; // trunk in tiny cells
+  const stair = (x: number, z: number, dx: number, dz: number): void => {
+    for (let step = 0; step < 3; step++) {
+      for (let h = 0; h < 3 - step; h++) {
+        roots.push([x + dx * step, TOP_TINY + h, z + dz * step, '#7a5434']);
+      }
+    }
+  };
+  for (const z of [z0, z1]) { stair(x0 - 1, z, -1, 0); stair(x1 + 1, z, 1, 0); }
+  for (const x of [x0, x1]) { stair(x, z0 - 1, 0, -1); stair(x, z1 + 1, 0, 1); }
+  build(root, roots, 'tree-roots', TINY, (_x, y) => y < TOP_TINY);
   build(root, leaves, 'tree-leaves', SMALL);
 
   // ---- Bush: a small rounded mound of leafy small blocks, back right ----
