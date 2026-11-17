@@ -18,3 +18,13 @@ To resume a saved version, create a new branch or worktree from its tag. Keep th
 | 1 — current | `island-checkpoint-1-2026-11-17` | 14 × 14 floating island with raised tree corner, tree with root stumps, pond, bush, rock and flowers. |
 
 [Open island checkpoint 1](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/island-1/).
+
+# Test Lab checkpoints
+
+| Checkpoint | Permanent Git tag | Saved version |
+| --- | --- | --- |
+| 1 — current | `test-lab-checkpoint-1-2026-11-17` | Approved universal Test Lab: responsive layout, off-white toolbar, orbitable wide Iso, original-size solid grey slabs, Inspection, docked Motion with pose toggles and reset on exit, and animation videos. |
+
+[Open Test Lab checkpoint 1](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/test-lab-1/).
+
+This is a frozen copy of the lab, all nine embedded tests, their runtime assets and the selected videos. Its relative links stay inside the checkpoint. The build checks every saved file against `files_sha256` before publishing. The Git tag preserves editable sources and dependencies. Continue new work in `/test-lab/`; keep this archive and tag unchanged.

@@ -25,4 +25,5 @@
 16. Use `/test-lab/` as the universal workspace for future tests by Codex and
     Claude Code. Reuse its off-white responsive toolbar, wide isometric view,
     neutral-grey floor and Inspection toggle. Integrate via `src/test-lab-scene.ts`;
-    see `test-lab/README.md`. Wait for the owner's review before freezing a lab checkpoint.
+    see `test-lab/README.md`. Approved baseline: `checkpoints/test-lab-1/`,
+    tag `test-lab-checkpoint-1-2026-11-17`. Keep it frozen; edit the live lab for future work.
