@@ -1,3 +1,4 @@
+import {installTestLabScene} from '../../src/test-lab-scene.ts';
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {createFootShape} from './foot-shape.js';
@@ -55,5 +56,6 @@ try{
  document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing){stopMotion();markPose('custom');}lastTime=0;});
  window.footLab={foot,calf,rig,scene,camera,controls,ground,view,applyPose,getState:()=>({current:{...current},target:{...target},playing,poseUpdates,activePose})};
  const requestedPose=new URLSearchParams(location.search).get('pose');if(requestedPose&&POSES[requestedPose])applyPose(requestedPose);
+ installTestLabScene({scene,camera,renderer,floors:[ground],getTarget:()=>controls.target,updateControls:()=>controls.update()});
  window.footLabReady=true;loading.hidden=true;
 }catch(error){console.error(error);loading.textContent='The foot could not open. Please reload to try again.';}

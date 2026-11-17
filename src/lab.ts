@@ -1,3 +1,4 @@
+import {installTestLabScene} from './test-lab-scene.ts';
 /**
  * Test Lab: a slate blue stage for examining one object from every side.
  * Now showing a 3D diamond built from 43 cm voxel blocks.
@@ -108,3 +109,5 @@ renderer.setAnimationLoop(() => {
   controls.update();
   renderer.render(scene, camera);
 });
+
+installTestLabScene({scene,camera,renderer,floorY:-1.11,floorSize:80,getTarget:()=>controls.target,updateControls:()=>controls.update()});

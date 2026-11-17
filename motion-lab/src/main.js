@@ -1,3 +1,4 @@
+import {installTestLabScene} from '../../src/test-lab-scene.ts';
 import * as T from 'three';
 import {createAssembledAvatar} from '../../avatar-lab/src/avatar.js';
 import {createHandRig,POSES as HAND_POSES} from '../../hand-lab/src/hand-rig.js';
@@ -53,4 +54,5 @@ renderer.setAnimationLoop(()=>{
  key.position.set(st.pos.x-3,5,st.pos.z+4);key.target.position.set(st.pos.x,.9,st.pos.z);
  renderer.render(scene,camera);
 });
-window.motionLab={avatar,walker,camera,view,input,renderer,scene,key};
+installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>look});
+window.motionLab={avatar,walker,camera,view,input,renderer,scene,key,setCamera:(yaw,pitch)=>{camYaw=yaw;camPitch=pitch;}};

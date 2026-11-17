@@ -1,3 +1,4 @@
+import {installTestLabScene} from '../../src/test-lab-scene.ts';
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {createAssembledAvatar} from './avatar.js';
@@ -78,6 +79,7 @@ async function start(){
  });
  document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stop();lastTime=0;});
  window.avatarLab={...avatar,handRig,scene,camera,controls,view,tab,restAll,applyHandPose:(name,immediate)=>applyPose('hands',name,immediate),applyFootPose:(name,immediate)=>applyPose('feet',name,immediate),getState:()=>({hands:structuredClone(state.hands),feet:structuredClone(state.feet),playing,updates,activeTab})};
+ installTestLabScene({scene,camera,renderer,floors:[floor],getTarget:()=>controls.target,updateControls:()=>controls.update()});
  loading.hidden=true;window.avatarLabReady=true;
 }
 start().catch(error=>{console.error(error);loading.textContent='The avatar could not open. Please reload to try again.';});

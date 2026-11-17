@@ -1,3 +1,4 @@
+import {installTestLabScene} from '../src/test-lab-scene.ts';
 import * as T from 'three';
 import {PlayableRun,TUNING} from './controller.js';
 import {MovementInput} from '../movement/input.js';
@@ -25,17 +26,18 @@ async function start(){
  const status=document.querySelector('#status');let last=0;
  renderer.setAnimationLoop(ms=>{
   const dt=Math.min(.05,last?(ms-last)/1000:1/60);last=ms;
-  const look=input.consumeLook();yaw-=look.x;pitch=T.MathUtils.clamp(pitch+look.y,.12,1.05);distance=T.MathUtils.clamp(distance*(1+look.zoom),3.0,9.0);
+  const look=input.consumeLook();yaw-=look.x;pitch=T.MathUtils.clamp(pitch+look.y,0,Math.PI/2);distance=T.MathUtils.clamp(distance*(1+look.zoom),3.0,9.0);
   const stick=override||input.update(),fx=-Math.sin(yaw),fz=-Math.cos(yaw),x=fx*stick.y-fz*stick.x,z=fz*stick.y+fx*stick.x;
   player.step(dt,x,z);player.pose(dt);
   follow.x=T.MathUtils.damp(follow.x,player.position.x,8,dt);follow.z=T.MathUtils.damp(follow.z,player.position.z,8,dt);
-  camera.fov=(camera.aspect<.8?60:50)+player.runBlend*3;camera.updateProjectionMatrix();camera.position.set(follow.x+Math.sin(yaw)*Math.cos(pitch)*distance,follow.y+Math.sin(pitch)*distance,follow.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.lookAt(follow);
+  camera.fov=(camera.aspect<.8?60:50)+player.runBlend*3;camera.updateProjectionMatrix();camera.position.set(follow.x+Math.sin(yaw)*Math.cos(pitch)*distance,follow.y+Math.sin(pitch)*distance,follow.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.up.set(0,pitch>1.55?0:1,pitch>1.55?-1:0);camera.lookAt(follow);
   shadow.position.set(player.position.x,.003,player.position.z);
   sun.position.set(player.position.x-3,6,player.position.z+4);sun.target.position.set(player.position.x,.8,player.position.z);
   const label=player.speed<.04?'Standing':'Running';if(status.textContent!==label)status.textContent=label;
   renderer.render(scene,camera);
  });
  window.movement={player,input,scene,camera,slab,renderer,getState:()=>({...player.getState(),camera:{yaw,pitch,distance},stick:input.stick?{x:input.stick.x,y:input.stick.y}:null}),setIntent:(x,y)=>{override=x===null?null:{x,y};},setCamera:(y,p,d)=>{yaw=y;pitch=p;distance=d;}};
+ installTestLabScene({scene,camera,renderer,floors:[slab],shadows:[shadow],getTarget:()=>follow});
  document.querySelector('#loading').hidden=true;window.movementReady=true;window.runTestReady=true;
 }
 start().catch(error=>{console.error(error);document.querySelector('#loading').textContent='The movement test could not open. Please reload to try again.';});
