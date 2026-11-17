@@ -13,7 +13,7 @@ export const TUNING={
  swingTime:.3,    // s a foot is in the air at walking speed
  stepHeight:.07,   // m the foot lifts mid-step
  heelRaise:12,     // degrees the back heel lifts before toe-off
- armSwing:.32,     // radians the arms swing at walking speed
+ armSwing:.24,     // radians the arms swing at walking speed
 };
 
 const TAU=Math.PI*2,deg=T.MathUtils.radToDeg,clamp=T.MathUtils.clamp,smooth=(a,b,x)=>T.MathUtils.smoothstep(x,a,b);
@@ -176,7 +176,7 @@ export function createWalker(avatar){
    const b=base.get(sh),be=base.get(el),swing=TUNING.armSwing*lead*sd*sn;
    sh.position.y=b.p.y+.0025*(breath*.5+.5)*id;
    sh.rotation.set(b.r.x+swing+.012*Math.sin(t*TAU/5.3+.6)*id,b.r.y,b.r.z-sd*.006*(breath*.5+.5)*id-.008*weight*id);
-   el.rotation.set(be.r.x-.18*sn-Math.max(0,-swing)*.4,be.r.y,be.r.z);
+   el.rotation.set(be.r.x-.18*sn-Math.max(0,-swing)*.3,be.r.y,be.r.z);
   }
   rig.root.updateMatrixWorld(true);
   return state;
