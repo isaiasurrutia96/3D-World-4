@@ -53,4 +53,4 @@ renderer.setAnimationLoop(()=>{
  key.position.set(st.pos.x-3,5,st.pos.z+4);key.target.position.set(st.pos.x,.9,st.pos.z);
  renderer.render(scene,camera);
 });
-window.motionLab={avatar,walker,camera,view,input};
+window.motionLab={avatar,walker,camera,view,input,renderer,scene,key};

@@ -10,7 +10,7 @@ export const TUNING={
  accel:3.5,        // m/s^2 speeding up
  brake:5,          // m/s^2 slowing down
  turnRate:5,       // how quickly the body turns toward travel
- maxTurn:4,        // rad/s at most, so the feet can keep up
+ maxTurn:3,        // rad/s at most, so the feet can keep up
  footWidth:.2,     // m the feet always stay apart, side to side
  swingTime:.3,    // s a foot is in the air at walking speed
  stepHeight:.07,   // m the foot lifts mid-step
@@ -103,13 +103,17 @@ export function createWalker(avatar){
 
  function update(dt,wishX,wishZ){
   state.time+=dt;const t=state.time;
-  // ---- Travel: speed up / slow down toward the stick, turn toward travel.
-  const amount=Math.min(1,Math.hypot(wishX,wishZ)),target=tmp.a.set(wishX,0,wishZ);
-  if(amount>0)target.setLength(amount*TUNING.walkSpeed);
-  const dv=tmp.b.copy(target).sub(state.vel),rate=(amount>0&&state.vel.dot(target)>=0?TUNING.accel:TUNING.brake)*dt;
-  if(dv.length()>rate)dv.setLength(rate);state.vel.add(dv);if(amount===0&&state.vel.length()<.02)state.vel.set(0,0,0);
-  state.speed=state.vel.length();
-  if(amount>0){const want=Math.atan2(wishX,wishZ);state.facing+=clamp(angleTo(state.facing,want)*Math.min(1,TUNING.turnRate*dt),-TUNING.maxTurn*dt,TUNING.maxTurn*dt);}
+  // ---- Travel, Mario 64 style: the stick turns him; he always moves the way
+  // he faces. Sharp or fast turns slow him down so his feet can keep up.
+  const amount=Math.min(1,Math.hypot(wishX,wishZ));let turnNow=0;
+  if(amount>0){const want=Math.atan2(wishX,wishZ),diff=angleTo(state.facing,want);
+   turnNow=clamp(diff*Math.min(1,TUNING.turnRate*dt),-TUNING.maxTurn*dt,TUNING.maxTurn*dt);state.facing+=turnNow;
+   state.turn=Math.abs(diff);}else state.turn=0;
+  const turning=Math.min(1,Math.abs(turnNow)/(TUNING.maxTurn*Math.max(dt,1e-4)));
+  const wantSpeed=amount*TUNING.walkSpeed*clamp(Math.cos(Math.min(state.turn,Math.PI/2)),.25,1)*(1-.45*turning);
+  const rate=(wantSpeed>=state.speed?TUNING.accel:TUNING.brake)*dt;
+  state.speed+=clamp(wantSpeed-state.speed,-rate,rate);if(amount===0&&state.speed<.02)state.speed=0;
+  state.vel.set(Math.sin(state.facing),0,Math.cos(state.facing)).multiplyScalar(state.speed);
   state.pos.addScaledVector(state.vel,dt);
   const s=state.speed,sn=s/TUNING.walkSpeed,T_=TUNING.swingTime;
 
@@ -138,10 +142,12 @@ export function createWalker(avatar){
     S.t=Math.min(1,S.t+dt/S.dur*(1+strain)); // standing ankle near its limit: land sooner
     // Aim for where the hip will be at landing, a little ahead of it.
     const left=(1-S.t)*S.dur,goal=homeOf(L,tmp.a.copy(state.pos).addScaledVector(state.vel,left+S.dur*.35),state.facing,tmp.b);
+    const reach=goal.x-partner.pos.x,reachZ=goal.z-partner.pos.z,rl=Math.hypot(reach,reachZ),maxStep=.5;
+    if(rl>maxStep){goal.x=partner.pos.x+reach/rl*maxStep;goal.z=partner.pos.z+reachZ/rl*maxStep;} // never lunge
     const k=smooth(0,1,S.t);
     L.pos.set(T.MathUtils.lerp(S.from.x,goal.x,k),S.height*Math.sin(Math.PI*S.t),T.MathUtils.lerp(S.from.z,goal.z,k));
     // Turn the foot toward travel, but not more than a comfortable angle from the other foot.
-    const yawGoal=partner.yaw+clamp(angleTo(partner.yaw,state.facing),-.8,.8);
+    const yawGoal=partner.yaw+clamp(angleTo(partner.yaw,state.facing),-.5,.5);
     // Never cross or crowd the standing foot: keep it on its own side,
     // measured across the direction both feet are pointing.
     const mid=partner.yaw+angleTo(partner.yaw,yawGoal)*.5,right=tmp.c.set(Math.cos(mid),0,-Math.sin(mid));
