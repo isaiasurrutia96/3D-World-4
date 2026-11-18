@@ -1,13 +1,15 @@
 import {build} from 'esbuild';
-import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,cp} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {resolve,dirname} from 'node:path';
 import {execFileSync} from 'node:child_process';
 const root=fileURLToPath(new URL('../',import.meta.url));
-execFileSync(process.execPath,['--test',resolve(root,'racing-lab/tests/track-view.test.mjs'),resolve(root,'racing-lab/tests/fpv.test.mjs')],{stdio:'inherit'});
+execFileSync(process.execPath,['--test',resolve(root,'racing-lab/tests/track-view.test.mjs'),resolve(root,'racing-lab/tests/fpv.test.mjs'),resolve(root,'racing-lab/tests/app.test.mjs')],{stdio:'inherit'});
 const result=await build({entryPoints:[resolve(root,'racing-lab/src/main.js')],bundle:true,write:false,minify:true,format:'iife'});
 const css=`.track-picker{display:flex;align-items:center;gap:7px;font-size:12px}.track-picker select{max-width:200px;min-height:44px;background:white;color:#353b3e;border:1px solid #bfc0bc;border-radius:4px;padding:6px;font-size:16px}.track-preview-page #status{display:none}.race-hud{position:absolute;left:12px;top:12px;max-width:calc(100% - 24px);padding:8px 12px;background:#f3f0e9e8;font-size:12px;pointer-events:none;border-radius:4px}.track-preview-page #topbar{gap:8px}@media(max-width:760px){.track-preview-page .identity span{display:none}.track-picker{font-size:0}.track-picker select{max-width:125px}.track-preview-page nav{order:4;width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}.track-preview-page nav button{padding:7px 2px;font-size:12px}}`;
 const drivingCss=await readFile(resolve(root,'racing-lab/src/driving.css'),'utf8');
-const shell=(await readFile(resolve(root,'motion-lab/shell.html'),'utf8')).replace('</style>',css+drivingCss+'</style>').replace('<title>Motion Lab</title>','<title>Track Lab</title>');
+const appHead=`<link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Driving Test"><meta name="apple-mobile-web-app-status-bar-style" content="default">`;
+const shell=(await readFile(resolve(root,'motion-lab/shell.html'),'utf8')).replace('</head>',appHead+'</head>').replace('</style>',css+drivingCss+'</style>').replace('<title>Motion Lab</title>','<title>Track Lab</title>');
 const html=shell.replace('/*MOTION_LAB_BUNDLE*/',()=>result.outputFiles[0].text.replace(/<\/script/g,'<\\/script'));
 for(const name of ['racing-lab/index.html','dist/racing-lab/index.html']){const p=resolve(root,name);await mkdir(dirname(p),{recursive:true});await writeFile(p,html);}console.log('Built track preview and driving-feel test at /racing-lab/');
+for(const name of ['manifest.webmanifest','icons'])await cp(resolve(root,'racing-lab',name),resolve(root,'dist/racing-lab',name),{recursive:true});

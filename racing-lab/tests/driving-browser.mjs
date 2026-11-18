@@ -7,7 +7,7 @@ const server = createServer(async (q, r) => { try {
     let path = new URL(q.url, 'http://local').pathname;
     if (path.endsWith('/'))
         path += 'index.html';
-    r.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css' })[extname(path)] || 'application/octet-stream');
+    r.setHeader('Content-Type', ({ '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.webmanifest': 'application/manifest+json', '.png': 'image/png' })[extname(path)] || 'application/octet-stream');
     r.end(await readFile(resolve('dist', '.' + path)));
 }
 catch {

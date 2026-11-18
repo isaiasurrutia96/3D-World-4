@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "checks": [
+    "Browser parses the standalone manifest without errors under the deployed project prefix.",
+    "Apple standalone metadata and all three PNG installation icons load successfully.",
+    "Home Screen start URL opens the actual driving test with six views; Gas, brake and scroll-to-videos work."
+  ],
+  "pageErrors": [],
+  "limitation": "Actual iOS Add to Home Screen and native browser chrome require the user to launch the installed icon on their device."
+}
