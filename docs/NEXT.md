@@ -108,7 +108,7 @@ Recorded 17 November 2026.
     the belly lag smoothly; the rim and waist ball only slide round
     themselves. Collarbones following the shoulders (shrugs) is the next
     step, after the owner checks this. Owner approved ("looks good").
-18. Collarbones now move (waiting for the owner's check): shrug up 4°
+18. Collarbones now move (owner approved, "looks good"): shrug up 4°
     (about 2 cm), down 1°, forward 4°, back 4°. The chest around each
     shoulder socket follows its collarbone softly, so the ball stays snug.
     Shoulders also follow the arms on their own
@@ -116,3 +116,13 @@ Recorded 17 November 2026.
     and come forward when reaching. Kept small because the chest has only
     about 4 cm below each socket to stretch (behind the upper arm).
     New poses: Shrug, Reach forward.
+19. Skeleton section 4, reaching (waiting for the owner's check;
+    `motion-core/skeleton/reach.js`, checks: `npm run test:reach`). Tell a
+    hand or foot where to go and the arm or leg bends to get there, solved
+    exactly (two-bone method), inside every joint limit. Feet: give the
+    ground point and heading, the foot lands flat. Elbows point down, a
+    little back and out; knees forward. Out of reach: the limb points
+    straight at the target. Shoulders follow while reaching. Note: the
+    approved ankle tips the toes up only 18°, so a deep squat with flat
+    feet needs the hips back (like a real squat). Demos: Squat, Foot on
+    step, Follow the ball.
