@@ -23,6 +23,7 @@
     "test:movement": "node movement/tests/run.mjs",
     "build:run-test": "node run-test/build.mjs",
     "build:skeleton-test": "node skeleton-test/build.mjs",
+    "test:torso": "node tests/avatar/torso-split.mjs",
     "test:hand-tilt": "node tests/avatar/hand-tilt.mjs",
     "test:attach": "node skeleton-test/check.mjs",
     "build:motion-core-test": "node motion-core-test/build.mjs",

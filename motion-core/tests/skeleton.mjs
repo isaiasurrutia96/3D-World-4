@@ -24,7 +24,7 @@ export function measure(){
  const W=o=>o.getWorldPosition(new T.Vector3()).toArray(),m={};
  const neck=r.torso.children.find(o=>o.name==='original-neck');neck.geometry.computeBoundingBox();
  m['neck']=neck.localToWorld(new T.Vector3(0,neck.geometry.boundingBox.min.y,0)).toArray();
- m['pelvis']=W(r.body);m['spine']=W(r.torso);m['head']=W(r.head);
+ m['pelvis']=W(r.body);m['spine']=a.waist.chest.localToWorld(a.waist.pivotLocal.clone()).toArray();m['head']=W(r.head);
  const verts=mesh=>{const p=mesh.geometry.attributes.position,out=[];for(let i=0;i<p.count;i++)out.push(new T.Vector3(p.getX(i),p.getY(i),p.getZ(i)).applyMatrix4(mesh.matrixWorld));return out;};
  const end=(mesh,top,band)=>{const v=verts(mesh);let e=top?-1e9:1e9;for(const p of v)e=top?Math.max(e,p.y):Math.min(e,p.y);return v.filter(p=>top?p.y>e-band:p.y<e+band);};
  // Centre of a rounded joint end (least-squares sphere fit).
@@ -112,8 +112,8 @@ check('raising the arm 90° out to the side puts the wrist out at shoulder heigh
 const arm2=S.solve({'upperArm.L':{x:-60,y:0,z:30}}),moved=b=>arm2.get(b.name).head.distanceTo(rest.get(b.name).head)>1e-9;
 const rightArm=S.bones.filter(b=>b.side==='L'&&!/thigh|shin|foot|toes/.test(b.name)&&b.name!=='upperArm.L');
 check('turning the shoulder moves the whole arm, hand and fingers, nothing else',rightArm.every(moved)&&S.bones.filter(b=>b.side!=='L'||/thigh|shin|foot|toes/.test(b.name)).every(b=>!moved(b)),`${rightArm.length} bones moved`);
-const bend=S.solve({spine:{x:30,y:20,z:0}}),legStill=S.bones.filter(b=>/thigh|shin|foot|toes/.test(b.name)).every(b=>bend.get(b.name).head.distanceTo(rest.get(b.name).head)<1e-9);
-check('bending the waist moves the upper body but not the legs',legStill&&bend.get('head').head.distanceTo(rest.get('head').head)>.1);
+const bend=S.solve({spine:{x:0,y:30,z:0}}),legStill=S.bones.filter(b=>/thigh|shin|foot|toes/.test(b.name)).every(b=>bend.get(b.name).head.distanceTo(rest.get(b.name).head)<1e-9);
+check('turning the waist turns the chest, arms and head but not the legs',legStill&&bend.get('upperArm.L').head.distanceTo(rest.get('upperArm.L').head)>.1,`shoulder moved ${mm(bend.get('upperArm.L').head.distanceTo(rest.get('upperArm.L').head))}`);
 let mirErr=0;for(let n=0;n<500;n++){const p=randomPose(),a=S.solve(p),b=S.solve(S.mirrorPose(p));for(const bone of S.bones){const other=bone.name.endsWith('.L')?bone.name.slice(0,-2)+'.R':bone.name.endsWith('.R')?bone.name.slice(0,-2)+'.L':bone.name;
  const h=a.get(bone.name).head,m=b.get(other).head;mirErr=Math.max(mirErr,Math.hypot(h.x+m.x,h.y-m.y,h.z-m.z));}}
 check('left and right are exact mirror images in every pose',mirErr<1e-9,`500 random poses, largest difference ${mirErr.toExponential(1)} m`);

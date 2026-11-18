@@ -8,8 +8,8 @@
 //
 // Not yet bending: the hand mesh's fingers and the foot's toes are part of
 // one piece each (their own bending comes back in the hands-and-feet
-// section), and the torso is one solid piece from hips to shoulders, so the
-// waist (spine) stays straight until the body-bending section.
+// section). The torso is now a chest on a pelvis (ball-and-socket waist):
+// the chest turns on the hips; leaning is kept at 0 for now.
 import * as T from 'three';
 import {createAssembledAvatar} from '../avatar-lab/src/avatar.js';
 import {createSkeleton} from '../motion-core/skeleton/skeleton.js';
@@ -19,7 +19,8 @@ export function createSkeletonAvatar(){
  rig.root.updateMatrixWorld(true);
  const mesh=group=>group.children.find(o=>o.isMesh);
  const parts=[
-  ['socket-torso',rig.torso.children.find(o=>o.name==='socket-torso'),'spine'],
+  ['chest',rig.torso.children.find(o=>o.name==='chest'),'spine'],
+  ['pelvis',rig.torso.children.find(o=>o.name==='pelvis'),'pelvis'],
   ['neck',rig.torso.children.find(o=>o.name==='original-neck'),'neck'],
   ['head',mesh(rig.head),'head'],
  ];

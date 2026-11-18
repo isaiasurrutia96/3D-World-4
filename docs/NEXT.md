@@ -69,3 +69,13 @@ Recorded 17 November 2026.
     socket (`avatar-lab/src/avatar.js` HAND_TILT_DEGREES; checks:
     `npm run test:hand-tilt`). Approved; Checkpoint 2 updated in place with
     the same name (`checkpoints/avatar-2/`, see its CHECKPOINT.json updates).
+
+## Chest and pelvis split (18 Nov 2026, waiting for owner check)
+
+14. Owner chose option 1: the torso is now a chest and a pelvis joined by a
+    ball-and-socket waist, keeping the approved outer shape except a thin
+    seam (`avatar-lab/src/torso-split.js`; checks: `npm run test:torso`).
+    The chest turns on the hips ±35° (throwing, swinging); leaning at the
+    waist is kept at 0 for now. Next after approval: collarbones and the
+    pelvis-to-hip connection in the skeleton, and bone links in the bones
+    view. Checkpoint 2 is updated in place only after approval.

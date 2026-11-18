@@ -16,7 +16,7 @@ const {createSkeletonAvatar,createAssembledAvatar,T}=await import(pathToFileURL(
 const A=createSkeletonAvatar(),S=A.skeleton,R=[],check=(name,ok,detail='')=>R.push({check:name,result:ok?'PASS':'FAIL',detail});
 const mm=v=>(v*1000).toFixed(2)+' mm';
 const part=label=>A.attached.find(a=>a.label===label);
-check('all 15 clay body parts hang on a bone',A.attached.length===15&&new Set(A.attached.map(a=>a.mesh)).size===15,A.attached.map(a=>`${a.label}→${a.bone}`).join(', '));
+check('all 16 clay body parts hang on a bone (chest and pelvis now separate)',A.attached.length===16&&new Set(A.attached.map(a=>a.mesh)).size===16,A.attached.map(a=>`${a.label}→${a.bone}`).join(', '));
 
 // Rest pose = the approved avatar, point for point.
 const ref=createAssembledAvatar();ref.rig.root.updateMatrixWorld(true);
@@ -37,12 +37,15 @@ const ballCentre=(pts,M)=>{const ATA=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],N
  const e=new T.Matrix4().set(...ATA.flat()).invert().elements,s=[0,1,2,3].map(i=>e[i]*N[0]+e[4+i]*N[1]+e[8+i]*N[2]+e[12+i]*N[3]);return new T.Vector3(s[0],s[1],s[2]);};
 const joints=[];
 for(const s of ['L','R'])joints.push(
- {name:'shoulder '+s,child:part('upper-arm.'+s),parent:part('socket-torso'),top:true,band:.06},
+ {name:'shoulder '+s,child:part('upper-arm.'+s),parent:part('chest'),top:true,band:.06},
  {name:'elbow '+s,child:part('forearm.'+s),parent:part('upper-arm.'+s),top:true,band:.05},
  {name:'wrist '+s,child:part('hand.'+s),parent:part('forearm.'+s),top:true,band:.05},
- {name:'hip '+s,child:part('thigh.'+s),parent:part('socket-torso'),top:true,band:.06},
+ {name:'hip '+s,child:part('thigh.'+s),parent:part('pelvis'),top:true,band:.06},
  {name:'knee '+s,child:part('calf.'+s),parent:part('thigh.'+s),top:true,band:.05});
 joints.push({name:'head',child:part('head'),parent:part('neck'),all:true});
+// Waist: the chest's ball (its points below the underside) in the pelvis bowl.
+const ballPts=(()=>{const c=part('chest'),P=c.mesh.geometry.attributes.position,piv=A.avatar.waist.pivotLocal,o=[];for(let i=0;i<P.count;i++){const v=new T.Vector3().fromBufferAttribute(P,i);if(v.y<piv.y+.03&&v.y>piv.y-.03&&Math.hypot(v.x,v.z)>.05)o.push(v);}return o;})();
+joints.push({name:'waist',child:part('chest'),parent:part('pelvis'),pts:ballPts});
 // The wrist ball's surface points are picked on the untilted hand (tilting changes which points are "top").
 const flat=createAssembledAvatar({handTilt:0});flat.rig.root.updateMatrixWorld(true);
 const flatTop=side=>{const h=flat.lowerArmParts.find(p=>p.side===side).hand,P=h.geometry.attributes.position,ys=[];let e=-1e9;for(let i=0;i<P.count;i++){const y=new T.Vector3().fromBufferAttribute(P,i).applyMatrix4(h.matrixWorld).y;ys.push(y);e=Math.max(e,y);}
@@ -55,7 +58,7 @@ let seed=3;const rand=()=>(seed=(seed*16807)%2147483647)/2147483647;
 const randomPose=()=>{const p={};for(const b of S.bones){if(!b.parent||b.name==='spine')continue;p[b.name]=Object.fromEntries(['x','y','z'].map(k=>[k,b.limits[k][0]+rand()*(b.limits[k][1]-b.limits[k][0])]));}return p;};
 const worstSeat={};for(let n=0;n<40;n++){A.apply(randomPose());for(const j of joints){const ball=ballCentre(j.pts,j.child.mesh.matrix),socket=j.inParent.clone().applyMatrix4(j.parent.mesh.matrix);worstSeat[j.name]=Math.max(worstSeat[j.name]??0,ball.distanceTo(socket));}}
 const seatMax=Math.max(...Object.values(worstSeat));
-check('every joint ball stays in its socket (shoulders, elbows, wrists, hips, knees, head) in 40 random poses',seatMax<5e-4,Object.entries(worstSeat).map(([k,v])=>`${k} ${mm(v)}`).join(', '));
+check('every joint ball stays in its socket (waist, shoulders, elbows, wrists, hips, knees, head) in 40 random poses',seatMax<5e-4,Object.entries(worstSeat).map(([k,v])=>`${k} ${mm(v)}`).join(', '));
 A.apply(S.restPose());
 const t0=performance.now();for(let n=0;n<2000;n++)A.apply(randomPose());const us=(performance.now()-t0)/2000*1000;
 check('fast enough for every frame',us<300,`${us.toFixed(0)} µs to pose the whole body`);
