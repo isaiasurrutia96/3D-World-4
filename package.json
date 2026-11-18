@@ -30,6 +30,7 @@
     "build:walk-test": "node walk-test/build.mjs",
     "test:motion-lab": "node motion-lab/test.mjs",
     "test:racing-core": "node --test racing-core/tests/core.test.mjs",
+    "test:racing-kart": "node --test racing-core/kart/check.test.mjs",
     "build:racing-lab": "node racing-lab/build.mjs",
     "test:racing-lab": "node racing-lab/tests/browser.mjs",
     "test:inspection-zoom": "node --test test-lab/zoom.test.mjs"

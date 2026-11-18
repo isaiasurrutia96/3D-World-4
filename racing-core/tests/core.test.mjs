@@ -1,5 +1,6 @@
 // Run the fresh track checks in deployment CI too; prototype tests below remain separate.
 import '../track/check.test.mjs';
+import '../kart/check.test.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import {writeFileSync} from 'node:fs';
 import {TRACK_IDS,getTrack,createRaceSession,createVehicle,stepVehicle,readDriver,createDriver,VEHICLE,createProgress,updateProgress,resolveKartContact,createGhostStore,sampleGhost,validateGhost,fromLabInput} from '../index.js';
 import letsgoHandling from './fixtures/letsgo-handling.json' with {type:'json'};

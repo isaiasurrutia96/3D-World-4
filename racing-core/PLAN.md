@@ -8,7 +8,8 @@ Updated 18 November 2026. This is the single plan and approval record for the fr
 - **Approved to implement:** section 1, track logic, following the owner's “okay go.”
 - **Approved by owner:** section 1 and its measured results, in “Yes the fix in the original and everything else okay go.”
 - **Approved and enabled:** Original Circuit seam repair; welded geometry is now the default.
-- **Authorized to build:** section 1V, the track-only preview, by the owner's go. Its visual review remains pending. All later gameplay layers remain unstarted and need a separate go.
+- **Approved by owner:** the track preview and inspection controls, followed by the discussion of section 2 and the owner's “okay do the code first, really build a solid code as usual.”
+- **Authorized to implement:** section 2, headless kart handling. Results below await owner review. No authorization has been given for section 3 or a playable visual kart page.
 - **Rejected as the new foundation:** extending/tuning the earlier racing prototype. Its existing demo stays available while replacement layers are reviewed; none of its logic is imported by the new track module.
 
 The process applies to the owner's other projects as well: code first, one section at a time, automatic checks before visuals, plain-language results, then owner approval before continuing. Keep logic in `racing-core/` and the future visual adapter in `racing-lab/`. Do not edit `motion-core/` or frozen checkpoints.
@@ -17,7 +18,7 @@ The process applies to the owner's other projects as well: code first, one secti
 
 The targets are the existing Original, Skyline, Suzuka and Winding circuits from `isaiasurrutia96/3D-World-3`, revision `573664e824a04234240a24dfc2eae2273e30a4ca`. This was the reference repository's latest main when captured. It is reference-only.
 
-The fresh module is **`track/index.ts`**, with its own geometry functions, data, strict TypeScript check and Node tests. The older `track.js`, root `index.js` and their vehicle/session modules are the superseded prototype, not dependencies of this rebuild.
+The fresh modules are **`track/index.ts`** and **`kart/index.ts`**, each with strict TypeScript checking and Node tests. The older `track.js`, root `index.js` and their vehicle/session modules are the superseded prototype, not dependencies of this rebuild.
 
 `tools/capture-track-reference.mjs` reads a pinned Git archive and extracts full-precision authoring samples, exact rail endpoints, access bridges, start/gates and appearance constants. It records SHA256 hashes of the source files. Independent height probes and crossing heights are calculated by LetsGo's original road-surface function during capture. Runtime code imports only local numeric data and fresh geometry functions; it requires no browser, Three.js or old checkout.
 
@@ -66,8 +67,8 @@ These checks prove geometry/query behavior. They do **not** prove kart handling,
 | Section | Focus | Required proof before review | Status |
 |---|---|---|---|
 | 1 | Track geometry, access, walls, gate data | Source fidelity, surface support, bridge separation, dimensions, placement and frame-split gate probes | Approved; seam fix enabled |
-| 1V | Track-only visual inspection, no kart/avatar | Draw from the checked geometry; reproduce original materials/curbs/barriers; check views and device layouts | Built for owner visual review; approval pending |
-| 2 | Kart speed, steering, grip, braking, boost, road following | Scripted reference input traces; numerical results at all four frame rates | Not started; requires go |
+| 1V | Track-only visual inspection, no kart/avatar | Draw from the checked geometry; reproduce original materials/curbs/barriers; check views and device layouts | Owner accepted preview/inspection and authorized section 2 |
+| 2 | Kart speed, steering, grip, braking, boost, road following | Scripted reference input traces; numerical results at all four frame rates | Implemented: 50 Node checks pass; results await owner approval |
 | 3 | Wall and kart contacts | Head-on/glancing/resting contacts, deck separation, no tunnelling at maximum/boost speed | Not started; requires go |
 | 4 | Race rules | Countdown, ordered gates/laps, reverse/wrong-way, respawn, standings and interpolated finish times | Not started; requires go |
 | 5 | Computer opponents | Same vehicle and inputs as player; real completed laps, no position shortcuts | Not started; requires go |
@@ -85,7 +86,7 @@ The original asphalt, underside, sidewall, red/white curb striping and instanced
 
 Five Node presentation checks pass before the preview build; the build runs them automatically. Browser checks cover all four complete tracks, fitted framing, views/reset, mouse orbit/wheel, phone orbit/pinch without a joystick, five layouts and zero page errors. Shared input regression and embedded Test Lab checks are also run. Videos remain empty. Island scenery is deferred.
 
-**Stop after delivering this preview for visual approval. Do not start kart handling or any later layer automatically.**
+The owner subsequently accepted the preview/inspection work and explicitly authorized section 2. Continue to require a separate go for every subsequent section.
 
 ## Approved update: isolated test tracks
 
@@ -97,8 +98,27 @@ Five Node presentation checks pass before the preview build; the build runs them
 - Explicit `accessBridge: true` retains the old connector as an optional source profile for future reference; it is not enabled in the preview. Exact original diagnostics use both `seam: 'reference'` and `accessBridge: true`.
 - Node checks verify absent support on connector-only points, null entrance/access values, empty connector geometry, closed walls/curbs and unchanged loop/gates. The presentation consumes that same profile; it creates seven static track mesh objects per circuit and no access bridge/curb objects.
 
-Continue to wait for visual approval before kart handling.
+This track-only stop was superseded by the owner's explicit section 2 authorization recorded above.
 
 ## Owner-requested inspection controls
 
 18 November 2026: visual approval is paused while the shared Test Lab viewer gains off-center inspection. Pinch focuses beneath the two-finger midpoint and moving the midpoint pans; wheel/trackpad zoom focuses beneath the cursor. Perspective focus depth follows the picked surface so a close zoom approaches that part without crossing it. The shared Motion Lab camera retains the target offset until Reset or an explicit fitted view. Isometric presentation and ordinary OrbitControls labs use the same correction. Camera gestures do not alter the checked track geometry or any movement-core code. Ten Node point/depth/picking tests include frame-split equivalence; browser checks measure projected pixel stability for off-center track perspective/isometric gestures and an avatar part, wheel focus, release stability and page-zoom suppression. This is an inspection fix, not approval to start kart handling.
+
+## Section 2 — kart handling, authorized and built for review
+
+The owner's “okay do the code first, really build a solid code as usual” authorizes the headless handling layer discussed immediately beforehand. The preceding “everything is good” and subsequent discussion accept the track/inspection stage. The owner prefers the existing kart, without an avatar, when a hands-on visual test is separately ready; no kart visual or playable page has been built in this section.
+
+Implementation: `kart/index.ts`, with a strict ES2022-only typecheck and no runtime imports. It implements original acceleration/caps, braking/reverse, coasting, speed-sensitive steering/tap/release/held gain, lateral grip, granted boost/expiry, gravity/landing, deck-aware support, pitch/bank and wheel travel. The 120 Hz controller owns all motion; immutable interpolated poses are provided for a future view. Jitter/catch-up retain elapsed time. Invalid calls roll back a whole frame batch. Short boost presses survive frames smaller than one physics tick.
+
+Reference decisions:
+
+- Pinned original LetsGo revision is unchanged. A separate capture tool executes its unmodified controller against flat/sloped/ledge/deck surfaces and the original four road surfaces, with horizontal contact resolution disabled. Only local numeric traces are used by the tests; the retired rebuild is never imported by fresh handling.
+- Preserve positive-left steering, original button-pedal semantics and original arcade grip. No new top-speed target from fractional throttle or more-realistic tire model is substituted. Analog steering strength is retained. Future pressure-sensitive pedals need an explicit decision.
+- Nitro lasts 2 seconds with the source's possible extra floating-point boundary tick (1/120 s), and decays back to normal speed at 12 m/s² under Gas. Boost is a granted edge command; inventory/charges/pickups remain later work.
+- Surface support uses only the supplied checked road: no hub bridges, floor slab, invisible centerline guide or wall constraint. Gravity handles driving off an edge. Staying within the guardrails and impact response require section 3.
+
+**Checks: 50 PASS, zero FAIL** in [kart/CHECK-RESULTS.md](kart/CHECK-RESULTS.md); structured companion JSON includes every input, rule and measurement. 31 original scenarios / 998 sampled states agree at 30/60/120/144 FPS; maximum numeric source difference is 1.171e-11 across state fields. First-second speed is 24 m/s over 12.1 m. Normal cap is 53.6448 m/s (120 mph), boost cap 80.4672 m/s (180 mph). Stopping from normal cap takes 1.491666667 s over 39.74562 m, with no reverse motion. Frame splits, mixed/jittered inputs, 250 ms batches, 60-second seeded driving and all captured bridge decks pass. Exact independent measurements, not visual appearance or subjective feel, are what is approved for review.
+
+Deployment integration: `npm run test:racing-core` passes all 128 checks: 50 fresh track, 50 fresh handling, and 28 separately retained prototype regressions. Re-running the source capture produces the same SHA256 reference-data hash. The prototype results are regression coverage, not approval of its architecture or later layers.
+
+**Stop here for owner approval. Section 3 (wall/kart contacts) remains unstarted.** No NPC, avatar/steering-wheel grips, race session, ghosts, device UI, scenery or visual polish is included.
