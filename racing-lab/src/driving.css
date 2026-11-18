@@ -23,3 +23,14 @@
  .drive-controls button{font-size:12px}
  .driving-test-page .race-hud{font-size:11px}
 }
+/* Touch layout keeps the old brake dimensions while enlarging the main controls. */
+@media(pointer:coarse),(max-width:760px){
+ .drive-controls{container-type:inline-size;align-items:flex-end;--original-steering-width:clamp(120px,42cqw,220px);--original-pedal-width:clamp(120px,42cqw,220px)}
+ .drive-controls .drive-steering{width:calc((var(--original-steering-width) - 12px)*1.25 + 12px);transform:translateX(36px)}
+ .drive-controls .drive-pedals{display:flex;flex-direction:column;align-items:flex-end;gap:12px;width:calc((var(--original-pedal-width) - 8px)*.625)}
+ #race-reverse{order:-1;flex:none;width:calc((var(--original-pedal-width) - 8px)*.5);height:58px;min-height:58px}
+ #race-left,#race-right,#race-gas{height:74px;min-height:74px;font-size:16px}
+ #race-gas{flex:none;width:100%}
+}
+@media(max-width:760px){.drive-controls{--original-steering-width:42cqw;--original-pedal-width:48cqw}}
+@media(max-width:760px) and (max-height:360px){.drive-boost{left:50%;right:auto;transform:translateX(-50%)}}

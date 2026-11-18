@@ -168,7 +168,7 @@ try {
     assert.equal(await mobile.locator('#driving-options-toggle').count(), 0);
     results.push('Original top controls stay visible: all six views, track selection and Reset work without a dropdown.');
     const layouts = [];
-    for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 1280, height: 800 }]) {
+    for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 568, height: 320 }, { width: 667, height: 375 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 1280, height: 800 }]) {
         await mobile.setViewportSize(viewport);
         await mobile.evaluate(() => scrollTo(0,0));
         await settle(mobile);
@@ -186,10 +186,13 @@ try {
         assert.equal(await mobile.evaluate(() => scrollY), 0);
         const left = await mobile.locator('#race-left').boundingBox(), right = await mobile.locator('#race-right').boundingBox();
         assert(right.x - left.x - left.width >= 12 - .1, 'Steering targets need a clear gap');
-        assert(right.x + right.width / 2 < viewport.width / 2, 'Steering centers must stay on their own side');
         const gasBounds = await mobile.locator('#race-gas').boundingBox();
         assert(gasBounds.x - right.x - right.width >= 4, 'Steering and pedals must remain separate on narrow phones');
-        assert(left.x >= 44 && left.x <= 52, 'Steering should have the requested second 12 px inward adjustment');
+        assert(left.x >= 56 && left.x <= 64, 'Mobile steering should move another 12 px inward');
+        const brakeBounds = await mobile.locator('#race-reverse').boundingBox();
+        assert(brakeBounds.y + brakeBounds.height + 11.9 <= gasBounds.y, 'Brake must sit above Gas');
+        assert.equal(brakeBounds.height,58);
+        for(const b of [left,right,gasBounds]) assert.equal(b.height,74,'Primary controls should be noticeably taller');
         const buttons = await mobile.locator('.drive-controls button,#race-boost,#reset,[data-view],#race-track').evaluateAll(bs => bs.map(b => { const r = b.getBoundingClientRect(); return { text: b.textContent, x: r.x, y: r.y, right: r.right, bottom: r.bottom, w: r.width, h: r.height }; }));
         for (const b of buttons) {
             assert(b.w >= 44 && b.h >= 44, JSON.stringify(b));
@@ -200,9 +203,9 @@ try {
         assert.equal((await mobile.locator('#topbar').boundingBox()).y, 0);
         await mobile.evaluate(() => scrollTo(0,0));
         await mobile.waitForFunction(() => scrollY === 0 && motionLab.getState().active);
-        layouts.push({ ...viewport, stageHeight:stage.height, headerHeight:stage.y, steeringGap:right.x-left.x-left.width, steeringLeft:left.x });
+        layouts.push({ ...viewport, stageHeight:stage.height, headerHeight:stage.y, steeringGap:right.x-left.x-left.width, steeringLeft:left.x, steeringButton:{width:left.width,height:left.height}, gas:{width:gasBounds.width,height:gasBounds.height}, brake:{width:brakeBounds.width,height:brakeBounds.height}, pedalGap:gasBounds.y-brakeBounds.y-brakeBounds.height });
     }
-    results.push('Five layouts: original header controls visible at full width, smaller header height, steering near edge, videos below the first screen and reachable by scrolling; driving zoom stays disabled.');
+    results.push('Seven touch layouts: larger primary controls, original-size brake above Gas, steering +12 px, separate controls, full header and video scrolling; driving zoom stays disabled.');
     await mobile.setViewportSize({width:390,height:844});
     await settle(mobile);
     const scrollLink = await mobile.locator('.drive-videos-link').boundingBox(), scrollX=scrollLink.x+scrollLink.width/2, scrollY=scrollLink.y+scrollLink.height/2;
