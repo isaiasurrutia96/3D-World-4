@@ -7,6 +7,7 @@ export const TRACK_IDS = Object.freeze(['original', 'skyline', 'suzuka', 'windin
 export type TrackId = typeof TRACK_IDS[number];
 export type TrackOptions = Readonly<{
     seam?: 'reference' | 'weld';
+    accessBridge?: boolean;
 }>;
 export type Placement = Readonly<{
     x?: number;
@@ -99,6 +100,8 @@ function interval(values: readonly number[], value: number): number {
 function triangle(a: Point, b: Point, c: Point): Triangle { return Object.freeze([a, b, c]); }
 export function createTrack(id: TrackId, placement: Placement = {}, options: TrackOptions = {}) {
     const seamMode = options.seam ?? 'weld';
+    const accessBridge=options.accessBridge??false;
+    if(typeof accessBridge!=='boolean')throw new TypeError('accessBridge must be boolean');
     if (!['reference', 'weld'].includes(seamMode))
         throw new RangeError('Invalid seam mode');
     const raw = blueprints.find(t => t.id === id);
@@ -133,12 +136,14 @@ export function createTrack(id: TrackId, placement: Placement = {}, options: Tra
     const segments: readonly RoadSegment[] = Object.freeze(Array.from({ length: count }, (_, i) => {
         const corners = Object.freeze([cornersAt(samples[i], -1), cornersAt(samples[i + 1], -1), cornersAt(samples[i + 1], 1), cornersAt(samples[i], 1)] as const);
         const innerCorners=Object.freeze([cornersAt(samples[i],-1,raw.halfWidth),cornersAt(samples[i+1],-1,raw.halfWidth),cornersAt(samples[i+1],1,raw.halfWidth),cornersAt(samples[i],1,raw.halfWidth)]);
-        return Object.freeze({ index: i, sourceDistance:samples[i].station,curbVisible:Object.freeze(raw.curbOpenings.map(indices=>!indices.includes(i))),innerCorners, a: transform(samples[i].position), b: transform(samples[i + 1].position), corners, triangles: Object.freeze([triangle(corners[0], corners[1], corners[2]), triangle(corners[0], corners[2], corners[3])] as const), length: distances[i + 1] - distances[i], distance: distances[i] });
+        return Object.freeze({ index: i, sourceDistance:samples[i].station,curbVisible:Object.freeze(raw.curbOpenings.map(indices=>!accessBridge||!indices.includes(i))),innerCorners, a: transform(samples[i].position), b: transform(samples[i + 1].position), corners, triangles: Object.freeze([triangle(corners[0], corners[1], corners[2]), triangle(corners[0], corners[2], corners[3])] as const), length: distances[i + 1] - distances[i], distance: distances[i] });
     }));
-    const rails: readonly Rail[] = Object.freeze(raw.rails.map((r, index) => Object.freeze({ index, a: transform(point(r[0], r[1], r[2])), b: railEnd(r[3], r[4], r[5]), height: reference.wallHeight })));
-    const access = Object.freeze(raw.access), h = access.height;
-    const accessCorners = Object.freeze([point(access.minX, h, access.minZ), point(access.maxX, h, access.minZ), point(access.maxX, h, access.maxZ), point(access.minX, h, access.maxZ)].map(transform));
-    const accessTriangles = Object.freeze([triangle(accessCorners[0], accessCorners[1], accessCorners[2]), triangle(accessCorners[0], accessCorners[2], accessCorners[3])]);
+    const rails: readonly Rail[] = Object.freeze(accessBridge
+        ? raw.rails.map((r,index)=>Object.freeze({index,a:transform(point(r[0],r[1],r[2])),b:railEnd(r[3],r[4],r[5]),height:reference.wallHeight}))
+        : samples.slice(0,-1).flatMap((a,i)=>[-1,1].map((side,sideIndex)=>Object.freeze({index:i*2+sideIndex,a:cornersAt(a,side,outer+.15),b:cornersAt(samples[i+1],side,outer+.15),height:reference.wallHeight}))));
+    const access=accessBridge?Object.freeze(raw.access):null;
+    const accessCorners: readonly Point[]=Object.freeze(access?[point(access.minX,access.height,access.minZ),point(access.maxX,access.height,access.minZ),point(access.maxX,access.height,access.maxZ),point(access.minX,access.height,access.maxZ)].map(transform):[]);
+    const accessTriangles: readonly Triangle[]=Object.freeze(access?[triangle(accessCorners[0],accessCorners[1],accessCorners[2]),triangle(accessCorners[0],accessCorners[2],accessCorners[3])]:[]);
     const sourceDistances = samples.map(s => s.station);
     const fromSourceDistance = (relative: number) => {
         const station = wrap(samples[raw.startIndex].station + relative, raw.sourceLength), i = interval(sourceDistances, station);
@@ -238,6 +243,6 @@ export function createTrack(id: TrackId, placement: Placement = {}, options: Tra
         return Object.freeze({ fraction, point: p });
     }
     const seamEdgeGap = Math.max(distance(segments[0].corners[0], segments.at(-1)!.corners[1]), distance(segments[0].corners[3], segments.at(-1)!.corners[2]));
-    return Object.freeze({ id, seamMode, name: raw.name, sourceId: raw.sourceId, placement: pose, length, sourceLength: raw.sourceLength, startIndex: raw.startIndex, halfWidth: raw.halfWidth, curbWidth: raw.curbWidth, outer, roadThickness: reference.roadThickness, segments, rails, access, accessTriangles, gates, bounds, seamEdgeGap, entrance: transform(raw.entrance), start: Object.freeze({ point: gates[0].center, yaw: Math.atan2(gates[0].forward.x, gates[0].forward.z) }), sample, roadHeightAt, heightAt, project, nearestWall, crossGate, toLocal });
+    return Object.freeze({ id, seamMode, accessBridge, name: raw.name, sourceId: raw.sourceId, placement: pose, length, sourceLength: raw.sourceLength, startIndex: raw.startIndex, halfWidth: raw.halfWidth, curbWidth: raw.curbWidth, outer, roadThickness: reference.roadThickness, segments, rails, access, accessTriangles, gates, bounds, seamEdgeGap, entrance: accessBridge?transform(raw.entrance):null, start: Object.freeze({ point: gates[0].center, yaw: Math.atan2(gates[0].forward.x, gates[0].forward.z) }), sample, roadHeightAt, heightAt, project, nearestWall, crossGate, toLocal });
 }
 export type Track = ReturnType<typeof createTrack>;

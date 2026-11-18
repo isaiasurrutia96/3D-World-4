@@ -11,3 +11,5 @@ This is the track-only visual review authorized after section 1 approval. See `r
 Build with `npm run build` (or `npm run build:racing-lab` after dependencies exist). The build first runs `node --test racing-lab/tests/track-view.test.mjs`. Verify with `npm run test:racing-lab`, `node test-lab/test.mjs` and `npm run test:motion-lab`. Chromium browser checks test actual rendering/input and fitted phone/desktop layouts; they do not approve the visuals on the owner’s behalf.
 
 The earlier `src/simulation.js`, `src/track-view.js` and old capture script are unused prototype files, kept temporarily for history. They are not the foundation for subsequent approved layers.
+
+The default preview omits the former hub connectors in both logic and rendering. Curbs and guardrails close those entry gaps; the main loops and internal overpasses stay intact. Seven static mesh objects make up each track view. Optional source-fidelity tests enable the original connector explicitly.

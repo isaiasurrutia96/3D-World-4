@@ -22,5 +22,5 @@ export function createTrackPreview({scene,stage,floor}){
  }
  label.querySelector('select').onchange=()=>{selected=label.querySelector('select').value;bindings.reset();bindings.setView('angled');document.activeElement?.blur();};
  let previous='';new ResizeObserver(()=>{const r=stage.getBoundingClientRect(),key=r.width+'x'+r.height;if(key!==previous){previous=key;if(bindings){bindings.reset();bindings.setView('angled');}}}).observe(stage);
- load(selected);window.trackLab={get track(){return track;},get view(){return view;},selectTrack(id){selected=id;bindings.reset();bindings.setView('angled');},getState:()=>({trackId:track.id,seamMode:track.seamMode,seamGap:track.seamEdgeGap,roadSegments:track.segments.length,rails:track.rails.length,karts:0,avatars:0})};window.trackLabReady=true;return api;
+ load(selected);window.trackLab={get track(){return track;},get view(){return view;},selectTrack(id){selected=id;bindings.reset();bindings.setView('angled');},getState:()=>({trackId:track.id,accessBridge:track.accessBridge,seamMode:track.seamMode,seamGap:track.seamEdgeGap,roadSegments:track.segments.length,rails:track.rails.length,karts:0,avatars:0})};window.trackLabReady=true;return api;
 }

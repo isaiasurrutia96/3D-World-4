@@ -23,7 +23,7 @@ The fresh module is **`track/index.ts`**, with its own geometry functions, data,
 
 ## Section 1 decisions
 
-1. Preserve all authored road corners, elevations, rail openings, access bridge dimensions, start positions and 13 gates per course. No curve redesign or rounding to a voxel grid.
+1. Preserve all race-loop road corners, elevations, start positions and 13 gates per course. Owner-approved update: remove the old hub entrance connectors from the default test tracks and close their rail/curb openings. No curve redesign or rounding to a voxel grid.
 2. Preserve 26 m asphalt width, 1.1 m curbs on each side, 28.2 m total width, 0.65 m road thickness and the source's 1.2 m physical wall height.
 3. Use the original two triangles per road segment for surface queries, matching the reference road. Do not invent an unseen driving surface or ground slab.
 4. Keep true physical distance along the 3D sample polyline separate from the source spline's approximate station-length table. Both measurements are reported. Gates retain their exact world positions while obtaining physical-distance coordinates.
@@ -56,7 +56,7 @@ The current run has **50 passing verification checks and zero unexpected failure
 - All 19 source overpass intersections preserve their lower and upper support surfaces.
 - All 52 source gates keep their positions, directions and ordering.
 - Forward geometric sweeps at 180 mph produce the same crossing points/times at 30, 60, 120 and 144 FPS; reverse, outside and wrong-height probes are rejected.
-- All 15,577 wall midpoints can be queried, access bridges support their source height, and empty space has no invented floor.
+- All 15,600 active wall midpoints can be queried. The two rail rings are continuous around each circuit. Removed connector-only points have no support; the optional source connector profile still reproduces its original surface.
 - Island placement, loop wrapping, route-branch hints, seam diagnosis/approved repair, immutable geometry and invalid-input handling pass.
 
 These checks prove geometry/query behavior. They do **not** prove kart handling, collision response or anti-tunnelling, finished laps, AI, ghosts, hardware input, performance on a phone, or visual resemblance. Those require their own sections. Frame-rate checks here sweep points through gate geometry; they do not animate or simulate a kart.
@@ -81,8 +81,20 @@ The exact kart model may be reused later without its avatar. Claude owns avatar 
 
 The current `/racing-lab/` is a track-only preview; the Test Lab’s former Driving entry is now Tracks (section 1). It uses the shared Motion Lab page/input/camera shell and the checked `track/index.ts` geometry. No kart, avatar, opponent or driving controller is mounted. Camera distance limits are configurable per adapter so a whole metre-scale track can be inspected without changing geometry scale.
 
-The original asphalt, underside, sidewall, red/white curb striping, curb entrance gaps, access bridge/curbs and instanced rail beams/posts are reproduced. A checkerboard start line follows the original source dimensions/colors. The reference capture now includes curb-opening flags and independent original mesh signatures. In reference mode, all four preview mesh lists match source position/normal/color buffers, instance transforms/colors, object transforms and materials exactly. Approved default mode applies only the measured seam repair. This is a geometry/material match, not a claim of identical lighting or surrounding scenery.
+The original asphalt, underside, sidewall, red/white curb striping and instanced rail beams/posts are reproduced. The old access bridge/curbs/openings are preserved only in the explicit source profile; the default test tracks omit those connectors and close the openings. A checkerboard start line follows the original source dimensions/colors. The reference capture now includes curb-opening flags and independent original mesh signatures. In reference mode, all four preview mesh lists match source position/normal/color buffers, instance transforms/colors, object transforms and materials exactly. Approved default mode applies only the measured seam repair. This is a geometry/material match, not a claim of identical lighting or surrounding scenery.
 
 Five Node presentation checks pass before the preview build; the build runs them automatically. Browser checks cover all four complete tracks, fitted framing, views/reset, mouse orbit/wheel, phone orbit/pinch without a joystick, five layouts and zero page errors. Shared input regression and embedded Test Lab checks are also run. Videos remain empty. Island scenery is deferred.
 
 **Stop after delivering this preview for visual approval. Do not start kart handling or any later layer automatically.**
+
+## Approved update: isolated test tracks
+
+18 November 2026: the owner requested removal of the bridges/stubs connecting each circuit to LetsGo’s shared floor slab. This is a track-foundation change, not just hiding a mesh.
+
+- Default `accessBridge: false`: no access triangles, access descriptor or entrance point; connector-only space has no road support; no connector curbs/rails; bounds and framing cover the circuit only.
+- Rebuild complete perimeter rails and enable the missing curb segments, closing the former entry openings. Each circuit has exactly two rails per road segment, with zero join gaps.
+- The loop’s road corners, physical length, gates, elevations and internal overpasses are identical to the approved welded profile with a connector.
+- Explicit `accessBridge: true` retains the old connector as an optional source profile for future reference; it is not enabled in the preview. Exact original diagnostics use both `seam: 'reference'` and `accessBridge: true`.
+- Node checks verify absent support on connector-only points, null entrance/access values, empty connector geometry, closed walls/curbs and unchanged loop/gates. The presentation consumes that same profile; it creates seven static track mesh objects per circuit and no access bridge/curb objects.
+
+Continue to wait for visual approval before kart handling.

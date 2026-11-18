@@ -21,8 +21,9 @@ export function createCheckedTrackView(track){
  root.add(road);if(track.id==='original')root.add(edges,bottom);else root.add(bottom,edges);
  for(const side of [-1,1]){const s=strip('curb',side);root.add(mesh(s.positions,curb,s.colors));}
  const access=track.access,p=track.placement,world=(x,y,z)=>new T.Vector3(x*Math.cos(p.yaw)+z*Math.sin(p.yaw)+p.x,y+p.y,z*Math.cos(p.yaw)-x*Math.sin(p.yaw)+p.z);
- const bridge=new T.Mesh(new T.BoxGeometry(access.maxX-access.minX,track.roadThickness,access.maxZ-access.minZ),asphalt);bridge.position.copy(world((access.minX+access.maxX)/2,access.height-track.roadThickness/2,(access.minZ+access.maxZ)/2));bridge.rotation.y=p.yaw;bridge.receiveShadow=true;root.add(bridge);
  const dummy=new T.Object3D();
+ if(access){
+ const bridge=new T.Mesh(new T.BoxGeometry(access.maxX-access.minX,track.roadThickness,access.maxZ-access.minZ),asphalt);bridge.position.copy(world((access.minX+access.maxX)/2,access.height-track.roadThickness/2,(access.minZ+access.maxZ)/2));bridge.rotation.y=p.yaw;bridge.receiveShadow=true;root.add(bridge);
  if(track.id==='original'){
   for(const side of [-1,1])for(let x=128;x<136;x+=2){const c=new T.Mesh(new T.BoxGeometry(2,.06,.9),new T.MeshLambertMaterial({color:(x/2)%2?A.curbs[0]:A.curbs[1]}));c.position.copy(world(x+1,.03,-150+side*9.55));c.rotation.y=p.yaw;root.add(c);}
  }else{
@@ -30,6 +31,7 @@ export function createCheckedTrackView(track){
   const curbs=new T.InstancedMesh(new T.BoxGeometry(1,.06,.9),new T.MeshLambertMaterial({color:'#ffffff'}),Math.ceil((end-start)/3)*2);let index=0;
   for(const side of [-1,1])for(let at=start;at<end;at+=3){const width=Math.min(3,end-at);dummy.position.copy(alongZ?world(side<0?access.minX+.45:access.maxX-.45,.03,at+width/2):world(at+width/2,.03,side<0?access.minZ+.45:access.maxZ-.45));dummy.rotation.set(0,p.yaw+(alongZ?Math.PI/2:0),0);dummy.scale.set(width,1,1);dummy.updateMatrix();curbs.setMatrixAt(index,dummy.matrix);curbs.setColorAt(index++,new T.Color(Math.floor((at-start)/3)%2?A.curbs[1]:A.curbs[0]));}
   curbs.count=index;curbs.instanceMatrix.needsUpdate=true;root.add(curbs);
+ }
  }
  const material=new T.MeshLambertMaterial({color:A.railColor}),beams=new T.InstancedMesh(new T.BoxGeometry(A.railBeamSize,A.railBeamSize,1),material,track.rails.length*2),posts=new T.InstancedMesh(new T.BoxGeometry(A.railPostSize,A.railPostHeight,A.railPostSize),material,Math.ceil(track.rails.length/3)),axis=new T.Vector3(0,0,1);let beam=0,post=0;
  for(let i=0;i<track.rails.length;i++){const r=track.rails[i],a=new T.Vector3(r.a.x,r.a.y,r.a.z),b=new T.Vector3(r.b.x,r.b.y,r.b.z),delta=b.clone().sub(a);
