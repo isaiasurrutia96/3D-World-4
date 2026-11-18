@@ -17,14 +17,14 @@
       "npc/race-progress.js": "58aac979b5077b2e07c6a03e2c2c34f2e311e7960a5e7add885d501f69d71352"
     }
   },
-  "referenceDataSHA256": "6833841d5747fa3f214e4c2700e8882c396a46538cddb524bb10daa35e6a5c78",
+  "referenceDataSHA256": "39176d0fcd7d6285667e17097cbd4f3f2945689ef9b8141c370ee255d0bc40a5",
   "fps": [
     30,
     60,
     120,
     144
   ],
-  "approval": "Awaiting owner review; seam repair is proposed, not enabled.",
+  "approval": "Owner approved section 1 and the Original Circuit seam repair on 18 November 2026.",
   "summary": {
     "passed": 50,
     "failed": 0
@@ -257,8 +257,8 @@
     },
     {
       "track": "original",
-      "rule": "Reference seam mismatch is measured; the proposed weld closes only the seam",
-      "input": "Compare reference mode against the explicit, unapproved seam-weld option.",
+      "rule": "Approved seam weld closes only the source seam",
+      "input": "Compare reference mode against the approved default seam weld.",
       "expected": "Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.",
       "measured": {
         "referenceEdgeGap": 0.04616350088989525,
@@ -267,7 +267,7 @@
         "maximumRoadEdit": 0.04616350088989525,
         "changedWallEnds": 2,
         "maximumWallEdit": 0.04665460196316793,
-        "enabledByDefault": "reference"
+        "enabledByDefault": "weld"
       },
       "status": "PASS"
     },
@@ -432,8 +432,8 @@
     },
     {
       "track": "skyline",
-      "rule": "Reference seam mismatch is measured; the proposed weld closes only the seam",
-      "input": "Compare reference mode against the explicit, unapproved seam-weld option.",
+      "rule": "Approved seam weld closes only the source seam",
+      "input": "Compare reference mode against the approved default seam weld.",
       "expected": "Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.",
       "measured": {
         "referenceEdgeGap": 0,
@@ -442,7 +442,7 @@
         "maximumRoadEdit": 0,
         "changedWallEnds": 0,
         "maximumWallEdit": 0,
-        "enabledByDefault": "reference"
+        "enabledByDefault": "weld"
       },
       "status": "PASS"
     },
@@ -607,8 +607,8 @@
     },
     {
       "track": "suzuka",
-      "rule": "Reference seam mismatch is measured; the proposed weld closes only the seam",
-      "input": "Compare reference mode against the explicit, unapproved seam-weld option.",
+      "rule": "Approved seam weld closes only the source seam",
+      "input": "Compare reference mode against the approved default seam weld.",
       "expected": "Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.",
       "measured": {
         "referenceEdgeGap": 0,
@@ -617,7 +617,7 @@
         "maximumRoadEdit": 0,
         "changedWallEnds": 0,
         "maximumWallEdit": 0,
-        "enabledByDefault": "reference"
+        "enabledByDefault": "weld"
       },
       "status": "PASS"
     },
@@ -782,8 +782,8 @@
     },
     {
       "track": "winding",
-      "rule": "Reference seam mismatch is measured; the proposed weld closes only the seam",
-      "input": "Compare reference mode against the explicit, unapproved seam-weld option.",
+      "rule": "Approved seam weld closes only the source seam",
+      "input": "Compare reference mode against the approved default seam weld.",
       "expected": "Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.",
       "measured": {
         "referenceEdgeGap": 0,
@@ -792,7 +792,7 @@
         "maximumRoadEdit": 0,
         "changedWallEnds": 0,
         "maximumWallEdit": 0,
-        "enabledByDefault": "reference"
+        "enabledByDefault": "weld"
       },
       "status": "PASS"
     },

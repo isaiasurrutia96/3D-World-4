@@ -3,7 +3,7 @@ protectPage(window);
 const $=selector=>document.querySelector(selector);
 const tests={
  avatar:{name:'Avatar',path:'avatar-test',ready:w=>w.avatarLabReady},
- driving:{name:'Driving',path:'racing-lab',ready:w=>w.racingLabReady&&w.motionLabReady,driving:true},
+ tracks:{name:'Tracks',path:'racing-lab',ready:w=>w.trackLabReady&&w.motionLabReady,tracks:true},
  skeleton:{name:'Skeleton',path:'skeleton-test',ready:w=>w.skeletonTestReady},
  rules:{name:'Movement rules',path:'motion-core-test',ready:w=>w.rulesTestReady,move:true},
  hands:{name:'Hands',path:'hand-lab',ready:w=>w.handLabReady},
@@ -44,9 +44,9 @@ function frameClock(w){
  return {setActive(value){if(active===value)return;active=value;if(!active){w.dispatchEvent(new w.Event('blur'));return;}w.dispatchEvent(new w.Event('focus'));const callbacks=[...pending.values()];pending.clear();callbacks.forEach(callback=>request(callback));},get active(){return active;}};
 }
 function mirrorControls(doc){
- if(tests[subject].driving){
+ if(tests[subject].tracks){
   controls.replaceChildren();const native=doc.querySelector('#race-track'),label=document.createElement('label'),select=native.cloneNode(true);select.id='driving-track';select.setAttribute('aria-label','Choose a track');label.textContent='Choose a track';label.append(select);controls.append(label);
-  select.onchange=()=>{native.value=select.value;native.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));setView('back');};syncControls=()=>{select.value=native.value;};return;
+  select.onchange=()=>{native.value=select.value;native.dispatchEvent(new frame.contentWindow.Event('change',{bubbles:true}));setView('angle');};syncControls=()=>{select.value=native.value;};return;
  }
  const source=doc.querySelector('aside');controls.replaceChildren();syncControls=()=>{};
  if(!source)return;
@@ -66,10 +66,10 @@ async function setTest(id){
    protectPage(w);
    const start=performance.now();while(!w.testLabScene||!(tests[id].ready?tests[id].ready(w):doc.querySelector('canvas'))){if(token!==generation)return;if(performance.now()-start>30000)throw Error('Test did not load');await new Promise(r=>setTimeout(r,40));}
    if(token!==generation)return;clock=frameClock(w);mirrorControls(doc);buildMotionControls(doc);
-   $('#visual-mode').disabled=Boolean(tests[id].driving);setInspection(inspection);
-   $('#live-help').textContent=tests[id].driving?'Hold Gas and Left/Right to drive. Drag to look around; pinch to zoom.':tests[id].move?'Left side: move · Right side: look around. Use a light joystick push to slow the motion.':'Drag the model to look around. Use the view buttons for a fixed angle.';
+   $('#visual-mode').disabled=Boolean(tests[id].tracks);setInspection(inspection);
+   $('#live-help').textContent=tests[id].tracks?'Choose a track, then drag to orbit and pinch to zoom. This section shows the track only.':tests[id].move?'Left side: move · Right side: look around. Use a light joystick push to slow the motion.':'Drag the model to look around. Use the view buttons for a fixed angle.';
    doc.querySelector('canvas')?.addEventListener('pointerdown',event=>{if(w.testLabScene.getState().isometric)return;if(!tests[id].move||event.clientX>w.innerWidth/2)for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed','false');});
-   setView(tests[id].driving?'back':'angle');clock.setActive(stageVisible);loading.hidden=true;ready=true;window.testLabReady=true;
+   setView('angle');clock.setActive(stageVisible);loading.hidden=true;ready=true;window.testLabReady=true;
   }catch(error){if(token===generation){loading.textContent='This test could not open. Choose Reset to try again.';console.error(error);}}
  };
 }
@@ -92,7 +92,7 @@ function setView(name){
 }
 function setInspection(enabled){inspection=enabled;frame?.contentWindow.testLabScene?.setFloorVisible(!inspection);$('#visual-mode').setAttribute('aria-pressed',String(inspection));$('#visual-mode').title=inspection?'Show the grey floor':'Hide the floor for a clear inspection';}
 function setMode(next){mode=next;for(const id of ['live','video']){$('#'+id+'-tab').setAttribute('aria-selected',String(id===mode));$('#'+id+'-panel').hidden=id!==mode;}}
-$('#subject').onchange=e=>setTest(e.target.value);$('#reset').onclick=()=>{if(tests[subject].driving&&ready){frame.contentWindow.motionLab.reset();setView('back');}else setTest(subject);};
+$('#subject').onchange=e=>setTest(e.target.value);$('#reset').onclick=()=>{if(tests[subject].tracks&&ready){frame.contentWindow.motionLab.reset();setView('angle');}else setTest(subject);};
 for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>setView(b.dataset.view);
 $('#visual-mode').onclick=()=>setInspection(!inspection);
 $('#motion-toggle').onclick=()=>setMotionOpen(!motionOpen);
@@ -105,4 +105,4 @@ new IntersectionObserver(entries=>{stageVisible=entries[0].intersectionRatio>.5;
 document.addEventListener('visibilitychange',()=>clock?.setActive(!document.hidden&&stageVisible));
 setInterval(()=>{if(ready&&!document.hidden){syncControls();syncMotion();}},150);
 window.testLab={setTest,setView,setMode,setInspection,setMotionOpen,getState:()=>({subject,mode,view,inspection,motionOpen,ready,active:clock?.active??false}),get frame(){return frame;}};
-const initial=new URLSearchParams(location.search).get('test');setTest(tests[initial]?initial:'avatar');
+const initial=new URLSearchParams(location.search).get('test');setTest(initial==='driving'?'tracks':tests[initial]?initial:'avatar');
