@@ -243,3 +243,20 @@ Verification: 12 build Node checks and full driving browser checks pass, includi
 The owner requested another 24 px Gas shift and a fast turnaround. Increase the requested mobile Gas inset from 24 to 48 px; Boost and all other controls stay as before. A single clearance calculation preserves at least 5 px between Gas and steering on narrow portraits instead of allowing overlap. This replaces the prior fixed 16 px narrow exception with the largest safe shift up to 48 px.
 
 Verification: 12 build Node checks pass. Targeted browser geometry checks pass at eight touch sizes; landscape/tablet layouts measure the exact 48 px inset. Narrow portrait fits remain clear (320: 16.7 px, 360: 23.7 px, 390: 28.95 px). Actual simultaneous Left + Gas and touch cancellation pass at the new position. Other simulation tests were not rerun for this CSS-only position adjustment. Stop for feedback after the verified link.
+
+## Original bridge approach — camera blackout fix
+
+The owner reports a dark/blue blackout on the circled climb before the Original Circuit's raised crossing, while confirming the handling feels good. Preserve every driving/track/control setting.
+
+Root cause reproduced: chase X/Z already followed the interpolated kart directly, but target Y had a separate 10/s damped lag. At 180 mph on the uphill grade near x=458–459, z=0–7 (about station 1391–1399 relative to the start), the camera aim point fell below the road. The existing road-obstruction ray then shortened the camera arm to its 0.5 m minimum. Replaying the actual page camera measured only 0.476127 m from the kart; the camera was effectively inside the model/road. The same actual driving section stays grounded at all four display rates, so this is not a missing-road or handling change.
+
+Fix: `motion-lab/src/camera-follow.js` follows the existing interpolated chase pose consistently on X/Y/Z, including the existing target height/inspection offset. Shared `page.js` uses that helper. Ordinary inspection/movement labs retain the previous exponential damping; FPV still uses its seated pose. Camera yaw rate, arm dimensions, obstruction behavior, kart/track geometry, input and all simulation constants are unchanged. No edits to motion-core/ or frozen checkpoints.
+
+Checks:
+- Four new Node regressions run in the racing build. The old vertical lag reproduces sub-road aim and 0.5 m arm collapse. The fix keeps 1 m aim clearance and the full 10.59481 m arm through the climb at 30/60/120/144 FPS. A two-second real boost drive stays grounded and produces identical complete physics states with and without camera tracking, also identical across the four rates. Non-chase target damping/offsets match the previous calculation.
+- Actual page-camera replay in two mobile orientations at all four rates (eight cases): minimum aim clearance 1 m; minimum camera-to-kart distance 10.965856 m; kart remains framed; rendered pixels, WebGL context and FPV eye checks pass with zero page errors. See `CHASE-CAMERA-CHECKS.json` and `CHASE-CAMERA-BROWSER-CHECKS.json`. The page replay supplies road poses to isolate the camera; the Node drive separately checks real kart support/handling.
+- Full production build passes, including all 16 presentation/camera/app Node checks. Additional shared Motion Lab and driving-browser regressions are run before delivery.
+
+Stop after delivering the verified fixed driving link. The owner's positive handling feedback is recorded; no tuning or later racing layer is authorized by this fix.
+
+Final regression verification: full shared Motion Lab browser suite and full driving browser suite pass, including all four tracks, actual device-input paths, FPV, mobile layout, Reset and video scrolling. No page errors. The new camera checks are included in every racing build so this exact bridge/boost regression stays covered.

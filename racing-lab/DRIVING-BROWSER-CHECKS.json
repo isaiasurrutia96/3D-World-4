@@ -27,7 +27,7 @@
         "height": 74
       },
       "gas": {
-        "width": 80.1875,
+        "width": 80.18748474121094,
         "height": 74
       },
       "brake": {
@@ -35,7 +35,7 @@
         "height": 58
       },
       "pedalGap": 12,
-      "gasLeft": 211.8125,
+      "gasLeft": 211.1125030517578,
       "boost": {
         "x": 203.8125,
         "width": 80.1875,
@@ -54,7 +54,7 @@
         "height": 74
       },
       "gas": {
-        "width": 101.1875,
+        "width": 101.18748474121094,
         "height": 74
       },
       "brake": {
@@ -62,7 +62,7 @@
         "height": 58
       },
       "pedalGap": 12,
-      "gasLeft": 252.8125,
+      "gasLeft": 247.8625030517578,
       "boost": {
         "x": 252.8125,
         "width": 101.1875,
@@ -89,7 +89,7 @@
         "height": 58
       },
       "pedalGap": 12,
-      "gasLeft": 377.40625,
+      "gasLeft": 353.40625,
       "boost": {
         "x": 206.703125,
         "width": 154.59375,
@@ -116,7 +116,7 @@
         "height": 58
       },
       "pedalGap": 12,
-      "gasLeft": 446.703125,
+      "gasLeft": 422.703125,
       "boost": {
         "x": 446.703125,
         "width": 184.296875,
@@ -143,7 +143,7 @@
         "height": 58
       },
       "pedalGap": 12,
-      "gasLeft": 675.5,
+      "gasLeft": 651.5,
       "boost": {
         "x": 675.5,
         "width": 132.5,
@@ -170,7 +170,7 @@
         "height": 58
       },
       "pedalGap": 12,
-      "gasLeft": 599.5,
+      "gasLeft": 575.5,
       "boost": {
         "x": 599.5,
         "width": 132.5,
@@ -197,7 +197,7 @@
         "height": 58
       },
       "pedalGap": 12,
-      "gasLeft": 1111.5,
+      "gasLeft": 1087.5,
       "boost": {
         "x": 1111.5,
         "width": 132.5,
