@@ -3,12 +3,56 @@
   "checks": [
     "All four tracks: keyboard Gas, braking, Reset, one original kart.",
     "Actual S/Left keys turn left; F/Right keys turn right in the chase-camera image.",
-    "Steering/wheels, boost, drag/wheel camera and Behind return pass.",
+    "Steering/wheels, boost, drag look, disabled wheel zoom and Behind return pass.",
     "FPV: seated eye, forward view, look/recenter, fixed eye on wheel input, live switches, Reset/track persistence; driving settings unchanged.",
     "Standard Gamepad API: three identities, analog steering, RT Gas, LT brake and disconnect.",
     "Phone: simultaneous Left + Gas, cancellation, Reverse, blur clears/pauses, Reset.",
     "Phone FPV toggles, touch look and Reset preserve the first-person view.",
-    "Pinch zoom without page zoom and five phone/tablet/desktop layouts pass."
+    "Phone menu: all six views, track selection and Reset work; selecting, retapping, Escape and outside touch close it.",
+    "Pinch/wheel zoom disabled without page zoom; full-height stage, hidden empty videos, inward separated steering targets and overlay menu pass five layouts.",
+    "Landscape phone: simultaneous Right + Gas and touch cancellation still work after rotation."
+  ],
+  "layouts": [
+    {
+      "width": 320,
+      "height": 568,
+      "stageHeight": 511,
+      "headerHeight": 57,
+      "steeringGap": 12,
+      "steeringLeft": 12
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "stageHeight": 787,
+      "headerHeight": 57,
+      "steeringGap": 12,
+      "steeringLeft": 12
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "stageHeight": 333,
+      "headerHeight": 57,
+      "steeringGap": 21.09375,
+      "steeringLeft": 180.90625
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "stageHeight": 967,
+      "headerHeight": 57,
+      "steeringGap": 19.1875,
+      "steeringLeft": 144.796875
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "stageHeight": 743,
+      "headerHeight": 57,
+      "steeringGap": 24,
+      "steeringLeft": 388
+    }
   ],
   "pageErrors": []
 }

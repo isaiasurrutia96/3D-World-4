@@ -171,3 +171,17 @@ After discussing possible F1-inspired tuning, the owner accepted the proposed st
 - Five Node camera checks pass and run before the racing page build. Desktop/mobile browser checks pass for seated pose, looking/centering, live switches without speed reset, Reset/track persistence and five screen layouts with six view buttons. The current 120 mph normal / 180 mph boost caps and all handling parameters remain unchanged.
 
 **Stop after the verified FPV link. Wait for the owner’s view/speed-feel feedback before implementing any proposed tuning.**
+
+## Mobile driving layout — owner-requested correction
+
+The owner requested more driving space on phones, collapsible track/view options, inward steering buttons with clear separation, and no pinch/zoom in the driving test. This authorizes presentation/input-camera changes only.
+
+- The empty Test videos section is hidden in driving mode. Its control instructions remain available in the compact Controls menu. The stage fills the remaining dynamic viewport, without page scrolling; safe-area insets protect the HUD and pedals.
+- On phones, touch devices and narrow windows, the header keeps the title and a Controls arrow. The existing track picker, six view buttons and Reset open in an overlay, without shrinking the stage. Selection, retapping the arrow, outside touch and Escape close the panel. Wide mouse-driven desktops retain the existing header controls.
+- Steering buttons move inward on wider displays and have a 12–24 px gap. Left remains Left and Right remains Right; simultaneous steering and pedals still use the shared input module.
+- Driving opts out of both camera-distance zoom and point-focused inspection zoom in every view. Drag-to-look remains available. Track/object inspection and other labs retain their existing zoom behavior.
+- The owner found the existing **180 mph boost** more enjoyable. Save that as feedback for the next speed/F1-feel discussion, not authorization to tune the handling. Normal/boost caps, acceleration, braking, steering, grip, kart dimensions and all authoritative racing logic are unchanged.
+
+Verification results are recorded in `racing-lab/DRIVING-BROWSER-CHECKS.json`. Stop after delivering the verified mobile driving link; discuss tuning with the owner before changing it.
+
+Validation: full production build and 10 presentation/camera Node checks pass. Driving browser checks pass for all four tracks, keyboard direction, gamepad API regression, phone portrait/landscape simultaneous pedals/steering, all six views, Reset/track persistence, menu keyboard focus/dismissal and blocked wheel/pinch zoom. Measured mobile header is 57 px; stage heights are 511/787/333/967/743 px at the five recorded screen sizes, with 12–24 px steering gaps and zero page errors. Shared Motion Lab controls/zoom and default track-inspection browser regressions also pass. No movement-core, frozen checkpoint or driving-physics source changes.
