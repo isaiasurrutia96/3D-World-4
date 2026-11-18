@@ -13,7 +13,7 @@ writeFileSync(entry,`export {createSkeletonAvatar} from '${root}/skeleton-test/a
 const approvedHand=resolve(root,'avatar/src/hand-study/hand.js'),capture=resolve(root,'hand-lab/src/capture-rest.js');
 await build({entryPoints:[entry],bundle:true,platform:'node',format:'esm',outfile:join(dir,'o.mjs'),logLevel:'error',nodePaths:[join(root,'node_modules')],
  plugins:[{name:'h',setup(b){b.onResolve({filter:/^\.\/resting-digits\.js$/},a=>a.importer===approvedHand?{path:capture}:undefined);}}]});
-const {createSkeletonAvatar,createDemos,seatTop,thighTop,footReach,reach,POSES,T}=await import(pathToFileURL(join(dir,'o.mjs')).href);
+const {createSkeletonAvatar,createDemos,seatTop,sittingHands,thighRests,footReach,reach,POSES,T}=await import(pathToFileURL(join(dir,'o.mjs')).href);
 const A=createSkeletonAvatar(),S=A.skeleton,D=createDemos(S,footReach(A)),R=[],check=(name,ok,detail='')=>R.push({check:name,result:ok?'PASS':'FAIL',detail}),mm=v=>(v*1000).toFixed(2)+' mm';
 const AX=['x','y','z'],inLimits=p=>S.bones.filter(b=>b.parent&&p[b.name]).every(b=>AX.every(k=>p[b.name][k]>=b.limits[k][0]-1e-6&&p[b.name][k]<=b.limits[k][1]+1e-6));
 const ray=new T.Raycaster(),verts=label=>{const a=A.attached.find(x=>x.label===label),P=a.mesh.geometry.attributes.position,o=[];for(let i=0;i<P.count;i++)o.push(new T.Vector3().fromBufferAttribute(P,i).applyMatrix4(a.mesh.matrix));return o;};
@@ -25,12 +25,19 @@ const sitD=D.sit(99),sitBody=reach(S,sitD.pose,sitD.goals,{follow:true}),fit=sea
 const under=[...verts('pelvis'),...verts('thigh.L'),...verts('thigh.R')].filter(v=>v.z<=fit.front&&Math.abs(v.x)<=.25);
 const gapToBlock=Math.min(...under.map(v=>v.y))-fit.top;
 const s1=A.solved,thighLevel=Math.max(...['L','R'].map(sd=>{const d=s1.get('thigh.'+sd).tail.clone().sub(s1.get('thigh.'+sd).head);return Math.abs(Math.asin(d.y/d.length()))/Math.PI*180;}));
-const goals={};for(const sd of ['L','R'])goals['hand.'+sd]={palm:thighTop(A,sd,ray).toArray(),face:[0,-1,0]};
-const sitHands=reach(S,sitBody.pose,goals,{follow:true}),sitFeet=feetOk(sitHands.pose,sitBody);
-const palmErr=Math.max(sitHands.error['hand.L'],sitHands.error['hand.R']),palmFace=Math.max(sitHands.facing['hand.L'],sitHands.facing['hand.R']);
+const RESTS=thighRests(A),sitHands=reach(S,sitBody.pose,sittingHands(S.solve(sitBody.pose),RESTS),{follow:true}),sitFeet=feetOk(sitHands.pose,sitBody);
+const palmErr=Math.max(sitHands.error['hand.L'],sitHands.error['hand.R']),palmFace=Math.max(sitHands.facing['hand.L'],sitHands.facing['hand.R']),fingerAim=Math.max(sitHands.pointing['hand.L'],sitHands.pointing['hand.R']);
 check('sit: the block touches him exactly (nothing sinks into it, nothing floats above it)',Math.abs(gapToBlock)<1e-9,`block top ${mm(fit.top)} above the floor; lowest body point over it ${mm(gapToBlock)} from it`);
 check('sit: thighs level, feet planted flat, every joint inside its limits',thighLevel<.5&&sitFeet.err<5e-4&&sitFeet.tilt<.5&&inLimits(sitHands.pose),`thighs ${thighLevel.toFixed(2)}° from level; feet off by ${mm(sitFeet.err)}, tilted ${sitFeet.tilt.toFixed(2)}°`);
-check('sit: each palm centre rests exactly on top of its thigh, palm down',palmErr<5e-4&&palmFace<15,`palms off the thigh surface by ${mm(palmErr)}; palms face down within ${palmFace.toFixed(1)}° (the wrist's limits decide the rest)`);
+A.apply(sitHands.pose);const palmsOnTop=['L','R'].every(sd=>{const g=sittingHands(A.solved,RESTS)['hand.'+sd];return g.face[1]<-.99;});
+check('sit: each palm centre rests exactly on top of its thigh, palm down, fingers along the thigh to the knee',palmErr<5e-4&&palmsOnTop&&palmFace<16&&fingerAim<15,`palms off the thigh surface by ${mm(palmErr)}; palms lie within ${palmFace.toFixed(1)}° of flat (the forearm can roll only 80°); fingers point along the thigh within ${fingerAim.toFixed(1)}°`);
+// Sitting down, frame by frame at 60 a second, exactly as the page does it: smooth, then perfectly still.
+let sitJump=0,stillJump=0,prevSit=null;const ARMS=['upperArm.L','lowerArm.L','hand.L','upperArm.R','lowerArm.R','hand.R','clavicle.L','clavicle.R'];
+let warm=null;const armsOf=p=>Object.fromEntries(['upperArm.L','lowerArm.L','hand.L','upperArm.R','lowerArm.R','hand.R'].map(n=>[n,p[n]]).filter(([,v])=>v));
+for(let f=0;f<=150;f++){const t=f/60,d=D.sit(t),b=reach(S,d.pose,d.goals,{follow:true});const now=S.solve(b.pose),hd=reach(S,warm?{...b.pose,...warm}:b.pose,sittingHands(now,RESTS,d.handWeight,now,S),{follow:true}).pose;warm=armsOf(hd);
+ const mix={};for(const n of ARMS)mix[n]={...(hd[n]??S.bones[S.index.get(n)].rest)};
+ if(prevSit){let m=0,wh='';for(const n of ARMS)for(const k of AX){const dd=Math.abs(mix[n][k]-prevSit[n][k]);if(dd>m){m=dd;wh=n+k;}}if(process.env.DBG&&m>2)console.log('JUMP',f,t.toFixed(3),m.toFixed(1),wh,d.handWeight.toFixed(3),JSON.stringify(hd[wh.slice(0,-1)]));if(t<=1.4)sitJump=Math.max(sitJump,m);else stillJump=Math.max(stillJump,m);}prevSit=mix;}
+check('sit: the arms move smoothly while sitting down and are perfectly still once seated (no jitter)',sitJump<3&&stillJump<1e-3,`largest change between frames while sitting down ${sitJump.toFixed(2)}°; once seated ${stillJump.toExponential(1)}°`);
 
 // ---- Squat ----
 let sqFeet=0,sqTilt=0,sqLimits=true,bottomLevel=99;
@@ -50,7 +57,7 @@ check('step: the foot never goes into the block, on the way up or down',into<5e-
 check('step: the foot lands flat on top of the block, fully on it; the other foot stays planted',Math.abs(sole-box.max.y)<.002&&inside&&stepFeet<5e-4&&stepLimits,`sole ${mm(sole-box.max.y)} from the block top; feet off their targets by ${mm(stepFeet)}`);
 
 // ---- Ball ----
-let ballErr=0,ballFace=0;for(let n=0;n<=120;n++){const d=D.ball(n/120*(Math.PI*2/1.4)),r=reach(S,d.pose,d.goals,{follow:true});const p=palmAt(S.solve(r.pose),'L');ballErr=Math.max(ballErr,Math.abs(p.distanceTo(new T.Vector3(...d.ball))-D.BALL.radius));ballFace=Math.max(ballFace,r.facing['hand.L']);}
+let ballErr=0,ballFace=0,bw=null;for(let n=0;n<=120;n++){const d=D.ball(n/120*(Math.PI*2/1.4)),r=reach(S,bw?{...d.pose,...bw}:d.pose,d.goals,{follow:true});bw=armsOf(r.pose);const p=palmAt(S.solve(r.pose),'L');ballErr=Math.max(ballErr,Math.abs(p.distanceTo(new T.Vector3(...d.ball))-D.BALL.radius));ballFace=Math.max(ballFace,r.facing['hand.L']);}
 check('ball: the palm centre stays on the ball all the way round, facing its centre',ballErr<5e-4&&ballFace<1,`palm off the ball's surface by ${mm(ballErr)}; facing off by ${ballFace.toFixed(2)}°`);
 
 // ---- Leg out ----

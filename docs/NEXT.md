@@ -139,3 +139,15 @@ Recorded 17 November 2026.
     then down; checked never to touch the block. Leg out: left leg 35° out to
     the side. Checks: `npm run test:demos`. Owner rule: never guess; ask and
     explain first.
+21. Sit fix (owner's item 1 of 3): no more arm glitching, hands lie flat.
+    Causes found: the thigh-top point was looked up fresh each frame and was
+    sometimes not found while the thighs were near upright; when two elbow
+    bends both worked the arm could flip to the other; the palm solver let
+    the elbow and forearm roll chase each other. Fixes: the palm rest point
+    is measured once on the front of the thigh (3/4 to the knee) and rides
+    with it; ties go to the bend closest to the current pose; the palm is
+    turned by one smooth solver (arm spin + forearm roll + wrist together,
+    Levenberg-Marquardt) that starts from last frame; the hands travel from
+    hanging to the thighs while he sits. Checked: under 2.2° change per frame
+    while sitting, still once seated, palms flat within 0.6°, fingers along
+    the thigh. Next: item 2 (squat smoothness), then item 3 (step).

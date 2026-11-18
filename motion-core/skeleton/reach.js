@@ -14,7 +14,8 @@
 //     pole      which way the elbow / knee should point (a direction);
 //               default: knees forward, elbows back and slightly out
 //     palm      for a hand: where the palm centre should be (instead of the wrist);
-//               face: which way the palm should face (a direction)
+//               face: which way the palm should face (a direction);
+//               fingers: which way the fingers should point (along the palm)
 //     touch     for a hand: the centre of a ball to touch, with radius: the palm
 //               centre lands on its surface, facing its centre
 //     flat      for a foot: keep it flat on the ground (default true with sole)
@@ -81,7 +82,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const across = (v, t) => v.clone().sub(t.clone().multiplyScalar(v.dot(t)));
 
 /** Solve one limb. Returns the new angles for its three bones. */
-function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, targetOverride = null){
+function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, targetOverride = null, spinOffset = 0){
  const [uName, mName, eName] = LIMBS[kind].map(n => `${n}.${side}`);
  const B = n => skeleton.bones[skeleton.index.get(n)], U = B(uName), Mb = B(mName), E = B(eName);
  const cur = n => ({...B(n).rest, ...(pose[n] ?? {})});
@@ -137,9 +138,11 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
  }
  // Try each hinge solution with the elbow/knee facing the pole; if a joint limit gets
  // in the way, look around the line for the nearest spin that still lands.
+ // Ties go to the bend closest to the pose's own (so the arm never flips to the other answer).
+ hinges.sort((a1, a2) => Math.abs(a1 - m.x) - Math.abs(a2 - m.x));
  let best = null;
- for(const hx of hinges){ const r = attempt(hx, 0); if(!best || r.err < best.err - 1e-9) best = r; }
- if(best.err > 1e-4){
+ for(const hx of hinges){ const r = attempt(hx, spinOffset * RAD); if(!best || r.err < best.err - 1e-9) best = r; }
+ if(best.err > 1e-4 && !spinOffset){
   for(const hx of hinges) for(let k = -17; k <= 18; k++){ const r = attempt(hx, k * 10 * RAD); if(r.err < best.err - 1e-9 || (Math.abs(r.err - best.err) <= 1e-9 && Math.abs(r.spin) < Math.abs(best.spin))) best = r; }
   if(best.err < 1e-5){
    // It lands with some spin: find the smallest spin that still lands (the elbow/knee
@@ -168,65 +171,106 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
   if(tuned.err <= best.err + 1e-6 && Math.abs(f1) < Math.abs(twistNeeded(best))) best = tuned;
   end = anglesFor(E, best.W2a.clone().invert().multiply(headingQ), end);
  }
- return {[uName]: best.upper, [mName]: best.mid, [eName]: end, forearm: best.W2a};
+ return {[uName]: best.upper, [mName]: best.mid, [eName]: end, forearm: best.W2a, err: best.err};
 }
 
 /**
  * A hand goal by the palm: the palm centre lands exactly on the point, and the
- * palm turns (at the wrist, inside its limits) to face the given way. The
- * wrist turn moves the palm, so it settles in a few exact rounds; the final
- * round lands the palm exactly.
+ * palm faces the given way (and, if asked, the fingers point the given way).
+ * Four things turn the palm without moving where it lands: the spin of the
+ * whole arm about the shoulder→palm line, the forearm's roll, and the wrist's
+ * two turns. They are solved together, smoothly (Levenberg-Marquardt), with a
+ * tiny preference for the most relaxed answer (the elbow toward its pole, the
+ * roll and wrist near the pose's own), so a small change in the target always
+ * gives a small change in the arm. Then a final exact solve lands the palm.
  */
 function solvePalm(skeleton, out, solved, side, goal){
- const name = 'hand.' + side, hand = skeleton.bones[skeleton.index.get(name)], H0 = new Vector3(...hand.head);
- const palm0 = new Vector3(...skeleton.palms[side].point), n0 = new Vector3(...skeleton.palms[side].normal);
+ const name = 'hand.' + side, fname = 'lowerArm.' + side, hand = skeleton.bones[skeleton.index.get(name)], fore = skeleton.bones[skeleton.index.get(fname)];
+ const H0 = new Vector3(...hand.head), palm0 = new Vector3(...skeleton.palms[side].point), n0 = new Vector3(...skeleton.palms[side].normal);
+ const f0 = new Vector3(...hand.tail).sub(H0); f0.sub(n0.clone().multiplyScalar(f0.dot(n0))).normalize();
  const centre = goal.touch ? new Vector3(...goal.touch) : null, r = goal.radius ?? 0;
- let face = goal.face ? new Vector3(...goal.face).normalize() : null, target = null, result = null;
- // The pose's own forearm roll and wrist: the most relaxed mix is the one closest to these.
- const relaxed = [(out['lowerArm.' + side] ?? {}).y ?? 0, (out[name] ?? hand.rest).x ?? hand.rest.x, (out[name] ?? hand.rest).z ?? hand.rest.z];
- for(let k = 0; k < 5; k++){
-  const wrist = {...hand.rest, ...(out[name] ?? {})}, Dw = deltaOf(hand, wrist);
-  const endRest = palm0.clone().sub(H0).applyQuaternion(Dw).add(H0);
-  if(centre){
-   // Touch a ball: the palm meets it coming from the shoulder, facing its centre, the palm
-   // centre on its surface (a steady choice that does not chase itself).
-   face = centre.clone().sub(solved.get('upperArm.' + side).head); if(face.lengthSq() < 1e-12) face.set(0, 0, 1); face.normalize();
-   target = centre.clone().addScaledVector(face, -r);
-  } else target = new Vector3(...goal.palm);
-  result = solveLimb(skeleton, out, solved, 'hand', side, goal, endRest, target);
-  out['upperArm.' + side] = result['upperArm.' + side]; out['lowerArm.' + side] = result['lowerArm.' + side];
-  if(!face) break;
-  // Turn the palm to face the wanted way using the forearm's roll and the wrist
-  // together (the wrist alone cannot turn the palm over), inside their limits.
-  const fore = skeleton.bones[skeleton.index.get('lowerArm.' + side)], W1 = result.forearm.clone().multiply(deltaOf(fore, out['lowerArm.' + side]).invert());
-  const lim = [fore.limits.y, hand.limits.x, hand.limits.z], clampAt = (v, j) => Math.min(lim[j][1], Math.max(lim[j][0], v));
-  const normalFor = ([ay, wx, wz]) => n0.clone().applyQuaternion(deltaOf(hand, {x: wx, y: 0, z: wz})).applyQuaternion(deltaOf(fore, {...out['lowerArm.' + side], y: ay})).applyQuaternion(W1);
-  // Many roll/wrist mixes face the same way; a tiny preference for the most relaxed
-  // one (closest to the pose's own roll and wrist) makes the answer unique and smooth.
-  const RELAX = 1e-6;
-  const cost = v => 1 - normalFor(v).dot(face) + RELAX * ((v[0] - relaxed[0]) ** 2 + (v[1] - relaxed[1]) ** 2 + (v[2] - relaxed[2]) ** 2);
-  let v = [out['lowerArm.' + side].y, wrist.x, wrist.z];
-  // Small steps downhill (numbers in degrees), each kept inside the limits; settles quickly.
-  for(let it = 0, step = 8; it < 40 && step > .01; it++){
-   let moved = false;
-   for(let j = 0; j < 3; j++) for(const dv of [step, -step]){ const tryV = v.slice(); tryV[j] = clampAt(v[j] + dv, j); if(cost(tryV) < cost(v) - 1e-12){ v = tryV; moved = true; } }
-   if(!moved) step /= 2;
+ let face = goal.face ? new Vector3(...goal.face).normalize() : null;
+ if(centre){
+  // Touch a ball: the palm meets it coming from the shoulder, facing its centre, the palm
+  // centre on its surface (a steady choice that does not chase itself).
+  face = centre.clone().sub(solved.get('upperArm.' + side).head); if(face.lengthSq() < 1e-12) face.set(0, 0, 1); face.normalize();
+ }
+ const target = centre ? centre.clone().addScaledVector(face, -r) : new Vector3(...goal.palm);
+ const fingers = goal.fingers && face ? (() => { const f = new Vector3(...goal.fingers); return f.sub(face.clone().multiplyScalar(f.dot(face))).normalize(); })() : null;
+ const foreNow = {...fore.rest, ...(out[fname] ?? {})}, wristNow = {...hand.rest, ...(out[name] ?? {})};
+ const at = ([spin, roll, wx, wz]) => {
+  const o = {...out, [fname]: {...foreNow, y: roll}, [name]: {...wristNow, x: wx, z: wz}};
+  const endRest = palm0.clone().sub(H0).applyQuaternion(deltaOf(hand, o[name])).add(H0);
+  return {o, res: solveLimb(skeleton, o, solved, 'hand', side, goal, endRest, target, spin)};
+ };
+ if(!face){ const {o, res} = at([0, foreNow.y, wristNow.x, wristNow.z]); return finish(o, res, 0); }
+ const lim = [[-180, 180], fore.limits.y, hand.limits.x, hand.limits.z], clampAt = (x, j) => Math.min(lim[j][1], Math.max(lim[j][0], x));
+ // Start from the pose given (e.g. last frame), with a very gentle preference for a
+ // relaxed answer. When the hand's whole turn is set (palm and fingers, e.g. resting on
+ // the thighs), that preference is the joints' natural rest, so nothing can drift. When
+ // only the palm's facing is set (e.g. touching a ball), the hand may need a big forearm
+ // roll, so the preference is the pose's own (it moves along with the hand).
+ const start = [0, foreNow.y, wristNow.x, wristNow.z], anchor = fingers ? [0, fore.rest.y, hand.rest.x, hand.rest.z] : start.slice(), RELAX = 1e-6, NEAR = 100;
+ const residual = v => {
+  const {res} = at(v), W2a = res.forearm, Dw = deltaOf(hand, {x: v[2], y: 0, z: v[3]});
+  const n = n0.clone().applyQuaternion(Dw).applyQuaternion(W2a).sub(face).multiplyScalar(Math.SQRT1_2), out3 = [n.x, n.y, n.z];
+  if(fingers){ const f = f0.clone().applyQuaternion(Dw).applyQuaternion(W2a); f.sub(face.clone().multiplyScalar(f.dot(face))); const d = f.normalize().sub(fingers).multiplyScalar(Math.SQRT1_2); out3.push(d.x, d.y, d.z); }
+  out3.push(NEAR * res.err); // only grows if a joint limit stops the palm landing
+  for(let j = 0; j < 4; j++) out3.push(Math.sqrt(RELAX) * (v[j] - anchor[j]));
+  return out3;
+ };
+ let v = leastSquares(residual, start, clampAt);
+ // If a joint limit left it stuck short of facing the right way, try a few other
+ // starting turns and keep the best (rare; normally the pose's own start is enough).
+ const cost = x => residual(x).reduce((a, y) => a + y * y, 0), off = x => { const r3 = residual(x); return r3[0] ** 2 + r3[1] ** 2 + r3[2] ** 2; };
+ if(off(v) > 1e-4){
+  let best = cost(v);
+  for(const seed of [[0, -60, 0, 0], [0, -30, 0, 0], [0, 40, 0, 0], [30, -45, 0, 15], [-30, -45, 0, 15]]){
+   const w = leastSquares(residual, seed.map((x, j) => j === 0 ? x : x + (j === 1 ? 0 : start[j])), clampAt), c = cost(w);
+   if(c < best - 1e-12){ best = c; v = w; }
   }
-  out['lowerArm.' + side] = {...out['lowerArm.' + side], y: v[0]};
-  out[name] = {...wrist, x: v[1], z: v[2]};
  }
- // Land the palm exactly with the final roll and wrist.
- {
-  const wrist = {...hand.rest, ...(out[name] ?? {})}, endRest = palm0.clone().sub(H0).applyQuaternion(deltaOf(hand, wrist)).add(H0);
-  if(centre) target = centre.clone().addScaledVector(face, -r);
-  result = solveLimb(skeleton, out, solved, 'hand', side, goal, endRest, target);
-  out['upperArm.' + side] = result['upperArm.' + side]; out['lowerArm.' + side] = result['lowerArm.' + side];
+ const {o, res} = at(v);
+ return finish(o, res, v[0]);
+
+ function finish(o, res, spin){
+  Object.assign(out, {[fname]: res[fname], [name]: o[name], ['upperArm.' + side]: res['upperArm.' + side]});
+  return {target, face, fingers, f0};
  }
- return {target, face};
+}
+
+/** Minimise the sum of squares of residual(v) (Levenberg-Marquardt), keeping each v[j] inside clampAt. */
+function leastSquares(residual, start, clampAt, {iterations = 20, h = 1e-3} = {}){
+ const n = start.length, sq = r => r.reduce((a, x) => a + x * x, 0);
+ let v = start.map((x, j) => clampAt(x, j)), r0 = residual(v), c0 = sq(r0), lambda = 1e-3;
+ for(let it = 0; it < iterations; it++){
+  const J = v.map((_, j) => { const vh = v.slice(); vh[j] += h; return residual(vh).map((x, i) => (x - r0[i]) / h); });
+  const A = J.map(a => J.map(b => a.reduce((s, x, m) => s + x * b[m], 0))), g = J.map(a => a.reduce((s, x, m) => s + x * r0[m], 0));
+  for(let i = 0; i < n; i++) A[i][i] += lambda * (A[i][i] + 1e-9);
+  const d = solveLinear(A, g.map(x => -x)); if(!d) break;
+  const tryV = v.map((x, j) => clampAt(x + d[j], j)), r1 = residual(tryV), c1 = sq(r1);
+  if(c1 < c0){ const moved = Math.max(...tryV.map((x, j) => Math.abs(x - v[j]))); v = tryV; r0 = r1; c0 = c1; lambda = Math.max(1e-7, lambda / 4); if(moved < 1e-5) break; }
+  else { lambda *= 8; if(lambda > 1e8) break; }
+ }
+ return v;
+}
+
+/** Solve A·x = b (small, dense; Gaussian elimination with pivoting). */
+function solveLinear(A, b){
+ const n = b.length, M = A.map((row, i) => [...row, b[i]]);
+ for(let c = 0; c < n; c++){
+  let p = c; for(let i = c + 1; i < n; i++) if(Math.abs(M[i][c]) > Math.abs(M[p][c])) p = i;
+  if(Math.abs(M[p][c]) < 1e-300) return null;
+  [M[c], M[p]] = [M[p], M[c]];
+  for(let i = c + 1; i < n; i++){ const f = M[i][c] / M[c][c]; for(let k = c; k <= n; k++) M[i][k] -= f * M[c][k]; }
+ }
+ const x = new Array(n);
+ for(let i = n - 1; i >= 0; i--){ let s = M[i][n]; for(let k = i + 1; k < n; k++) s -= M[i][k] * x[k]; x[i] = s / M[i][i]; }
+ return x;
 }
 
 /** Reach every goal; see the top of this file. */
-export function reach(skeleton, pose, goals, {follow = false, passes = 3} = {}){
+export function reach(skeleton, pose, goals, {follow = false, passes = 2} = {}){
  let out = {...pose};
  const rounds = follow ? passes : 1, palmGoals = {};
  for(let r = 0; r < rounds; r++){
@@ -238,22 +282,23 @@ export function reach(skeleton, pose, goals, {follow = false, passes = 3} = {}){
    if(!LIMBS[kind]) throw Error('Can only reach with hand.L/R or foot.L/R, not ' + name);
    if(kind === 'hand' && (goal.palm || goal.touch)){ palmGoals[name] = solvePalm(skeleton, out, solved, side, goal); continue; }
    const res = solveLimb(skeleton, out, solved, kind, side, goal);
-   delete res.forearm; Object.assign(out, res);
+   delete res.forearm; delete res.err; Object.assign(out, res);
   }
  }
  // How far each goal is from being reached (metres), and for palms how far off the facing is (degrees).
- const solved = skeleton.solve(out), error = {}, facing = {};
+ const solved = skeleton.solve(out), error = {}, facing = {}, pointing = {};
  for(const [name, goal] of Object.entries(goals)){
   const b = solved.get(name), side = name.split('.')[1];
   if(palmGoals[name]){
    const H0 = new Vector3(...skeleton.bones[skeleton.index.get(name)].head), palm = new Vector3(...skeleton.palms[side].point).sub(H0).applyQuaternion(b.rotation).add(b.head);
    error[name] = palm.distanceTo(palmGoals[name].target);
    if(palmGoals[name].face) facing[name] = new Vector3(...skeleton.palms[side].normal).applyQuaternion(b.rotation).angleTo(palmGoals[name].face) / RAD;
+   if(palmGoals[name].fingers){ const g = palmGoals[name], f = g.f0.clone().applyQuaternion(b.rotation), want = g.fingers.clone().sub(g.face.clone().multiplyScalar(g.fingers.dot(g.face))).normalize(); pointing[name] = f.sub(g.face.clone().multiplyScalar(f.dot(g.face))).angleTo(want) / RAD; }
    continue;
   }
   const t = new Vector3(...(goal.position ?? goal.sole));
   if(!goal.position) t.y += skeleton.bones[skeleton.index.get(name)].head[1];
   error[name] = b.head.distanceTo(t);
  }
- return {pose: out, error, facing};
+ return {pose: out, error, facing, pointing};
 }

@@ -12,7 +12,8 @@
 //                hip's 120° bend: 90° + 28° = 118°.
 //   sit          upright; lowers once onto a simple block and stays; palms
 //                rest on top of the thighs, three quarters of the way to the
-//                knees, palms down. The block's top is measured to touch the
+//                knees, palms down, fingers pointing along the thigh to the knee
+//                (thighRests(): a point measured on the thigh that rides with it). The block's top is measured to touch the
 //                body exactly (seatTop()).
 //   step         a simple block 15 cm tall, starting 3 cm in front of the toes
 //                (measured on the foot model);
@@ -22,7 +23,7 @@
 //                so it never touches the block on the way.
 //   ball         the palm centre touches a 3.5 cm ball circling in front of
 //                him and faces its centre.
-import {Vector3, Quaternion, Euler} from 'three';
+import {Vector3, Quaternion, Euler, Mesh, Raycaster} from 'three';
 import {EASE} from '../motion-core/skeleton/pose.js';
 
 const RAD = Math.PI / 180, ease = t => EASE.inOut(Math.min(1, Math.max(0, t)));
@@ -127,12 +128,55 @@ export function seatTop(avatar, pose){
  return {top, front, back};
 }
 
-/** The top of a thigh three quarters of the way to the knee (on its surface), for a palm to rest on. */
-export function thighTop(avatar, side, raycaster){
- const hip = avatar.solved.get('thigh.' + side).head, knee = avatar.solved.get('shin.' + side).head;
- const at = hip.clone().lerp(knee, .75), mesh = avatar.attached.find(a => a.label === 'thigh.' + side).mesh;
- mesh.updateMatrixWorld(true);
- raycaster.set(at.clone().add(new Vector3(0, .5, 0)), new Vector3(0, -1, 0));
- const hit = raycaster.intersectObject(mesh, false)[0];
- return hit ? hit.point : null;
+/**
+ * Where each palm rests when sitting: on the front of the thigh, three quarters
+ * of the way from the hip to the knee, on the thigh's centre line (measured on
+ * the thigh model at rest). The point rides on the thigh, so when he sits
+ * (thigh level) it is the top of the thigh, and it moves smoothly all the way
+ * down. Returns, per side, the point and the surface direction at rest.
+ */
+export function thighRests(avatar){
+ const out = {}, sk = avatar.skeleton;
+ for(const s of ['L', 'R']){
+  const thigh = sk.bones[sk.index.get('thigh.' + s)], hip = new Vector3(...thigh.head), knee = new Vector3(...thigh.tail);
+  const axis = knee.clone().sub(hip).normalize(), at = hip.clone().lerp(knee, .75);
+  // Come in from the front, at rest, along the centre line: the first surface met.
+  const a = avatar.attached.find(x => x.label === 'thigh.' + s), m = new Mesh(a.mesh.geometry);
+  m.matrixAutoUpdate = false; m.matrix.copy(a.rest); m.matrixWorld.copy(a.rest);
+  const hit = new Raycaster(at.clone().add(new Vector3(0, 0, .5)), new Vector3(0, 0, -1)).intersectObject(m, false)[0];
+  if(!hit) throw Error('Thigh surface not found');
+  const best = hit.point.clone();
+  const normal = best.clone().sub(at); normal.sub(axis.clone().multiplyScalar(normal.dot(axis))).normalize();
+  out[s] = {point: best, normal, head: hip};
+ }
+ return out;
+}
+
+/**
+ * Palm goals for sitting, k = how far down he is (0 standing, 1 seated). The
+ * hands travel naturally: from where they hang (base: the solved pose before
+ * the hands are placed) to the thigh rest point, the palm turning from facing
+ * in to facing down, the fingers from pointing down to pointing along the
+ * thigh. At k = 1: palm centre on the thigh rest point, palm against the
+ * thigh, fingers along the thigh toward the knee.
+ */
+export function sittingHands(solved, rests, k = 1, base = solved, skeleton = null){
+ const goals = {};
+ for(const s of ['L', 'R']){
+  const t = solved.get('thigh.' + s), r = rests[s];
+  const point = r.point.clone().sub(r.head).applyQuaternion(t.rotation).add(t.head), into = r.normal.clone().applyQuaternion(t.rotation).negate();
+  const along = t.tail.clone().sub(t.head).normalize();
+  if(!skeleton){ goals['hand.' + s] = {palm: point.toArray(), face: into.toArray(), fingers: along.toArray()}; continue; }
+  // Where the palm is now, which way it faces and points (hands hanging).
+  const h = base.get('hand.' + s), b = skeleton.bones[skeleton.index.get('hand.' + s)], H0 = new Vector3(...b.head);
+  const palm0 = new Vector3(...skeleton.palms[s].point).sub(H0).applyQuaternion(h.rotation).add(h.head);
+  const n0 = new Vector3(...skeleton.palms[s].normal).applyQuaternion(h.rotation);
+  const f0 = new Vector3(...b.tail).sub(H0).applyQuaternion(h.rotation).normalize();
+  const turn = (a, c) => a.clone().applyQuaternion(new Quaternion().slerp(new Quaternion().setFromUnitVectors(a, c), k));
+  // The elbow keeps pointing the way it hangs (out and back), so the arm never flips.
+  const sh = base.get('upperArm.' + s).head, el = base.get('lowerArm.' + s).head, line = h.head.clone().sub(sh).normalize();
+  const pole = el.clone().sub(sh); pole.sub(line.multiplyScalar(pole.dot(line)));
+  goals['hand.' + s] = {palm: palm0.lerp(point, k).toArray(), face: turn(n0, into).toArray(), fingers: turn(f0, along).toArray(), pole: pole.toArray()};
+ }
+ return goals;
 }
