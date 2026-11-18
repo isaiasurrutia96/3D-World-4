@@ -60,8 +60,15 @@ export const CENTRE = [
 
 /** His left side's bones (+X), mirrored to make his right. */
 export const SIDE = [
+ // Collarbone: from the base of the neck out to the shoulder ball, so the
+ // arm hangs from it like a real skeleton. Locked for now: the shoulder
+ // ball sits in a socket in the one-piece chest, so a shrug would pull it
+ // out. Moving it (shrugs, reaching forward) needs that socket redesigned.
+ {name:'clavicle', parent:'spine', head:[0,1.2965,0.004], tail:[0.2979,1.2464,0.0035], frame:'body',
+  note:'Collarbone. Locked (0) until the shoulder socket allows shrugging.',
+  rest:{x:0,y:0,z:0}, limits:{x:[0,0], y:[0,0], z:[0,0]}},
  // Arm. The approved model holds the arms a little out (z) and forward (x).
- {name:'upperArm', parent:'spine', head:[0.2979,1.2464,0.0035], tail:[0.3596,0.9441,0.0331], frame:'body',
+ {name:'upperArm', parent:'clavicle', head:[0.2979,1.2464,0.0035], tail:[0.3596,0.9441,0.0331], frame:'body',
   note:'Shoulder. -x swings forward/up, +z raises out to the side.',
   rest:{x:deg(-0.04),y:0,z:deg(0.20)}, limits:{x:[-170,50], y:[-90,90], z:[-10,170]}},
  {name:'lowerArm', parent:'upperArm', head:[0.3596,0.9441,0.0331], tail:[0.4088,0.6778,0.1284], frame:'body',
@@ -71,8 +78,14 @@ export const SIDE = [
   note:'Wrist. Rests turned 8° (fingertips slightly forward); 0 is the hand hanging straight.',
   rest:{x:HAND_TILT,y:0,z:0}, limits:{x:[-70,70], y:[0,0], z:[-20,30]}},
 
+ // Hip bone: from the centre of the pelvis to the hip ball, so the leg
+ // hangs from the pelvis. Fixed: the pelvis is one solid piece (as in a
+ // real body, where the two hip bones are part of the pelvis).
+ {name:'hip', parent:'pelvis', head:[0,0.9895,0], tail:[0.15,0.8395,0.025], frame:'body',
+  note:'Hip bone (part of the pelvis). Fixed.',
+  rest:{x:0,y:0,z:0}, limits:{x:[0,0], y:[0,0], z:[0,0]}},
  // Leg.
- {name:'thigh', parent:'pelvis', head:[0.15,0.8395,0.025], tail:[0.15,0.4724,0.025], frame:'body',
+ {name:'thigh', parent:'hip', head:[0.15,0.8395,0.025], tail:[0.15,0.4724,0.025], frame:'body',
   note:'Hip. -x swings the leg forward, +z out to the side.',
   rest:{x:0,y:0,z:0}, limits:{x:[-120,30], y:[-40,40], z:[-20,45]}},
  {name:'shin', parent:'thigh', head:[0.15,0.4724,0.025], tail:[0.15,0.1635,0.025], frame:'body',
