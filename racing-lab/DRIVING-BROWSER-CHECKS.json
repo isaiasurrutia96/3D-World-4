@@ -4,8 +4,10 @@
     "All four tracks: keyboard Gas, braking, Reset, one original kart.",
     "Actual S/Left keys turn left; F/Right keys turn right in the chase-camera image.",
     "Steering/wheels, boost, drag/wheel camera and Behind return pass.",
+    "FPV: seated eye, forward view, look/recenter, fixed eye on wheel input, live switches, Reset/track persistence; driving settings unchanged.",
     "Standard Gamepad API: three identities, analog steering, RT Gas, LT brake and disconnect.",
     "Phone: simultaneous Left + Gas, cancellation, Reverse, blur clears/pauses, Reset.",
+    "Phone FPV toggles, touch look and Reset preserve the first-person view.",
     "Pinch zoom without page zoom and five phone/tablet/desktop layouts pass."
   ],
   "pageErrors": []

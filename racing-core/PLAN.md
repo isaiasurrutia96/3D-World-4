@@ -161,3 +161,13 @@ Final local verification for the driving test: **166 racing Node checks pass**, 
 The owner reported S steering right and F steering left. The device adapter had inverted the original steering convention: positive steer produces a right turn from a behind-camera view. Corrected only the adapter's horizontal axis/button sign; S/Left now sends negative steer, F/Right positive steer, consistently for keyboard, phone buttons and gamepad. Handling rates, grip, speed and camera behavior are unchanged. Corrected the misleading sign annotation in the handling contract. A new regression projects actual driven paths through a chase camera at four headings and all four rendering rates; it failed on the old mapping. Browser checks now use actual S/F and arrow key events and measure screen-space turn direction, rather than treating a wheel-angle sign as proof of a left/right turn. Stop for the owner's driving feedback after the updated link.
 
 Steering correction verification: 13 driving-test Node checks pass, including 96 actual-path/chase-camera direction probes. Browser keypress checks confirm S/Left and F/Right screen-space movement, with touch and controller regressions also passing; full build passes. Physics tuning is unchanged.
+
+## First-person view — authorized comparison step
+
+After discussing possible F1-inspired tuning, the owner accepted the proposed staged order: first add FPV, then stop to compare the same driving from both perspectives (“okay and also ill see if its too fast or not go”). This go authorizes the view only. The proposed 150 mph normal / 200 mph boost tuning, acceleration/coasting/steering adjustments, any resize and deeper grip changes remain proposals awaiting a separate go.
+
+- FPV button on the existing driving test; Behind restores the original chase view. Camera reads the existing interpolated pose from a seated offset, with bounded look and the original first-person FOV. It changes no driving state or settings.
+- Reset and track changes preserve FPV; reselecting FPV centers head look. Mouse, touch and controller look stay within the mode. Point-focused inspection zoom is suspended in FPV and restored for the external views, keeping the eye fixed to the kart.
+- Five Node camera checks pass and run before the racing page build. Desktop/mobile browser checks pass for seated pose, looking/centering, live switches without speed reset, Reset/track persistence and five screen layouts with six view buttons. The current 120 mph normal / 180 mph boost caps and all handling parameters remain unchanged.
+
+**Stop after the verified FPV link. Wait for the owner’s view/speed-feel feedback before implementing any proposed tuning.**

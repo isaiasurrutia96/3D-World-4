@@ -78,6 +78,23 @@ try {
     await reset();
     await p.waitForFunction(() => { const c = motionLab.camera, model = drivingLab.kart.root, v = c.position.clone().copy(model.position); v.y += .6; v.project(c); return Math.abs(v.x) < .8 && Math.abs(v.y) < .8 && v.z >= -1 && v.z <= 1; });
     results.push('Steering/wheels, boost, drag/wheel camera and Behind return pass.');
+    // First-person camera must only change the view, including while driving.
+    await reset();await p.getByRole('button',{name:'FPV',exact:true}).click();
+    await p.waitForFunction(()=>motionLab.camera.fov===76&&motionLab.getState().camera.view==='fpv');
+    const eye=await p.evaluate(()=>{const model=drivingLab.kart.root,expected=model.localToWorld(motionLab.camera.position.clone().set(0,1.32,-.78));return expected.distanceTo(motionLab.camera.position);});assert(eye<1e-8);
+    assert.equal(await p.evaluate(()=>motionLab.zoom.getState().enabled),false);
+    const fpvPose=await p.evaluate(()=>drivingLab.getState().physics),fpvStage=await p.locator('#stage').boundingBox();
+    await p.mouse.move(700,fpvStage.y+150);await p.mouse.down();await p.mouse.move(780,fpvStage.y+170,{steps:4});await p.mouse.up();
+    await p.waitForFunction(()=>Math.abs(drivingLab.getCameraState().headYaw)>.1);
+    assert.equal(await p.evaluate(()=>motionLab.getState().camera.view),'fpv');assert.equal(await p.evaluate(()=>drivingLab.getState().physics.x),fpvPose.x);
+    await p.getByRole('button',{name:'FPV',exact:true}).click();assert.equal(await p.evaluate(()=>drivingLab.getCameraState().headYaw),0);
+    const beforeWheel=await p.evaluate(()=>motionLab.camera.position.toArray());await p.mouse.wheel(0,200);await p.waitForTimeout(100);const afterWheel=await p.evaluate(()=>motionLab.camera.position.toArray());assert(Math.hypot(...beforeWheel.map((v,i)=>v-afterWheel[i]))<1e-8);
+    await p.keyboard.down('e');await p.waitForFunction(()=>drivingLab.test.controller.state.speed>8);
+    await p.getByRole('button',{name:'Behind',exact:true}).click();await p.waitForFunction(()=>motionLab.camera.fov===45);assert(await p.evaluate(()=>drivingLab.test.controller.state.speed>8));assert.equal(await p.evaluate(()=>motionLab.zoom.getState().enabled),true);
+    await p.getByRole('button',{name:'FPV',exact:true}).click();await p.waitForFunction(()=>motionLab.camera.fov===76);assert(await p.evaluate(()=>drivingLab.test.controller.state.speed>8));await p.keyboard.up('e');await reset();assert.equal(await p.evaluate(()=>motionLab.getState().camera.view),'fpv');
+    for(const id of ['original','skyline','suzuka','winding']){await p.locator('#race-track').selectOption(id);await p.waitForFunction(id=>drivingLab.getState().trackId===id&&motionLab.camera.fov===76,id);assert.equal(await p.evaluate(()=>motionLab.getState().camera.view),'fpv');}
+    await p.getByRole('button',{name:'Behind',exact:true}).click();await p.waitForFunction(()=>motionLab.camera.fov===45);
+    results.push('FPV: seated eye, forward view, look/recenter, fixed eye on wheel input, live switches, Reset/track persistence; driving settings unchanged.');
     await p.evaluate(() => { window.testPad = { id: 'Xbox Controller', connected: true, mapping: 'standard', axes: [.4, 0, 0, 0], buttons: Array.from({ length: 8 }, () => ({ value: 0, pressed: false })) }; testPad.buttons[7] = { value: 1, pressed: true }; Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [testPad] }); });
     for (const id of ['Xbox Controller', 'DualSense Wireless Controller', 'Nintendo Switch Pro Controller']) {
         await reset();
@@ -126,11 +143,17 @@ try {
     await mobile.waitForFunction(d => motionLab.getState().camera.distance < d - .1, anchoredDistance);
     assert.equal(await mobile.evaluate(() => visualViewport.scale), 1);
     await mobile.locator('#reset').tap();
+    await mobile.getByRole('button',{name:'FPV',exact:true}).tap();await mobile.waitForFunction(()=>motionLab.camera.fov===76);
+    const fpvTouchStage=await mobile.locator('#stage').boundingBox(),fpvBefore=await mobile.evaluate(()=>drivingLab.getCameraState().headYaw);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{id:7,x:230,y:fpvTouchStage.y+160}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{id:7,x:310,y:fpvTouchStage.y+175}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    await mobile.waitForFunction(y=>Math.abs(drivingLab.getCameraState().headYaw-y)>.1,fpvBefore);assert.equal(await mobile.evaluate(()=>motionLab.getState().camera.view),'fpv');
+    await mobile.locator('#reset').tap();assert.equal(await mobile.evaluate(()=>motionLab.getState().camera.view),'fpv');
+    results.push('Phone FPV toggles, touch look and Reset preserve the first-person view.');
     for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 1280, height: 800 }]) {
         await mobile.setViewportSize(viewport);
         await mobile.waitForFunction(() => Math.abs(document.querySelector('#stage').getBoundingClientRect().bottom - innerHeight) < 3);
         assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-        const buttons = await mobile.locator('.drive-controls button,#race-boost,#reset').evaluateAll(bs => bs.map(b => { const r = b.getBoundingClientRect(); return { text: b.textContent, x: r.x, y: r.y, right: r.right, bottom: r.bottom, w: r.width, h: r.height }; }));
+        const buttons = await mobile.locator('.drive-controls button,#race-boost,#reset,[data-view]').evaluateAll(bs => bs.map(b => { const r = b.getBoundingClientRect(); return { text: b.textContent, x: r.x, y: r.y, right: r.right, bottom: r.bottom, w: r.width, h: r.height }; }));
         for (const b of buttons) {
             assert(b.w >= 44 && b.h >= 44, JSON.stringify(b));
             assert(b.x >= 0 && b.right <= viewport.width && b.y >= 0 && b.bottom <= viewport.height, JSON.stringify(b));
