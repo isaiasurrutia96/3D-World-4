@@ -1,11 +1,12 @@
 // Skeleton section 2 checks: every body part hangs on a bone, the rest pose
-// is the approved Checkpoint 2 avatar point for point, and every joint ball
+// is the live assembled avatar point for point, and every joint ball
 // stays in its socket in random poses. Usage: node skeleton-test/check.mjs
 import {build} from 'esbuild';
 import {mkdtempSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve,dirname} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
+import {ANKLE_LIMITS,ANKLE_MAX_COMBINED} from '../avatar/src/joints/ankle-contract.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),dir=mkdtempSync(join(tmpdir(),'attach-')),entry=join(dir,'e.js');
 writeFileSync(entry,`export {createSkeletonAvatar} from '${root}/skeleton-test/attach.js';export {createAssembledAvatar} from '${root}/avatar-lab/src/avatar.js';export * as T from 'three';`);
 const approvedHand=resolve(root,'avatar/src/hand-study/hand.js'),capture=resolve(root,'hand-lab/src/capture-rest.js');
@@ -16,18 +17,20 @@ const {createSkeletonAvatar,createAssembledAvatar,T}=await import(pathToFileURL(
 const A=createSkeletonAvatar(),S=A.skeleton,R=[],check=(name,ok,detail='')=>R.push({check:name,result:ok?'PASS':'FAIL',detail});
 const mm=v=>(v*1000).toFixed(2)+' mm';
 const part=label=>A.attached.find(a=>a.label===label);
-check('all 16 clay body parts hang on a bone (chest and pelvis now separate)',A.attached.length===16&&new Set(A.attached.map(a=>a.mesh)).size===16,A.attached.map(a=>`${a.label}→${a.bone}`).join(', '));
+check('all 18 clay body parts hang on a bone, including two ankle balls',A.attached.length===18&&new Set(A.attached.map(a=>a.mesh)).size===18,A.attached.map(a=>`${a.label}→${a.bone}`).join(', '));
 
-// Rest pose = the approved avatar, point for point.
+// Rest pose = the live assembled avatar, point for point. The frozen
+// checkpoint deliberately keeps the earlier ankle until visual approval.
 const ref=createAssembledAvatar();ref.rig.root.updateMatrixWorld(true);
 const refMeshes=[];ref.rig.root.traverse(o=>{if(o.isMesh)refMeshes.push(o);});
 let worst=0,count=0;const v=new T.Vector3(),w=new T.Vector3();
 for(const a of A.attached){
- const twin=refMeshes.find(m=>m.geometry.attributes.position.count===a.mesh.geometry.attributes.position.count&&Math.abs(new T.Box3().setFromObject(m).getCenter(new T.Vector3()).x-new T.Box3().setFromBufferAttribute(a.mesh.geometry.attributes.position).applyMatrix4(a.mesh.matrix).getCenter(new T.Vector3()).x)<.01);
+ const twin=refMeshes.find(m=>m.name===a.mesh.name&&m.geometry.attributes.position.count===a.mesh.geometry.attributes.position.count&&Math.abs(new T.Box3().setFromObject(m).getCenter(new T.Vector3()).x-new T.Box3().setFromBufferAttribute(a.mesh.geometry.attributes.position).applyMatrix4(a.mesh.matrix).getCenter(new T.Vector3()).x)<.01);
+ if(!twin)throw Error('Missing live reference mesh: '+a.label);
  const p=a.mesh.geometry.attributes.position,q=twin.geometry.attributes.position;
  for(let i=0;i<p.count;i+=3){v.fromBufferAttribute(p,i).applyMatrix4(a.mesh.matrix);w.fromBufferAttribute(q,i).applyMatrix4(twin.matrixWorld);worst=Math.max(worst,v.distanceTo(w));count++;}
 }
-check('at rest, every point of every part is exactly where Checkpoint 2 has it',worst<1e-6,`${count.toLocaleString()} points compared, largest difference ${worst.toExponential(1)} m`);
+check('at rest, every point matches the live assembled avatar (including the new ankles)',worst<1e-6,`${count.toLocaleString()} points compared, largest difference ${worst.toExponential(1)} m`);
 
 // Joint balls stay in their sockets.
 const world=(a,local)=>local.clone().applyMatrix4(a.mesh.matrix);
@@ -61,6 +64,26 @@ const parentMatrix=j=>j.name.startsWith('shoulder')?j.parent.shoulderMatrix[j.na
 const worstSeat={};for(let n=0;n<40;n++){A.apply(randomPose());for(const j of joints){const ball=ballCentre(j.pts,j.child.mesh.matrix),socket=j.inParent.clone().applyMatrix4(parentMatrix(j));worstSeat[j.name]=Math.max(worstSeat[j.name]??0,ball.distanceTo(socket));}}
 const seatMax=Math.max(...Object.values(worstSeat));
 check('every joint ball stays in its socket (waist, shoulders, elbows, wrists, hips, knees, head) in 40 random poses, chest bending and shrugs included',seatMax<5e-4,Object.entries(worstSeat).map(([k,v])=>`${k} ${mm(v)}`).join(', '));
+// A separate ankle ball and both sockets are measured from their explicit
+// construction centres, not by fitting a sphere to a rounded socket lip.
+const ankleCentre=a=>{
+ const data=a.mesh.userData,g=a.mesh.geometry.userData;
+ const c=data.ankleCenter??data.ballCenter??g.ankleCenter??g.ballCenter;
+ if(!Array.isArray(c)||c.length!==3||!c.every(Number.isFinite))throw Error('Missing ankle centre metadata: '+a.label);
+ return new T.Vector3(...c).applyMatrix4(a.mesh.matrix);
+};
+let ankleMax=0,anklePivotMax=0,anklePoses=0;
+const checkAnkles=pose=>{
+ A.apply(pose);anklePoses++;
+ for(const sd of ['L','R']){
+  const ball=ankleCentre(part('ankle-ball.'+sd)),foot=ankleCentre(part('foot.'+sd)),calf=ankleCentre(part('calf.'+sd));
+  ankleMax=Math.max(ankleMax,ball.distanceTo(foot),ball.distanceTo(calf));
+  anklePivotMax=Math.max(anklePivotMax,ball.distanceTo(A.solved.get('foot.'+sd).head));
+ }
+};
+for(let n=0;n<100;n++)checkAnkles(randomPose());
+for(const x of [ANKLE_LIMITS.ankle[0],0,ANKLE_LIMITS.ankle[1],ANKLE_MAX_COMBINED])for(const z of [ANKLE_LIMITS.roll[0],0,ANKLE_LIMITS.roll[1]])checkAnkles({'foot.L':{x,y:0,z},'foot.R':{x,y:0,z:-z},'shin.L':{x:70,y:0,z:0},'shin.R':{x:35,y:0,z:0},root:{rotation:{x:12,y:37,z:-9},position:[.3,.2,-.1]}});
+check('both ankle balls stay centred in both sockets, including combined limits and whole-body transforms',ankleMax<1e-8&&anklePivotMax<1e-8,`${anklePoses} poses; ball/socket ${mm(ankleMax)}, ball/pivot ${mm(anklePivotMax)}`);
 A.apply(S.restPose());
 const t0=performance.now();for(let n=0;n<2000;n++)A.apply(randomPose());const us=(performance.now()-t0)/2000*1000;
 check('fast enough for every frame (under 2 ms of a 16 ms frame, chest bending every frame)',us<2000,`${us.toFixed(0)} µs to pose the whole body; holding still costs nothing extra for the chest`);

@@ -201,3 +201,14 @@ Recorded 17 November 2026.
     settled, and the shoulder-follow second pass is skipped when the shoulders
     moved under 0.05°. Gripping: about 0.3 ms a hand (was 0.67). Checks
     tightened to match (palm under 1 ms, grip under 0.5 ms).
+27. Owner-authorized ankle mechanics: a real ankle ball and two rigid smooth sockets.
+    Shared contract: avatar/src/joints/ankle-contract.js; radius115mm, radial
+    clearance0.6mm, unchanged knee/sole/contact locations. Foot Lab now exposes
+    Joint / Foot socket / Calf socket / Ball for inspection. Isolated ankle
+    up36/down48 androll±20 double the prior range. Point+heel total is capped
+    at60 (actual shells intersect from66); use normalizeAnklePose, not48+30.
+    Skeleton keeps Claude's 63 bones and 18 rigid attachments, including ankle balls; pose/reach
+    algorithms and demos remain Claude's work. Geometry/attachment checks cover
+    seating and actual shell collisions. Await owner's visual review before
+    updating a frozen checkpoint. Full details: motion-core/PLAN.md and
+    foot-lab/README.md.

@@ -1,19 +1,21 @@
-# Foot Lab
+# Foot and ankle lab
 
-A separate foot-shape study for the approved clay avatar. It keeps the measured original foot's width and height, with a broader rounded front, a softly narrowed heel, a continuous raised ankle area and a flatter sole with rolled edges. A smooth medial toe extension (up to 22 mm) gives the big-toe side a slightly more pointed, softly rounded tip. The foot remains one closed surface in the same clay material.
+The live foot keeps the approved asymmetric toe outline, flat sole, ground-contact points and toe hinge. The upper ankle area now holds a separate spherical joint between two smooth sockets. Frozen avatar checkpoints remain unchanged.
 
-The toe area sweeps 30 mm to the left in Top view, giving the front a more diagonal outline. The heel, ankle and overall width stay in place.
+## Mechanical contract
 
-Open `/foot-lab/` and drag to orbit, pinch/scroll to zoom, or use Angle, Front, Side, Top and Sole. Floor toggles the inspection floor. Phone controls are supported.
+`avatar/src/joints/ankle-contract.js` is the rendering-independent source of truth. The ball radius is115mm (230mm diameter, about90% of the calf's256mm depth). Both cavities use a115.6mm radius: the deliberate0.6mm radial clearance prevents coincident surfaces while keeping the joint visually seated. Each true cup covers a45° cap, with a5mm rolled lip. All three meshes are closed solids. The foot lip alone is locally refined so its small curve has sufficient geometry; original sole and toe vertices remain in place.
 
-The calf now cradles the foot in a centered ankle socket. Its shallow cavity follows the actual foot surface with 0.6 mm clearance and a softly rolled lip. The seating contour is measured 24 mm below the foot's highest point; the calf is aligned to that contour's center. The foot geometry and the calf's upper profile stay unchanged. No separate ankle ball or connector is added.
+The original ankle center is measured before carving: foot-local `[0.0006089437,0.1635200068,0.0147097013]`. Calf placement, its upper profile/knee contact, and the standing sole stay fixed. `createFootRig` exposes `ankleBall` and `pivot`; foot/calf geometry exposes local `ankleCenter`, `socketRadius` and true spherical `cavityIndices`. `avatar.lowerLegs` exposes each ball for skeleton attachment.
 
-The movement lab keeps the calf visible and adds Rest, Point, Flex, Toes and Tiptoe poses, ankle bend, side tilt, toe bend and heel-raise sliders, and a Play/Pause motion sequence. Phone sliders and touch orbit are supported. Rest restores the fitted foot and calf position/normal buffers exactly.
+Isolated ankle bend is−36°/+48° and side tilt±20°—twice the former range. Toe bend25° and heel raise30° remain available. Pointing and heel raise share one physical ankle: `normalizeAnklePose` caps their sum at60°. Actual outer-shell probes found intersections beginning at66°, so adding48°+30° is not safe. The skeleton uses the same60° combined cap. Motion/IK algorithms consume those limits; they are not rewritten here.
 
-The foot bends through a smooth arc across the ball, transporting its cross-sections around a middle-height curve. Tiptoe combines heel rotation with a counter-bend, leaving the front sole planted while the calf rises with the ankle. The calf body stays rigid: its shaft and upper cap retain their exact shape and shading throughout every pose. Only the rounded socket lip flexes between the seated cavity and the rigid calf. The rig keeps the lowest foot surface on the floor for inspection. These are lab poses, not a walking or full-body foot-locking system.
+During articulation the calf and ball remain rigid. The foot rotates about their common center. Heel raise moves the common center and calf together while the front stays planted; only the toe region deforms. Rest restores buffers and transforms exactly. These lab poses do not replace Claude's movement animation.
 
-This does not replace the approved avatar or change the existing hand lab. Full-body walking, foot IK, jumping and landing still need development and testing.
+## Inspect and check
 
-The mesh includes hidden heel, ball and toe contact locations on its flat sole, and a suggested ankle pivot for later work. These are model coordinates, not a claim of working foot IK.
+Open `/test-lab/?test=feet` for the shared viewer, or `/foot-lab/` for the focused lab. Joint, Foot socket, Calf socket and Ball buttons expose the individual pieces; Top shows the foot bowl, Sole shows the calf bowl. Use the existing poses/sliders, orbit, zoom and inspection-floor controls on phone or desktop.
 
-Build with `npm run build:foot-lab`. The normal project build includes the self-contained page in `dist/foot-lab/` for Pages deployment.
+`npm run test:ankle` runs independent Node geometry checks: fitted centers/radii, manifold/winding, true-cap gap, all-face sphere clearance, full foot/calf shell probes, composed motion limits, unchanged sole/toes/upper calf and exact rest. Results are saved to `ANKLE-CHECKS.json`. These checks also run before every Foot Lab build. `npm run test:foot-lab` exercises browser controls and mobile framing.
+
+Review the live joint before approving a new frozen checkpoint.

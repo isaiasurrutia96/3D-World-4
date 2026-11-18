@@ -10,11 +10,12 @@
   aside{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:26px 24px;background:#fafaf6;border-left:1px solid #dddcd5}.panel-label{text-transform:uppercase;letter-spacing:1.4px;font-size:10px;font-weight:700;color:#81867b;margin:0 0 12px}.status{font-size:13px;color:#55634b;margin:0 0 17px;min-height:20px}.presets{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.presets button{border:1px solid #dddfd5;background:#f0f1e9;color:#424b40;border-radius:10px;min-height:44px;font-size:12px;padding:0 4px}.presets button[aria-pressed=true]{border-color:#525f4a;background:#525f4a;color:white}#play{width:100%;min-height:44px;border:1px solid #d6d8ce;border-radius:10px;background:transparent;margin-top:10px;color:#53604c;font-size:13px}#play[aria-pressed=true]{background:#e8ecdf;border-color:#849276}.divider{height:1px;background:#e0e2d8;margin:25px 0}.motion-row{margin:0 0 18px}.motion-heading{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px}.motion-heading label{font-size:13px;font-weight:550}.motion-heading output{font-size:11px;font-variant-numeric:tabular-nums;color:#81867a}.motion-row input{display:block;width:100%;height:27px;accent-color:#657456;cursor:pointer;touch-action:pan-y;margin:0}.axis-labels{display:flex;justify-content:space-between;font-size:10px;color:#93988b}.note{font-size:11px;line-height:1.65;color:#858b7d;margin:17px 0 0}.loading{position:absolute;inset:0;display:grid;place-items:center;color:#d1dbe3;background:#405363;font-size:13px;z-index:3}.loading[hidden]{display:none}
   @media(max-width:700px){.app{grid-template-columns:1fr;grid-template-rows:65px minmax(200px,1fr) minmax(230px,42dvh)}header{padding:12px 18px}h1{font-size:20px}.subtitle{font-size:11px}.badge{font-size:10px;padding:6px 9px}.hint{left:18px;top:15px;font-size:11px;line-height:1.5}.floor-toggle{right:16px;top:10px;padding:0 12px}.views{bottom:12px;gap:2px}.views button{min-height:40px;padding:0 10px;font-size:11px}aside{border-left:0;border-top:1px solid #dddcd5;padding:17px 20px max(20px,env(safe-area-inset-bottom))}.status{display:none}.panel-label{margin-bottom:9px}#play{margin-top:8px}.divider{margin:17px 0}.motion-row{margin-bottom:13px}.note{margin-top:10px}}
   @media(max-height:650px) and (max-width:700px){.app{grid-template-rows:58px minmax(170px,1fr) 42dvh}.subtitle,.hint{display:none}}
+ .joint-parts{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:18px}
  </style>
 </head>
 <body>
  <main class="app">
-  <header><div><h1>Foot Lab</h1><p class="subtitle">Explore how your foot and ankle move.</p></div><span class="badge">Fitted calf socket</span></header>
+  <header><div><h1>Foot Lab</h1><p class="subtitle">Inspect the ankle ball and its two smooth sockets.</p></div><span class="badge">Ankle ball joint</span></header>
   <section id="stage" aria-label="Interactive 3D foot and calf">
    <div class="hint">Drag to rotate · Pinch or scroll to zoom</div>
    <button id="floor" class="floor-toggle" aria-pressed="true">Floor</button>
@@ -22,11 +23,13 @@
    <div id="loading" class="loading" role="status">Preparing your foot…</div>
   </section>
   <aside aria-label="Foot movement controls">
+   <p class="panel-label">Inspect the joint</p>
+   <div class="presets joint-parts" role="group" aria-label="Joint parts"><button data-parts="joint" aria-pressed="true">Joint</button><button data-parts="foot" aria-pressed="false">Foot socket</button><button data-parts="calf" aria-pressed="false">Calf socket</button><button data-parts="ball" aria-pressed="false">Ball</button></div>
    <p class="panel-label">Try a pose</p><p class="status" id="pose-name" aria-live="polite">Fitted rest pose</p>
    <div class="presets" role="group" aria-label="Foot poses"><button data-pose="rest" aria-pressed="true">Rest</button><button data-pose="point" aria-pressed="false">Point</button><button data-pose="flex" aria-pressed="false">Flex</button><button data-pose="toes" aria-pressed="false">Toes</button><button data-pose="tiptoe" aria-pressed="false">Tiptoe</button></div>
    <button id="play" aria-pressed="false">Play motion</button><div class="divider"></div>
    <div id="motion-controls"></div>
-   <p class="note">Rest restores your fitted foot. Tiptoe raises the heel while the front stays planted.</p>
+   <p class="note">Inspect either socket on its own, or return to Joint. Pointing and heel raise share a safe bend limit. Tiptoe keeps the front planted.</p>
   </aside>
  </main>
  <script>/*FOOT_LAB_BUNDLE*/</script>

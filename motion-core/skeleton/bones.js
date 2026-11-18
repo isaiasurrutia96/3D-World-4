@@ -31,7 +31,12 @@
 // side is the exact mirror (see skeleton.js), so the two sides can never
 // drift apart.
 
+import {ANKLE_LIMITS,ANKLE_MAX_COMBINED} from '../../avatar/src/joints/ankle-contract.js';
+
 const deg = v => v * 180 / Math.PI;
+// Exact measured ankle height; rounding this pivot makes a separate ball orbit
+// its socket slightly instead of turning in place.
+const ANKLE_HEIGHT = .163520006775856;
 
 /**
  * The live avatar's hands rest turned 8° at the wrist, fingertips slightly
@@ -99,17 +104,20 @@ export const SIDE = [
  {name:'thigh', parent:'hip', head:[0.15,0.8395,0.025], tail:[0.15,0.4724,0.025], frame:'body',
   note:'Hip. -x swings the leg forward, +z out to the side.',
   rest:{x:0,y:0,z:0}, limits:{x:[-120,30], y:[-40,40], z:[-20,45]}},
- {name:'shin', parent:'thigh', head:[0.15,0.4724,0.025], tail:[0.15,0.1635,0.025], frame:'body',
+ {name:'shin', parent:'thigh', head:[0.15,0.4724,0.025], tail:[0.15,ANKLE_HEIGHT,0.025], frame:'body',
   note:'Knee. Bends only backwards (+x), never the wrong way.',
   rest:{x:0,y:0,z:0}, limits:{x:[0,150], y:[0,0], z:[0,0]}},
- {name:'foot', parent:'shin', head:[0.15,0.1635,0.025], tail:[0.1494,0.065,0.2153], frame:'body',
-  note:'Ankle (the approved foot pivot). +x points the toes down; z tilts the foot. '
-   +'Range matches the approved foot (toes up 18°, toes down 24°, plus up to 30° of heel raise = 54°; tilt ±10°).',
-  rest:{x:0,y:0,z:0}, limits:{x:[-18,54], y:[0,0], z:[-10,10]}},
+ {name:'foot', parent:'shin', head:[0.15,ANKLE_HEIGHT,0.025], tail:[0.1494,0.065,0.2153], frame:'body',
+  note:'Ankle ball: the foot socket and calf socket share this exact centre. '
+   +'+x points the toes down; z tilts the foot. Isolated ankle bend is doubled '
+   +'to 36° up / 48° down; heel raise still allows 30°. Their combined '
+   +'rotation is capped at the shell-tested 60°, because adding both '
+   +'maxima blindly would make the heel enter the calf. Twist stays locked.',
+  rest:{x:0,y:0,z:0}, limits:{x:[ANKLE_LIMITS.ankle[0],ANKLE_MAX_COMBINED], y:[0,0], z:[...ANKLE_LIMITS.roll]}},
  {name:'toes', parent:'foot', head:[0.1494,0.065,0.2153], tail:[0.1494,0.03,0.355], frame:'body',
   note:'Ball of the foot. -x lifts the toes (or, with the toes planted, raises the heel). '
    +'Range matches the approved foot: toe bend 25° + heel raise 30° = 55°.',
-  rest:{x:0,y:0,z:0}, limits:{x:[-55,0], y:[0,0], z:[0,0]}},
+  rest:{x:0,y:0,z:0}, limits:{x:[-(ANKLE_LIMITS.toes[1]+ANKLE_LIMITS.heel[1]),0], y:[0,0], z:[0,0]}},
 ];
 
 /**

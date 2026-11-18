@@ -4,6 +4,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {createAssembledAvatar} from './avatar.js';
 import {createHandRig,FINGERS,REST_POSE as HAND_REST,POSES as HAND_POSES} from '../../hand-lab/src/hand-rig.js';
 import {MOTIONS,REST_POSE as FOOT_REST,POSES as FOOT_POSES,motionPose} from '../../foot-lab/src/foot-rig.js';
+import {normalizeAnklePose} from '../../avatar/src/joints/ankle-contract.js';
 
 const stage=document.querySelector('#stage'),loading=document.querySelector('#loading');
 async function start(){
@@ -53,7 +54,7 @@ async function start(){
    const id=kind+'-'+field.id,row=document.createElement('div');row.className='motion-row';
    row.innerHTML=`<div class="motion-heading"><label for="${id}">${field.label}</label><output id="${id}-value" for="${id}"></output></div><input id="${id}" type="range" min="${field.min}" max="${field.max}" step="1"><div class="axis-labels"><span>${field.left}</span><span>${field.right}</span></div>`;
    parent.append(row);const input=row.querySelector('input');inputs[kind][field.id]=input;
-   input.oninput=()=>{stop();state[kind].target[field.id]=Number(input.value)/(kind==='hands'?100:1);state[kind].pose='custom';refresh(kind);};
+   input.oninput=()=>{stop();state[kind].target[field.id]=Number(input.value)/(kind==='hands'?100:1);if(kind==='feet')Object.assign(state.feet.target,normalizeAnklePose(state.feet.target));state[kind].pose='custom';refresh(kind);};
   }
   refresh(kind);
  }

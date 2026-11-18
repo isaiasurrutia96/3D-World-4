@@ -59,7 +59,7 @@ export function createAssembledAvatar(options={}){
   knee.remove(oldCalf,oldAnkle);
   oldCalf.geometry.dispose();oldAnkle.traverse(o=>{if(o.isMesh)o.geometry.dispose();});
   foot.name=side===1?'right-rounded-foot':'left-rounded-foot';calf.name=side===1?'right-socket-calf':'left-socket-calf';
-  lowerLegs.push({side,mount,foot,calf,motion,restCalfPosition:calf.position.clone()});
+  lowerLegs.push({side,mount,foot,calf,motion,ankleBall:motion.ankleBall,restCalfPosition:calf.position.clone()});
  }
  rig.root.updateMatrixWorld(true);
  const sole=Math.min(...lowerLegs.map(({foot})=>new T.Box3().setFromObject(foot).min.y));

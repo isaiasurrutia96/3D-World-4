@@ -1,4 +1,4 @@
-// Skeleton layer 1 checks. Measures the live Checkpoint 2 avatar and proves
+// Skeleton layer 1 checks. Measures the live assembled avatar and proves
 // the skeleton matches it, then checks structure, limits, lengths, mirroring
 // and speed. Usage: node motion-core/tests/skeleton.mjs
 import {build} from 'esbuild';
@@ -6,6 +6,7 @@ import {mkdtempSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve,dirname} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
+import {ANKLE_LIMITS,ANKLE_MAX_COMBINED} from '../../avatar/src/joints/ankle-contract.js';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
 const dir=mkdtempSync(join(tmpdir(),'skeleton-')),entry=join(dir,'entry.js');
@@ -20,7 +21,7 @@ import {shoulderFollow} from '${root}/motion-core/skeleton/shoulder.js';
 import {POSES} from '${root}/motion-core/skeleton/poses.js';
 import {measurePalm} from '${root}/avatar-lab/src/palm.js';
 export {createSkeleton,shoulderFollow,POSES,T};
-// Measure the approved model the same way bones.js was written.
+// Measure the live model the same way bones.js was written.
 export function measure(){
  const a=createAssembledAvatar(),r=a.rig;r.root.updateMatrixWorld(true);
  const flat=createAssembledAvatar({handTilt:0});flat.rig.root.updateMatrixWorld(true);
@@ -82,11 +83,11 @@ check('63 bones: body (with an upper chest), collarbones, hip bones, both arms a
 check('one root (pelvis); every other bone has a real parent listed before it',S.bones.filter(b=>b.parentIndex<0).length===1&&S.bones.every((b,i)=>b.parentIndex<i));
 check('names match his own left and right (he faces +Z, so his left is +X)',S.bones.filter(b=>b.side==='L').every(b=>b.head[0]>=0&&b.tail[0]>0)&&S.bones.filter(b=>b.side==='R').every(b=>b.head[0]<=0&&b.tail[0]<0)&&S.bones.every(b=>b.side==='C'||b.name.endsWith('.'+b.side)));
 
-// ---- 2. Matches the approved model ----
+// ---- 2. Matches the live model ----
 let worst=0,worstName='';
 for(const b of S.bones){const ref=M[b.name];if(!ref)continue;const e=dist(b.head,ref);if(e>worst){worst=e;worstName=b.name;}}
 const measured=S.bones.filter(b=>M[b.name]).length;
-check('every joint sits at the centre of its ball on the approved Checkpoint 2 model',worst<.0002,`${measured} joints measured, largest difference ${mm(worst)} (${worstName})`);
+check('every joint sits at the centre of its ball on the live assembled avatar',worst<.0002,`${measured} joints measured, largest difference ${mm(worst)} (${worstName})`);
 const restOk=['L','R'].every(s=>{const sh=S.bones[S.index.get('upperArm.'+s)],el=S.bones[S.index.get('lowerArm.'+s)],rs=M['restShoulder.'+s],re=M['restElbow.'+s],rad=Math.PI/180;
  return Math.abs(sh.rest.x*rad-rs[0])<1e-9&&Math.abs(sh.rest.y*rad-rs[1])<1e-9&&Math.abs(sh.rest.z*rad-rs[2])<1e-9&&Math.abs(el.rest.x*rad-re[0])<1e-9;});
 check('rest angles are the ones the approved model is built with (shoulders, elbows)',restOk);
@@ -100,6 +101,9 @@ const rest=S.solve(S.restPose());let restErr=0;for(const b of S.bones)restErr=Ma
 check('the rest pose reproduces the model exactly',restErr<1e-9,`largest difference ${restErr.toExponential(1)} m`);
 const fb=M['footBox.L'],inside=Object.values(S.footContacts.L).every(([x,y,z])=>x>=fb.min.x&&x<=fb.max.x&&z>=fb.min.z&&z<=fb.max.z&&y===0);
 check('foot contact points are on the ground, inside the real foot',inside);
+const ankle=S.bones[S.index.get('foot.L')],ankleR=S.bones[S.index.get('foot.R')],shin=S.bones[S.index.get('shin.L')];
+check('ankle ball uses the exact measured joint centre without changing the knee or sole contacts',dist(ankle.head,M['foot.L'])<1e-9&&dist(ankle.head,shin.tail)<1e-12&&shin.head[1]===.4724,`ankle ${ankle.head.map(v=>v.toFixed(10)).join(', ')} m`);
+check('isolated ankle bend and tilt double; combined bend uses the measured shell-safe cap',ANKLE_LIMITS.ankle[0]===-36&&ANKLE_LIMITS.ankle[1]===48&&ANKLE_LIMITS.heel[1]===30&&ANKLE_MAX_COMBINED===60&&ankle.limits.x[0]===-36&&ankle.limits.x[1]===ANKLE_MAX_COMBINED&&ankle.limits.z[0]===-20&&ankle.limits.z[1]===20&&ankle.limits.y.every(v=>v===0)&&ankleR.limits.x[0]===-36&&ankleR.limits.x[1]===ANKLE_MAX_COMBINED&&S.bones[S.index.get('toes.L')].limits.x[0]===-55,'ankle up 36° / point 48°, tilt ±20°; heel still 30°; composed ankle+heel capped at 60° to clear the calf; toes remain 55° combined');
 const palmErr=Math.max(...['L','R'].map(sd=>dist(S.palms[sd].point,M['palm.'+sd].point))),palmTurn=Math.max(...['L','R'].map(sd=>new T.Vector3(...S.palms[sd].normal).angleTo(new T.Vector3(...M['palm.'+sd].normal))/Math.PI*180));
 check('the palm centre sits on the approved hand\'s palm (re-measured), facing the right way',palmErr<1e-4&&palmTurn<.1,`both palms within ${mm(palmErr)}, facing within ${palmTurn.toFixed(3)}°`);
 
@@ -161,4 +165,4 @@ const t0=performance.now();for(let n=0;n<2000;n++)S.solve(randomPose());const ms
 check('fast enough for every frame',ms<.2,`${(ms*1000).toFixed(0)} µs to solve all 63 bones`);
 
 console.table(R);const fail=R.some(r=>r.result==='FAIL');
-console.log(fail?'FAIL':'PASS: the skeleton matches the approved avatar and behaves as planned.');process.exit(fail?1:0);
+console.log(fail?'FAIL':'PASS: the skeleton matches the live avatar and behaves as planned.');process.exit(fail?1:0);

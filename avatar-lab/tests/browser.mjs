@@ -9,25 +9,29 @@ import * as T from 'three';
 import {createApprovedAvatar} from '../../avatar/src/approved-avatar.js';
 import {createAssembledAvatar} from '../src/avatar.js';
 import {POSES,BEND_END} from '../../foot-lab/src/foot-rig.js';
+import {ANKLE_RADIUS,ANKLE_LIMITS,ANKLE_MAX_COMBINED} from '../../avatar/src/joints/ankle-contract.js';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
 const hash=array=>createHash('sha256').update(new Uint8Array(array.buffer,array.byteOffset,array.byteLength)).digest('hex');
 const meshes=o=>{const result=[];o.traverse(x=>{if(x.isMesh)result.push(x);});return result;};
 const original=createApprovedAvatar(),assembled=createAssembledAvatar();
+// The live torso split and hand tilt are separately approved features. Compare
+// the unchanged upper parts with those optional features disabled on both sides.
+const preserved=createAssembledAvatar({torsoSplit:false,handTilt:0});
 const replaced=new Set([original.rig.kneeLeft.children[0],original.rig.kneeRight.children[0],original.rig.ankleLeft.children[0],original.rig.ankleRight.children[0]]);
-const newParts=new Set(assembled.lowerLegs.flatMap(l=>[l.foot,l.calf]));
+const newParts=new Set(preserved.lowerLegs.flatMap(l=>[l.foot,l.calf,l.ankleBall]));
 const signature=(m,root)=>{
  const ancestors=[];for(let o=m;o&&o!==root;o=o.parent)ancestors.push([o.position.toArray(),o.rotation.toArray(),o.scale.toArray()]);
  return {position:hash(m.geometry.attributes.position.array),normal:hash(m.geometry.attributes.normal.array),index:hash(m.geometry.index.array),color:m.material.color.getHex(),ancestors};
 };
-const oldUpper=meshes(original.rig.root).filter(m=>!replaced.has(m)),newUpper=meshes(assembled.rig.root).filter(m=>!newParts.has(m));
-assert.equal(oldUpper.length,11);assert.equal(newUpper.length,11);assert.equal(meshes(assembled.rig.root).length,15,'Extra body/joint meshes were added');
-assert.deepEqual(newUpper.map(m=>signature(m,assembled.rig.root)),oldUpper.map(m=>signature(m,original.rig.root)),'Saved upper body, arms or hands changed');
+const oldUpper=meshes(original.rig.root).filter(m=>!replaced.has(m)),newUpper=meshes(preserved.rig.root).filter(m=>!newParts.has(m));
+assert.equal(oldUpper.length,11);assert.equal(newUpper.length,11);assert.equal(meshes(assembled.rig.root).length,18,'Expected the existing split torso and two new ankle balls');
+assert.deepEqual(newUpper.map(m=>signature(m,preserved.rig.root)),oldUpper.map(m=>signature(m,original.rig.root)),'Saved upper body, arms or hands changed');
 const initialBody=assembled.rig.body.position.clone();
 const initial=assembled.lowerLegs.map(l=>({foot:l.foot.geometry.attributes.position.array.slice(),calf:l.calf.geometry.attributes.position.array.slice(),normals:l.calf.geometry.attributes.normal.array.slice()}));
 const standingHeight=new T.Box3().setFromObject(assembled.rig.root).getSize(new T.Vector3()).y;
 let maxKneeError=0,maxPlantedError=0;
-for(const [name,pose] of Object.entries({...POSES,combined:{ankle:24,roll:10,toes:25,heel:30}})){
+for(const [name,pose] of Object.entries({...POSES,combined:{ankle:ANKLE_LIMITS.ankle[1],roll:ANKLE_LIMITS.roll[1],toes:ANKLE_LIMITS.toes[1],heel:ANKLE_LIMITS.heel[1]}})){
  assembled.setFootPose(pose);
  for(const [legIndex,leg] of assembled.lowerLegs.entries()){
   const {calf,foot,side}=leg,knee=side===1?assembled.rig.kneeRight:assembled.rig.kneeLeft;
@@ -35,6 +39,8 @@ for(const [name,pose] of Object.entries({...POSES,combined:{ankle:24,roll:10,toe
   const error=contact.distanceTo(knee.localToWorld(new T.Vector3(0,.035,0)));maxKneeError=Math.max(maxKneeError,error);
   assert.ok(error<1e-7,'Knee separated during '+name);
   assert.ok(Math.abs(new T.Box3().setFromObject(foot).min.y)<1e-7,'Assembled foot lost floor contact during '+name);
+  const ballCenter=leg.ankleBall.getWorldPosition(new T.Vector3());
+  for(const part of [foot,calf]){const positions=part.geometry.attributes.position;for(const i of part.geometry.userData.cavityIndices){const sample=part.localToWorld(new T.Vector3().fromBufferAttribute(positions,i));assert.ok(Math.abs(sample.distanceTo(ballCenter)-ANKLE_RADIUS-.0006)<1e-6,'Assembled ankle unseated during '+name);}}
   const p=calf.geometry.attributes.position,baseline=initial[legIndex];
   for(let i=0;i<p.count;i++)if(baseline.calf[i*3+1]>=calf.geometry.userData.joinY-1e-7){for(let axis=0;axis<3;axis++)assert.equal(p.array[i*3+axis],baseline.calf[i*3+axis],'Calf body bends');}
   if(name==='tiptoe'){
@@ -51,7 +57,8 @@ assembled.setFootPose(POSES.rest);assert.deepEqual(assembled.rig.body.position,i
 for(const [i,leg] of assembled.lowerLegs.entries()){
  assert.deepEqual(leg.foot.geometry.attributes.position.array,initial[i].foot);assert.deepEqual(leg.calf.geometry.attributes.position.array,initial[i].calf);assert.deepEqual(leg.calf.geometry.attributes.normal.array,initial[i].normals);
  const seat=leg.calf.geometry.userData;
- assert.ok(leg.calf.localToWorld(new T.Vector3(...seat.socketSeatCenter)).distanceTo(leg.foot.localToWorld(new T.Vector3(...seat.footSeatCenter)))<1e-8,'Socket is off-center');
+ assert.ok(leg.calf.localToWorld(new T.Vector3(...seat.ankleCenter)).distanceTo(leg.foot.localToWorld(new T.Vector3(...leg.foot.geometry.userData.ankleCenter)))<1e-8,'Ankle sockets are off-center');
+ assert.ok(leg.ankleBall.getWorldPosition(new T.Vector3()).distanceTo(leg.foot.localToWorld(new T.Vector3(...leg.foot.geometry.userData.ankleCenter)))<1e-8,'Ankle ball is off-center');
 }
 const [left,right]=assembled.lowerLegs,lp=left.foot.geometry.attributes.position,rp=right.foot.geometry.attributes.position;
 for(let i=0;i<lp.count;i+=37){const a=left.foot.localToWorld(new T.Vector3().fromBufferAttribute(lp,i)),b=right.foot.localToWorld(new T.Vector3().fromBufferAttribute(rp,i));assert.ok(Math.hypot(a.x+b.x,a.y-b.y,a.z-b.z)<1e-8,'Feet are not mirrored');}
@@ -64,7 +71,7 @@ const shots=process.env.AVATAR_LAB_SHOTS;if(shots)await mkdir(shots,{recursive:t
 async function settle(page){await page.waitForFunction(()=>{const s=avatarLab.getState(),hp=avatarLab.handRig.getPose(),fp=avatarLab.lowerLegs[0].motion.getState().pose;return ['hands','feet'].every(kind=>Object.keys(s[kind].target).every(k=>s[kind].target[k]===s[kind].current[k]&&Math.abs((kind==='hands'?hp:fp)[k]-s[kind].target[k])<1e-8));},undefined,{timeout:60000});}
 async function fingerprints(page){return page.evaluate(async()=>{
  const sha=async array=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',array.buffer.slice(array.byteOffset,array.byteOffset+array.byteLength)))).map(n=>n.toString(16).padStart(2,'0')).join('');
- const parts=[...avatarLab.handParts,...avatarLab.lowerLegs.flatMap(l=>[l.foot,l.calf])];return Promise.all(parts.map(async m=>({position:await sha(m.geometry.attributes.position.array),normal:await sha(m.geometry.attributes.normal.array)})));
+ const parts=[...avatarLab.handParts,...avatarLab.lowerLegs.flatMap(l=>[l.foot,l.calf,l.ankleBall])];return Promise.all(parts.map(async m=>({position:await sha(m.geometry.attributes.position.array),normal:await sha(m.geometry.attributes.normal.array)})));
 });}
 async function framing(page){return page.evaluate(()=>{
  const {rig,camera}=avatarLab;rig.root.updateMatrixWorld(true);camera.updateMatrixWorld(true);let minX=1,maxX=-1,minY=1,maxY=-1;const v=rig.root.position.clone();
@@ -92,6 +99,12 @@ try{
   if(name==='Tiptoe'&&shots){await page.getByRole('button',{name:'Side',exact:true}).click();await page.screenshot({path:resolve(shots,'full-tiptoe.png')});}
  }
  await page.getByRole('button',{name:'Rest all',exact:true}).click();await settle(page);assert.deepEqual(await fingerprints(page),baseline);
+ await page.locator('#feet-ankle').fill(String(ANKLE_LIMITS.ankle[1]));await settle(page);
+ await page.locator('#feet-heel').fill(String(ANKLE_LIMITS.heel[1]));await settle(page);
+ const coupled=await page.evaluate(()=>({target:avatarLab.getState().feet.target,applied:avatarLab.lowerLegs[0].motion.getState().pose}));
+ assert.equal(coupled.target.ankle+coupled.target.heel,ANKLE_MAX_COMBINED,'Avatar controls must normalize the compound joint limit');
+ assert.equal(coupled.applied.ankle,coupled.target.ankle);assert.equal(Number(await page.locator('#feet-ankle').inputValue()),coupled.target.ankle);
+ await page.getByRole('button',{name:'Rest all',exact:true}).click();await settle(page);assert.deepEqual(await fingerprints(page),baseline);
  await page.getByRole('button',{name:'Play motion',exact:true}).click();const before=await page.evaluate(()=>avatarLab.getState().updates);await page.waitForFunction(before=>avatarLab.getState().updates>before+6,before,{timeout:60000});
  await page.waitForFunction(()=>avatarLab.getState().hands.target.together>.1&&avatarLab.handRig.getPose().together>.08,undefined,{timeout:60000});
  assert.ok(Number(await page.locator('#hands-together').inputValue())>10,'Playback leaves Fingers Together stuck at zero');
@@ -116,5 +129,5 @@ try{
  await phone.getByRole('button',{name:'Rest all',exact:true}).click();await settle(phone);assert.deepEqual(await fingerprints(phone),baseline,'Mobile Rest changed shapes');await mobile.close();
  for(const [path,ready] of [['/hand-lab/','handLabReady'],['/foot-lab/','footLabReady'],['/dist/','__game']]){await page.goto(base+path);await page.waitForFunction(ready=>Boolean(window[ready]),ready,{timeout:60000});}
  assert.deepEqual(errors,[]);
- console.log(JSON.stringify({meshCount:15,savedUpperMeshesPreserved:11,standingHeight,maxKneeError,maxPlantedError,mirroredFeet:true,rigidCalves:true,handAndFootMotion:true,fingersTogetherPlayback:true,protectedPalms:true,exactRest:true,playPause:true,mobileViews:true,mobileOrbit:true,phoneHeel,savedCheckpointUnchanged:true,existingPagesLoad:true,errors}));
+ console.log(JSON.stringify({meshCount:18,ankleBalls:2,coupledSliderClamping:true,savedUpperMeshesPreserved:11,standingHeight,maxKneeError,maxPlantedError,mirroredFeet:true,rigidCalves:true,handAndFootMotion:true,fingersTogetherPlayback:true,protectedPalms:true,exactRest:true,playPause:true,mobileViews:true,mobileOrbit:true,phoneHeel,savedCheckpointUnchanged:true,existingPagesLoad:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

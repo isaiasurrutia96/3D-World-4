@@ -4,6 +4,7 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {createFootShape} from './foot-shape.js';
 import {createCalf} from './calf.js';
 import {createFootRig,MOTIONS,REST_POSE,POSES,motionPose} from './foot-rig.js';
+import {normalizeAnklePose} from '../../avatar/src/joints/ankle-contract.js';
 
 const stage=document.querySelector('#stage'),loading=document.querySelector('#loading');
 try{
@@ -40,9 +41,17 @@ try{
  function refreshInputs(){for(const {id} of MOTIONS){inputs[id].value=Math.round(target[id]);document.getElementById(id+'-value').textContent=Math.round(target[id])+'°';}}
  function markPose(name){activePose=name;for(const b of document.querySelectorAll('[data-pose]'))b.setAttribute('aria-pressed',String(b.dataset.pose===name));poseLabel.textContent=({rest:'Fitted rest pose',point:'Point the foot',flex:'Flex the ankle',toes:'Bend at the ball of the foot',tiptoe:'Rise onto the front of the foot',custom:'Your pose',motion:'Foot motion test'})[name];}
  function stopMotion(){playing=false;play.setAttribute('aria-pressed','false');play.textContent='Play motion';}
+ let inspectedParts='joint';
+ function inspectParts(mode){
+  if(!['joint','foot','calf','ball'].includes(mode))return;
+  applyPose('rest',true);inspectedParts=mode;
+  foot.visible=mode==='joint'||mode==='foot';calf.visible=mode==='joint'||mode==='calf';rig.ankleBall.visible=mode==='joint'||mode==='ball';
+  for(const button of document.querySelectorAll('[data-parts]'))button.setAttribute('aria-pressed',String(button.dataset.parts===mode));
+ }
+ for(const button of document.querySelectorAll('[data-parts]'))button.onclick=()=>inspectParts(button.dataset.parts);
  function applyPose(name,immediate=false){stopMotion();Object.assign(target,POSES[name]);markPose(name);refreshInputs();if(immediate||reduced){Object.assign(current,target);rig.setPose(current);poseUpdates++;needsPose=false;}}
  for(const button of document.querySelectorAll('[data-pose]'))button.onclick=()=>applyPose(button.dataset.pose);
- for(const {id} of MOTIONS)inputs[id].oninput=()=>{stopMotion();target[id]=Number(inputs[id].value);markPose('custom');refreshInputs();};
+ for(const {id} of MOTIONS)inputs[id].oninput=()=>{stopMotion();Object.assign(target,normalizeAnklePose({...target,[id]:Number(inputs[id].value)}));markPose('custom');refreshInputs();};
  play.onclick=()=>{if(playing){stopMotion();markPose('custom');}else{playing=true;playStart=performance.now()/1000;markPose('motion');play.setAttribute('aria-pressed','true');play.textContent='Pause motion';}};
  renderer.setAnimationLoop(ms=>{
   const time=ms/1000,dt=Math.min(.1,lastTime?time-lastTime:1/60);lastTime=time;
@@ -54,7 +63,7 @@ try{
   controls.update();renderer.render(scene,camera);
  });
  document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing){stopMotion();markPose('custom');}lastTime=0;});
- window.footLab={foot,calf,rig,scene,camera,controls,ground,view,applyPose,getState:()=>({current:{...current},target:{...target},playing,poseUpdates,activePose})};
+ window.footLab={foot,calf,ankleBall:rig.ankleBall,rig,scene,camera,controls,ground,view,applyPose,inspectParts,getState:()=>({current:{...current},target:{...target},playing,poseUpdates,activePose,inspectedParts})};
  const requestedPose=new URLSearchParams(location.search).get('pose');if(requestedPose&&POSES[requestedPose])applyPose(requestedPose);
  installTestLabScene({scene,camera,renderer,floors:[ground],getTarget:()=>controls.target,updateControls:()=>controls.update()});
  window.footLabReady=true;loading.hidden=true;

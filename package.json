@@ -11,6 +11,7 @@
     "test:hand-lab": "node hand-lab/tests/browser.mjs",
     "build:foot-lab": "node foot-lab/build.mjs",
     "test:foot-lab": "node foot-lab/tests/browser.mjs",
+    "test:ankle": "node --test foot-lab/tests/ankle.test.mjs",
     "build:avatar-lab": "node avatar-lab/build.mjs",
     "test:avatar-lab": "node avatar-lab/tests/browser.mjs",
     "build:avatar-test": "node avatar-test/build.mjs",

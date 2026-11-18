@@ -1,0 +1,330 @@
+{
+  "summary": {
+    "passed": 10,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "Ankle ball is a proportional sphere at the common measured pivot",
+      "input": "Fit the actual rest ball surface independently and compare it with both socket centres and the existing foot pivot.",
+      "expected": "115 mm radius; common centre within 0.02 mm; diameter is 75–100% of the original 256 mm calf diameter.",
+      "measured": {
+        "radius": 0.11500000058974692,
+        "maxRadiusError": 5.4585891084979465e-9,
+        "maxCentreError": 4.26797023088924e-10,
+        "pivot": [
+          0.0006089437118379434,
+          0.163520006775856,
+          0.014709701318248815
+        ],
+        "diameterToCalf": 0.8984375
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Ball, foot and calf remain closed outward-facing finite surfaces",
+      "input": "Virtually weld coincident seam vertices, count directed edge incidences, Euler characteristic and signed volume.",
+      "expected": "Every edge has two opposing faces; Euler characteristic 2 and positive volume for each piece.",
+      "measured": [
+        {
+          "name": "draft-rounded-foot",
+          "vertices": 43709,
+          "faces": 87414,
+          "volume": 0.010767564815445002
+        },
+        {
+          "name": "original-avatar-calf",
+          "vertices": 8178,
+          "faces": 16352,
+          "volume": 0.012491152028445864
+        },
+        {
+          "name": "ankle-ball",
+          "vertices": 3010,
+          "faces": 6016,
+          "volume": 0.006353588605992694
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Both spherical sockets closely cradle the actual ball",
+      "input": "Inspect every advertised true cavity vertex and its normal at rest, independently of the stored radius.",
+      "expected": "0.6 mm radial clearance within 0.002 mm, inward-facing cavity normals and coincident independently fitted centres.",
+      "measured": [
+        {
+          "name": "draft-rounded-foot",
+          "samples": 13995,
+          "minimumGap": 0.0005999959928858628,
+          "maximumGap": 0.0006000027618887488,
+          "maximumNormalDot": -0.9999999999999989,
+          "centreError": 1.1645068100959139e-9
+        },
+        {
+          "name": "original-avatar-calf",
+          "samples": 1793,
+          "minimumGap": 0.0005999927093190971,
+          "maximumGap": 0.0006000039824354958,
+          "maximumNormalDot": -0.9999999999999989,
+          "centreError": 1.658626665125428e-9
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Socket construction preserves the sole, toe shape and upper calf",
+      "input": "Compare original sole/toe positions and original reference-calf upper-profile vertices with actual new geometry.",
+      "expected": "Sole and all toe vertices at or past z=0.145 remain unchanged; foot X/Z bounds and contact points are preserved; upper calf profile still matches.",
+      "measured": {
+        "solePoints": 2817,
+        "preservedToePoints": 4483,
+        "preservedUpperCalfPoints": 90,
+        "contacts": {
+          "heel": [
+            0,
+            0,
+            -0.03978224001824856
+          ],
+          "ball": [
+            0,
+            0,
+            0.20050334787368773
+          ],
+          "toe": [
+            0,
+            0,
+            0.2465464094877243
+          ]
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Both cups stay seated through combined ankle, roll, heel and toe poses",
+      "input": "Sweep the 16 combined limit corners and 128 deterministic intermediate poses; independently fit transformed spherical surfaces.",
+      "expected": "Both socket centres remain within 0.02 mm of the ball and radial clearance stays within 0.002 mm of 0.6 mm.",
+      "measured": {
+        "poses": 145,
+        "maxCentreError": 8.940788765488929e-9,
+        "maxGapError": 1.3939309522728767e-8,
+        "maxRigidCalfDisplacement": 0,
+        "maxBallRadiusError": 5.45858915013131e-9,
+        "maxFootCupAngleError": 2.1073424255447017e-8
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Spherical cuff openings retain clearance at the maximum combined bend",
+      "input": "Measure the angular envelope of roll × (ankle + heel) over all limit corners, allowing a 5 mm lip on both cups.",
+      "expected": "45° caps and their lips cannot meet, including the measured-safe composed bend and 20° roll.",
+      "measured": {
+        "maximumJointAngleDegrees": 62.94989777837098,
+        "lipEnvelopeDegrees": 4.983812737959785,
+        "minimumAngularMarginDegrees": 22.066289483669248
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Combined bend rejects the measured unsafe 66° request while preserving doubled ankle motion",
+      "input": "Request isolated ankle extremes and the old 48° ankle + 30° heel combination; inspect the applied shared mechanical contract.",
+      "expected": "Isolated -36° and +48° remain available; composition never exceeds the measured-safe 60° envelope.",
+      "measured": {
+        "isolatedUp": {
+          "ankle": -36,
+          "roll": 0,
+          "toes": 0,
+          "heel": 0
+        },
+        "isolatedDown": {
+          "ankle": 48,
+          "roll": 0,
+          "toes": 0,
+          "heel": 0
+        },
+        "unsafe66": {
+          "ankle": 30,
+          "roll": 0,
+          "toes": 0,
+          "heel": 30
+        },
+        "unsafe78": {
+          "ankle": 30,
+          "roll": 0,
+          "toes": 0,
+          "heel": 30
+        },
+        "applied": {
+          "ankle": 30,
+          "roll": 20,
+          "toes": 25,
+          "heel": 30
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "The complete foot and calf surfaces stay outside the ankle sphere",
+      "input": "Measure the nearest point of every actual shell triangle to the ball centre at rest and the largest combined bends.",
+      "expected": "No hidden outer-blend or triangle penetration; all faces retain positive clearance beyond a 0.01 mm numerical tolerance.",
+      "measured": [
+        {
+          "pose": {
+            "ankle": 0,
+            "roll": 0,
+            "toes": 0,
+            "heel": 0
+          },
+          "footGap": 0.00041280829286380327,
+          "calfGap": 0.0005435607847351365
+        },
+        {
+          "pose": {
+            "ankle": -36,
+            "roll": -20,
+            "toes": 0,
+            "heel": 0
+          },
+          "footGap": 0.00041280482747504954,
+          "calfGap": 0.0005435607847351365
+        },
+        {
+          "pose": {
+            "ankle": -36,
+            "roll": 20,
+            "toes": 0,
+            "heel": 0
+          },
+          "footGap": 0.00041280575439353595,
+          "calfGap": 0.0005435607847352752
+        },
+        {
+          "pose": {
+            "ankle": 48,
+            "roll": -20,
+            "toes": 0,
+            "heel": 0
+          },
+          "footGap": 0.0004128076839190614,
+          "calfGap": 0.0005435607847349838
+        },
+        {
+          "pose": {
+            "ankle": 48,
+            "roll": 20,
+            "toes": 0,
+            "heel": 0
+          },
+          "footGap": 0.00041280605591879904,
+          "calfGap": 0.0005435607847351781
+        },
+        {
+          "pose": {
+            "ankle": 30,
+            "roll": -20,
+            "toes": 25,
+            "heel": 30
+          },
+          "footGap": 0.0004128116223775513,
+          "calfGap": 0.0005435607847350948
+        },
+        {
+          "pose": {
+            "ankle": 30,
+            "roll": 20,
+            "toes": 25,
+            "heel": 30
+          },
+          "footGap": 0.0004128074408140253,
+          "calfGap": 0.0005435607847351781
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Actual foot and calf shells do not intersect at the safe movement extremes",
+      "input": "Test every vertex in both directions against the other actual closed shell with indexed face-ray probes and nearest-surface confirmation.",
+      "expected": "Zero vertices penetrate the other shell by more than 0.01 mm, including 60° composed bend and ±20° roll.",
+      "measured": [
+        {
+          "pose": {
+            "ankle": -36,
+            "roll": -20,
+            "toes": 0,
+            "heel": 0
+          },
+          "probes": 51887,
+          "inside": 0,
+          "maximumDepth": 0
+        },
+        {
+          "pose": {
+            "ankle": -36,
+            "roll": 20,
+            "toes": 0,
+            "heel": 0
+          },
+          "probes": 51887,
+          "inside": 0,
+          "maximumDepth": 0
+        },
+        {
+          "pose": {
+            "ankle": 48,
+            "roll": -20,
+            "toes": 0,
+            "heel": 0
+          },
+          "probes": 51887,
+          "inside": 0,
+          "maximumDepth": 0
+        },
+        {
+          "pose": {
+            "ankle": 48,
+            "roll": 20,
+            "toes": 0,
+            "heel": 0
+          },
+          "probes": 51887,
+          "inside": 0,
+          "maximumDepth": 0
+        },
+        {
+          "pose": {
+            "ankle": 30,
+            "roll": -20,
+            "toes": 25,
+            "heel": 30
+          },
+          "probes": 51887,
+          "inside": 0,
+          "maximumDepth": 0
+        },
+        {
+          "pose": {
+            "ankle": 30,
+            "roll": 20,
+            "toes": 25,
+            "heel": 30
+          },
+          "probes": 51887,
+          "inside": 0,
+          "maximumDepth": 0
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Toe-only motion leaves the calf rigid and repeated poses return exactly to rest",
+      "input": "Apply a toe-only pose, then repeated limit corners and restore zero pose.",
+      "expected": "Toe bending never changes calf positions/normals; rest restores every mesh buffer and placement bit for bit.",
+      "measured": {
+        "exactPositionBuffers": true,
+        "exactNormalBuffers": true,
+        "exactRestMatrices": true,
+        "toeOnlyCalfUnchanged": true
+      },
+      "status": "PASS"
+    }
+  ]
+}

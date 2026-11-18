@@ -1,6 +1,7 @@
 // Skeleton · section 2: hanging the clay body parts on the bones.
 //
-// Each approved Checkpoint 2 body part rides rigidly on one bone. When a
+// Each live clay body part rides rigidly on one bone. The approved upper
+// body is preserved; the live lower legs now include separate ankle balls. When a
 // bone turns, its parts turn with it about the joint pivot, which is the
 // centre of that part's rounded joint ball, so every ball stays in its
 // socket. The skeleton itself (motion-core/skeleton) knows nothing about
@@ -33,7 +34,8 @@ export function createSkeletonAvatar(){
  for(const [side,k] of [['L','Right'],['R','Left']]){
   const arm=avatar.lowerArmParts.find(p=>p.side===(side==='L'?1:-1)),leg=avatar.lowerLegs.find(l=>l.side===(side==='L'?1:-1));
   parts.push([`upper-arm.${side}`,mesh(rig['shoulder'+k]),`upperArm.${side}`],[`forearm.${side}`,arm.forearm,`lowerArm.${side}`],[`hand.${side}`,arm.hand,`hand.${side}`],
-   [`thigh.${side}`,mesh(rig['hip'+k]),`thigh.${side}`],[`calf.${side}`,leg.calf,`shin.${side}`],[`foot.${side}`,leg.foot,`foot.${side}`]);
+   [`thigh.${side}`,mesh(rig['hip'+k]),`thigh.${side}`],[`calf.${side}`,leg.calf,`shin.${side}`],[`foot.${side}`,leg.foot,`foot.${side}`],
+   [`ankle-ball.${side}`,leg.ankleBall,`foot.${side}`]);
  }
  // Lift every part out of the old rig, keeping exactly where it is now.
  const root=new T.Group();root.name='skeleton-avatar';

@@ -85,7 +85,7 @@ for(const [name,on,off,sides] of [['sit',2.4,2.4,['L','R']],['squat',3,1.6,['L',
  const {frames,P}=simulate(name,on,off),j=jolt(frames),end=atRest(frames.at(-1).pose),feet=sides.length?planted(frames,sides):0;
  check(`${name}: starts and stops smoothly (no jolt), feet stay planted, and ends exactly at rest with nothing left running`,j.m<1&&j.rm<.0015&&end<1e-6&&feet<5e-4&&!P.layers.length&&!P.goalLayers.length,
   `largest change in joint speed between frames ${j.m.toFixed(2)}°; in body speed ${(j.rm*1000).toFixed(2)} mm; ${sides.length?'planted foot off by '+mm(feet)+'; ':''}back at rest within ${end.toExponential(1)}`,
-  name==='step'?'the lifted foot\'s ankle reaches its 18° limit while the knee is high; fixed by weight shift and foot planning (balance layer, step 3)':'');
+  name==='step'?'the lifted foot still needs weight shift and foot planning while the knee is high (balance layer, step 3); the new ankle joint limits are handled separately':'');
 }
 
 console.table(R);const fail=R.some(r=>r.result==='FAIL'),known=R.filter(r=>r.result==='KNOWN').length;console.log(fail?'FAIL':'PASS: every reaching demo does exactly what it shows'+(known?` (${known} known item${known>1?'s':''} listed above, planned)`:'')+'.');process.exit(fail?1:0);
