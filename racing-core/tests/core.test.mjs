@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {writeFileSync} from 'node:fs';
 import {TRACK_IDS,getTrack,createRaceSession,createVehicle,stepVehicle,readDriver,createDriver,VEHICLE,createProgress,updateProgress,resolveKartContact,createGhostStore,sampleGhost,validateGhost,fromLabInput} from '../index.js';
+import letsgoHandling from './fixtures/letsgo-handling.json' with {type:'json'};
 const reports=[];
 const drive=(session,limit=1200)=>{const driver=createDriver({lane:-3.3,pace:1.01});session.start();for(let i=0;i<limit*120;i++){const controls=readDriver(driver,session.player.state,session.track,VEHICLE.step,session.racers.slice(1).map(r=>r.state));session.advance(VEHICLE.step,controls);if(session.racers.some(r=>r.progress.invalidReason))assert.fail(JSON.stringify(session.getState()));if(i%120===0&&session.getState().phase==='finished')return session.getState();}assert.fail('Race failed to finish '+session.track.id);};
 for(const id of TRACK_IDS){
@@ -17,6 +18,22 @@ test('AI returns ordinary controls without mutating vehicle state',()=>{const tr
 test('universal input adapter preserves analog strength',()=>{const sample={moveX:0,moveZ:-.35,look:{x:0}},input=fromLabInput(sample,0);assert.equal(input.throttle,.35);assert.equal(input.steer,0);});
 test('a held boost consumes a single charge and eventually expires',()=>{const track=getTrack('original'),car=createVehicle(track.at(0));for(let i=0;i<240;i++)stepVehicle(car,{throttle:1,boost:true},VEHICLE.step,track);assert.equal(car.boosts,2);assert.equal(car.boostLeft,0);});
 test('height-aware support preserves both decks at each circuit crossing',()=>{for(const id of TRACK_IDS){const track=getTrack(id);let found=false;for(let i=0;i<track.segments.length&&!found;i++)for(let j=i+12;j<track.segments.length&&!found;j++){const a=track.segments[i],b=track.segments[j],d=a.dx*b.dz-a.dz*b.dx;if(Math.abs(d)<1e-9)continue;const qx=b.a.x-a.a.x,qz=b.a.z-a.a.z,t=(qx*b.dz-qz*b.dx)/d,u=(qx*a.dz-qz*a.dx)/d;if(t<0||t>1||u<0||u>1)continue;const ya=a.a.y+(a.b.y-a.a.y)*t,yb=b.a.y+(b.b.y-b.a.y)*u;if(Math.abs(ya-yb)<4)continue;const x=a.a.x+a.dx*t,z=a.a.z+a.dz*t,low=Math.min(ya,yb),high=Math.max(ya,yb);assert(Math.abs(track.support(x,z,low+.2)-low)<.2);assert(Math.abs(track.support(x,z,high+.2)-high)<.2);found=true;}assert(found,id+' crossing');}});
+for(const scenario of letsgoHandling.scenarios)test('LetsGo handling reference: '+scenario.name,()=>{
+ const flat={support:()=>0,resolve:(x,z)=>({x,z})},car=createVehicle();car.vz=car.speed=scenario.speed;
+ let tick=0,index=0;
+ for(const [ticks,throttle,steer] of scenario.phases)for(let i=0;i<ticks;i++){
+  stepVehicle(car,{throttle,steer},VEHICLE.step,flat);tick++;
+  if(tick!==scenario.samples[index]?.tick)continue;
+  const expected=scenario.samples[index++];
+  for(const field of ['x','z','yaw','speed','steering'])assert(Math.abs(car[field]-expected[field])<1e-8,`${scenario.name}: ${field} at ${tick}: ${car[field]} vs ${expected[field]}`);
+ }
+ assert.equal(index,scenario.samples.length);
+});
+test('a held turn can steer away from a rail after a head-on stop',()=>{
+ const wall={support:()=>0,resolve:(x,z)=>({x:Math.min(0,x),z})},car=createVehicle({x:0,y:0,z:0,yaw:Math.PI/2});
+ for(let i=0;i<120;i++)stepVehicle(car,{throttle:1,steer:1},VEHICLE.step,wall);
+ assert(car.yaw>Math.PI/2+.15);assert(car.contacts>0);
+});
 test.after(()=>{writeFileSync(new URL('../TEST-RESULTS.json',import.meta.url),JSON.stringify({generatedAt:new Date().toISOString(),sourceRevision:'573664e824a04234240a24dfc2eae2273e30a4ca',visuals:'No renderer is required by these checks',fullRaces:reports},null,2)+'\n');});
 
 test('right device input turns right in chase view and keyboard throttle stays independent',()=>{const r=fromLabInput({source:'keyboard',moveX:-Math.SQRT1_2,moveZ:Math.SQRT1_2,look:{x:0}},Math.PI);assert.equal(r.throttle,1);assert.equal(r.steer,-1);});

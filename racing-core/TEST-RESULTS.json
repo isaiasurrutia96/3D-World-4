@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T02:26:06.746Z",
+  "generatedAt": "2026-11-18T03:09:04.735Z",
   "sourceRevision": "573664e824a04234240a24dfc2eae2273e30a4ca",
   "visuals": "No renderer is required by these checks",
   "fullRaces": [
@@ -9,27 +9,27 @@
       "laps": 3,
       "finished": 5,
       "respawns": 0,
-      "raceSeconds": 364.075,
+      "raceSeconds": 378.875,
       "finishTimes": [
         {
           "id": "player",
-          "seconds": 357.334
+          "seconds": 372.213
         },
         {
           "id": "npc-1",
-          "seconds": 358.717
+          "seconds": 373.616
         },
         {
           "id": "npc-3",
-          "seconds": 359.105
+          "seconds": 374.174
         },
         {
           "id": "npc-2",
-          "seconds": 361.173
+          "seconds": 376.257
         },
         {
           "id": "npc-4",
-          "seconds": 364.068
+          "seconds": 378.871
         }
       ]
     },
@@ -39,27 +39,27 @@
       "laps": 3,
       "finished": 5,
       "respawns": 0,
-      "raceSeconds": 406.408,
+      "raceSeconds": 420.592,
       "finishTimes": [
         {
           "id": "npc-1",
-          "seconds": 392.511
+          "seconds": 406.455
         },
         {
           "id": "npc-3",
-          "seconds": 393.253
+          "seconds": 407.421
         },
         {
           "id": "player",
-          "seconds": 397.807
+          "seconds": 412.189
         },
         {
           "id": "npc-2",
-          "seconds": 402.258
+          "seconds": 416.526
         },
         {
           "id": "npc-4",
-          "seconds": 406.404
+          "seconds": 420.587
         }
       ]
     },
@@ -69,27 +69,27 @@
       "laps": 3,
       "finished": 5,
       "respawns": 0,
-      "raceSeconds": 479.508,
+      "raceSeconds": 495.042,
       "finishTimes": [
         {
           "id": "player",
-          "seconds": 467.665
+          "seconds": 483.649
         },
         {
           "id": "npc-1",
-          "seconds": 470.365
+          "seconds": 486.265
         },
         {
           "id": "npc-3",
-          "seconds": 470.597
+          "seconds": 486.492
         },
         {
           "id": "npc-2",
-          "seconds": 474.465
+          "seconds": 490.173
         },
         {
           "id": "npc-4",
-          "seconds": 479.506
+          "seconds": 495.036
         }
       ]
     },
@@ -99,27 +99,27 @@
       "laps": 3,
       "finished": 5,
       "respawns": 0,
-      "raceSeconds": 714.108,
+      "raceSeconds": 752.692,
       "finishTimes": [
         {
           "id": "player",
-          "seconds": 706.303
+          "seconds": 744.365
         },
         {
           "id": "npc-2",
-          "seconds": 709.699
+          "seconds": 747.7
         },
         {
           "id": "npc-1",
-          "seconds": 712.299
+          "seconds": 750.615
         },
         {
           "id": "npc-4",
-          "seconds": 712.884
+          "seconds": 750.848
         },
         {
           "id": "npc-3",
-          "seconds": 714.104
+          "seconds": 752.69
         }
       ]
     }

@@ -24,10 +24,11 @@ export function readDriver(driver, s, track, dt, traffic = []) {
         }
     }
     driver.offset += (lane - driver.offset) * (1 - Math.exp(-2 * dt));
-    const at = d => track.at(progress + d, driver.offset), look = clamp(8 + Math.max(0, s.speed) * .45, 8, 32), target = at(look), dx = target.x - s.x, dz = target.z - s.z, right = dx * Math.cos(s.yaw) - dz * Math.sin(s.yaw), wheel = Math.atan2(2 * VEHICLE.wheelbase * right, Math.max(4, dx * dx + dz * dz)), steer = clamp(wheel / maxSteering(s.speed), -1, 1);
+    const at = d => track.at(progress + d, driver.offset), look = clamp(8 + Math.max(0, s.speed) * .45, 8, 32), target = at(look), dx = target.x - s.x, dz = target.z - s.z, right = dx * Math.cos(s.yaw) - dz * Math.sin(s.yaw), wheel = Math.atan2(2 * VEHICLE.wheelbase * right, Math.max(4, dx * dx + dz * dz)), steer = clamp(wheel / maxSteering(s.speed, s.steerHoldTime), -1, 1);
     let speed = VEHICLE.topSpeed * .83 * driver.pace;
+    // Leave cornering margin for the gentler steering build used by the player.
     for (const d of [0, 12, 25, 50, 90, 150]) {
-        const k = curvature(at(d - 8), at(d), at(d + 8)), allowed = Math.min(VEHICLE.topSpeed, Math.sqrt(9 / Math.max(.00001, k)));
+        const k = curvature(at(d - 8), at(d), at(d + 8)), allowed = Math.min(VEHICLE.topSpeed, Math.sqrt(8 / Math.max(.00001, k)));
         speed = Math.min(speed, Math.sqrt(allowed * allowed + 2 * 25 * Math.max(0, d - 12)));
     }
     if (leader && gap < 10)

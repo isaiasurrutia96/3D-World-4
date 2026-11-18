@@ -1,13 +1,17 @@
 import { clamp, approach, finite } from './math.js';
-export const VEHICLE = Object.freeze({ step: 1 / 120, topSpeed: 120 * .44704, boostSpeed: 180 * .44704, acceleration: 24, braking: 36, reverseSpeed: 8, steeringLock: .415, wheelbase: 2.03, radius: 1.05, gravity: 18, grip: 10 });
-export function createVehicle(p = { x: 0, y: 0, z: 0, yaw: 0 }) { return { x: p.x, y: p.y, z: p.z, yaw: p.yaw, vx: 0, vz: 0, speed: 0, steering: 0, verticalSpeed: 0, grounded: true, pitch: 0, bank: 0, boostLeft: 0, boosts: 3, contacts: 0 }; }
+export const VEHICLE = Object.freeze({ step: 1 / 120, topSpeed: 120 * .44704, boostSpeed: 180 * .44704, acceleration: 24, braking: 36, reverseSpeed: 8, steeringLock: .415, steeringBuild: 6.5, steeringRelease: 14, heldSteerDelay: .5, heldSteerRamp: .8, heldSteerGain: .20, wheelbase: 2.03, radius: 1.05, gravity: 18, grip: 7 });
+export function createVehicle(p = { x: 0, y: 0, z: 0, yaw: 0 }) { return { x: p.x, y: p.y, z: p.z, yaw: p.yaw, vx: 0, vz: 0, speed: 0, steering: 0, steerHoldTime: 0, steerHoldDirection: 0, railContactTime: 0, verticalSpeed: 0, grounded: true, pitch: 0, bank: 0, boostLeft: 0, boosts: 3, contacts: 0 }; }
 export function normalizeInput(input = {}) { return { throttle: clamp(Number.isFinite(input.throttle) ? input.throttle : 0, -1, 1), steer: clamp(Number.isFinite(input.steer) ? input.steer : 0, -1, 1), brake: !!input.brake, boost: !!input.boost }; }
-export function maxSteering(speed) { return VEHICLE.steeringLock / (1 + Math.abs(speed) / 11); }
+export function maxSteering(speed, holdSeconds = 0) {
+    const hold = clamp((holdSeconds - VEHICLE.heldSteerDelay) / VEHICLE.heldSteerRamp, 0, 1);
+    return VEHICLE.steeringLock / (1 + Math.abs(speed) / 11) * (1 + VEHICLE.heldSteerGain * hold * hold * (3 - 2 * hold));
+}
 export function stepVehicle(s, raw, dt, track) {
     finite(dt, 'dt');
     if (dt <= 0 || dt > VEHICLE.step + 1e-8)
         throw new RangeError('Vehicle must use fixed substeps');
     const input = normalizeInput(raw), T = VEHICLE;
+    s.railContactTime = Math.max(0, (s.railContactTime || 0) - dt);
     if (input.boost && !s.boostLatch && s.boosts > 0) {
         s.boostLeft = 1.5;
         s.boosts--;
@@ -25,9 +29,17 @@ export function stepVehicle(s, raw, dt, track) {
         forward = approach(forward, -T.reverseSpeed * -input.throttle, (forward > 0 ? T.braking : 8) * dt);
     else
         forward = approach(forward, 0, (1.8 + .0035 * forward * forward) * dt);
-    s.steering += (input.steer * maxSteering(forward) - s.steering) * (1 - Math.exp(-10 * dt));
+    // LetsGo's short taps build gently; release/countersteer straightens sooner.
+    // Holding a turn gains up to 20% lock after half a second.
+    const heldDirection = Math.abs(input.steer) > .55 && forward > 2 && s.grounded && !input.brake ? Math.sign(input.steer) : 0;
+    s.steerHoldTime = heldDirection ? (s.steerHoldDirection === heldDirection ? s.steerHoldTime : 0) + dt : 0;
+    s.steerHoldDirection = heldDirection;
+    const targetSteering = input.steer * maxSteering(forward, s.steerHoldTime);
+    const building = input.steer * s.steering >= 0 && Math.abs(targetSteering) > Math.abs(s.steering);
+    s.steering += (targetSteering - s.steering) * (1 - Math.exp(-(building ? T.steeringBuild : T.steeringRelease) * dt));
+    const turnSpeed = s.railContactTime > 0 && input.throttle > 0 ? Math.max(forward, 2) : forward;
     if (s.grounded)
-        s.yaw += forward / T.wheelbase * Math.tan(s.steering) * dt;
+        s.yaw += turnSpeed / T.wheelbase * Math.tan(s.steering) * dt;
     s.vx = Math.sin(s.yaw) * forward + Math.cos(s.yaw) * side;
     s.vz = Math.cos(s.yaw) * forward - Math.sin(s.yaw) * side;
     const steps = Math.max(1, Math.ceil(Math.hypot(s.vx, s.vz) * dt / .22));
@@ -38,6 +50,7 @@ export function stepVehicle(s, raw, dt, track) {
         s.z = r.z;
         if (depth > 1e-7) {
             s.contacts++;
+            s.railContactTime = .3;
             const nx = dx / depth, nz = dz / depth, closing = s.vx * nx + s.vz * nz;
             if (closing < 0) {
                 s.vx -= nx * closing * 1.03;

@@ -21,7 +21,7 @@ export function createMotionLab({title,section,videos=[],createSimulation=null,h
  let yaw=Math.PI,pitch=.5,distance=simulation?.distance||10,last=0,active=true,viewName='back';
  const cameraRay=new T.Raycaster(),rayDirection=new T.Vector3();
  function resize(){const rect=stage.getBoundingClientRect();camera.aspect=Math.max(1,rect.width)/Math.max(1,rect.height);camera.updateProjectionMatrix();renderer.setSize(Math.max(1,rect.width),Math.max(1,rect.height));}new ResizeObserver(resize).observe(stage);resize();
- function setView(name){const views={back:[Math.PI,.5],front:[0,.5],side:[Math.PI/2,.4],top:[Math.PI,Math.PI/2],angled:[Math.PI*.78,.6]};const entry=views[name];if(!entry)return;yaw=controller.state.facing+entry[0];pitch=entry[1];viewName=name;for(const button of document.querySelectorAll('[data-view]'))button.setAttribute('aria-pressed',String(button.dataset.view===name));}
+ function setView(name){const views={back:[Math.PI,simulation?.chasePitch??.5],front:[0,.5],side:[Math.PI/2,.4],top:[Math.PI,Math.PI/2],angled:[Math.PI*.78,.6]};const entry=views[name];if(!entry)return;yaw=controller.state.facing+entry[0];pitch=entry[1];viewName=name;for(const button of document.querySelectorAll('[data-view]'))button.setAttribute('aria-pressed',String(button.dataset.view===name));}
  function reset(){input.reset();controller.place();const s=controller.state;target.set(s.x,(s.y||0)+(simulation?.targetHeight??.1),s.z);distance=simulation?.distance||10;setView('back');}
  for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>setView(button.dataset.view);document.querySelector('#reset').onclick=reset;
  function setActive(value){active=value&&!document.hidden;input.setEnabled(active);}
@@ -33,10 +33,10 @@ export function createMotionLab({title,section,videos=[],createSimulation=null,h
   marker.position.set(state.x,state.y||0,state.z);marker.rotation.set(state.pitch||0,state.facing,state.bank||0);
   // The plain test slab grows if a long test travels beyond its starting area.
   if(!simulation){floor.scale.x=Math.max(1,Math.ceil((Math.abs(state.x)+50)/100));floor.scale.z=Math.max(1,Math.ceil((Math.abs(state.z)+50)/100));}
-  target.x=T.MathUtils.damp(target.x,state.x,10,seconds);target.z=T.MathUtils.damp(target.z,state.z,10,seconds);
+  target.x=simulation?.chase?state.x:T.MathUtils.damp(target.x,state.x,10,seconds);target.z=simulation?.chase?state.z:T.MathUtils.damp(target.z,state.z,10,seconds);
   target.y=T.MathUtils.damp(target.y,(state.y||0)+(simulation?.targetHeight??.1),10,seconds);
-  if(simulation?.chase&&viewName==='back')yaw+=Math.atan2(Math.sin(state.facing+Math.PI-yaw),Math.cos(state.facing+Math.PI-yaw))*(1-Math.exp(-8*seconds));
-  camera.fov=simulation?60+Math.min(6,Math.max(0,state.speed)/10):45;camera.updateProjectionMatrix();
+  if(simulation?.chase&&viewName==='back')yaw+=Math.atan2(Math.sin(state.facing+Math.PI-yaw),Math.cos(state.facing+Math.PI-yaw))*(1-Math.exp(-(simulation.chaseRate??8)*seconds));
+  camera.fov=simulation?.fov??(simulation?60+Math.min(6,Math.max(0,state.speed)/10):45);camera.updateProjectionMatrix();
   camera.position.set(target.x+Math.sin(yaw)*Math.cos(pitch)*distance,target.y+Math.sin(pitch)*distance,target.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.up.set(0,pitch>1.55?0:1,pitch>1.55?-1:0);camera.lookAt(target);camera.updateMatrixWorld(true);
   if(simulation?.cameraObstacles?.length){rayDirection.copy(camera.position).sub(target);const full=rayDirection.length();cameraRay.set(target,rayDirection.normalize());cameraRay.near=.2;cameraRay.far=full;const hit=cameraRay.intersectObjects(simulation.cameraObstacles,false)[0];if(hit)camera.position.copy(target).addScaledVector(rayDirection,Math.max(.5,hit.distance-.35));camera.lookAt(target);camera.updateMatrixWorld(true);}
   document.querySelector('#status').textContent=`${state.mode} · ${state.speed.toFixed(1)} m/s · ${Math.round(controls.strength*100)}% input · ${state.x.toFixed(1)}, ${state.z.toFixed(1)} m`;
