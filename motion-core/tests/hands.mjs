@@ -45,5 +45,5 @@ const far=grip(S,{},'L',[{sphere:[5,5,5],radius:.01}]);
 check('with nothing to touch the fingers close fully',DIGITS.every(d=>Math.abs(far[`${d}1.L`].x-S.bones[S.index.get(`${d}1.L`)].limits.x[1])<1e-6));
 
 const t0=performance.now();for(let k=0;k<200;k++)grip(S,placed,'L',[rod],{opposition:.4});const us=(performance.now()-t0)/200*1000;
-check('fast enough for every frame',us<1500,`${us.toFixed(0)} µs for one hand's grip`);
+check('fast enough for every frame (under 0.5 ms a hand)',us<500,`${us.toFixed(0)} µs for one hand's grip`);
 console.table(R);const fail=R.some(r=>r.result==='FAIL');console.log(fail?'FAIL':'PASS: hand shapes are exact and fingers grip without going into what they hold.');process.exit(fail?1:0);

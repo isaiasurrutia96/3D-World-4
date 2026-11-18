@@ -195,3 +195,9 @@ Recorded 17 November 2026.
     than this stylized hand can wrap (the approved curl is about 90°); rods,
     rims and knees are fine. Small one-line addition in hand-lab/src/hand-rig.js:
     it now also returns its binding (read only; no change to how it bends).
+26. Speed clean-up (no visible change): a palm that faces its target now costs
+    about 0.26 ms a frame (was about 3 ms): the palm solver works out the
+    fixed parts of the limb once per frame instead of every step, stops once
+    settled, and the shoulder-follow second pass is skipped when the shoulders
+    moved under 0.05°. Gripping: about 0.3 ms a hand (was 0.67). Checks
+    tightened to match (palm under 1 ms, grip under 0.5 ms).

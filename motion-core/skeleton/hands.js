@@ -93,36 +93,43 @@ function gap(a, b, r, shape){
 export function grip(skeleton, pose, side, shapes, {opposition = 0, together = 0, from = REST, outer = false} = {}){
  const B = n => skeleton.bones[skeleton.index.get(n)];
  const hand = skeleton.solve(pose).get('hand.' + side);
- const deltaQ = (b, a) => b.frameQ.clone().multiply(new Quaternion().setFromEuler(new Euler(a.x * RAD, a.y * RAD, a.z * RAD, b.order))).multiply(b.restInv).multiply(b.frameInv);
- const base = handPose(skeleton, side, {opposition, together});
- /** The finger's joints and tip (world) for a curl amount. */
+ const deltaQ = (b, a, out = new Quaternion()) => out.copy(b.frameQ).multiply(eq.setFromEuler(eu.set(a.x * RAD, a.y * RAD, a.z * RAD, b.order))).multiply(b.restInv).multiply(b.frameInv);
+ const eq = new Quaternion(), eu = new Euler(), base = handPose(skeleton, side, {opposition, together});
+ // Per finger, what does not depend on the curl: its palm bone's world turn and joint, and
+ // each joint's offset from its parent (worked out once per grip, reused for every try).
+ const fixed = {};
+ for(const d of DIGITS){
+  const b0 = B(`${d}0.${side}`), hb = B('hand.' + side);
+  const rot0 = hand.rotation.clone().multiply(deltaQ(b0, base[`${d}0.${side}`]));
+  const head0 = new Vector3(...b0.head).sub(new Vector3(...hb.head)).applyQuaternion(hand.rotation).add(hand.head);
+  const joints = [1, 2, 3].map(j => B(`${d}${j}.${side}`));
+  const offsets = joints.map((b, j) => new Vector3(...b.head).sub(new Vector3(...(j === 0 ? b0.head : joints[j - 1].head))));
+  fixed[d] = {rot0, head0, joints, offsets, tip: new Vector3(...joints[2].tail).sub(new Vector3(...joints[2].head)), radii: FINGER_RADII[d]};
+ }
+ const rot = new Quaternion(), dq = new Quaternion(), pts = [new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+ /** The finger's joints and tip (world) for a curl amount (reuses its own vectors). */
  function chain(d, curl){
-  const angles = curlAngles(d, curl), names = [0, 1, 2, 3].map(j => `${d}${j}.${side}`);
-  let rot = hand.rotation.clone(), head = hand.head.clone(), parent = B('hand.' + side);
-  const pts = [];
-  names.forEach((n, j) => {
-   const b = B(n), a = j === 0 ? base[n] : {x: angles[j - 1], y: 0, z: 0};
-   head = new Vector3(...b.head).sub(new Vector3(...parent.head)).applyQuaternion(rot).add(head);
-   rot = rot.clone().multiply(deltaQ(b, a));
-   if(j > 0) pts.push(head.clone());
-   if(j === 3) pts.push(new Vector3(...b.tail).sub(new Vector3(...b.head)).applyQuaternion(rot).add(head));
-   parent = b;
-  });
+  const f = fixed[d], angles = curlAngles(d, curl);
+  rot.copy(f.rot0); let head = pts[0].copy(f.offsets[0]).applyQuaternion(rot).add(f.head0);
+  for(let j = 0; j < 3; j++){
+   if(j > 0) head = pts[j].copy(f.offsets[j]).applyQuaternion(rot).add(pts[j - 1]);
+   rot.multiply(deltaQ(f.joints[j], {x: angles[j], y: 0, z: 0}, dq));
+  }
+  pts[3].copy(f.tip).applyQuaternion(rot).add(pts[2]);
   return pts; // knuckle, middle joint, end joint, tip
  }
- const r0 = d => side === 'L' ? FINGER_RADII[d] : FINGER_RADII[d];
  // outer: only the two outer segments count (the palm rests on the surface, so the
  // segment by the knuckle lies along it whatever the fingers do).
- const touching = (d, curl) => { const p = chain(d, curl), r = r0(d); let m = Infinity; for(let j = outer ? 1 : 0; j < 3; j++) for(const s of shapes) m = Math.min(m, gap(p[j], p[j + 1], r[j], s)); return m <= 0; };
+ const touching = (d, curl) => { const p = chain(d, curl), r = fixed[d].radii; for(let j = outer ? 1 : 0; j < 3; j++) for(const s of shapes) if(gap(p[j], p[j + 1], r[j], s) <= 0) return true; return false; };
  const curls = {};
  for(const d of DIGITS){
   // Close step by step until the first touch, then find the touch exactly.
   // (Fingers start from their relaxed curl, `from`: a grip never straightens them past it.)
   let lo = from, hi = null;
   if(touching(d, from)){ curls[d] = from; continue; }
-  for(let k = 1; k <= 24; k++){ const c = from + (1 - from) * k / 24; if(touching(d, c)){ hi = c; break; } lo = c; }
+  for(let k = 1; k <= 12; k++){ const c = from + (1 - from) * k / 12; if(touching(d, c)){ hi = c; break; } lo = c; }
   if(hi === null){ curls[d] = 1; continue; }
-  for(let k = 0; k < 14; k++){ const c = (lo + hi) / 2; if(touching(d, c)) hi = c; else lo = c; }
+  for(let k = 0; k < 12; k++){ const c = (lo + hi) / 2; if(touching(d, c)) hi = c; else lo = c; }
   curls[d] = lo;
  }
  return handPose(skeleton, side, {...curls, opposition, together});
