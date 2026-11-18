@@ -25,8 +25,8 @@ function check(track, rule, input, expected, measure, verify) {
     });
 }
 for (const id of TRACK_IDS) {
-    const raw = reference.tracks.find(t => t.id === id), referenceTrack = createTrack(id, {}, { seam: 'reference' }), track = createTrack(id), candidate = track;
-    trackMetrics.push({ id, name: track.name, segments: track.segments.length, rails: track.rails.length, roadWidth: track.halfWidth * 2, curbWidth: track.curbWidth, totalWidth: track.outer * 2, physicalLength: track.length, sourceLength: track.sourceLength, referenceEdgeGap: referenceTrack.seamEdgeGap, proposedEdgeGap: candidate.seamEdgeGap, bridgeCrossings: raw.expected.crossings.length, referenceSeamStatus: referenceTrack.seamEdgeGap <= tolerance ? 'PASS' : 'FAIL', proposedSeamStatus: candidate.seamEdgeGap <= tolerance ? 'PASS' : 'FAIL' });
+    const raw = reference.tracks.find(t => t.id === id), referenceTrack = createTrack(id, {}, { seam: 'reference', accessBridge:true }), track = createTrack(id), candidate = createTrack(id,{}, {accessBridge:true});
+    trackMetrics.push({ id, name: track.name, segments: track.segments.length, rails: track.rails.length, accessBridge:track.accessBridge,roadWidth: track.halfWidth * 2, curbWidth: track.curbWidth, totalWidth: track.outer * 2, physicalLength: track.length, sourceLength: track.sourceLength, referenceEdgeGap: referenceTrack.seamEdgeGap, proposedEdgeGap: candidate.seamEdgeGap, bridgeCrossings: raw.expected.crossings.length, referenceSeamStatus: referenceTrack.seamEdgeGap <= tolerance ? 'PASS' : 'FAIL', proposedSeamStatus: candidate.seamEdgeGap <= tolerance ? 'PASS' : 'FAIL' });
     check(id, 'Road corners and wall endpoints exactly match the pinned source', 'Hash every double-precision road corner and rail endpoint, without rounding.', 'Both SHA256 digests equal the independent source capture.', () => ({ road: hash(referenceTrack.segments.map(s => s.corners.map(xyz))), walls: hash(referenceTrack.rails.map(r => [...xyz(r.a), ...xyz(r.b)])) }), m => { assert.equal(m.road, raw.expected.roadCornersSHA256); assert.equal(m.walls, raw.expected.railsSHA256); });
     check(id, 'Road width, height and triangle data are finite and nondegenerate', 'Visit every road segment and its four corners.', 'Asphalt is 26 m wide, each curb is 1.1 m, total is 28.2 m; both triangle areas are positive.', () => {
         let widthError = 0, minArea = Infinity, nonFinite = 0;
@@ -131,19 +131,16 @@ for (const id of TRACK_IDS) {
         }
         return { byRate, maximumTimeError, maximumPositionError, rejected };
     }, m => { near(m.maximumTimeError, 0, 1e-10); near(m.maximumPositionError, 0); assert.equal(m.rejected, 13 * 3 * 4); });
-    check(id, 'Road, access bridge and intentional wall openings stay distinct', 'Check the access bridge center and far-away empty space, then query every wall midpoint.', 'Bridge supports its source height; empty space has no floor; all rail midpoints are found on their own deck.', () => {
-        const a = raw.access, x = (a.minX + a.maxX) / 2, z = (a.minZ + a.maxZ) / 2;
-        const bridge = track.heightAt(x, z, a.height + .01), empty = track.heightAt(track.bounds.max.x + 1000, track.bounds.max.z + 1000);
-        let missing = 0, maxWallError = 0;
-        for (const rail of track.rails) {
-            const p = { x: (rail.a.x + rail.b.x) / 2, y: (rail.a.y + rail.b.y) / 2 + .5, z: (rail.a.z + rail.b.z) / 2 }, hit = track.nearestWall(p, .001);
-            if (!hit)
-                missing++;
-            else
-                maxWallError = Math.max(maxWallError, hit.distance);
-        }
-        return { bridge, expectedBridge: a.height, empty, railMidpoints: track.rails.length, missing, maxWallError };
-    }, m => { near(m.bridge, m.expectedBridge); assert.equal(m.empty, null); assert.equal(m.missing, 0); near(m.maxWallError, 0); });
+    check(id,'Default tracks exclude the hub connector and close its rail and curb openings','Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.','No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.',()=>{
+        const connected=createTrack(id,{}, {accessBridge:true});let connectorPoint=null;
+        for(const fx of [.02,.2,.5,.8,.98])for(const fz of [.02,.2,.5,.8,.98]){const a=connected.access,x=a.minX+(a.maxX-a.minX)*fx,z=a.minZ+(a.maxZ-a.minZ)*fz;if(connected.roadHeightAt(x,z,a.height+.01)===null&&connected.heightAt(x,z,a.height+.01)!==null)connectorPoint={x,y:a.height,z};}
+        assert(connectorPoint,'Source connector must include a point outside the race road');
+        assert.equal(track.heightAt(connectorPoint.x,connectorPoint.z,connectorPoint.y+.01),null);assert.equal(track.access,null);assert.equal(track.entrance,null);assert.equal(track.accessTriangles.length,0);assert.equal(track.accessBridge,false);
+        let maximumRailJoinGap=0;for(let i=0;i<track.segments.length;i++)for(const side of [0,1])maximumRailJoinGap=Math.max(maximumRailJoinGap,distance(track.rails[i*2+side].b,track.rails[((i+1)%track.segments.length)*2+side].a));
+        assert.deepEqual(track.segments.map(s=>s.corners),connected.segments.map(s=>s.corners));assert.deepEqual(track.gates,connected.gates);assert.equal(track.length,connected.length);assert(track.segments.every(s=>s.curbVisible.every(Boolean)));
+        let missingWalls=0;for(const r of track.rails){const p={x:(r.a.x+r.b.x)/2,y:(r.a.y+r.b.y)/2+.5,z:(r.a.z+r.b.z)/2};if(!track.nearestWall(p,.001))missingWalls++;}
+        return {accessTriangles:track.accessTriangles.length,connectorPoint,connectorSupport:null,rails:track.rails.length,expectedRails:track.segments.length*2,maximumRailJoinGap,missingWalls,mainLoopUnchanged:true};
+    },m=>{assert.equal(m.rails,m.expectedRails);near(m.maximumRailJoinGap,0);assert.equal(m.missingWalls,0);});
     check(id, 'A translated and rotated island placement preserves road geometry', 'Translate by (1234,70,-890) m and rotate by 0.7 radians; sample 60 locations around the loop.', 'Sample positions, road heights and projection distances agree after the same transform; no voxel-grid rounding.', () => {
         const angle = .7, sin = Math.sin(angle), cos = Math.cos(angle), placed = createTrack(id, { x: 1234, y: 70, z: -890, yaw: angle });
         let maximumError = 0;

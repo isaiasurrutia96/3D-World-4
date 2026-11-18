@@ -6,10 +6,10 @@ Source: LetsGo Racing `573664e824a04234240a24dfc2eae2273e30a4ca`. Every rule bel
 
 | Track | Road segments | Rails | Physical length (m) | Source station length (m) | Source seam gap (m) | Approved seam gap (m) | Source seam closed? |
 |---|---:|---:|---:|---:|---:|---:|---|
-| Original Circuit | 1200 | 2395 | 3682.701867103 | 3679.832947424 | 0.046163501 | 0 | FAIL |
-| Skyline Circuit | 1800 | 3594 | 4513.430721129 | 4510.258330488 | 0 | 0 | PASS |
-| Suzuka Circuit | 2400 | 4794 | 5757.437844709 | 5757.526739055 | 0 | 0 | PASS |
-| Winding Circuit | 2400 | 4794 | 6635.147404997 | 6635.60023163 | 0 | 0 | PASS |
+| Original Circuit | 1200 | 2400 | 3682.701867103 | 3679.832947424 | 0.046163501 | 0 | FAIL |
+| Skyline Circuit | 1800 | 3600 | 4513.430721129 | 4510.258330488 | 0 | 0 | PASS |
+| Suzuka Circuit | 2400 | 4800 | 5757.437844709 | 5757.526739055 | 0 | 0 | PASS |
+| Winding Circuit | 2400 | 4800 | 6635.147404997 | 6635.60023163 | 0 | 0 | PASS |
 
 The source station length comes from its spline lookup table. Physical length is measured along the actual 3D road samples; gates keep their exact source positions.
 
@@ -73,11 +73,11 @@ The source station length comes from its spline lookup table. Physical length is
 - Measured result: `{"byRate":[{"fps":30,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":60,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":120,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":144,"forwardCrossings":13,"earliest":1,"latest":1}],"maximumTimeError":0,"maximumPositionError":0,"rejected":156}`
 - **PASS**
 
-### original — Road, access bridge and intentional wall openings stay distinct
+### original — Default tracks exclude the hub connector and close its rail and curb openings
 
-- Rule: Bridge supports its source height; empty space has no floor; all rail midpoints are found on their own deck.
-- Scripted input: Check the access bridge center and far-away empty space, then query every wall midpoint.
-- Measured result: `{"bridge":0,"expectedBridge":0,"empty":null,"railMidpoints":2395,"missing":0,"maxWallError":1.1368683772161603e-13}`
+- Rule: No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.
+- Scripted input: Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.
+- Measured result: `{"accessTriangles":0,"connectorPoint":{"x":133.2,"y":0,"z":-140.4},"connectorSupport":null,"rails":2400,"expectedRails":2400,"maximumRailJoinGap":0,"missingWalls":0,"mainLoopUnchanged":true}`
 - **PASS**
 
 ### original — A translated and rotated island placement preserves road geometry
@@ -157,11 +157,11 @@ The source station length comes from its spline lookup table. Physical length is
 - Measured result: `{"byRate":[{"fps":30,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":60,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":120,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":144,"forwardCrossings":13,"earliest":1,"latest":1}],"maximumTimeError":0,"maximumPositionError":0,"rejected":156}`
 - **PASS**
 
-### skyline — Road, access bridge and intentional wall openings stay distinct
+### skyline — Default tracks exclude the hub connector and close its rail and curb openings
 
-- Rule: Bridge supports its source height; empty space has no floor; all rail midpoints are found on their own deck.
-- Scripted input: Check the access bridge center and far-away empty space, then query every wall midpoint.
-- Measured result: `{"bridge":0,"expectedBridge":0,"empty":null,"railMidpoints":3594,"missing":0,"maxWallError":1.1368683772161603e-13}`
+- Rule: No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.
+- Scripted input: Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.
+- Measured result: `{"accessTriangles":0,"connectorPoint":{"x":-131.51,"y":0,"z":9.600000000000001},"connectorSupport":null,"rails":3600,"expectedRails":3600,"maximumRailJoinGap":0,"missingWalls":0,"mainLoopUnchanged":true}`
 - **PASS**
 
 ### skyline — A translated and rotated island placement preserves road geometry
@@ -241,11 +241,11 @@ The source station length comes from its spline lookup table. Physical length is
 - Measured result: `{"byRate":[{"fps":30,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":60,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":120,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":144,"forwardCrossings":13,"earliest":1,"latest":1}],"maximumTimeError":0,"maximumPositionError":0,"rejected":156}`
 - **PASS**
 
-### suzuka — Road, access bridge and intentional wall openings stay distinct
+### suzuka — Default tracks exclude the hub connector and close its rail and curb openings
 
-- Rule: Bridge supports its source height; empty space has no floor; all rail midpoints are found on their own deck.
-- Scripted input: Check the access bridge center and far-away empty space, then query every wall midpoint.
-- Measured result: `{"bridge":0,"expectedBridge":0,"empty":null,"railMidpoints":4794,"missing":0,"maxWallError":2.2737367544323206e-13}`
+- Rule: No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.
+- Scripted input: Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.
+- Measured result: `{"accessTriangles":0,"connectorPoint":{"x":9.600000000000001,"y":0,"z":-232.48000000000002},"connectorSupport":null,"rails":4800,"expectedRails":4800,"maximumRailJoinGap":0,"missingWalls":0,"mainLoopUnchanged":true}`
 - **PASS**
 
 ### suzuka — A translated and rotated island placement preserves road geometry
@@ -325,11 +325,11 @@ The source station length comes from its spline lookup table. Physical length is
 - Measured result: `{"byRate":[{"fps":30,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":60,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":120,"forwardCrossings":13,"earliest":1,"latest":1},{"fps":144,"forwardCrossings":13,"earliest":1,"latest":1}],"maximumTimeError":0,"maximumPositionError":0,"rejected":156}`
 - **PASS**
 
-### winding — Road, access bridge and intentional wall openings stay distinct
+### winding — Default tracks exclude the hub connector and close its rail and curb openings
 
-- Rule: Bridge supports its source height; empty space has no floor; all rail midpoints are found on their own deck.
-- Scripted input: Check the access bridge center and far-away empty space, then query every wall midpoint.
-- Measured result: `{"bridge":0,"expectedBridge":0,"empty":null,"railMidpoints":4794,"missing":0,"maxWallError":2.2737367544323206e-13}`
+- Rule: No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.
+- Scripted input: Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.
+- Measured result: `{"accessTriangles":0,"connectorPoint":{"x":9.600000000000001,"y":0,"z":972.2293220831097},"connectorSupport":null,"rails":4800,"expectedRails":4800,"maximumRailJoinGap":0,"missingWalls":0,"mainLoopUnchanged":true}`
 - **PASS**
 
 ### winding — A translated and rotated island placement preserves road geometry

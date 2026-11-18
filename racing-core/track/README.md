@@ -8,13 +8,13 @@ Run `node --test racing-core/track/check.test.mjs` from the repository root with
 
 Import `createTrack`, `TRACK_IDS`, `SOURCE` and `APPEARANCE` from `index.ts`.
 
-`createTrack(id, placement?, options?)` accepts `original`, `skyline`, `suzuka` and `winding`. Placement is a rigid `{x,y,z,yaw}` transform in metres/radians, applied about the original scene origin. It preserves scale. `options.seam` is `weld` by default: the owner approved the Original Circuit seam correction on 18 November 2026. Use explicit `reference` only for source-fidelity diagnostics.
+`createTrack(id, placement?, options?)` accepts `original`, `skyline`, `suzuka` and `winding`. Placement is a rigid `{x,y,z,yaw}` transform in metres/radians, applied about the original scene origin. It preserves scale. `options.seam` is `weld` by default: the owner approved the Original Circuit seam correction on 18 November 2026. The default `accessBridge: false` omits the old shared-hub connector and closes its rail/curb openings. Use explicit `{seam: 'reference', accessBridge: true}` for complete original-source diagnostics.
 
 Public geometry is immutable:
 
 - `segments`: source road corners and two exact support triangles per segment.
-- `rails`: original endpoints, including entry openings and access rails, plus the source physical wall height. No collision response is implemented.
-- `accessTriangles`: the source bridge's supported surface. The shared hub, voxel island and global floor are not part of a track.
+- `rails`: two complete perimeter rail rings by default, plus the source physical wall height. The opt-in connector profile retains original entry openings/access rails. No collision response is implemented.
+- `accessTriangles`: an empty array by default; the opt-in source bridge’s supported surface when `accessBridge: true`. `access` and `entrance` are null without a connector. The shared hub, voxel island and global floor are not part of a track.
 - `gates`: original world positions and horizontal forward directions, with physical distances and source distances both labelled.
 - `start`, `entrance`, `bounds`, widths, thickness, `length`, `sourceLength` and `seamEdgeGap` expose the measured layout.
 
@@ -22,7 +22,7 @@ Queries return new values rather than mutating geometry:
 
 - `sample(metres)` follows the physical 3D centerline, relative to the source start. Negative and multi-lap distances wrap. Its normal is the interpolated **source left-normal**, not a vehicle steering vector.
 - `roadHeightAt(x,z,maximum)` queries only the source road triangles and returns the highest surface not above `maximum`, or null. The default maximum is Infinity; a vehicle must supply an appropriate height limit at an overpass.
-- `heightAt(x,z,maximum)` also includes the access bridge. No floor exists elsewhere.
+- `heightAt(x,z,maximum)` also includes the access bridge only when explicitly enabled; the default is race-road support only. No floor exists elsewhere.
 - `project(point,{hintDistance,maxDelta})` returns route position and height error. Positive `lateral` is to the **right** of the forward direction. Optional hints keep the result within an explicit physical-distance window at nearby branches; no valid match returns null.
 - `nearestWall(point,radius)` queries rail geometry within a horizontal distance and the wall's vertical span. It does not resolve contacts, sweep a body or prove anti-tunnelling.
 - `crossGate(index,from,to)` returns a forward crossing fraction/point within the gate's width and height band, or null. Arriving on the plane counts; departing from the plane does not count twice. It does not award a lap or enforce checkpoint order.

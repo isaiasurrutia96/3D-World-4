@@ -52,11 +52,12 @@
     {
       "rule": "Approved default is a closed static track",
       "input": "Construct Original Circuit with default options and create its view.",
-      "expected": "Zero seam gap; weld enabled; 16 static mesh objects; no actors.",
+      "expected": "Zero seam gap; weld enabled; 7 static track mesh objects; no connector or actors.",
       "measured": {
         "seamGap": 0,
         "seamMode": "weld",
-        "meshCount": 16
+        "accessBridge": false,
+        "meshCount": 7
       },
       "status": "PASS"
     }

@@ -34,7 +34,8 @@
       "id": "original",
       "name": "Original Circuit",
       "segments": 1200,
-      "rails": 2395,
+      "rails": 2400,
+      "accessBridge": false,
       "roadWidth": 26,
       "curbWidth": 1.1,
       "totalWidth": 28.2,
@@ -50,7 +51,8 @@
       "id": "skyline",
       "name": "Skyline Circuit",
       "segments": 1800,
-      "rails": 3594,
+      "rails": 3600,
+      "accessBridge": false,
       "roadWidth": 26,
       "curbWidth": 1.1,
       "totalWidth": 28.2,
@@ -66,7 +68,8 @@
       "id": "suzuka",
       "name": "Suzuka Circuit",
       "segments": 2400,
-      "rails": 4794,
+      "rails": 4800,
+      "accessBridge": false,
       "roadWidth": 26,
       "curbWidth": 1.1,
       "totalWidth": 28.2,
@@ -82,7 +85,8 @@
       "id": "winding",
       "name": "Winding Circuit",
       "segments": 2400,
-      "rails": 4794,
+      "rails": 4800,
+      "accessBridge": false,
       "roadWidth": 26,
       "curbWidth": 1.1,
       "totalWidth": 28.2,
@@ -221,16 +225,22 @@
     },
     {
       "track": "original",
-      "rule": "Road, access bridge and intentional wall openings stay distinct",
-      "input": "Check the access bridge center and far-away empty space, then query every wall midpoint.",
-      "expected": "Bridge supports its source height; empty space has no floor; all rail midpoints are found on their own deck.",
+      "rule": "Default tracks exclude the hub connector and close its rail and curb openings",
+      "input": "Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.",
+      "expected": "No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.",
       "measured": {
-        "bridge": 0,
-        "expectedBridge": 0,
-        "empty": null,
-        "railMidpoints": 2395,
-        "missing": 0,
-        "maxWallError": 1.1368683772161603e-13
+        "accessTriangles": 0,
+        "connectorPoint": {
+          "x": 133.2,
+          "y": 0,
+          "z": -140.4
+        },
+        "connectorSupport": null,
+        "rails": 2400,
+        "expectedRails": 2400,
+        "maximumRailJoinGap": 0,
+        "missingWalls": 0,
+        "mainLoopUnchanged": true
       },
       "status": "PASS"
     },
@@ -396,16 +406,22 @@
     },
     {
       "track": "skyline",
-      "rule": "Road, access bridge and intentional wall openings stay distinct",
-      "input": "Check the access bridge center and far-away empty space, then query every wall midpoint.",
-      "expected": "Bridge supports its source height; empty space has no floor; all rail midpoints are found on their own deck.",
+      "rule": "Default tracks exclude the hub connector and close its rail and curb openings",
+      "input": "Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.",
+      "expected": "No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.",
       "measured": {
-        "bridge": 0,
-        "expectedBridge": 0,
-        "empty": null,
-        "railMidpoints": 3594,
-        "missing": 0,
-        "maxWallError": 1.1368683772161603e-13
+        "accessTriangles": 0,
+        "connectorPoint": {
+          "x": -131.51,
+          "y": 0,
+          "z": 9.600000000000001
+        },
+        "connectorSupport": null,
+        "rails": 3600,
+        "expectedRails": 3600,
+        "maximumRailJoinGap": 0,
+        "missingWalls": 0,
+        "mainLoopUnchanged": true
       },
       "status": "PASS"
     },
@@ -571,16 +587,22 @@
     },
     {
       "track": "suzuka",
-      "rule": "Road, access bridge and intentional wall openings stay distinct",
-      "input": "Check the access bridge center and far-away empty space, then query every wall midpoint.",
-      "expected": "Bridge supports its source height; empty space has no floor; all rail midpoints are found on their own deck.",
+      "rule": "Default tracks exclude the hub connector and close its rail and curb openings",
+      "input": "Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.",
+      "expected": "No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.",
       "measured": {
-        "bridge": 0,
-        "expectedBridge": 0,
-        "empty": null,
-        "railMidpoints": 4794,
-        "missing": 0,
-        "maxWallError": 2.2737367544323206e-13
+        "accessTriangles": 0,
+        "connectorPoint": {
+          "x": 9.600000000000001,
+          "y": 0,
+          "z": -232.48000000000002
+        },
+        "connectorSupport": null,
+        "rails": 4800,
+        "expectedRails": 4800,
+        "maximumRailJoinGap": 0,
+        "missingWalls": 0,
+        "mainLoopUnchanged": true
       },
       "status": "PASS"
     },
@@ -746,16 +768,22 @@
     },
     {
       "track": "winding",
-      "rule": "Road, access bridge and intentional wall openings stay distinct",
-      "input": "Check the access bridge center and far-away empty space, then query every wall midpoint.",
-      "expected": "Bridge supports its source height; empty space has no floor; all rail midpoints are found on their own deck.",
+      "rule": "Default tracks exclude the hub connector and close its rail and curb openings",
+      "input": "Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.",
+      "expected": "No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.",
       "measured": {
-        "bridge": 0,
-        "expectedBridge": 0,
-        "empty": null,
-        "railMidpoints": 4794,
-        "missing": 0,
-        "maxWallError": 2.2737367544323206e-13
+        "accessTriangles": 0,
+        "connectorPoint": {
+          "x": 9.600000000000001,
+          "y": 0,
+          "z": 972.2293220831097
+        },
+        "connectorSupport": null,
+        "rails": 4800,
+        "expectedRails": 4800,
+        "maximumRailJoinGap": 0,
+        "missingWalls": 0,
+        "mainLoopUnchanged": true
       },
       "status": "PASS"
     },
