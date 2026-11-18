@@ -6,7 +6,7 @@ import * as T from 'three';
 import {MovementInput} from '../movement/input.js';
 import {createMoveController} from '../motion-core/controller.js';
 
-const SLAB=80;
+const SLAB=30;
 const renderer=new T.WebGLRenderer({antialias:!matchMedia('(pointer:coarse)').matches});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));document.body.prepend(renderer.domElement);
 const scene=new T.Scene();scene.background=new T.Color('#405363'); // no fog: the isometric camera sits far away and fog would hide everything
 
