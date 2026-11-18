@@ -78,7 +78,7 @@ const randomPose=(wild=1)=>{const p={};for(const b of S.bones){if(!b.parent)cont
 
 // ---- 1. Structure ----
 const names=new Set(S.bones.map(b=>b.name));
-check('53 bones: body (with an upper chest), collarbones, hip bones, both arms and legs, 15 finger bones per hand',S.bones.length===53&&names.size===53,`${S.bones.length} bones`);
+check('63 bones: body (with an upper chest), collarbones, hip bones, both arms and legs, per hand 5 palm bones and 15 finger bones',S.bones.length===63&&names.size===63,`${S.bones.length} bones`);
 check('one root (pelvis); every other bone has a real parent listed before it',S.bones.filter(b=>b.parentIndex<0).length===1&&S.bones.every((b,i)=>b.parentIndex<i));
 check('names match his own left and right (he faces +Z, so his left is +X)',S.bones.filter(b=>b.side==='L').every(b=>b.head[0]>=0&&b.tail[0]>0)&&S.bones.filter(b=>b.side==='R').every(b=>b.head[0]<=0&&b.tail[0]<0)&&S.bones.every(b=>b.side==='C'||b.name.endsWith('.'+b.side)));
 
@@ -158,7 +158,7 @@ const curlTip=four.map((f,i)=>dist(curl.get(`${f}3.L`).tail.toArray(),M.tipCurl[
 check('at rest, fingertips are within 4 mm of the approved hand',Math.max(...restTip)<.004,`${restTip.map(mm).join(', ')}`);
 check('fully curled, fingertips land within 6 mm of where the approved hand puts them',Math.max(...curlTip)<.006,`${curlTip.map(mm).join(', ')}`);
 const t0=performance.now();for(let n=0;n<2000;n++)S.solve(randomPose());const ms=(performance.now()-t0)/2000;
-check('fast enough for every frame',ms<.2,`${(ms*1000).toFixed(0)} µs to solve all 53 bones`);
+check('fast enough for every frame',ms<.2,`${(ms*1000).toFixed(0)} µs to solve all 63 bones`);
 
 console.table(R);const fail=R.some(r=>r.result==='FAIL');
 console.log(fail?'FAIL':'PASS: the skeleton matches the approved avatar and behaves as planned.');process.exit(fail?1:0);

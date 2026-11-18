@@ -16,6 +16,8 @@
 //     palm      for a hand: where the palm centre should be (instead of the wrist);
 //               face: which way the palm should face (a direction);
 //               fingers: which way the fingers should point (along the palm)
+//     grip      for a hand: {shapes, opposition, together}: the fingers curl around
+//               the shapes until they touch them (hands.js)
 //     touch     for a hand: the centre of a ball to touch, with radius: the palm
 //               centre lands on its surface, facing its centre
 //     flat      for a foot: keep it flat on the ground (default true with sole); a
@@ -43,6 +45,7 @@
 // a smoothly moving target gives a smoothly moving limb at any frame rate.
 import {Euler, Quaternion, Vector3} from 'three';
 import {shoulderFollow} from './shoulder.js';
+import {grip} from './hands.js';
 
 const RAD = Math.PI / 180, X = new Vector3(1, 0, 0);
 const LIMBS = {hand: ['upperArm', 'lowerArm', 'hand'], foot: ['thigh', 'shin', 'foot']};
@@ -310,6 +313,13 @@ export function reach(skeleton, pose, goals, {follow = false, passes = 2, clavic
    const res = solveLimb(skeleton, out, solved, kind, side, goal, null, null, null, pose);
    delete res.forearm; delete res.err; Object.assign(out, res);
   }
+ }
+ // Hands that grip: once the arm and palm are placed, each finger curls until it
+ // touches what it holds (hands.js).
+ // (grip.weight 0..1 eases the grip in from the hand's own shape.)
+ for(const [name, goal] of Object.entries(goals)) if(goal.grip){
+  const g = grip(skeleton, out, name.split('.')[1], goal.grip.shapes, goal.grip), w = Math.min(1, Math.max(0, goal.grip.weight ?? 1));
+  for(const [b, a] of Object.entries(g)){ const own = {...skeleton.bones[skeleton.index.get(b)].rest, ...(out[b] ?? {})}; out[b] = {x: own.x + (a.x - own.x) * w, y: own.y + (a.y - own.y) * w, z: own.z + (a.z - own.z) * w}; }
  }
  // How far each goal is from being reached (metres), and for palms how far off the facing is (degrees).
  const solved = skeleton.solve(out), error = {}, facing = {}, pointing = {};

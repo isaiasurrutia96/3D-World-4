@@ -145,7 +145,8 @@ export function createClip(keys, {loop=false, duration}={}){
  *       the pose and layers, fading in; clearGoals(name, fade) fades it out.
  *       goals may be a function of time and the pose so far (moving targets).
  *       Each reaching layer starts from where its limbs were last frame
- *       (smooth and quick). clearGoals(name, fade, {after}).
+ *       (smooth and quick). clearGoals(name, fade, {after}). glide (seconds):
+ *       fingers glide to their grip instead of jumping when a touch changes.
  *   follow: the shoulders follow the arms (shoulder.js), reaching included.
  */
 export function createPosePlayer(skeleton, start={}, {follow=false}={}){
@@ -193,9 +194,9 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   layers.set(name,{clip,pose,fn,start:time,...fadeState(layers.get(name),weight,fade)});
  }
  function clearLayer(name, fade=.35, {after=0}={}){ later(layers.get(name),fade,after); }
- function setGoals(name, goals, {fade=.35, weight=1}={}){
+ function setGoals(name, goals, {fade=.35, weight=1, glide=0}={}){
   const old=goalLayers.get(name);
-  goalLayers.set(name,{goals,start:time,warm:old?.warm??null,...fadeState(old,weight,fade)});
+  goalLayers.set(name,{goals,glide,start:time,warm:old?.warm??null,fingers:old?.fingers??null,last:old?.last??null,...fadeState(old,weight,fade)});
  }
  function clearGoals(name, fade=.35, {after=0}={}){ later(goalLayers.get(name),fade,after); }
  /** Fade a layer out now, or after a wait (it keeps playing until then). */
@@ -240,6 +241,9 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
    const r=reach(skeleton,g.warm?{...pose,...g.warm}:pose,goals,{follow,clavicles:authored,continuing:!!g.warm}).pose;
    // Remember this layer's limbs for next frame (start from there: smooth and quick).
    g.warm=Object.fromEntries(Object.keys(r).filter(k=>k!=='root'&&limbOf(k,goals)).map(k=>[k,r[k]]));
+   // glide: fingers glide to where the grip puts them (a critically damped spring with
+   // this time constant, seconds) instead of jumping when a touch point changes.
+   if(g.glide>0)glideFingers(g,r,at);
    pose=blend(pose,{...r,root:pose.root},w);
   }
   pose.root=pose.root??ROOT0();
@@ -255,6 +259,23 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   get layers(){return [...layers.keys()];},
   get goalLayers(){return [...goalLayers.keys()];},
  };
+}
+
+const FINGER=/^(thumb|index|middle|ring|little)\d\./;
+/** Move the finger angles in r toward their targets with a critically damped spring (state in g). */
+function glideFingers(g,r,at){
+ const dt=g.last===null?0:Math.max(0,at-g.last);g.last=at;
+ const w0=2/g.glide,e=Math.exp(-w0*dt);
+ g.fingers=g.fingers??{};
+ for(const [b,target] of Object.entries(r)){
+  if(!FINGER.test(b))continue;
+  const st=g.fingers[b]??(g.fingers[b]={x:{...target},v:{x:0,y:0,z:0}});
+  for(const k of AXES){
+   const x=st.x[k]-target[k],v=st.v[k],tmp=(v+w0*x)*dt;
+   st.x[k]=target[k]+(x+tmp)*e;st.v[k]=(v-w0*tmp)*e;
+  }
+  r[b]={...st.x};
+ }
 }
 
 /** Is this bone part of a limb that one of these goals moves (or its collarbone)? */

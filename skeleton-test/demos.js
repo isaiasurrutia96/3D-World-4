@@ -12,8 +12,7 @@
 //                28° because level thighs plus the lean must stay inside the
 //                hip's 120° bend: 90° + 28° = 118°.
 //   sit          upright; lowers once onto a simple block and stays; palms
-//                rest on top of the thighs, three quarters of the way to the
-//                knees, palms down, fingers pointing along the thigh to the knee
+//                rest on top of the thighs, near the knees (78% of the way), palms down, fingers pointing along the thigh to the knee
 //                (thighRests(): a point measured on the thigh that rides with it). The block's top is measured to touch the
 //                body exactly (seatTop()).
 //   step         a simple block 15 cm tall, starting 3 cm in front of the toes
@@ -143,8 +142,9 @@ export function seatTop(avatar, pose){
 }
 
 /**
- * Where each palm rests when sitting: on the front of the thigh, three quarters
- * of the way from the hip to the knee, on the thigh's centre line (measured on
+ * Where each palm rests when sitting: on the front of the thigh, PALM_ALONG
+ * (78%) of the way from the hip to the knee, so the fingers reach over the knee
+ * (closer than 78% the arms reach their shoulder limit and flip), on the thigh's centre line (measured on
  * the thigh model at rest). The point rides on the thigh, so when he sits
  * (thigh level) it is the top of the thigh, and it moves smoothly all the way
  * down. Returns, per side, the point and the surface direction at rest.
@@ -153,7 +153,7 @@ export function thighRests(avatar){
  const out = {}, sk = avatar.skeleton;
  for(const s of ['L', 'R']){
   const thigh = sk.bones[sk.index.get('thigh.' + s)], hip = new Vector3(...thigh.head), knee = new Vector3(...thigh.tail);
-  const axis = knee.clone().sub(hip).normalize(), at = hip.clone().lerp(knee, .75);
+  const axis = knee.clone().sub(hip).normalize(), at = hip.clone().lerp(knee, PALM_ALONG);
   // Come in from the front, at rest, along the centre line: the first surface met.
   const a = avatar.attached.find(x => x.label === 'thigh.' + s), m = new Mesh(a.mesh.geometry);
   m.matrixAutoUpdate = false; m.matrix.copy(a.rest); m.matrixWorld.copy(a.rest);
@@ -161,7 +161,8 @@ export function thighRests(avatar){
   if(!hit) throw Error('Thigh surface not found');
   const best = hit.point.clone();
   const normal = best.clone().sub(at); normal.sub(axis.clone().multiplyScalar(normal.dot(axis))).normalize();
-  out[s] = {point: best, normal, head: hip};
+  // The thigh's thickness there (its axis to its surface), for the fingers to wrap around.
+  out[s] = {point: best, normal, head: hip, radius: best.clone().sub(at).sub(axis.clone().multiplyScalar(best.clone().sub(at).dot(axis))).length()};
  }
  return out;
 }
@@ -174,6 +175,9 @@ export function thighRests(avatar){
  * thigh. At k = 1: palm centre on the thigh rest point, palm against the
  * thigh, fingers along the thigh toward the knee.
  */
+/** How far along the thigh (hip 0, knee 1) the seated palms rest: near the knee, so the fingers hold it. */
+export const PALM_ALONG = .78;
+
 /** How far the seated hands turn in toward the middle of the body (degrees). */
 export const HANDS_IN = 20;
 
@@ -195,7 +199,10 @@ export function sittingHands(solved, rests, k = 1, base = solved, skeleton = nul
   // The elbow keeps pointing the way it hangs (out and back), so the arm never flips.
   const sh = base.get('upperArm.' + s).head, el = base.get('lowerArm.' + s).head, line = h.head.clone().sub(sh).normalize();
   const pole = el.clone().sub(sh); pole.sub(line.multiplyScalar(pole.dot(line)));
-  goals['hand.' + s] = {palm: palm0.lerp(point, k).toArray(), face: turn(n0, into).toArray(), fingers: turn(f0, along).toArray(), pole: pole.toArray()};
+  // Once the palm is on the thigh the fingers wrap around the thigh and over the knee
+  // (each stops where it touches), easing in as the hands arrive.
+  const knee = t.tail, holds = {shapes: [{capsule: [t.head.toArray(), knee.toArray()], radius: r.radius}, {sphere: knee.toArray(), radius: r.radius}], opposition: .3, outer: true, from: 0, weight: band(.8, 1, k)};
+  goals['hand.' + s] = {palm: palm0.lerp(point, k).toArray(), face: turn(n0, into).toArray(), fingers: turn(f0, along).toArray(), pole: pole.toArray(), grip: holds};
  }
  return goals;
 }
@@ -216,7 +223,7 @@ export function createDemoRunner(player, D, rests){
  let active = null, began = 0;
  const now = () => player.time;
  /** Hands layer for sitting: k(t) = how far the hands are along their path to the thighs. */
- const sitHands = k => player.setGoals('hands', (t, pose, sk) => { const q = sk.solve(pose); return sittingHands(q, rests, k(t), q, sk); }, {fade: 0});
+ const sitHands = k => player.setGoals('hands', (t, pose, sk) => { const q = sk.solve(pose); return sittingHands(q, rests, k(t), q, sk); }, {fade: 0, glide: .2});
  const run = {
   sit(){ player.transitionTo({root: D.body(1, 0)}, {duration: 1.4}); player.setGoals('feet', D.feet, {fade: 0});
    // The hands travel from hanging to the thighs along a path, arriving as he sits.

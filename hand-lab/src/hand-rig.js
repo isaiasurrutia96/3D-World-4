@@ -161,6 +161,9 @@ export function createHandRig(hand){
   position.needsUpdate=true;geometry.attributes.normal.needsUpdate=true;
  }
  return {setPose,getPose:()=>({...pose}),approvedPositions:approved,approvedNormals,vertexCount,
+  // Read-only binding (for other bending methods to match this one): per finger, rows of
+  // [vertex, step index, fraction, weight, ...] (12 numbers a row); t = (index + fraction) / STEPS * RANGE.
+  binding:{steps:STEPS,range:RANGE,digits:digits.map(d=>({id:d.id,rows:d.rows,adductionRows:d.adductionRows,adduction:d.adduction??0,root:[...d.centres.slice(0,3)]})),side,thumbPivot:[...thumbPivot]},thumbWeights,
   fingerTipVertices:digits.slice(0,4).map(d=>d.tipVertices),
   rigidFingerVertices:digits.slice(0,4).map(d=>d.rigidVertices),
   protectedVertices:Array.from({length:vertexCount},(_,i)=>i).filter(i=>original[i*3+1]/.0008+285>=300)};

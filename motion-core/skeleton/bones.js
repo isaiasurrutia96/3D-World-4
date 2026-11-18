@@ -135,6 +135,35 @@ export const FINGERS = {
 /** The thumb's base also swings across the palm (approved: up to 30° and 42°). */
 export const THUMB_OPPOSITION = {y:[0,30], z:[0,42]};
 
+/**
+ * The bones inside the palm (one per finger, like a real hand's long palm
+ * bones), his left hand at rest. Each runs from its finger's root (where the
+ * approved hand's finger begins) to the first knuckle, and turns in the
+ * approved hand's own frame (HAND_FRAME, the hand model's turn at rest):
+ *   the thumb's swings across the palm (opposition): z by up to −42°, then y
+ *   by up to −30° (order ZYX);
+ *   the other fingers close toward the middle one (together): z by −4°
+ *   (index), 0 (middle), +4° (ring), +6° (little).
+ * Measured on the approved hand (hand-lab/src/hand-rig.js binding); the checks
+ * re-measure it.
+ */
+/**
+ * How thick each finger segment is: the distance from its bone line to the
+ * finger's surface (the middle value over the segment's points), his left
+ * hand, measured on the approved hand. Fingers stop when this surface touches
+ * what they grip. Re-measured by tests/avatar/hand-skin.mjs.
+ */
+export const FINGER_RADII = {thumb:[0.0393,0.0364,0.0331], index:[0.0353,0.0319,0.0297], middle:[0.0284,0.0291,0.0298], ring:[0.0279,0.0293,0.0285], little:[0.0304,0.0275,0.0255]};
+
+export const HAND_FRAME = [-0.117105, -0.684499, 0.257719, 0.67181];
+export const PALM_BONES = {
+ thumb:{root:[0.41314,0.69524,0.19911], limits:{x:[0,0], y:[-30,0], z:[-42,0]}, order:'ZYX'},
+ index:{root:[0.42739,0.62124,0.18514], limits:{x:[0,0], y:[0,0], z:[-4,0]}},
+ middle:{root:[0.42959,0.59887,0.12258], limits:{x:[0,0], y:[0,0], z:[0,0]}},
+ ring:{root:[0.42823,0.59667,0.07292], limits:{x:[0,0], y:[0,0], z:[0,4]}},
+ little:{root:[0.42238,0.6197,0.03815], limits:{x:[0,0], y:[0,0], z:[0,6]}},
+};
+
 /** Turn point p about a line (through c, direction axis) by deg degrees. */
 function turn(p,c,axis,deg){
  const a=deg*Math.PI/180,k=axis,v=[p[0]-c[0],p[1]-c[1],p[2]-c[2]],cs=Math.cos(a),sn=Math.sin(a),dot=k[0]*v[0]+k[1]*v[1]+k[2]*v[2];
@@ -157,14 +186,14 @@ export function fingerBones(){
    for(let k=j+1;k<4;k++)pts[k]=turn(pts[k],pts[j],axes[j],f.rest[j]);
    for(let k=j+1;k<3;k++)axes[k]=turn(axes[k],origin,axes[j],f.rest[j]);
   }
+  // The palm bone first (finger root → first knuckle); the finger hangs from it.
+  const pb=PALM_BONES[id];
+  bones.push({name:`${id}0`, parent:'hand', head:pb.root, tail:pts[0].map(v=>+v.toFixed(6)), frame:{basis:HAND_FRAME},
+   order:pb.order??'XYZ', rest:{x:0,y:0,z:0}, limits:pb.limits});
   for(let j=0;j<3;j++){
+   // Each finger joint bends (x); sideways turns happen in the palm bone.
    const limits={x:[0,f.closed[j]], y:[0,0], z:[0,0]};
-   if(j===0){
-    // Knuckle: also spreads/closes sideways; the thumb base also opposes.
-    limits.z=f.spread>=0?[0,f.spread]:[f.spread,0];
-    if(id==='thumb'){limits.y=[...THUMB_OPPOSITION.y];limits.z=[...THUMB_OPPOSITION.z];}
-   }
-   bones.push({name:`${id}${j+1}`, parent:j===0?'hand':`${id}${j}`,
+   bones.push({name:`${id}${j+1}`, parent:j===0?`${id}0`:`${id}${j}`,
     head:pts[j].map(v=>+v.toFixed(6)), tail:pts[j+1].map(v=>+v.toFixed(6)),
     frame:{bendAxis:axes[j]}, rest:{x:f.rest[j],y:0,z:0}, limits});
   }

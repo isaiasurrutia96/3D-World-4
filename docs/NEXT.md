@@ -178,3 +178,20 @@ Recorded 17 November 2026.
     ankle reaches its limit (a small jolt), fixed by weight shift and foot
     planning. Checks: `npm run test:pose`, `npm run test:demos` (start/stop of
     every demo frame by frame).
+25. Step 2 (hands) built, waiting for the owner's check. Hands bend on the
+    graphics card (`avatar-lab/src/hand-skin.js`, about 14 µs a frame for
+    both; the hand lab's rig takes about 40 ms a hand), weighted from the
+    approved rig's own binding; matches the approved hand within 4 mm
+    anywhere (about 1 mm on average), palm and wrist ball rigid. New palm
+    bones (one per finger, 63 bones in all) carry the thumb's swing across
+    the palm and the fingers closing together, as the approved hand does.
+    Hand shapes (`motion-core/skeleton/hands.js`): the approved hand's own
+    numbers (curl per finger, opposition, together) as finger angles.
+    Gripping: each finger curls until it touches the shape and stops
+    (measured finger thickness); fingers glide to the grip. Sit: palms at
+    78% along the thigh (closer, the arms hit the shoulder limit and flip),
+    fingers wrap over the knees. Checks: `npm run test:hands`,
+    `npm run test:grip`, `npm run test:demos`. Note: a 12 cm ball is bigger
+    than this stylized hand can wrap (the approved curl is about 90°); rods,
+    rims and knees are fine. Small one-line addition in hand-lab/src/hand-rig.js:
+    it now also returns its binding (read only; no change to how it bends).

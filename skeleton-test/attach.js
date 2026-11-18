@@ -15,6 +15,7 @@
 // still one smooth piece.
 import * as T from 'three';
 import {createChestBend} from '../avatar-lab/src/chest-bend.js';
+import {createSkinnedHands} from '../avatar-lab/src/hand-skin.js';
 import {createAssembledAvatar} from '../avatar-lab/src/avatar.js';
 import {createSkeleton} from '../motion-core/skeleton/skeleton.js';
 
@@ -49,6 +50,14 @@ export function createSkeletonAvatar(){
  const clavTurn=[new T.Quaternion(),new T.Quaternion()],chestInv=new T.Quaternion();
  chestPart.firmMatrix=new T.Matrix4();
  const relTurn=new T.Quaternion();
+ // The hands bend with their finger bones (on the graphics card). The solid hand
+ // meshes stay attached but hidden, so the joint checks can still use them.
+ const handPart=s=>attached.find(a=>a.label==='hand.'+s);
+ let hands=null;
+ if(handPart('L').mesh.geometry.userData.labBind){
+  hands=createSkinnedHands({L:{mesh:handPart('L').mesh,rest:handPart('L').rest},R:{mesh:handPart('R').mesh,rest:handPart('R').rest}},skeleton);
+  root.add(hands.L,hands.R);handPart('L').mesh.visible=handPart('R').mesh.visible=false;
+ }
  const delta=new T.Matrix4(),move=new T.Matrix4(),back=new T.Matrix4(),turn=new T.Matrix4();
  let solved=skeleton.solve(skeleton.restPose());
  /** Pose the body: each part = (move to the bone's joint now) · turn · (from its rest joint) · rest placement. */
@@ -67,8 +76,9 @@ export function createSkeletonAvatar(){
   chestBend.apply(relTurn,clavTurn);
   chestPart.firmMatrix.multiplyMatrices(chestPart.mesh.matrix,chestBend.firmLocal);
   chestPart.shoulderMatrix.forEach((m,j)=>m.multiplyMatrices(chestPart.mesh.matrix,chestBend.shoulderLocal[j]));
+  hands?.update(solved);
   return solved;
  }
  apply(skeleton.restPose());
- return {root,skeleton,attached,apply,chestBend,get solved(){return solved;},avatar};
+ return {root,skeleton,attached,apply,chestBend,hands,get solved(){return solved;},avatar};
 }

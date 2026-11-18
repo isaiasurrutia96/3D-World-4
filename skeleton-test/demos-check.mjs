@@ -9,11 +9,11 @@ import {tmpdir} from 'node:os';
 import {join,resolve,dirname} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),dir=mkdtempSync(join(tmpdir(),'demos-')),entry=join(dir,'e.js');
-writeFileSync(entry,`export {createSkeletonAvatar} from '${root}/skeleton-test/attach.js';export * from '${root}/skeleton-test/demos.js';export {reach} from '${root}/motion-core/skeleton/reach.js';export {POSES} from '${root}/motion-core/skeleton/poses.js';export {createPosePlayer} from '${root}/motion-core/skeleton/pose.js';export * as T from 'three';`);
+writeFileSync(entry,`export {createSkeletonAvatar} from '${root}/skeleton-test/attach.js';export * from '${root}/skeleton-test/demos.js';export {reach} from '${root}/motion-core/skeleton/reach.js';export {POSES} from '${root}/motion-core/skeleton/poses.js';export {createPosePlayer} from '${root}/motion-core/skeleton/pose.js';export {FINGER_RADII} from '${root}/motion-core/skeleton/bones.js';export * as T from 'three';`);
 const approvedHand=resolve(root,'avatar/src/hand-study/hand.js'),capture=resolve(root,'hand-lab/src/capture-rest.js');
 await build({entryPoints:[entry],bundle:true,platform:'node',format:'esm',outfile:join(dir,'o.mjs'),logLevel:'error',nodePaths:[join(root,'node_modules')],
  plugins:[{name:'h',setup(b){b.onResolve({filter:/^\.\/resting-digits\.js$/},a=>a.importer===approvedHand?{path:capture}:undefined);}}]});
-const {createSkeletonAvatar,createDemos,seatTop,sittingHands,thighRests,footReach,createDemoRunner,createPosePlayer,reach,POSES,T}=await import(pathToFileURL(join(dir,'o.mjs')).href);
+const {createSkeletonAvatar,createDemos,seatTop,sittingHands,thighRests,footReach,createDemoRunner,createPosePlayer,FINGER_RADII,reach,POSES,T}=await import(pathToFileURL(join(dir,'o.mjs')).href);
 const A=createSkeletonAvatar(),S=A.skeleton,D=createDemos(S,footReach(A)),R=[],check=(name,ok,detail='',known='')=>R.push({check:name,result:ok?'PASS':known?'KNOWN':'FAIL',detail:ok||!known?detail:detail+' — known: '+known}),mm=v=>(v*1000).toFixed(2)+' mm';
 const AX=['x','y','z'],inLimits=p=>S.bones.filter(b=>b.parent&&p[b.name]).every(b=>AX.every(k=>p[b.name][k]>=b.limits[k][0]-1e-6&&p[b.name][k]<=b.limits[k][1]+1e-6));
 const ray=new T.Raycaster(),verts=label=>{const a=A.attached.find(x=>x.label===label),P=a.mesh.geometry.attributes.position,o=[];for(let i=0;i<P.count;i++)o.push(new T.Vector3().fromBufferAttribute(P,i).applyMatrix4(a.mesh.matrix));return o;};
@@ -36,6 +36,12 @@ check('sit: each palm centre rests exactly on top of its thigh, palm down, finge
 const sitRun=(()=>{const P=createPosePlayer(S,{},{follow:true}),run=createDemoRunner(P,D,thighRests(A)),fr=[];run.start('sit');for(let i=0;i<150;i++)fr.push(P.update(1/60));return fr;})();
 const ARMS=['upperArm.L','lowerArm.L','hand.L','upperArm.R','lowerArm.R','hand.R','clavicle.L','clavicle.R'];
 let sitJump=0,stillJump=0;for(let i=1;i<sitRun.length;i++){let m=0;for(const n of ARMS)for(const k of AX)m=Math.max(m,Math.abs(sitRun[i][n][k]-sitRun[i-1][n][k]));if(i<=84)sitJump=Math.max(sitJump,m);else if(i>100)stillJump=Math.max(stillJump,m);}
+// Holding the knees: once seated, the fingers wrap over the thighs and knees and stop at their surface.
+{const seated=sitRun.at(-1),q=S.solve(seated),R2=thighRests(A);let deepest=0,touching=0;
+ for(const sd of ['L','R']){const t=q.get('thigh.'+sd),shapes=[{a:t.head,b:t.tail,r:R2[sd].radius},{a:t.tail,b:t.tail,r:R2[sd].radius}];
+  for(const d of ['index','middle','ring','little']){let g=Infinity;for(const j of [2,3]){const b=q.get(`${d}${j}.${sd}`),r=FINGER_RADII[d][j-1];for(const sh of shapes){let best=Infinity;for(let u=0;u<=16;u++){const p=b.head.clone().lerp(b.tail,u/16);for(let v=0;v<=16;v++)best=Math.min(best,p.distanceTo(sh.a.clone().lerp(sh.b,v/16)));}g=Math.min(g,best-r-sh.r);}}
+   deepest=Math.min(deepest,g);if(g<.003)touching++;}}
+ check('sit: the hands hold the knees: the outer finger segments wrap over the thighs and knees and stop at their surface (the palm rests on the thigh)',deepest>-.003&&touching>=6,`${touching} of 8 fingers touching; deepest ${mm(-deepest)} into the leg (measured finger and thigh thickness)`);}
 check('sit: the arms move smoothly while sitting down and are perfectly still once seated (no jitter)',sitJump<4&&stillJump<1e-3,`fastest arm joint ${(sitJump*60).toFixed(0)}°/s while sitting down; once seated ${stillJump.toExponential(1)}° between frames`);
 
 // ---- Squat ----

@@ -18,6 +18,7 @@ const mirrorPoint = ([x,y,z]) => [-x,y,z];
 /** A bone's frame (its own x/y/z axes) as a rotation from avatar space. */
 function frameOf(bone){
  if(bone.frame==='body')return new Quaternion();
+ if(bone.frame.basis)return new Quaternion(...bone.frame.basis).normalize();
  const y=new Vector3(...bone.tail).sub(new Vector3(...bone.head)).normalize();
  const x=new Vector3(...bone.frame.bendAxis);x.addScaledVector(y,-x.dot(y)).normalize();
  const z=new Vector3().crossVectors(x,y);
@@ -31,7 +32,8 @@ function frameOf(bone){
  */
 function mirrorBone(b){
  const flip=([a,c])=>[-c,-a];
- const frame=b.frame==='body'?'body':{bendAxis:[b.frame.bendAxis[0],-b.frame.bendAxis[1],-b.frame.bendAxis[2]]};
+ // A frame given as a turn mirrors as (x, −y, −z, w); a bend axis as (x, −y, −z).
+ const frame=b.frame==='body'?'body':b.frame.basis?{basis:[b.frame.basis[0],-b.frame.basis[1],-b.frame.basis[2],b.frame.basis[3]]}:{bendAxis:[b.frame.bendAxis[0],-b.frame.bendAxis[1],-b.frame.bendAxis[2]]};
  return {...b, name:b.name+'.R', parent:b.parent&&!CENTRE.some(c=>c.name===b.parent)?b.parent+'.R':b.parent,
   head:mirrorPoint(b.head), tail:mirrorPoint(b.tail), frame,
   rest:{x:b.rest.x,y:-b.rest.y,z:-b.rest.z},
