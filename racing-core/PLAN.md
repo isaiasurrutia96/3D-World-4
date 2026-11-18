@@ -115,7 +115,7 @@ Implementation: `kart/index.ts`, with a strict ES2022-only typecheck and no runt
 Reference decisions:
 
 - Pinned original LetsGo revision is unchanged. A separate capture tool executes its unmodified controller against flat/sloped/ledge/deck surfaces and the original four road surfaces, with horizontal contact resolution disabled. Only local numeric traces are used by the tests; the retired rebuild is never imported by fresh handling.
-- Preserve positive-left steering, original button-pedal semantics and original arcade grip. No new top-speed target from fractional throttle or more-realistic tire model is substituted. Analog steering strength is retained. Future pressure-sensitive pedals need an explicit decision.
+- Preserve the original steering convention (positive-right from the chase view), original button-pedal semantics and original arcade grip. No new top-speed target from fractional throttle or more-realistic tire model is substituted. Analog steering strength is retained. Future pressure-sensitive pedals need an explicit decision.
 - Nitro lasts 2 seconds with the source's possible extra floating-point boundary tick (1/120 s), and decays back to normal speed at 12 m/s² under Gas. Boost is a granted edge command; inventory/charges/pickups remain later work.
 - Surface support uses only the supplied checked road: no hub bridges, floor slab, invisible centerline guide or wall constraint. Gravity handles driving off an edge. Staying within the guardrails and impact response require section 3.
 
@@ -154,3 +154,10 @@ The owner corrected the proposed sequencing: after proving handling/contact code
 **Stop after delivering the verified driving-test link. The next action belongs to the owner: drive it and give handling feedback.** Do not interpret this test authorization as permission to advance another racing layer.
 
 Final local verification for the driving test: **166 racing Node checks pass**, including the 12 new test-wiring checks; the complete build passes. Browser validation covers the driving app plus shared input and default track-preview regressions. These are implementation checks; handling feel awaits the owner’s test.
+
+
+## Driving-test steering correction
+
+The owner reported S steering right and F steering left. The device adapter had inverted the original steering convention: positive steer produces a right turn from a behind-camera view. Corrected only the adapter's horizontal axis/button sign; S/Left now sends negative steer, F/Right positive steer, consistently for keyboard, phone buttons and gamepad. Handling rates, grip, speed and camera behavior are unchanged. Corrected the misleading sign annotation in the handling contract. A new regression projects actual driven paths through a chase camera at four headings and all four rendering rates; it failed on the old mapping. Browser checks now use actual S/F and arrow key events and measure screen-space turn direction, rather than treating a wheel-angle sign as proof of a left/right turn. Stop for the owner's driving feedback after the updated link.
+
+Steering correction verification: 13 driving-test Node checks pass, including 96 actual-path/chase-camera direction probes. Browser keypress checks confirm S/Left and F/Right screen-space movement, with touch and controller regressions also passing; full build passes. Physics tuning is unchanged.

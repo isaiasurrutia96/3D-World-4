@@ -6,7 +6,7 @@ The owner authorized this layer after accepting the track/inspection work. Resul
 
 ## Behavior and units
 
-Metres, seconds and radians. +Y is up, +Z is forward at yaw 0, and positive yaw points toward +X. **Positive steering turns left**, matching the original LetsGo controller. The future device adapter must preserve that sign; it must not assume that screen-right is +steer.
+Metres, seconds and radians. +Y is up, +Z is forward at yaw 0, and positive yaw points toward +X. **Positive steering turns right from the chase view**, matching the original LetsGo controller. The future device adapter must preserve that sign; screen-right maps to positive steer and screen-left to negative steer.
 
 The pinned reference is LetsGo Racing, `isaiasurrutia96/3D-World-3`, revision `573664e824a04234240a24dfc2eae2273e30a4ca`. Original handling constants and behavior are retained:
 

@@ -39,9 +39,20 @@ try {
         await reset();
     }
     results.push('All four tracks: keyboard Gas, braking, Reset, one original kart.');
+    // Measure actual driving against the initial chase-camera image, not the steering variable.
+    for(const [key,direction] of [['s',-1],['f',1],['ArrowLeft',-1],['ArrowRight',1]]){
+        await reset();await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+        const initial=await p.evaluate(()=>{const c=motionLab.camera,s=drivingLab.test.controller.state,v=c.position.clone().set(s.x,s.y+.6,s.z).project(c);return {yaw:s.yaw,screenX:v.x,view:c.matrixWorldInverse.toArray(),projection:c.projectionMatrix.toArray()};});
+        await p.keyboard.down('e');await p.keyboard.down(key);
+        await p.waitForFunction(yaw=>{const s=drivingLab.test.controller.state;return s.speed>5&&Math.abs(s.yaw-yaw)>.04;},initial.yaw);
+        await p.keyboard.up(key);await p.keyboard.up('e');
+        const delta=await p.evaluate(initial=>{const c=motionLab.camera,s=drivingLab.test.controller.state,v=c.position.clone().set(s.x,s.y+.6,s.z);v.applyMatrix4(c.matrixWorldInverse.clone().fromArray(initial.view));v.applyMatrix4(c.projectionMatrix.clone().fromArray(initial.projection));return v.x-initial.screenX;},initial);
+        assert(delta*direction>1e-4,`${key} steers to the wrong side of the chase view: ${delta}`);
+    }
+    results.push('Actual S/Left keys turn left; F/Right keys turn right in the chase-camera image.');
     await p.keyboard.down('ArrowUp');
     await p.keyboard.down('ArrowLeft');
-    await p.waitForFunction(() => drivingLab.test.controller.state.steering > .01 && drivingLab.test.controller.state.speed > 3);
+    await p.waitForFunction(() => drivingLab.test.controller.state.steering < -.01 && drivingLab.test.controller.state.speed > 3);
     await p.keyboard.up('ArrowLeft');
     await p.keyboard.up('ArrowUp');
     assert(await p.evaluate(() => drivingLab.kart.wheels.filter(w => w.front).every(w => Math.abs(w.node.rotation.y) > .001)));
@@ -71,7 +82,7 @@ try {
     for (const id of ['Xbox Controller', 'DualSense Wireless Controller', 'Nintendo Switch Pro Controller']) {
         await reset();
         await p.evaluate(id => { testPad.id = id; testPad.axes = [.4, 0, 0, 0]; testPad.buttons[7] = { value: 1, pressed: true }; testPad.connected = true; }, id);
-        await p.waitForFunction(() => drivingLab.test.controller.state.speed > 3 && drivingLab.test.controller.state.steering < -.01);
+        await p.waitForFunction(() => drivingLab.test.controller.state.speed > 3 && drivingLab.test.controller.state.steering > .01);
         await p.evaluate(() => { testPad.buttons[7] = { value: 0, pressed: false }; testPad.buttons[6] = { value: 1, pressed: true }; });
         await p.waitForFunction(() => drivingLab.test.controller.state.speed === 0);
         await p.evaluate(() => { testPad.buttons[6] = { value: 0, pressed: false }; testPad.connected = false; });
@@ -85,7 +96,7 @@ try {
     async function touch(name, id) { const b = await mobile.locator('#race-' + name).boundingBox(); return { id, x: b.x + b.width / 2, y: b.y + b.height / 2 }; }
     const gas = await touch('gas', 1), left = await touch('left', 2);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [gas, left] });
-    await mobile.waitForFunction(() => drivingLab.test.controller.state.speed > 3 && drivingLab.test.controller.state.steering > .01);
+    await mobile.waitForFunction(() => drivingLab.test.controller.state.speed > 3 && drivingLab.test.controller.state.steering < -.01);
     assert.equal(await mobile.evaluate(() => motionLab.input.stick), null);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
     await mobile.waitForFunction(() => !motionLab.input.actions.gas && !motionLab.input.actions.left);

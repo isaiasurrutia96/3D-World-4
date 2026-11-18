@@ -7,7 +7,7 @@
     144
   ],
   "summary": {
-    "passed": 12,
+    "passed": 13,
     "failed": 0
   },
   "checks": [
@@ -22,9 +22,27 @@
         ],
         "script": "Up/Down/Left/Right and diagonals, including simultaneous camera look."
       },
-      "expected": "Up=+throttle, Down=-throttle, Left=+steer, Right=-steer; diagonal keyboard commands remain full strength.",
+      "expected": "Up=+throttle, Down=-throttle, Left=-steer, Right=+steer; diagonal keyboard commands remain full strength.",
       "measured": {
         "probes": 48
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Left and right commands turn to the correct side of an actual chase camera",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Drive 0.5 s using keyboard, phone and analog left/right commands at four headings; project the actual path through a behind-camera matrix."
+      },
+      "expected": "Left moves to negative screen X and Right to positive screen X for every device, heading and FPS.",
+      "measured": {
+        "probes": 96,
+        "minimumCorrectDisplacement": 0.06773137021586664
       },
       "status": "PASS"
     },
@@ -44,7 +62,7 @@
       "input": {
         "script": "Left/Right/Gas/Reverse, opposites and independent Brake/Boost."
       },
-      "expected": "Left is +steer, right -steer, both cancel; Reverse is -throttle; Gas+Reverse applies the brake; independent Brake/Boost are retained.",
+      "expected": "Left is -steer, right +steer, both cancel; Reverse is -throttle; Gas+Reverse applies the brake; independent Brake/Boost are retained.",
       "measured": {
         "combinations": 7
       },
