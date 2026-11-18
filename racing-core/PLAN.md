@@ -216,3 +216,16 @@ Verification: 12 build-time Node checks and the complete driving browser suite p
 The owner's “a little more” requests another 12 CSS pixels inward. Increase only the steering-group translation from 12 to 24 px; the normal inset becomes 48 px. Keep widths, button gap, pedals, app setup and driving unchanged. Existing browser layout checks now verify both steering button centers remain on the left and steering/pedals remain separated even on 320 px phones. Wait for user feedback after the verified link.
 
 Verification: 12 build-time Node checks and the complete driving browser suite pass. All five screen sizes measure the 48 px normal inset and 12 px button gap; the steering and pedal buttons do not overlap. Portrait/landscape touch combinations, input cancellation, keyboard/gamepad, camera and video-scroll regressions pass with zero page errors.
+
+## Mobile controls — larger primary buttons and stacked pedals
+
+The owner requested Brake / Reverse above Gas at its existing size, noticeably larger Left/Right/Gas buttons, and another 12 px steering inset. This is a mobile/touch layout change only.
+
+- Touch/narrow layouts use the original responsive group widths as a sizing reference. Container units keep the calculation relative to the actual control area and its safe-area insets. Each primary button becomes 25% wider and grows from 58 to 74 px high; labels are 16 px. Brake / Reverse keeps its original responsive width and 58 px height, above Gas with a 12 px gap. Both pedals align to the right edge.
+- Steering translation grows from 24 to 36 px only for touch/narrow layouts, so its normal inset is now 60 px. Button widths and the 12 px steering gap are independent of this translation. The larger buttons remain separated from the pedals on narrow phones.
+- At the shortest narrow landscape size, Boost sits at top center to avoid the taller pedal stack. Other mobile/desktop header, view, app-launch, video-scroll and input behavior stays as before. Wide mouse-driven desktop controls retain their previous geometry and placement. Driving physics/speeds are untouched.
+- Independent before/after browser measurements at 320×568, 390×844, 568×320, 667×375, 844×390, 768×1024 and 1280×800 touch viewports confirm 1.25× primary widths, 74 px primary heights, unchanged Brake width/height, exactly +12 px steering translation, stacked pedals and zero button overlap. A separate 1280×800 mouse-driven desktop retains the former 48 px inset and 104×58 px steering button.
+
+Stop after the verified link and wait for the owner's feedback.
+
+Final verification: 12 build-time Node checks and the complete driving browser suite pass with zero page errors. Seven touch layouts, actual portrait/landscape multi-touch steering/pedals, Reverse/cancellation, keyboard/gamepad, views/FPV, video scrolling and disabled driving zoom pass. The before/after sizing comparison above also passes. No handling or simulation source changed.

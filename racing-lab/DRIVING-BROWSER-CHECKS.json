@@ -9,7 +9,7 @@
     "Phone: simultaneous Left + Gas, cancellation, Reverse, blur clears/pauses, Reset.",
     "Phone FPV toggles, touch look and Reset preserve the first-person view.",
     "Original top controls stay visible: all six views, track selection and Reset work without a dropdown.",
-    "Five layouts: original header controls visible at full width, smaller header height, steering near edge, videos below the first screen and reachable by scrolling; driving zoom stays disabled.",
+    "Seven touch layouts: larger primary controls, original-size brake above Gas, steering +12 px, separate controls, full header and video scrolling; driving zoom stays disabled.",
     "Phone touch swipe from the video link scrolls to the video section; returning to the stage resumes driving.",
     "Landscape phone: simultaneous Right + Gas and touch cancellation still work after rotation."
   ],
@@ -20,7 +20,20 @@
       "stageHeight": 465,
       "headerHeight": 103,
       "steeringGap": 12,
-      "steeringLeft": 48
+      "steeringLeft": 60,
+      "steeringButton": {
+        "width": 67.046875,
+        "height": 74
+      },
+      "gas": {
+        "width": 80.1875,
+        "height": 74
+      },
+      "brake": {
+        "width": 64.15625,
+        "height": 58
+      },
+      "pedalGap": 12
     },
     {
       "width": 390,
@@ -28,7 +41,62 @@
       "stageHeight": 743,
       "headerHeight": 101,
       "steeringGap": 12,
-      "steeringLeft": 48
+      "steeringLeft": 60,
+      "steeringButton": {
+        "width": 85.421875,
+        "height": 74
+      },
+      "gas": {
+        "width": 101.1875,
+        "height": 74
+      },
+      "brake": {
+        "width": 80.953125,
+        "height": 58
+      },
+      "pedalGap": 12
+    },
+    {
+      "width": 568,
+      "height": 320,
+      "stageHeight": 219,
+      "headerHeight": 101,
+      "steeringGap": 12,
+      "steeringLeft": 60,
+      "steeringButton": {
+        "width": 132.140625,
+        "height": 74
+      },
+      "gas": {
+        "width": 154.59375,
+        "height": 74
+      },
+      "brake": {
+        "width": 123.671875,
+        "height": 58
+      },
+      "pedalGap": 12
+    },
+    {
+      "width": 667,
+      "height": 375,
+      "stageHeight": 274,
+      "headerHeight": 101,
+      "steeringGap": 12,
+      "steeringLeft": 60,
+      "steeringButton": {
+        "width": 158.125,
+        "height": 74
+      },
+      "gas": {
+        "width": 184.296875,
+        "height": 74
+      },
+      "brake": {
+        "width": 147.4375,
+        "height": 58
+      },
+      "pedalGap": 12
     },
     {
       "width": 844,
@@ -36,7 +104,20 @@
       "stageHeight": 337,
       "headerHeight": 53,
       "steeringGap": 12,
-      "steeringLeft": 48
+      "steeringLeft": 60,
+      "steeringButton": {
+        "width": 130,
+        "height": 74
+      },
+      "gas": {
+        "width": 132.5,
+        "height": 74
+      },
+      "brake": {
+        "width": 106,
+        "height": 58
+      },
+      "pedalGap": 12
     },
     {
       "width": 768,
@@ -44,7 +125,20 @@
       "stageHeight": 923,
       "headerHeight": 101,
       "steeringGap": 12,
-      "steeringLeft": 48
+      "steeringLeft": 60,
+      "steeringButton": {
+        "width": 130,
+        "height": 74
+      },
+      "gas": {
+        "width": 132.5,
+        "height": 74
+      },
+      "brake": {
+        "width": 106,
+        "height": 58
+      },
+      "pedalGap": 12
     },
     {
       "width": 1280,
@@ -52,7 +146,20 @@
       "stageHeight": 747,
       "headerHeight": 53,
       "steeringGap": 12,
-      "steeringLeft": 48
+      "steeringLeft": 60,
+      "steeringButton": {
+        "width": 130,
+        "height": 74
+      },
+      "gas": {
+        "width": 132.5,
+        "height": 74
+      },
+      "brake": {
+        "width": 106,
+        "height": 58
+      },
+      "pedalGap": 12
     }
   ],
   "pageErrors": []

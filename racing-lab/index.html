@@ -27,6 +27,17 @@
  .drive-controls button{font-size:12px}
  .driving-test-page .race-hud{font-size:11px}
 }
+/* Touch layout keeps the old brake dimensions while enlarging the main controls. */
+@media(pointer:coarse),(max-width:760px){
+ .drive-controls{container-type:inline-size;align-items:flex-end;--original-steering-width:clamp(120px,42cqw,220px);--original-pedal-width:clamp(120px,42cqw,220px)}
+ .drive-controls .drive-steering{width:calc((var(--original-steering-width) - 12px)*1.25 + 12px);transform:translateX(36px)}
+ .drive-controls .drive-pedals{display:flex;flex-direction:column;align-items:flex-end;gap:12px;width:calc((var(--original-pedal-width) - 8px)*.625)}
+ #race-reverse{order:-1;flex:none;width:calc((var(--original-pedal-width) - 8px)*.5);height:58px;min-height:58px}
+ #race-left,#race-right,#race-gas{height:74px;min-height:74px;font-size:16px}
+ #race-gas{flex:none;width:100%}
+}
+@media(max-width:760px){.drive-controls{--original-steering-width:42cqw;--original-pedal-width:48cqw}}
+@media(max-width:760px) and (max-height:360px){.drive-boost{left:50%;right:auto;transform:translateX(-50%)}}
 </style><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Driving Test"><meta name="apple-mobile-web-app-status-bar-style" content="default"></head><body>
 <header id="topbar"><div class="identity"><h1 id="lab-title">Motion Lab</h1><span id="section-name">Ground movement</span></div><nav aria-label="Camera views"><button data-view="back" aria-pressed="true">Behind</button><button data-view="front" aria-pressed="false">Front</button><button data-view="side" aria-pressed="false">Side</button><button data-view="top" aria-pressed="false">Top</button><button data-view="angled" aria-pressed="false">Angled</button></nav><button id="reset">Reset</button></header>
 <main><section id="stage" aria-label="Interactive motion test"><output id="status" aria-label="Movement state">Ready</output></section><section id="test-videos"><h2>Test videos</h2><p class="help">E S D F or arrows: move · J L I K: look · Drag: look · Wheel or pinch: zoom.<br>Phone: left stick moves, right side looks. Gamepad: left stick moves, right stick looks.</p><div id="video-cards"></div></section></main>
