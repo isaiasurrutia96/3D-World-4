@@ -161,3 +161,46 @@ Final local verification for the driving test: **166 racing Node checks pass**, 
 The owner reported S steering right and F steering left. The device adapter had inverted the original steering convention: positive steer produces a right turn from a behind-camera view. Corrected only the adapter's horizontal axis/button sign; S/Left now sends negative steer, F/Right positive steer, consistently for keyboard, phone buttons and gamepad. Handling rates, grip, speed and camera behavior are unchanged. Corrected the misleading sign annotation in the handling contract. A new regression projects actual driven paths through a chase camera at four headings and all four rendering rates; it failed on the old mapping. Browser checks now use actual S/F and arrow key events and measure screen-space turn direction, rather than treating a wheel-angle sign as proof of a left/right turn. Stop for the owner's driving feedback after the updated link.
 
 Steering correction verification: 13 driving-test Node checks pass, including 96 actual-path/chase-camera direction probes. Browser keypress checks confirm S/Left and F/Right screen-space movement, with touch and controller regressions also passing; full build passes. Physics tuning is unchanged.
+
+## First-person view — authorized comparison step
+
+After discussing possible F1-inspired tuning, the owner accepted the proposed staged order: first add FPV, then stop to compare the same driving from both perspectives (“okay and also ill see if its too fast or not go”). This go authorizes the view only. The proposed 150 mph normal / 200 mph boost tuning, acceleration/coasting/steering adjustments, any resize and deeper grip changes remain proposals awaiting a separate go.
+
+- FPV button on the existing driving test; Behind restores the original chase view. Camera reads the existing interpolated pose from a seated offset, with bounded look and the original first-person FOV. It changes no driving state or settings.
+- Reset and track changes preserve FPV; reselecting FPV centers head look. Mouse, touch and controller look stay within the mode. Point-focused inspection zoom is suspended in FPV and restored for the external views, keeping the eye fixed to the kart.
+- Five Node camera checks pass and run before the racing page build. Desktop/mobile browser checks pass for seated pose, looking/centering, live switches without speed reset, Reset/track persistence and five screen layouts with six view buttons. The current 120 mph normal / 180 mph boost caps and all handling parameters remain unchanged.
+
+**Stop after the verified FPV link. Wait for the owner’s view/speed-feel feedback before implementing any proposed tuning.**
+
+## Mobile driving layout — owner-requested correction
+
+The owner requested more driving space on phones, collapsible track/view options, inward steering buttons with clear separation, and no pinch/zoom in the driving test. This authorizes presentation/input-camera changes only.
+
+- The empty Test videos section is hidden in driving mode. Its control instructions remain available in the compact Controls menu. The stage fills the remaining dynamic viewport, without page scrolling; safe-area insets protect the HUD and pedals.
+- On phones, touch devices and narrow windows, the header keeps the title and a Controls arrow. The existing track picker, six view buttons and Reset open in an overlay, without shrinking the stage. Selection, retapping the arrow, outside touch and Escape close the panel. Wide mouse-driven desktops retain the existing header controls.
+- Steering buttons move inward on wider displays and have a 12–24 px gap. Left remains Left and Right remains Right; simultaneous steering and pedals still use the shared input module.
+- Driving opts out of both camera-distance zoom and point-focused inspection zoom in every view. Drag-to-look remains available. Track/object inspection and other labs retain their existing zoom behavior.
+- The owner found the existing **180 mph boost** more enjoyable. Save that as feedback for the next speed/F1-feel discussion, not authorization to tune the handling. Normal/boost caps, acceleration, braking, steering, grip, kart dimensions and all authoritative racing logic are unchanged.
+
+Verification results are recorded in `racing-lab/DRIVING-BROWSER-CHECKS.json`. Stop after delivering the verified mobile driving link; discuss tuning with the owner before changing it.
+
+Validation: full production build and 10 presentation/camera Node checks pass. Driving browser checks pass for all four tracks, keyboard direction, gamepad API regression, phone portrait/landscape simultaneous pedals/steering, all six views, Reset/track persistence, menu keyboard focus/dismissal and blocked wheel/pinch zoom. Measured mobile header is 57 px; stage heights are 511/787/333/967/743 px at the five recorded screen sizes, with 12–24 px steering gaps and zero page errors. Shared Motion Lab controls/zoom and default track-inspection browser regressions also pass. No movement-core, frozen checkpoint or driving-physics source changes.
+
+## Mobile layout correction — supersedes the collapsed header above
+
+The owner rejected the excessive steering inset and clarified the video/header layout. Restore the original visible track picker, six camera buttons and Reset. Reduce header vertical padding/row spacing only; do not narrow its controls. Remove the Controls dropdown. Steering returns close to its original edge, at a modest 24 px inset with a 12 px separation.
+
+Test videos stays in the document below the full first driving screen, reachable by scrolling. Remove the driving-only page-scroll lock. A small bottom-center Test videos link provides both an anchor and a touch-scroll area, since canvas gestures remain reserved for looking. Keep driving zoom disabled. No changes to speed, handling or racing logic; tuning discussion remains pending.
+
+Correction verification: 10 presentation/camera Node checks and the driving browser suite pass. Five screen sizes retain all original header controls at usable touch sizes, a 24 px steering inset and 12 px steering gap. Videos start below the first viewport, the bottom link and an actual touch swipe reach them, the header stays visible while scrolling, and returning to the stage resumes driving. Keyboard, simultaneous portrait/landscape pedals/steering, gamepad API, views/Reset, no-page-zoom and disabled driving-zoom checks pass with zero page errors. The previous no-scroll/dropdown layout is superseded, not an approved future baseline.
+
+## Safari browser bars — Home Screen web app
+
+The owner reports Safari's URL/tab bars repeatedly appearing and asks for a fix. Browser chrome belongs to Safari; a normal tab cannot permanently hide it. Add a scoped standalone Home Screen launch for the existing driving test rather than changing scrolling or its approved layout.
+
+- `racing-lab/manifest.webmanifest`: stable driving-app identity, `display: standalone`, start URL `./?drive=1`, scope `./`, slate theme/background and 192/512 PNG icons. Relative URLs preserve the GitHub project prefix. Apple capable/title/status-bar metadata and a 180 px touch icon support the Home Screen flow. Keep the system status bar's default appearance.
+- The racing builder copies the manifest/icons into the published racing directory. No service worker or offline cache is introduced; launching online loads the current published test. No physics, speed, controls or page-layout changes.
+- iPhone usage: open the verified driving link in Safari, Share → Add to Home Screen; keep Open as Web App enabled if offered, then launch the new icon. Safari's normal tab still owns its tabs/URL controls. The native Add to Home Screen step must be performed on the user's phone; the website cannot silently install itself or force Safari chrome off.
+- Two Node checks validate scoped app identity/start URL and all declared PNG dimensions; they run in the racing build. Browser checks parse the manifest with Chromium's actual manifest API, fetch all installation icons under the project prefix, verify Apple metadata, launch the real start URL, and exercise Gas/brake and video scrolling. Native iOS installation/browser bars cannot be tested in this Linux environment. `npm run test:racing-app` records the browser results in `APP-BROWSER-CHECKS.json`.
+
+Stop after delivering the working link and the short Home Screen instructions. Handling/speed tuning remains pending.

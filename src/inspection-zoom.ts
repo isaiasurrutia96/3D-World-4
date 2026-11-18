@@ -30,10 +30,12 @@ type Options={scene:Scene;camera:Camera;canvas:HTMLCanvasElement;getTarget:()=>V
 /** Observe existing controls; never replaces their move/look/zoom input handling. */
 export function installInspectionZoom(options:Options){
  const {canvas}=options,pointers=new Map<number,{x:number;y:number}>();
+ let enabled=true;
  let anchor:{point:Vector3;plane:Plane;screen:Vector2;kind:'pinch'|'wheel';accepted:boolean;frames:number}|null=null;
  const screen=(x:number,y:number)=>{const r=canvas.getBoundingClientRect();return new Vector2((x-r.left)/Math.max(1,r.width)*2-1,1-(y-r.top)/Math.max(1,r.height)*2);};
  const midpoint=()=>{const p=[...pointers.values()];return screen((p[0].x+p[1].x)/2,(p[0].y+p[1].y)/2);};
  function begin(position:Vector2,kind:'pinch'|'wheel'){
+  if(!enabled)return;
   const camera=options.getCamera(),target=options.getTarget(),point=pickZoomPoint(options.scene,camera,position,target);
   const focus=focusZoomDepth(camera,target,point);if(focus){options.onTargetShift?.(focus.shift);options.onFocusDistance?.(focus.distance);}
   anchor={point,plane:new Plane().setFromNormalAndCoplanarPoint(camera.getWorldDirection(new Vector3()),point),screen:position,kind,accepted:kind==='wheel'||!options.canPinch,frames:2};
@@ -49,7 +51,7 @@ export function installInspectionZoom(options:Options){
  canvas.addEventListener('wheel',event=>{if(event.deltaY){const position=screen(event.clientX,event.clientY);if(anchor?.kind==='wheel'&&anchor.screen.distanceToSquared(position)<1e-12)anchor.frames=2;else begin(position,'wheel');}},{capture:true,passive:true});
  window.addEventListener('blur',reset);window.addEventListener('resize',reset);document.addEventListener('visibilitychange',()=>{if(document.hidden)reset();});
  document.addEventListener('click',event=>{if((event.target as Element)?.closest?.('[data-view],#reset'))reset();},true);
- return {reset,getState:()=>({anchor:anchor?.point.toArray()??null,screen:anchor?.screen.toArray()??null}),apply(camera:Camera){
+ return {reset,setEnabled(value:boolean){if(enabled!==value){enabled=value;reset();}},getState:()=>({enabled,anchor:anchor?.point.toArray()??null,screen:anchor?.screen.toArray()??null}),apply(camera:Camera){
   if(!anchor)return;accept();const held=anchor.kind==='pinch'&&pointers.size===2;
   if(anchor.accepted){const shift=keepZoomPoint(camera,options.camera,options.getTarget(),anchor.point,anchor.plane,anchor.screen);if(shift)options.onTargetShift?.(shift);}
   if(!held&&--anchor.frames<=0)anchor=null;

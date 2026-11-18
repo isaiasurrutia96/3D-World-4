@@ -1,0 +1,25 @@
+.driving-test-page #stage{height:calc(100dvh - var(--bar-height,100px));min-height:0}
+.driving-test-page #status{display:none}
+/* Keep the original full-width controls, with less vertical padding only. */
+.driving-test-page #topbar{gap:8px;row-gap:4px;padding-top:max(4px,env(safe-area-inset-top));padding-bottom:4px}
+.driving-test-page .identity span{font-size:12px}
+.driving-test-page .race-hud{display:flex;flex-direction:column;gap:3px;z-index:2;left:max(12px,env(safe-area-inset-left))}
+.driving-test-page .race-hud strong{font-size:18px}
+.drive-boost{position:absolute;right:max(12px,env(safe-area-inset-right));top:12px;z-index:2;background:#f3f0e9;touch-action:none}
+.drive-controls{position:absolute;left:max(24px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));bottom:max(36px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;gap:16px;pointer-events:none;z-index:2}
+.drive-steering,.drive-pedals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:clamp(120px,42%,220px);pointer-events:auto}
+.drive-steering{gap:12px}
+.drive-pedals{gap:8px}
+.drive-controls button{min-height:58px;padding:8px 4px;background:#f3f0e9e8;touch-action:none;font-size:14px;user-select:none;-webkit-user-select:none}
+.drive-controls button[aria-pressed=true],.drive-boost[aria-pressed=true]{background:#51575b;color:#fff}
+/* The canvas reserves its gestures for looking; this lower strip allows page scrolling. */
+.drive-videos-link{position:absolute;bottom:0;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;min-height:32px;padding:4px 12px;color:#f3f0e9;font-size:12px;z-index:2;touch-action:pan-y;text-underline-offset:3px}
+@media(max-width:760px){
+ .driving-test-page .identity span{display:none}
+ .driving-test-page .track-picker select{max-width:110px}
+ .driving-test-page nav{order:4;grid-template-columns:repeat(6,minmax(0,1fr))}
+ .drive-pedals{width:48%}
+ .drive-steering{width:42%}
+ .drive-controls button{font-size:12px}
+ .driving-test-page .race-hud{font-size:11px}
+}
