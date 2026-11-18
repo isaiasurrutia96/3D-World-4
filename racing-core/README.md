@@ -1,3 +1,5 @@
+> **Fresh restart:** the owner rejected extending this prototype. The approved track-only rebuild is in [track/](track/README.md), with decisions and approvals in [PLAN.md](PLAN.md). Everything below describes the previous prototype, retained temporarily for existing demos. Its checks do not approve the new rebuild.
+
 # Racing core — code-first rebuild
 
 Four circuits from **3D-World-3 `573664e824a04234240a24dfc2eae2273e30a4ca`**: Original, Skyline, Suzuka and Winding. That revision introduces four NPC opponents on every circuit. The original repository is reference only; all implementation work here is in 3D-World-4. `motion-core/` and approved checkpoints are untouched.
