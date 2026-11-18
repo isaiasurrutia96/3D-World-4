@@ -8,10 +8,10 @@
   "avatar_revision": "f2375fb194d941c52b4de03d1063698aa9d7f520",
   "preview_url": "https://isaiasurrutia96.github.io/3D-World-4/checkpoints/avatar-2/",
   "editable_assembly": "avatar-lab/src/avatar.js",
-  "viewer_sha256": "16a3d95695aa22f1626f832aa33db582e24c9696cffaf48664f4fea49bf42171",
+  "viewer_sha256": "2e2c44ec800568e7805d9c46453bce7d2aee800dbfdc6dc82d997e82df5436b7",
   "design": {
     "color": "#b9b2a6",
-    "mesh_count": 15,
+    "mesh_count": 16,
     "standing_height_m": 1.8945200003385545,
     "preserved_upper_body_meshes": 11,
     "feet": "rounded with medial big-toe sweep, opposite side mirrored",
@@ -81,6 +81,14 @@
       "source": "avatar-lab/src/avatar.js HAND_TILT_DEGREES",
       "checks": "tests/avatar/hand-tilt.mjs",
       "updated_at_commit": "f2375fb194d941c52b4de03d1063698aa9d7f520"
+    },
+    {
+      "date": "2026-11-18",
+      "approved_by_owner": true,
+      "change": "The torso is now two pieces, a chest and a pelvis, joined by a ball-and-socket waist so the chest can turn on the hips (±35°). The outer shape is the approved torso's except a thin 4 mm seam at the waist.",
+      "source": "avatar-lab/src/torso-split.js",
+      "checks": "tests/avatar/torso-split.mjs",
+      "updated_at_commit": "0059f40f1ea9f0c0bf8dc61f161b02cab26c08ca"
     }
   ],
   "tag_note": "The tag avatar-checkpoint-2-2026-11-17 still marks the original 17 Nov version; this in-place update (same checkpoint name) is recorded under 'updates'."

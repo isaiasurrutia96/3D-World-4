@@ -68,8 +68,9 @@ Files: `skeleton/bones.js` (the bones, measured from Checkpoint 2),
 `skeleton/skeleton.js` (building, limits, mirroring, forward kinematics),
 `tests/skeleton.mjs` (`npm run test:skeleton`).
 
-1. 48 bones: pelvis (root), spine, neck, head; each side upper arm, lower
-   arm, hand, thigh, shin, foot, toes, and three bones per finger and thumb.
+1. 52 bones: pelvis (root), spine, neck, head; each side collarbone, upper
+   arm, lower arm, hand, hip bone, thigh, shin, foot, toes, and three bones
+   per finger and thumb.
 2. Every joint pivot was measured from the approved Checkpoint 2 model.
    Angles are absolute (0 = limb hanging straight, finger straight); the
    rest angles reproduce the approved model exactly.
@@ -130,3 +131,11 @@ Files: `skeleton/pose.js` (easing, blending, clips, pose player),
 The torso is a chest on a pelvis with a ball-and-socket waist. The spine
 bone now pivots at the chest ball's centre; it turns (y) ±35° and does not
 lean yet. The pelvis bone carries the pelvis piece and the legs.
+
+### Collarbones and hip bones (18 Nov 2026)
+
+Each arm hangs from a collarbone (base of the neck to the shoulder ball)
+and each leg from a hip bone (pelvis centre to the hip ball). Both are
+locked at 0: the hip bones are part of the solid pelvis, and the shoulder
+ball sits in a socket in the one-piece chest, so shrugging or reaching the
+shoulder forward needs that socket redesigned before the collarbone moves.
