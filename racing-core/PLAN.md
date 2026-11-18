@@ -237,3 +237,9 @@ The owner requested Gas and Boost 24 px closer to center and a primary-sized Boo
 Responsive fit exceptions are explicit: at widths up to 360 px Gas uses a 16 px shift so it does not overlap steering; at the existing shortest narrow-landscape layout Boost remains centered at the top. Those are layout guards, not changes to the driving model. Wide mouse-driven desktop controls, steering/brake geometry, input semantics, app launch, page layout and speed/handling are unchanged.
 
 Verification: 12 build Node checks and full driving browser checks pass, including actual simultaneous Gas + enlarged Boost, cancellation, portrait/landscape steering/pedals, FPV/views, scroll-to-videos and gamepad/keyboard paths. Independent before/after geometry checks pass at seven touch sizes; extra 340/355/360/361 px measurements check the narrow guard's boundary. Boost matches Gas dimensions, normal insets are 24 px, other control geometry is preserved, and no controls overlap. Stop after the verified live link for owner feedback.
+
+## Gas only — fast extra 24 px inward
+
+The owner requested another 24 px Gas shift and a fast turnaround. Increase the requested mobile Gas inset from 24 to 48 px; Boost and all other controls stay as before. A single clearance calculation preserves at least 5 px between Gas and steering on narrow portraits instead of allowing overlap. This replaces the prior fixed 16 px narrow exception with the largest safe shift up to 48 px.
+
+Verification: 12 build Node checks pass. Targeted browser geometry checks pass at eight touch sizes; landscape/tablet layouts measure the exact 48 px inset. Narrow portrait fits remain clear (320: 16.7 px, 360: 23.7 px, 390: 28.95 px). Actual simultaneous Left + Gas and touch cancellation pass at the new position. Other simulation tests were not rerun for this CSS-only position adjustment. Stop for feedback after the verified link.
