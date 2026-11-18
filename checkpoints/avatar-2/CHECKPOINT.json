@@ -5,10 +5,10 @@
   "tag": "avatar-checkpoint-2-2026-11-17",
   "previous_checkpoint": "avatar-approved-2026-11-17",
   "source_base_commit": "58ed6491de649c6364e954d2a02bea12d27ca184",
-  "avatar_revision": "5d27a4dc0c9d25f16d74368df3608015051984ab",
+  "avatar_revision": "f2375fb194d941c52b4de03d1063698aa9d7f520",
   "preview_url": "https://isaiasurrutia96.github.io/3D-World-4/checkpoints/avatar-2/",
   "editable_assembly": "avatar-lab/src/avatar.js",
-  "viewer_sha256": "e38508d0719e7bd81173e71d6e7c7d1028e0f281e0a0889d94e485c623bfc8b2",
+  "viewer_sha256": "16a3d95695aa22f1626f832aa33db582e24c9696cffaf48664f4fea49bf42171",
   "design": {
     "color": "#b9b2a6",
     "mesh_count": 15,
@@ -58,18 +58,30 @@
     "avatar/src/hand-study/surface.js": "12ee4d8545acc787536d611ef18e95d5f5f9e2435197cf90e162c689623ccf5a",
     "avatar/src/reference/PlayerModel.ts": "91fa642b962d78c1e0e294b1f7bdb1b77d932df0bfe5ece4034de4c1ba72c470",
     "avatar-lab/build.mjs": "7576fdb83bc296134bc3ffb5895aea91640afdaaa2f04f6e7b77ef54f646c802",
-    "avatar-lab/shell.html": "0f65fbf162c03cdc4887abbee2c36b91e3dc06449eae6bc562c3abfa5bd91c14",
-    "avatar-lab/src/avatar.js": "48edcad852bb3423d70435b86ea917009b8f4829ef814a7283a0e59ce6374fa3",
-    "avatar-lab/src/main.js": "61793401f2fc28bc03e9c20d2ec439aaa9e9077bfd7189b0fa828c3fc5ddd39c",
+    "avatar-lab/shell.html": "7ffa5f8c945bcb0e16e6086ad555daede4883f88ff58ee8b2115641fcb86be56",
+    "avatar-lab/src/avatar.js": "d6705cf35ef17c0903623b435ce24c9efb83289b2e859051cc36daed9e8313ce",
+    "avatar-lab/src/main.js": "b4c54287d6789884e1740086145c04e52c8aedf9aa5894fce6ddb17830f8d9e7",
     "foot-lab/src/ankle-socket.js": "a2ef6590402230227bae1059d1ce0e84ca0e65328672038e9cd8b3ffac0f7839",
     "foot-lab/src/calf.js": "e9cf847c73fc47f1d75c6bce3cff5b679f91b79d0457c8a0c9a3e9cf91bd86cc",
     "foot-lab/src/foot-rig.js": "740c40a8334d161204c622257cc84d7776658ce5dcbcf778afd5c834b4e79fe2",
     "foot-lab/src/foot-shape.js": "7f6092d1e34da42b520c5e20a64df2b8cd48a2690d315e6e99352d5e726e92b0",
-    "foot-lab/src/main.js": "562ed2b922ed1d68e6fa47992f01b08a8950ac5386c72c8bf99d7436d4849680",
+    "foot-lab/src/main.js": "db71a7778644276b28e23f5fa3dc34680afe0e668819203dfbc47a32d6389ae0",
     "hand-lab/src/capture-rest.js": "77965881e0650a4a6b1f314f764fbcb7e7d4eba847f8e4e74736a723c31404b6",
     "hand-lab/src/hand-rig.js": "292cdf4220f34b9e0020258c41b89181f7a8cacbe1790ee619e07c327711998a",
     "package-lock.json": "094c58c1e334631b9aae8c9d1ea3da4a35cab1d8e54b334339f4943bcc992a49",
-    "package.json": "0005b4a3f63b1371062280c6a82eb95e393cbc2f19711c018a07360dea88dd84",
-    "scripts/build-checkpoints.mjs": "b53ee88e6fea17a837cedccdc2e7bcf282ab31db0da2cab3ccec9613f85783d9"
-  }
+    "package.json": "243d6a4c13b5c6148286e26e1ece73f01d27d5d7f3b1d149195bb0993696b694",
+    "scripts/build-checkpoints.mjs": "c02e5780bb7eda676a29026f3c3790d145b19c6b432007af7c6cfb0375d2cc16"
+  },
+  "updated_on": "2026-11-18",
+  "updates": [
+    {
+      "date": "2026-11-18",
+      "approved_by_owner": true,
+      "change": "Both hands rest turned 8 degrees at the wrist (fingertips slightly forward), each about its wrist ball so it stays cradled in the forearm socket. Nothing else on the avatar changed.",
+      "source": "avatar-lab/src/avatar.js HAND_TILT_DEGREES",
+      "checks": "tests/avatar/hand-tilt.mjs",
+      "updated_at_commit": "f2375fb194d941c52b4de03d1063698aa9d7f520"
+    }
+  ],
+  "tag_note": "The tag avatar-checkpoint-2-2026-11-17 still marks the original 17 Nov version; this in-place update (same checkpoint name) is recorded under 'updates'."
 }

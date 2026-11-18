@@ -61,3 +61,11 @@ Recorded 17 November 2026.
 12. The owner wants to learn: Claude acts as a game-development mentor,
     explaining each step in simple words with alternatives, never
     assuming. Terms are collected in `docs/LEARNING.md`.
+
+## Avatar hand tilt (approved 18 Nov 2026)
+
+13. Both hands rest turned 8° at the wrist (fingertips slightly forward),
+    each turning about its wrist ball so it stays cradled in the forearm
+    socket (`avatar-lab/src/avatar.js` HAND_TILT_DEGREES; checks:
+    `npm run test:hand-tilt`). Approved; Checkpoint 2 updated in place with
+    the same name (`checkpoints/avatar-2/`, see its CHECKPOINT.json updates).

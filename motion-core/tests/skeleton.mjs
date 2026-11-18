@@ -20,6 +20,7 @@ export {createSkeleton,T};
 // Measure the approved model the same way bones.js was written.
 export function measure(){
  const a=createAssembledAvatar(),r=a.rig;r.root.updateMatrixWorld(true);
+ const flat=createAssembledAvatar({handTilt:0});flat.rig.root.updateMatrixWorld(true);
  const W=o=>o.getWorldPosition(new T.Vector3()).toArray(),m={};
  const neck=r.torso.children.find(o=>o.name==='original-neck');neck.geometry.computeBoundingBox();
  m['neck']=neck.localToWorld(new T.Vector3(0,neck.geometry.boundingBox.min.y,0)).toArray();
@@ -33,7 +34,9 @@ export function measure(){
   const k=side===1?'Right':'Left';
   const part0=a.lowerArmParts.find(p=>p.side===side),upper=r['shoulder'+k].children.find(o=>o.isMesh),thighMesh=r['hip'+k].children.find(o=>o.isMesh),calf=a.lowerLegs.find(l=>l.side===side).calf;
   m['upperArm.'+s]=ball(end(upper,true,.06));m['armBottom.'+s]=ball(end(upper,false,.06));m['lowerArm.'+s]=ball(end(part0.forearm,true,.05));
-  m['hand.'+s]=ball(end(part0.hand,true,.05));m['thigh.'+s]=ball(end(thighMesh,true,.06));m['shin.'+s]=ball(end(calf,true,.05));
+  { // Wrist ball: pick the hand's top surface points on the untilted hand, fit them on the live (tilted) hand.
+   const flatHand=flat.lowerArmParts.find(p=>p.side===side).hand,fv=verts(flatHand);let e=-1e9;for(const p of fv)e=Math.max(e,p.y);
+   const lv=verts(part0.hand);m['hand.'+s]=ball(fv.map((p,i)=>p.y>e-.05?lv[i]:null).filter(Boolean));}m['thigh.'+s]=ball(end(thighMesh,true,.06));m['shin.'+s]=ball(end(calf,true,.05));
   m['restShoulder.'+s]=[r['shoulder'+k].rotation.x,r['shoulder'+k].rotation.y,r['shoulder'+k].rotation.z];
   m['restElbow.'+s]=[r['elbow'+k].rotation.x,r['elbow'+k].rotation.y,r['elbow'+k].rotation.z];
   const leg=a.lowerLegs.find(l=>l.side===side);
