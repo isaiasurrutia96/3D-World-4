@@ -20,6 +20,8 @@ export const POSES={
  // shoulders follow forward on their own, see shoulder.js).
  shrug:{'clavicle.L':{x:0,y:0,z:4},'clavicle.R':{x:0,y:0,z:-4}},
  reach:{'upperArm.L':{x:-85,y:0,z:8},'upperArm.R':{x:-85,y:0,z:-8},'lowerArm.L':{x:-10,y:0,z:0},'lowerArm.R':{x:-10,y:0,z:0}},
+ // His left leg swings out to the side at the hip (35° of its 45°).
+ 'leg-side':{'thigh.L':{x:0,y:0,z:35}},
  'chest-bend':{'chest':{x:15,y:0,z:0}},
  'chest-twist':{'chest':{x:0,y:15,z:0}},
  // Winding up to throw: waist and chest turn together, the head keeps looking ahead.

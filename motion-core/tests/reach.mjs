@@ -71,7 +71,18 @@ check('reaching with the left gives the exact mirror of the right',mErr<1e-6,`la
 const hi=reach(S,{},{'hand.L':{position:[.32,1.78,.08]}},{follow:true}),his=S.solve(hi.pose);
 check('reaching up high: the shoulder lifts on its own and the hand still lands exactly',hi.pose['clavicle.L'].z>1.5&&hi.error['hand.L']<5e-4,`shoulder lifts ${hi.pose['clavicle.L'].z.toFixed(1)}°; hand off by ${mm(hi.error['hand.L'])}`);
 
-// 8. Speed.
+// 8. Palm: the palm centre touches a moving ball exactly and faces it; smooth all the way round.
+let palmErr=0,faceErr=0,pj=0,pp=null;const R0=.035;
+for(let n=0;n<=360;n++){const a=n/360*Math.PI*2,c=[.24+.16*Math.cos(a),1.32+.18*Math.sin(a),.42+.06*Math.sin(2*a)];
+ const r=reach(S,{},{'hand.L':{touch:c,radius:R0}},{follow:true});palmErr=Math.max(palmErr,r.error['hand.L']);faceErr=Math.max(faceErr,r.facing['hand.L']);
+ // The palm centre's distance from the ball's centre must be the radius.
+ const s=S.solve(r.pose),h=s.get('hand.L'),H0=new T.Vector3(...S.bones[S.index.get('hand.L')].head),palm=new T.Vector3(...S.palms.L.point).sub(H0).applyQuaternion(h.rotation).add(h.head);
+ palmErr=Math.max(palmErr,Math.abs(palm.distanceTo(new T.Vector3(...c))-R0));
+ if(pp)for(const b of ['upperArm.L','lowerArm.L','hand.L'])for(const k of AX)pj=Math.max(pj,Math.abs(r.pose[b][k]-pp[b][k]));pp=r.pose;}
+check('the palm centre touches a moving ball exactly and faces it, moving smoothly all the way round',palmErr<5e-4&&faceErr<1&&pj<2,`palm off the ball's surface by at most ${mm(palmErr)}; facing off by at most ${faceErr.toFixed(2)}°; joints change at most ${pj.toFixed(2)}° a step`);
+
+// 9. Speed.
 const t0=performance.now();for(let n=0;n<2000;n++)reach(S,{root:{position:[0,-.1,0]}},{'foot.L':{sole:soleL},'foot.R':{sole:soleR},'hand.L':{position:[.3,1.1,.3]}});const us=(performance.now()-t0)/2000*1000;
-check('fast enough for every frame (both feet and a hand)',us<500,`${us.toFixed(0)} µs`);
+const t1=performance.now();for(let n=0;n<500;n++)reach(S,{},{'hand.L':{touch:[.3+.001*n%.1,1.3,.42],radius:.035},'foot.L':{sole:soleL},'foot.R':{sole:soleR}},{follow:true});const usP=(performance.now()-t1)/500*1000;
+check('fast enough for every frame (both feet and a hand; and with a palm touching a ball)',us<500&&usP<2000,`${us.toFixed(0)} µs; with the palm and shoulders following ${usP.toFixed(0)} µs`);
 console.table(R);const fail=R.some(r=>r.result==='FAIL');console.log(fail?'FAIL':'PASS: hands and feet reach exactly, smoothly and within every limit.');process.exit(fail?1:0);

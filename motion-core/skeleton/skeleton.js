@@ -10,7 +10,7 @@
 // with angles in degrees; any bone left out stays at its rest angle.
 // Moving a bone turns everything below it; bone lengths never change.
 import {Euler, Matrix4, Quaternion, Vector3} from 'three';
-import {CENTRE, SIDE, FOOT_CONTACTS, fingerBones} from './bones.js';
+import {CENTRE, SIDE, FOOT_CONTACTS, PALM, fingerBones} from './bones.js';
 
 const RAD = Math.PI / 180;
 const mirrorPoint = ([x,y,z]) => [-x,y,z];
@@ -116,5 +116,7 @@ export function createSkeleton(){
  }
 
  const contacts=side=>Object.fromEntries(Object.entries(FOOT_CONTACTS).map(([k,pnt])=>[k,side==='R'?mirrorPoint(pnt):[...pnt]]));
- return {bones,index,restPose,clampPose,solve,mirrorPose,footContacts:{R:contacts('R'),L:contacts('L')}};
+ // Palm centres (point and the way the palm faces), at rest; his right is the mirror.
+ const palms={L:{point:[...PALM.point],normal:[...PALM.normal]},R:{point:mirrorPoint(PALM.point),normal:mirrorPoint(PALM.normal)}};
+ return {bones,index,restPose,clampPose,solve,mirrorPose,footContacts:{R:contacts('R'),L:contacts('L')},palms};
 }

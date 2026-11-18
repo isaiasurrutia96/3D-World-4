@@ -175,6 +175,15 @@ export function fingerBones(){
 // The hand bone points from the wrist to the middle knuckle (tilted).
 SIDE.find(b=>b.name==='hand').tail=turn([0.4296,0.6005,0.1116],WRIST,[1,0,0],HAND_TILT).map(v=>+v.toFixed(6));
 
+/**
+ * The centre of the palm, his left hand at rest (avatar space), and the way
+ * the palm faces there. Measured on the approved hand by
+ * avatar-lab/src/palm.js (halfway from the wrist to the knuckles, halfway
+ * across between the index and little knuckles, on the palm's surface); the
+ * checks re-measure the live model. Hands reach with this point.
+ */
+export const PALM = {point:[0.35087,0.63836,0.12305], normal:[-0.89553,-0.44485,-0.01159]};
+
 /** Points on each foot that can touch the ground (his left foot, +X, avatar space). */
 export const FOOT_CONTACTS = {
  heel:[0.15,0,-0.12], heelInner:[0.06,0,-0.08], heelOuter:[0.24,0,-0.08],

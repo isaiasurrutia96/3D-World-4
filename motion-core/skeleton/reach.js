@@ -4,7 +4,7 @@
 // there. This is what lets feet land exactly on the ground (flat floor,
 // steps, slopes) without sliding or sinking, and hands grab things.
 //
-//   reach(skeleton, pose, goals, options) → {pose, error}
+//   reach(skeleton, pose, goals, options) → {pose, error, facing}
 //
 //   goals: { 'hand.L': {position:[x,y,z], pole?}, 'foot.R': {sole:[x,y,z], pole?, flat?}, ... }
 //     position  where the wrist / ankle joint should be (avatar or world space,
@@ -13,6 +13,10 @@
 //               is then set flat on the ground there
 //     pole      which way the elbow / knee should point (a direction);
 //               default: knees forward, elbows back and slightly out
+//     palm      for a hand: where the palm centre should be (instead of the wrist);
+//               face: which way the palm should face (a direction)
+//     touch     for a hand: the centre of a ball to touch, with radius: the palm
+//               centre lands on its surface, facing its centre
 //     flat      for a foot: keep it flat on the ground (default true with sole)
 //     heading   for a foot: which way it faces (degrees about the vertical; default:
 //               the way the body faces). Planted feet keep their own heading.
@@ -77,7 +81,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const across = (v, t) => v.clone().sub(t.clone().multiplyScalar(v.dot(t)));
 
 /** Solve one limb. Returns the new angles for its three bones. */
-function solveLimb(skeleton, pose, solved, kind, side, goal){
+function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, targetOverride = null){
  const [uName, mName, eName] = LIMBS[kind].map(n => `${n}.${side}`);
  const B = n => skeleton.bones[skeleton.index.get(n)], U = B(uName), Mb = B(mName), E = B(eName);
  const cur = n => ({...B(n).rest, ...(pose[n] ?? {})});
@@ -85,8 +89,10 @@ function solveLimb(skeleton, pose, solved, kind, side, goal){
  const P = solved.get(U.parent).rotation, Sw = solved.get(uName).head;
  // Body turn (for poles and flat feet): the pelvis's world turn.
  const bodyQ = solved.get('pelvis').rotation, bodyYaw = new Euler().setFromQuaternion(bodyQ, 'YXZ').y;
- const target = new Vector3(...(goal.position ?? goal.sole));
- if(!goal.position) target.y += H0.y; // sole → ankle height above the ground (foot flat)
+ // The point of the limb that must land (wrist / ankle, or the palm centre for palm goals).
+ const END = endRest ?? H0;
+ const target = targetOverride ? targetOverride.clone() : new Vector3(...(goal.position ?? goal.sole));
+ if(!targetOverride && !goal.position) target.y += H0.y; // sole → ankle height above the ground (foot flat)
  // Feet face a heading (world turn about the vertical, degrees; default: where the body faces).
  const heading = goal.heading !== undefined ? goal.heading * RAD : bodyYaw, headingQ = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), heading);
 
@@ -95,7 +101,7 @@ function solveLimb(skeleton, pose, solved, kind, side, goal){
  //    twist (forearm roll) is kept: H(t) = E0 + Rx(t)·G·(H0 − E0).
  const m = cur(mName), rx = Mb.rest.x * RAD;
  const G = new Quaternion().setFromAxisAngle(X, rx).multiply(new Quaternion().setFromEuler(new Euler(0, m.y * RAD, m.z * RAD, 'XYZ'))).multiply(new Quaternion().setFromAxisAngle(X, -rx));
- const p = H0.clone().sub(E0).applyQuaternion(G), s = S0.clone().sub(E0);
+ const p = END.clone().sub(E0).applyQuaternion(G), s = S0.clone().sub(E0);
  const pPar = X.clone().multiplyScalar(p.dot(X)), pPerp = p.clone().sub(pPar), q = X.clone().cross(pPerp);
  const A0 = s.clone().sub(pPar).lengthSq() + pPerp.lengthSq(), a = 2 * s.dot(pPerp), b = 2 * s.dot(q), R = Math.hypot(a, b);
  const d = target.distanceTo(Sw), base = Math.atan2(b, a);
@@ -126,7 +132,7 @@ function solveLimb(skeleton, pose, solved, kind, side, goal){
   const upper = anglesFor(U, P.clone().invert().multiply(W1), cur(uName)), mid = {x: hingeX, y: m.y, z: m.z};
   // Where the wrist/ankle really lands with the (limited) angles.
   const W1a = tmp.copy(P).multiply(deltaOf(U, upper)), elbowW = E0.clone().sub(S0).applyQuaternion(W1a).add(Sw);
-  const W2a = W1a.clone().multiply(deltaOf(Mb, mid, d2)), wrist = H0.clone().sub(E0).applyQuaternion(W2a).add(elbowW);
+  const W2a = W1a.clone().multiply(deltaOf(Mb, mid, d2)), wrist = END.clone().sub(E0).applyQuaternion(W2a).add(elbowW);
   return {upper, mid, W2a, err: wrist.distanceTo(target), spin: extraSpin};
  }
  // Try each hinge solution with the elbow/knee facing the pole; if a joint limit gets
@@ -162,13 +168,67 @@ function solveLimb(skeleton, pose, solved, kind, side, goal){
   if(tuned.err <= best.err + 1e-6 && Math.abs(f1) < Math.abs(twistNeeded(best))) best = tuned;
   end = anglesFor(E, best.W2a.clone().invert().multiply(headingQ), end);
  }
- return {[uName]: best.upper, [mName]: best.mid, [eName]: end};
+ return {[uName]: best.upper, [mName]: best.mid, [eName]: end, forearm: best.W2a};
+}
+
+/**
+ * A hand goal by the palm: the palm centre lands exactly on the point, and the
+ * palm turns (at the wrist, inside its limits) to face the given way. The
+ * wrist turn moves the palm, so it settles in a few exact rounds; the final
+ * round lands the palm exactly.
+ */
+function solvePalm(skeleton, out, solved, side, goal){
+ const name = 'hand.' + side, hand = skeleton.bones[skeleton.index.get(name)], H0 = new Vector3(...hand.head);
+ const palm0 = new Vector3(...skeleton.palms[side].point), n0 = new Vector3(...skeleton.palms[side].normal);
+ const centre = goal.touch ? new Vector3(...goal.touch) : null, r = goal.radius ?? 0;
+ let face = goal.face ? new Vector3(...goal.face).normalize() : null, target = null, result = null;
+ // The pose's own forearm roll and wrist: the most relaxed mix is the one closest to these.
+ const relaxed = [(out['lowerArm.' + side] ?? {}).y ?? 0, (out[name] ?? hand.rest).x ?? hand.rest.x, (out[name] ?? hand.rest).z ?? hand.rest.z];
+ for(let k = 0; k < 5; k++){
+  const wrist = {...hand.rest, ...(out[name] ?? {})}, Dw = deltaOf(hand, wrist);
+  const endRest = palm0.clone().sub(H0).applyQuaternion(Dw).add(H0);
+  if(centre){
+   // Touch a ball: the palm meets it coming from the shoulder, facing its centre, the palm
+   // centre on its surface (a steady choice that does not chase itself).
+   face = centre.clone().sub(solved.get('upperArm.' + side).head); if(face.lengthSq() < 1e-12) face.set(0, 0, 1); face.normalize();
+   target = centre.clone().addScaledVector(face, -r);
+  } else target = new Vector3(...goal.palm);
+  result = solveLimb(skeleton, out, solved, 'hand', side, goal, endRest, target);
+  out['upperArm.' + side] = result['upperArm.' + side]; out['lowerArm.' + side] = result['lowerArm.' + side];
+  if(!face) break;
+  // Turn the palm to face the wanted way using the forearm's roll and the wrist
+  // together (the wrist alone cannot turn the palm over), inside their limits.
+  const fore = skeleton.bones[skeleton.index.get('lowerArm.' + side)], W1 = result.forearm.clone().multiply(deltaOf(fore, out['lowerArm.' + side]).invert());
+  const lim = [fore.limits.y, hand.limits.x, hand.limits.z], clampAt = (v, j) => Math.min(lim[j][1], Math.max(lim[j][0], v));
+  const normalFor = ([ay, wx, wz]) => n0.clone().applyQuaternion(deltaOf(hand, {x: wx, y: 0, z: wz})).applyQuaternion(deltaOf(fore, {...out['lowerArm.' + side], y: ay})).applyQuaternion(W1);
+  // Many roll/wrist mixes face the same way; a tiny preference for the most relaxed
+  // one (closest to the pose's own roll and wrist) makes the answer unique and smooth.
+  const RELAX = 1e-6;
+  const cost = v => 1 - normalFor(v).dot(face) + RELAX * ((v[0] - relaxed[0]) ** 2 + (v[1] - relaxed[1]) ** 2 + (v[2] - relaxed[2]) ** 2);
+  let v = [out['lowerArm.' + side].y, wrist.x, wrist.z];
+  // Small steps downhill (numbers in degrees), each kept inside the limits; settles quickly.
+  for(let it = 0, step = 8; it < 40 && step > .01; it++){
+   let moved = false;
+   for(let j = 0; j < 3; j++) for(const dv of [step, -step]){ const tryV = v.slice(); tryV[j] = clampAt(v[j] + dv, j); if(cost(tryV) < cost(v) - 1e-12){ v = tryV; moved = true; } }
+   if(!moved) step /= 2;
+  }
+  out['lowerArm.' + side] = {...out['lowerArm.' + side], y: v[0]};
+  out[name] = {...wrist, x: v[1], z: v[2]};
+ }
+ // Land the palm exactly with the final roll and wrist.
+ {
+  const wrist = {...hand.rest, ...(out[name] ?? {})}, endRest = palm0.clone().sub(H0).applyQuaternion(deltaOf(hand, wrist)).add(H0);
+  if(centre) target = centre.clone().addScaledVector(face, -r);
+  result = solveLimb(skeleton, out, solved, 'hand', side, goal, endRest, target);
+  out['upperArm.' + side] = result['upperArm.' + side]; out['lowerArm.' + side] = result['lowerArm.' + side];
+ }
+ return {target, face};
 }
 
 /** Reach every goal; see the top of this file. */
 export function reach(skeleton, pose, goals, {follow = false, passes = 3} = {}){
  let out = {...pose};
- const rounds = follow ? passes : 1;
+ const rounds = follow ? passes : 1, palmGoals = {};
  for(let r = 0; r < rounds; r++){
   // The follow is worked out afresh from the pose's own collarbones each pass (never piled up).
   if(follow) out = shoulderFollow(skeleton, {...out, 'clavicle.L': pose['clavicle.L'], 'clavicle.R': pose['clavicle.R']});
@@ -176,15 +236,24 @@ export function reach(skeleton, pose, goals, {follow = false, passes = 3} = {}){
   for(const [name, goal] of Object.entries(goals)){
    const [kind, side] = name.split('.');
    if(!LIMBS[kind]) throw Error('Can only reach with hand.L/R or foot.L/R, not ' + name);
-   Object.assign(out, solveLimb(skeleton, out, solved, kind, side, goal));
+   if(kind === 'hand' && (goal.palm || goal.touch)){ palmGoals[name] = solvePalm(skeleton, out, solved, side, goal); continue; }
+   const res = solveLimb(skeleton, out, solved, kind, side, goal);
+   delete res.forearm; Object.assign(out, res);
   }
  }
- // How far each goal is from being reached (metres).
- const solved = skeleton.solve(out), error = {};
+ // How far each goal is from being reached (metres), and for palms how far off the facing is (degrees).
+ const solved = skeleton.solve(out), error = {}, facing = {};
  for(const [name, goal] of Object.entries(goals)){
-  const at = solved.get(name).head, t = new Vector3(...(goal.position ?? goal.sole));
+  const b = solved.get(name), side = name.split('.')[1];
+  if(palmGoals[name]){
+   const H0 = new Vector3(...skeleton.bones[skeleton.index.get(name)].head), palm = new Vector3(...skeleton.palms[side].point).sub(H0).applyQuaternion(b.rotation).add(b.head);
+   error[name] = palm.distanceTo(palmGoals[name].target);
+   if(palmGoals[name].face) facing[name] = new Vector3(...skeleton.palms[side].normal).applyQuaternion(b.rotation).angleTo(palmGoals[name].face) / RAD;
+   continue;
+  }
+  const t = new Vector3(...(goal.position ?? goal.sole));
   if(!goal.position) t.y += skeleton.bones[skeleton.index.get(name)].head[1];
-  error[name] = at.distanceTo(t);
+  error[name] = b.head.distanceTo(t);
  }
- return {pose: out, error};
+ return {pose: out, error, facing};
 }

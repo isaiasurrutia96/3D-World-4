@@ -18,6 +18,7 @@ import {easeDigitSweep} from '${root}/avatar/src/hand-study/ease-digit-sweep.js'
 import {createSkeleton} from '${root}/motion-core/skeleton/skeleton.js';
 import {shoulderFollow} from '${root}/motion-core/skeleton/shoulder.js';
 import {POSES} from '${root}/motion-core/skeleton/poses.js';
+import {measurePalm} from '${root}/avatar-lab/src/palm.js';
 export {createSkeleton,shoulderFollow,POSES,T};
 // Measure the approved model the same way bones.js was written.
 export function measure(){
@@ -46,6 +47,8 @@ export function measure(){
   m['toes.'+s]=leg.foot.localToWorld(new T.Vector3(0,.065,(.145+.265)/2)).toArray();
   const part=a.lowerArmParts.find(p=>p.side===side);part.forearm.geometry.computeBoundingBox();
   m['footBox.'+s]=new T.Box3().setFromObject(leg.foot);
+  // Palm centre (measured before anything else touches the hand).
+  {const S0=createSkeleton(),bb=n=>S0.bones[S0.index.get(n)];m['palm.'+s]=measurePalm(part0.hand,new T.Vector3(...bb('hand.'+s).head),['index','middle','ring','little'].map(f=>{const x=bb(f+'1.'+s);return {head:x.head,tail:x.tail,bendAxis:x.frame.bendAxis};}));}
   // Finger centre lines exactly as the hand rig builds them.
   const hand=part.hand,hs=hand.geometry.userData.labBind.side,STEPS=512,RANGE=1.6,pos=[];
   for(const d of FINGERS)for(let j=0;j<=STEPS;j++){const t=j/STEPS*RANGE;pos.push((d.root[0]+(d.tip[0]-d.root[0])*t-244)*.0008*hs,(d.root[1]+(d.tip[1]-d.root[1])*t-285)*.0008,0);}
@@ -97,6 +100,8 @@ const rest=S.solve(S.restPose());let restErr=0;for(const b of S.bones)restErr=Ma
 check('the rest pose reproduces the model exactly',restErr<1e-9,`largest difference ${restErr.toExponential(1)} m`);
 const fb=M['footBox.L'],inside=Object.values(S.footContacts.L).every(([x,y,z])=>x>=fb.min.x&&x<=fb.max.x&&z>=fb.min.z&&z<=fb.max.z&&y===0);
 check('foot contact points are on the ground, inside the real foot',inside);
+const palmErr=Math.max(...['L','R'].map(sd=>dist(S.palms[sd].point,M['palm.'+sd].point))),palmTurn=Math.max(...['L','R'].map(sd=>new T.Vector3(...S.palms[sd].normal).angleTo(new T.Vector3(...M['palm.'+sd].normal))/Math.PI*180));
+check('the palm centre sits on the approved hand\'s palm (re-measured), facing the right way',palmErr<1e-4&&palmTurn<.1,`both palms within ${mm(palmErr)}, facing within ${palmTurn.toFixed(3)}°`);
 
 // ---- 3. Moving ----
 let lenErr=0;for(let n=0;n<1500;n++){const s=S.solve(randomPose());for(const b of S.bones)lenErr=Math.max(lenErr,Math.abs(s.get(b.name).head.distanceTo(s.get(b.name).tail)-b.length));}

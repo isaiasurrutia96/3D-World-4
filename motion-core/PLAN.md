@@ -183,3 +183,11 @@ flat. Stateless (pure function of the pose), so any frame rate gives the
 same result. Checks: 600/600 random reachable targets within 0.5 mm, feet
 planted and flat through a 32 cm squat with sway and turn, smooth following
 (under 1° per step), exact mirror, about 0.1 ms for both feet and a hand.
+
+Palm goals (18 Nov 2026): a hand can reach with its palm centre
+(skeleton.palms, measured; `palm`, `face`, or `touch` + `radius`). The palm
+point rides on the hand bone, so the arm is solved for that point; the palm
+turns to face the target with the forearm roll and the wrist together
+(inside limits, choosing the most relaxed mix), then a final exact solve
+lands the palm. Checked: palm on a moving ball within 0.01 mm, facing
+within 0.1°, smooth.

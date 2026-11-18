@@ -126,3 +126,16 @@ Recorded 17 November 2026.
     approved ankle tips the toes up only 18°, so a deep squat with flat
     feet needs the hips back (like a real squat). Demos: Squat, Foot on
     step, Follow the ball.
+20. Reaching fixes (owner asked, 18 Nov 2026; waiting for the owner's check):
+    hands reach with the palm centre, measured on the approved hand
+    (`avatar-lab/src/palm.js`: halfway wrist→knuckles, halfway across, on the
+    palm surface); the palm turns to face its target using the forearm roll
+    and the wrist together. Sit (renamed from the old squat): lowers once
+    onto a simple block measured to touch him exactly, thighs level, palms
+    resting on the thighs. Squat: gym form, upper body leaning 28° (level
+    thighs + lean must stay inside the hip's 120° bend). Foot on step: the
+    block starts 3 cm past the measured toes; the foot rises 10 cm above it
+    first (the toes droop because the ankle lifts them only 18°), then over,
+    then down; checked never to touch the block. Leg out: left leg 35° out to
+    the side. Checks: `npm run test:demos`. Owner rule: never guess; ask and
+    explain first.
