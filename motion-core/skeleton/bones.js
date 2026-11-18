@@ -15,6 +15,11 @@
 // a frame built from their bend axis and the finger's direction.
 // Rotation order is x, then y, then z (three.js 'XYZ').
 //
+// Pivots are the centres of each joint's rounded ball (the end of the child
+// part that sits in its socket), so turning a joint keeps the ball in place
+// and the socket stays seated. They were found by fitting a sphere to each
+// ball's surface on the approved model.
+//
 // Angles are absolute: 0 means the limb hanging straight (or a straight
 // finger). `rest` is the angle the approved model is built at, so the rest
 // pose reproduces Checkpoint 2 exactly. `limits` are [min, max] per axis.
@@ -32,31 +37,31 @@ export const CENTRE = [
  {name:'spine', parent:'pelvis', head:[0,0.9895,0], tail:[0,1.2965,0.004], frame:'body',
   note:'Waist. +x leans forward. Turns the whole upper body; the legs stay with the pelvis.',
   rest:{x:0,y:0,z:0}, limits:{x:[-15,40], y:[-35,35], z:[-25,25]}},
- {name:'neck', parent:'spine', head:[0,1.2965,0.004], tail:[0,1.4545,0.004], frame:'body',
+ {name:'neck', parent:'spine', head:[0,1.2965,0.004], tail:[0,1.6745,0], frame:'body',
   rest:{x:0,y:0,z:0}, limits:{x:[-20,25], y:[-40,40], z:[-20,20]}},
- {name:'head', parent:'neck', head:[0,1.4545,0.004], tail:[0,1.8945,0], frame:'body',
-  note:'Pivots at the bottom of the head, like nodding on top of the neck.',
+ {name:'head', parent:'neck', head:[0,1.6745,0], tail:[0,1.8945,0], frame:'body',
+  note:'Pivots at the centre of the round head, so it turns in place over the neck.',
   rest:{x:0,y:0,z:0}, limits:{x:[-25,30], y:[-40,40], z:[-20,20]}},
 ];
 
 /** Right-side bones (mirrored to make the left). */
 export const RIGHT = [
  // Arm. The approved model holds the arms a little out (z) and forward (x).
- {name:'upperArm', parent:'spine', head:[0.28,1.3345,0], tail:[0.3436,1.0211,0.0125], frame:'body',
+ {name:'upperArm', parent:'spine', head:[0.2979,1.2464,0.0035], tail:[0.3596,0.9441,0.0331], frame:'body',
   note:'Shoulder. -x swings forward/up, +z raises out to the side.',
   rest:{x:deg(-0.04),y:0,z:deg(0.20)}, limits:{x:[-170,50], y:[-90,90], z:[-10,170]}},
- {name:'lowerArm', parent:'upperArm', head:[0.3436,1.0211,0.0125], tail:[0.4052,0.72,0.094], frame:'body',
+ {name:'lowerArm', parent:'upperArm', head:[0.3596,0.9441,0.0331], tail:[0.4088,0.6778,0.1284], frame:'body',
   note:'Elbow. Bends only forward (-x), never backwards. y turns the forearm.',
   rest:{x:deg(-0.22),y:0,z:0}, limits:{x:[-150,0], y:[-80,80], z:[0,0]}},
- {name:'hand', parent:'lowerArm', head:[0.4052,0.72,0.094], tail:[0.4296,0.6005,0.1116], frame:'body',
+ {name:'hand', parent:'lowerArm', head:[0.4088,0.6778,0.1284], tail:[0.4296,0.6005,0.1116], frame:'body',
   note:'Wrist. The approved model has no wrist movement yet; rest is straight.',
   rest:{x:0,y:0,z:0}, limits:{x:[-70,70], y:[0,0], z:[-20,30]}},
 
  // Leg.
- {name:'thigh', parent:'pelvis', head:[0.15,0.9695,0.025], tail:[0.15,0.5495,0.025], frame:'body',
+ {name:'thigh', parent:'pelvis', head:[0.15,0.8395,0.025], tail:[0.15,0.4724,0.025], frame:'body',
   note:'Hip. -x swings the leg forward, +z out to the side.',
   rest:{x:0,y:0,z:0}, limits:{x:[-120,30], y:[-40,40], z:[-20,45]}},
- {name:'shin', parent:'thigh', head:[0.15,0.5495,0.025], tail:[0.15,0.1635,0.025], frame:'body',
+ {name:'shin', parent:'thigh', head:[0.15,0.4724,0.025], tail:[0.15,0.1635,0.025], frame:'body',
   note:'Knee. Bends only backwards (+x), never the wrong way.',
   rest:{x:0,y:0,z:0}, limits:{x:[0,150], y:[0,0], z:[0,0]}},
  {name:'foot', parent:'shin', head:[0.15,0.1635,0.025], tail:[0.1494,0.065,0.2153], frame:'body',

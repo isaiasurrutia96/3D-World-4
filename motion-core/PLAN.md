@@ -53,8 +53,9 @@ The owner chose to build the body's joints before hands, feet and walking,
 the way game developers do: an invisible skeleton of bones joined at
 pivots, with the clay parts hung on the bones later. Order:
 
-1. The skeleton (built, waiting for approval).
-2. Attach the clay body parts to the bones, sockets staying seated.
+1. The skeleton (built).
+2. Attach the clay body parts to the bones, sockets staying seated (built,
+   waiting for approval).
 3. Poses: set and blend joint angles smoothly.
 4. Reaching: work out joint angles from where a hand or foot must go.
 5. Hands and feet detail (finger curl, spread, thumb, toes, ball of the
@@ -82,3 +83,19 @@ Files: `skeleton/bones.js` (the bones, measured from Checkpoint 2),
    (fully curled) of the approved hand. The exact finger surface will come
    from the approved hand's own bending in section 5.
 6. No visuals yet; shown in the Test Lab once the body parts are attached.
+
+### Section 2 · Body parts on the bones
+
+Files: `skeleton-test/attach.js` (glue), `skeleton-test/main.js` (Test Lab
+page "Skeleton (section 2)"), `skeleton-test/check.mjs` (`npm run test:attach`).
+
+1. While attaching, the checks showed several old pivots sat at the edge of
+   each joint ball, which would pop balls out of their sockets. All pivots
+   now sit at the centre of the child part's joint ball (sphere-fitted on the
+   approved model): shoulders, elbows, wrists, hips, knees, head.
+2. All 15 clay parts hang on a bone. The rest pose matches Checkpoint 2
+   exactly; every joint ball stays within 0.07 mm of its socket centre in
+   40 random poses.
+3. Not bending yet: fingers and toes (one piece each, hands-and-feet
+   section), the waist (the torso is one piece from hips to shoulders), and
+   the ankle socket lip (Codex's foot rebuilds it; hands-and-feet section).

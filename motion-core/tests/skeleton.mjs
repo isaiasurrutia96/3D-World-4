@@ -23,17 +23,23 @@ export function measure(){
  const W=o=>o.getWorldPosition(new T.Vector3()).toArray(),m={};
  const neck=r.torso.children.find(o=>o.name==='original-neck');neck.geometry.computeBoundingBox();
  m['neck']=neck.localToWorld(new T.Vector3(0,neck.geometry.boundingBox.min.y,0)).toArray();
- m['pelvis']=W(r.body);m['spine']=W(r.torso);
+ m['pelvis']=W(r.body);m['spine']=W(r.torso);m['head']=W(r.head);
+ const verts=mesh=>{const p=mesh.geometry.attributes.position,out=[];for(let i=0;i<p.count;i++)out.push(new T.Vector3(p.getX(i),p.getY(i),p.getZ(i)).applyMatrix4(mesh.matrixWorld));return out;};
+ const end=(mesh,top,band)=>{const v=verts(mesh);let e=top?-1e9:1e9;for(const p of v)e=top?Math.max(e,p.y):Math.min(e,p.y);return v.filter(p=>top?p.y>e-band:p.y<e+band);};
+ // Centre of a rounded joint end (least-squares sphere fit).
+ const ball=pts=>{const ATA=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],N=[0,0,0,0];for(const p of pts){const a=[2*p.x,2*p.y,2*p.z,1],b=p.lengthSq();for(let i=0;i<4;i++){N[i]+=a[i]*b;for(let j=0;j<4;j++)ATA[i][j]+=a[i]*a[j];}}
+  const M=new T.Matrix4().set(...ATA.flat()).invert(),e=M.elements,sol=[0,1,2,3].map(i=>e[i]*N[0]+e[4+i]*N[1]+e[8+i]*N[2]+e[12+i]*N[3]);return [sol[0],sol[1],sol[2]];};
  for(const [s,side] of [['R',1],['L',-1]]){
   const k=side===1?'Right':'Left';
-  m['upperArm.'+s]=W(r['shoulder'+k]);m['lowerArm.'+s]=W(r['elbow'+k]);m['thigh.'+s]=W(r['hip'+k]);m['shin.'+s]=W(r['knee'+k]);
+  const part0=a.lowerArmParts.find(p=>p.side===side),upper=r['shoulder'+k].children.find(o=>o.isMesh),thighMesh=r['hip'+k].children.find(o=>o.isMesh),calf=a.lowerLegs.find(l=>l.side===side).calf;
+  m['upperArm.'+s]=ball(end(upper,true,.06));m['armBottom.'+s]=ball(end(upper,false,.06));m['lowerArm.'+s]=ball(end(part0.forearm,true,.05));
+  m['hand.'+s]=ball(end(part0.hand,true,.05));m['thigh.'+s]=ball(end(thighMesh,true,.06));m['shin.'+s]=ball(end(calf,true,.05));
   m['restShoulder.'+s]=[r['shoulder'+k].rotation.x,r['shoulder'+k].rotation.y,r['shoulder'+k].rotation.z];
   m['restElbow.'+s]=[r['elbow'+k].rotation.x,r['elbow'+k].rotation.y,r['elbow'+k].rotation.z];
   const leg=a.lowerLegs.find(l=>l.side===side);
   m['foot.'+s]=leg.motion.group.localToWorld(new T.Vector3().fromArray(leg.motion.pivot)).toArray();
   m['toes.'+s]=leg.foot.localToWorld(new T.Vector3(0,.065,(.145+.265)/2)).toArray();
   const part=a.lowerArmParts.find(p=>p.side===side);part.forearm.geometry.computeBoundingBox();
-  m['hand.'+s]=part.forearm.localToWorld(new T.Vector3(0,part.forearm.geometry.boundingBox.min.y,0)).toArray();
   m['footBox.'+s]=new T.Box3().setFromObject(leg.foot);
   // Finger centre lines exactly as the hand rig builds them.
   const hand=part.hand,hs=hand.geometry.userData.labBind.side,STEPS=512,RANGE=1.6,pos=[];
@@ -71,14 +77,16 @@ check('one root (pelvis); every other bone has a real parent listed before it',S
 let worst=0,worstName='';
 for(const b of S.bones){const ref=M[b.name];if(!ref)continue;const e=dist(b.head,ref);if(e>worst){worst=e;worstName=b.name;}}
 const measured=S.bones.filter(b=>M[b.name]).length;
-check('every joint sits where the approved Checkpoint 2 model has it',worst<.0002,`${measured} joints measured, largest difference ${mm(worst)} (${worstName})`);
+check('every joint sits at the centre of its ball on the approved Checkpoint 2 model',worst<.0002,`${measured} joints measured, largest difference ${mm(worst)} (${worstName})`);
 const restOk=['R','L'].every(s=>{const sh=S.bones[S.index.get('upperArm.'+s)],el=S.bones[S.index.get('lowerArm.'+s)],rs=M['restShoulder.'+s],re=M['restElbow.'+s],rad=Math.PI/180;
  return Math.abs(sh.rest.x*rad-rs[0])<1e-9&&Math.abs(sh.rest.y*rad-rs[1])<1e-9&&Math.abs(sh.rest.z*rad-rs[2])<1e-9&&Math.abs(el.rest.x*rad-re[0])<1e-9;});
 check('rest angles are the ones the approved model is built with (shoulders, elbows)',restOk);
-// Angle 0 means hanging straight: rotating a straight-down arm by the rest angles gives the measured elbow.
-const arm=S.bones[S.index.get('upperArm.R')],len=arm.length,rad=Math.PI/180;
-const elbow=new T.Vector3(0,-len,0).applyEuler(new T.Euler(arm.rest.x*rad,0,arm.rest.z*rad,'XYZ')).add(new T.Vector3(...arm.head));
-check('angle 0 means the limb hanging straight down',elbow.distanceTo(new T.Vector3(...arm.tail))<.0005,`arm rebuilt from its angles lands ${mm(elbow.distanceTo(new T.Vector3(...arm.tail)))} from the measured elbow`);
+// Angle 0 means hanging straight: a straight-down arm turned by the rest angles lines up with the real upper arm.
+const arm=S.bones[S.index.get('upperArm.R')],rad=Math.PI/180;
+const down=new T.Vector3(0,-1,0).applyEuler(new T.Euler(arm.rest.x*rad,0,arm.rest.z*rad,'XYZ'));
+const realAxis=new T.Vector3(...M['armBottom.R']).sub(new T.Vector3(...M['upperArm.R'])).normalize();
+const off=down.angleTo(realAxis)/rad;
+check('angle 0 means the limb hanging straight down',off<.5,`rest angles line the arm up with the real upper arm to within ${off.toFixed(2)}°`);
 const rest=S.solve(S.restPose());let restErr=0;for(const b of S.bones)restErr=Math.max(restErr,dist(rest.get(b.name).head.toArray(),b.head),dist(rest.get(b.name).tail.toArray(),b.tail));
 check('the rest pose reproduces the model exactly',restErr<1e-9,`largest difference ${restErr.toExponential(1)} m`);
 const fb=M['footBox.R'],inside=Object.values(S.footContacts.R).every(([x,y,z])=>x>=fb.min.x&&x<=fb.max.x&&z>=fb.min.z&&z<=fb.max.z&&y===0);
@@ -95,7 +103,7 @@ const bentElbow=S.solve({'lowerArm.R':{x:-90,y:0,z:0},'lowerArm.L':{x:60,y:0,z:0
 const straightL=S.solve({'lowerArm.L':{x:0,y:0,z:0}}).get('lowerArm.L');
 check('elbows bend only forwards (asked to bend backwards, they stay straight)',er.tail.z>er.head.z+.25&&el.tail.distanceTo(straightL.tail)<1e-9,`bent elbow: wrist ${mm(er.tail.z-er.head.z)} in front`);
 const raised=S.solve({'upperArm.R':{x:0,y:0,z:90},'lowerArm.R':{x:0,y:0,z:0}}),wr=raised.get('lowerArm.R').tail,sh=raised.get('upperArm.R').head;
-check('raising the arm 90° out to the side puts the wrist out at shoulder height',Math.abs(wr.y-sh.y)<.03&&wr.x>sh.x+.6,`wrist ${mm(wr.y-sh.y)} from shoulder height, ${mm(wr.x-sh.x)} out`);
+check('raising the arm 90° out to the side puts the wrist out at shoulder height',Math.abs(wr.y-sh.y)<.03&&wr.x>sh.x+.55,`wrist ${mm(wr.y-sh.y)} from shoulder height, ${mm(wr.x-sh.x)} out`);
 // Moving a parent moves its children only.
 const arm2=S.solve({'upperArm.R':{x:-60,y:0,z:30}}),moved=b=>arm2.get(b.name).head.distanceTo(rest.get(b.name).head)>1e-9;
 const rightArm=S.bones.filter(b=>b.side==='R'&&!/thigh|shin|foot|toes/.test(b.name)&&b.name!=='upperArm.R');
