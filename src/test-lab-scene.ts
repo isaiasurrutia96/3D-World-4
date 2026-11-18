@@ -74,7 +74,12 @@ export function installTestLabScene(options: Options): void {
     orthographic.up.copy(camera.up);
     orthographic.lookAt(target);
     orthographic.updateProjectionMatrix();
+    // The isometric camera sits far away, so any fog would fade the whole
+    // scene: switch fog off for this view only.
+    const fog = scene.fog;
+    scene.fog = null;
     render(scene,orthographic);
+    scene.fog = fog;
   };
   window.testLabScene = {
     camera, orthographic, floors,
