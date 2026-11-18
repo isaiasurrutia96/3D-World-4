@@ -1,23 +1,14 @@
-// Skeleton test (section 2): the approved avatar hanging on the new skeleton,
-// with a few fixed poses and a "show bones" view. Poses switch instantly;
-// smooth blending between poses is section 3. Visuals are placeholders.
+// Skeleton test (sections 2 and 3): the approved avatar on the new skeleton.
+// Poses now move smoothly (section 3), and "Wave" plays a looping wave on
+// the left arm as a layer. "Show bones" draws the skeleton. Visuals are
+// placeholders.
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import {createSkeletonAvatar} from './attach.js';
 
-const POSES={
- rest:{},
- 'arms-out':{'upperArm.L':{x:0,y:0,z:88},'upperArm.R':{x:0,y:0,z:-88},'lowerArm.L':{x:0,y:0,z:0},'lowerArm.R':{x:0,y:0,z:0}},
- 'arms-up':{'upperArm.L':{x:-165,y:0,z:8},'upperArm.R':{x:-165,y:0,z:-8},'lowerArm.L':{x:-5,y:0,z:0},'lowerArm.R':{x:-5,y:0,z:0}},
- // Natural wave: upper arm out at shoulder height, forearm straight up, palm forward;
- // the hand tilted 10° back (clockwise seen from his waving side) about its own middle.
- wave:{'upperArm.L':{x:-83.2,y:-5.1,z:79.2},'lowerArm.L':{x:-74.6,y:-14.6,z:0},'hand.L':{x:-1.2,y:0,z:8.5}},
- elbows:{'upperArm.L':{x:-15,y:0,z:12},'upperArm.R':{x:-15,y:0,z:-12},'lowerArm.L':{x:-120,y:0,z:0},'lowerArm.R':{x:-120,y:0,z:0},'hand.L':{x:30,y:0,z:0},'hand.R':{x:30,y:0,z:0}},
- kick:{'thigh.L':{x:-70,y:0,z:0},'shin.L':{x:35,y:0,z:0},'foot.L':{x:20,y:0,z:0},'upperArm.L':{x:25,y:0,z:12},'upperArm.R':{x:-35,y:0,z:-12}},
- knee:{'thigh.R':{x:-95,y:0,z:0},'shin.R':{x:115,y:0,z:0},'foot.R':{x:30,y:0,z:0},'upperArm.L':{x:-30,y:0,z:20},'upperArm.R':{x:20,y:0,z:-20}},
- look:{'neck':{x:5,y:25,z:0},'head':{x:-10,y:15,z:6}},
-};
+import {POSES,CLIPS} from '../motion-core/skeleton/poses.js';
+import {createPosePlayer} from '../motion-core/skeleton/pose.js';
 
 const stage=document.querySelector('#stage');
 const A=createSkeletonAvatar();
@@ -37,8 +28,13 @@ const bonesView=new T.Group();bonesView.add(lines,dots);bonesView.visible=false;
 const m4=new T.Matrix4();
 function drawBones(s){s.bones.forEach((b,i)=>{b.head.toArray(linePos,i*6);b.tail.toArray(linePos,i*6+3);m4.makeTranslation(b.head.x,b.head.y,b.head.z);dots.setMatrixAt(i,m4);});lineGeo.attributes.position.needsUpdate=true;dots.instanceMatrix.needsUpdate=true;}
 
-let current='rest';
-function setPose(name){current=name;drawBones(A.apply(POSES[name]??{}));for(const b of document.querySelectorAll('[data-pose]'))b.setAttribute('aria-pressed',String(b.dataset.pose===name));}
+const player=createPosePlayer(A.skeleton);let current='rest';
+function setPose(name){
+ current=name;
+ if(name==='wave'){player.transitionTo(POSES.rest,{duration:.6});player.setLayer('wave',{clip:CLIPS.wave,fade:.5});}
+ else{player.clearLayer('wave',.4);player.transitionTo(POSES[name]??{},{duration:.6});}
+ for(const b of document.querySelectorAll('[data-pose]'))b.setAttribute('aria-pressed',String(b.dataset.pose===name));
+}
 for(const b of document.querySelectorAll('[data-pose]'))b.onclick=()=>setPose(b.dataset.pose);
 const bonesButton=document.querySelector('#bones');
 function showBones(on){bonesView.visible=on;bonesButton.setAttribute('aria-pressed',String(on));bonesButton.textContent=on?'Hide bones':'Show bones';}
@@ -52,7 +48,8 @@ for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>view(b.dat
 controls.addEventListener('start',()=>{for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed','false');});
 function resize(){const {width,height}=stage.getBoundingClientRect();camera.aspect=width/height;camera.fov=camera.aspect<.7?46:36;camera.updateProjectionMatrix();renderer.setSize(width,height);}
 new ResizeObserver(resize).observe(stage);resize();view('angled');setPose('rest');
-renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
-window.skeletonLab={camera,controls,scene,setPose,showBones,view,avatar:A,poses:Object.keys(POSES)};
+let last=0;
+renderer.setAnimationLoop(ms=>{const dt=Math.min(.1,last?(ms-last)/1000:0);last=ms;drawBones(A.apply(player.update(dt)));controls.update();renderer.render(scene,camera);});
+window.skeletonLab={camera,controls,scene,setPose,showBones,view,avatar:A,player,poses:Object.keys(POSES)};
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
 document.querySelector('#loading').hidden=true;window.skeletonTestReady=true;

@@ -54,9 +54,8 @@ the way game developers do: an invisible skeleton of bones joined at
 pivots, with the clay parts hung on the bones later. Order:
 
 1. The skeleton (built).
-2. Attach the clay body parts to the bones, sockets staying seated (built,
-   waiting for approval).
-3. Poses: set and blend joint angles smoothly.
+2. Attach the clay body parts to the bones, sockets staying seated (approved).
+3. Poses: set and blend joint angles smoothly (built, waiting for approval).
 4. Reaching: work out joint angles from where a hand or foot must go.
 5. Hands and feet detail (finger curl, spread, thumb, toes, ball of the
    foot, tiptoe), rebuilt to match the approved Codex hand and foot.
@@ -105,3 +104,23 @@ page "Skeleton (section 2)"), `skeleton-test/check.mjs` (`npm run test:attach`).
 Bone names now use the avatar's own left and right (.L / .R). He faces +Z,
 so +X is his left. The approved model's older code calls +X parts "right"
 (screen-right when facing him); the skeleton no longer follows that.
+
+### Section 3 · Poses and smooth movement
+
+Files: `skeleton/pose.js` (easing, blending, clips, pose player),
+`skeleton/poses.js` (pose library and the looping wave clip),
+`tests/pose.mjs` (`npm run test:pose`). Shown in the Skeleton test.
+
+1. Blending mixes joint angles; every in-between pose stays inside every
+   joint limit (a blend can never bend a knee backwards).
+2. Transitions use a quintic curve: they start with the position, speed
+   and acceleration the body already has and arrive exactly on time, at
+   rest. Interrupting one mid-way never jerks. Same result at any frame rate.
+3. Layers play a clip or pose on only the bones it names (the wave on the
+   left arm) and fade in and out smoothly.
+4. Clips: poses at times joined by smooth curves (Catmull-Rom), looping
+   seamlessly. The wave swings the forearm from the elbow (bending and
+   straightening it) with the hand a quarter-beat behind; the elbow stays
+   put, the hand swings about 17 cm.
+5. Any future pose (point, thumbs up, grips, kart poses) is just a list of
+   joint angles added to poses.js.
