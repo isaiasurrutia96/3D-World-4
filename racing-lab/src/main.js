@@ -1,0 +1,3 @@
+import {createMotionLab} from '../../motion-lab/src/page.js';
+import {createRacingSimulation} from './simulation.js';
+createMotionLab({title:'Racing Lab',section:'Four-track race test',createSimulation:createRacingSimulation,helpText:'E / Up: gas. S F / Left Right: steer. D / Down: brake then reverse. Space / LT: brake. Shift / A: boost. Phone: left stick drives; right side looks; pinch zooms. Pick a track, then Start race.',videos:[{src:'./videos/drive.mp4',title:'Shared controls and racing',description:'The player and four opponents use the rebuilt racing physics. The road is drawn from the same triangles used for support.',passed:true}]});

@@ -2,6 +2,8 @@
 
 Current avatar: **Checkpoint 2**, saved on 17 November 2026.
 
+[Drive the Racing Lab](https://isaiasurrutia96.github.io/3D-World-4/racing-lab/): choose any of the four tracks and race a placeholder kart against four opponents using keyboard, phone touch or a controller.
+
 [Racing core](racing-core/README.md) is the code-first rebuild of Original, Skyline, Suzuka and Winding from 3D-World-3. It separates track geometry, kart physics, four NPC opponents, race rules and ghost records from presentation. Run `npm run test:racing-core`; [recorded test results](racing-core/TEST-RESULTS.json) include five-kart, three-lap races on every circuit.
 
 [Open Motion Lab](https://isaiasurrutia96.github.io/3D-World-4/motion-lab/): the code-first movement test template, using one keyboard/mouse/touch/gamepad input module and Claude's unmodified motion core. It currently shows a marker, with placeholder visuals. [Motion Lab checkpoint 1](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/motion-lab-1/) preserves this working baseline.

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints && npm run build:run-test && npm run build:walk-test && npm run build:motion-core-test",
+    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints && npm run build:run-test && npm run build:walk-test && npm run build:motion-core-test && npm run build:racing-lab",
     "preview": "vite preview",
     "build:hand-lab": "node hand-lab/build.mjs",
     "test:hand-lab": "node hand-lab/tests/browser.mjs",
@@ -23,7 +23,9 @@
     "build:motion-core-test": "node motion-core-test/build.mjs",
     "build:walk-test": "node walk-test/build.mjs",
     "test:motion-lab": "node motion-lab/test.mjs",
-    "test:racing-core": "node --test racing-core/tests/core.test.mjs"
+    "test:racing-core": "node --test racing-core/tests/core.test.mjs",
+    "build:racing-lab": "node racing-lab/build.mjs",
+    "test:racing-lab": "node racing-lab/tests/browser.mjs"
   },
   "dependencies": {
     "three": "0.180.0"

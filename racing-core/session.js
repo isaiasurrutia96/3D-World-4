@@ -15,7 +15,7 @@ export function createRaceSession({ trackId = 'original', mode = 'race', laps = 
     function start() { if (phase === 'grid')
         phase = countdownLeft > 0 ? 'countdown' : 'racing'; }
     function respawn(id = 'player') { const racer = racers.find(r => r.id === id); if (!racer)
-        throw new RangeError('Unknown racer'); const distance = racer.progress.lastGateDistance, p = track.at(distance + 2, racer.driver?.lane ?? -3.3); Object.assign(racer.state, createVehicle(p)); racer.progress.distance = distance + 2; racer.progress.lastWrapped = ((distance + 2) % track.length + track.length) % track.length; racer.progress.invalidReason = ''; racer.progress.validForRecord = false; racer.respawns++; if (id === 'player')
+        throw new RangeError('Unknown racer'); const distance = racer.progress.lastGateDistance, p = track.at(distance + 2, racer.driver?.lane ?? -3.3); const boosts=racer.state.boosts;Object.assign(racer.state, createVehicle(p));racer.state.boosts=boosts; racer.progress.distance = distance + 2; racer.progress.lastWrapped = ((distance + 2) % track.length + track.length) % track.length; racer.progress.invalidReason = ''; racer.progress.validForRecord = false; racer.respawns++; if (id === 'player')
         recorder.stop(); }
     function step(raw) {
         if (phase === 'grid' || phase === 'finished')

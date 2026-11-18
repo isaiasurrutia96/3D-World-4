@@ -8,10 +8,10 @@ export function createInput(canvas){return new LabInput(canvas);}
 class LabInput{
  constructor(canvas){
   this.canvas=canvas;this.keys=new Set();this.pointers=new Map();this.look={x:0,y:0};this.zoom=0;this.enabled=true;this.focused=true;this.last={moveX:0,moveZ:0,strength:0,look:{x:0,y:0},zoom:0,source:'none'};
-  this.stick=null;this.pinch=null;this.radius=56;
+  this.stick=null;this.pinch=null;this.radius=56;this.actions={brake:false,boost:false};
   this.base=document.createElement('div');this.base.className='input-stick';this.base.hidden=true;this.base.setAttribute('aria-hidden','true');this.knob=document.createElement('span');this.base.append(this.knob);canvas.parentElement.append(this.base);
-  const codes=['KeyE','KeyS','KeyD','KeyF','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','KeyJ','KeyL','KeyI','KeyK'];
-  window.addEventListener('keydown',event=>{if(!this.enabled||event.target.closest?.('input,textarea,select,video,[contenteditable=true]'))return;if(codes.includes(event.code)){event.preventDefault();this.keys.add(event.code);}});
+  const codes=['KeyE','KeyS','KeyD','KeyF','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','KeyJ','KeyL','KeyI','KeyK','Space','ShiftLeft','ShiftRight'];
+  window.addEventListener('keydown',event=>{if(!this.enabled||event.target.closest?.('input,textarea,select,video,[contenteditable=true]'))return;if(event.code==='Space'&&event.target.closest?.('button'))return;if(codes.includes(event.code)){event.preventDefault();this.keys.add(event.code);}});
   window.addEventListener('keyup',event=>this.keys.delete(event.code));
   window.addEventListener('blur',()=>{this.focused=false;this.reset();});window.addEventListener('focus',()=>{this.focused=true;});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.reset();});
@@ -20,8 +20,9 @@ class LabInput{
   canvas.addEventListener('wheel',event=>{if(!this.enabled)return;event.preventDefault();this.zoom+=event.deltaY*.0015;},{passive:false});
   canvas.addEventListener('contextmenu',event=>event.preventDefault());
  }
+ setAction(name,value){if(name in this.actions)this.actions[name]=Boolean(value);}
  setEnabled(value){if(this.enabled&&!value)this.reset();this.enabled=value;}
- reset(){this.keys.clear();this.pointers.clear();this.stick=null;this.pinch=null;this.base.hidden=true;this.look.x=this.look.y=this.zoom=0;this.last={moveX:0,moveZ:0,strength:0,look:{x:0,y:0},zoom:0,source:'none'};}
+ reset(){this.actions.brake=this.actions.boost=false;this.keys.clear();this.pointers.clear();this.stick=null;this.pinch=null;this.base.hidden=true;this.look.x=this.look.y=this.zoom=0;this.last={moveX:0,moveZ:0,strength:0,look:{x:0,y:0},zoom:0,source:'none'};}
  down(event){
   if(!this.enabled)return;event.preventDefault();this.canvas.setPointerCapture(event.pointerId);
   const rect=this.canvas.getBoundingClientRect(),p={id:event.pointerId,x:event.clientX,y:event.clientY,startX:event.clientX,startY:event.clientY,touch:event.pointerType!=='mouse',role:'look'};
@@ -45,12 +46,12 @@ class LabInput{
   if(strength){const length=Math.hypot(x,y);x/=length;y/=length;}
   const touch=this.stick?radialStick((this.stick.x-this.stick.startX)/this.radius,-(this.stick.y-this.stick.startY)/this.radius):{x:0,y:0,strength:0};
   if(touch.strength>strength){({x,y,strength}=touch);source='touch';}
-  let padLook={x:0,y:0,strength:0};
+  let padLook={x:0,y:0,strength:0},padBrake=false,padBoost=false;
   let pads=[];try{pads=navigator.getGamepads?.()||[];}catch{}
-  for(const pad of pads){if(!pad?.connected)continue;const left=radialStick(pad.axes[0],-(pad.axes[1]||0)),right=radialStick(pad.axes[2],pad.axes[3]);if(left.strength>strength){({x,y,strength}=left);source='gamepad';}if(right.strength>padLook.strength)padLook=right;}
+  for(const pad of pads){if(!pad?.connected)continue;padBrake||=(pad.buttons?.[6]?.value??0)>.15;padBoost||=Boolean(pad.buttons?.[0]?.pressed);const left=radialStick(pad.axes[0],-(pad.axes[1]||0)),right=radialStick(pad.axes[2],pad.axes[3]);if(left.strength>strength){({x,y,strength}=left);source='gamepad';}if(right.strength>padLook.strength)padLook=right;}
   const look={x:this.look.x+(key('KeyL')-key('KeyJ'))*2.2*dt+padLook.x*2.2*dt,y:this.look.y+(key('KeyK')-key('KeyI'))*1.6*dt+padLook.y*1.6*dt},zoom=this.zoom;
   const heading=cameraYaw-look.x;this.look.x=this.look.y=this.zoom=0;
-  return this.last={moveX:-Math.sin(heading)*y+Math.cos(heading)*x,moveZ:-Math.cos(heading)*y-Math.sin(heading)*x,strength,look,zoom,source};
+  return this.last={moveX:-Math.sin(heading)*y+Math.cos(heading)*x,moveZ:-Math.cos(heading)*y-Math.sin(heading)*x,strength,look,zoom,source,actions:{brake:this.actions.brake||this.keys.has('Space')||padBrake,boost:this.actions.boost||this.keys.has('ShiftLeft')||this.keys.has('ShiftRight')||padBoost}};
  }
  getState(){return {...this.last,look:{...this.last.look},pointers:this.pointers.size};}
 }
