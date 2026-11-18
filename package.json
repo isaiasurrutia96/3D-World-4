@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints && npm run build:run-test && npm run build:walk-test && npm run build:motion-core-test && npm run build:racing-lab",
+    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints && npm run build:run-test && npm run build:walk-test && npm run build:motion-core-test && npm run build:racing-lab && npm run build:skeleton-test",
     "preview": "vite preview",
     "build:hand-lab": "node hand-lab/build.mjs",
     "test:hand-lab": "node hand-lab/tests/browser.mjs",
