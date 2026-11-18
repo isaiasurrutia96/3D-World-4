@@ -4,10 +4,46 @@ import {createFootShape} from '../../foot-lab/src/foot-shape.js';
 import {createCalf} from '../../foot-lab/src/calf.js';
 import {createFootRig,REST_POSE} from '../../foot-lab/src/foot-rig.js';
 
+// How far both hands turn at the wrist at rest (degrees): the fingertips
+// point slightly forward. Owner's change, 18 Nov 2026.
+export const HAND_TILT_DEGREES=8;
+
+/** Centre of a rounded end (least-squares sphere fit). */
+function ballCentre(points){
+ const A=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],N=[0,0,0,0];
+ for(const p of points){const a=[2*p.x,2*p.y,2*p.z,1],b=p.lengthSq();for(let i=0;i<4;i++){N[i]+=a[i]*b;for(let j=0;j<4;j++)A[i][j]+=a[i]*a[j];}}
+ const e=new T.Matrix4().set(...A.flat()).invert().elements;
+ return new T.Vector3(...[0,1,2].map(i=>e[i]*N[0]+e[4+i]*N[1]+e[8+i]*N[2]+e[12+i]*N[3]));
+}
+
+/**
+ * Turn both hands at the wrist so the fingertips point slightly forward.
+ * Each hand turns about its wrist ball (the rounded top of the hand that sits
+ * in the forearm socket), so it stays cradled in the socket. The left hand
+ * is the exact mirror (its mount is mirrored), so the same local turn works.
+ */
+function tiltHands(avatar,degrees){
+ if(!degrees)return;
+ avatar.rig.root.updateMatrixWorld(true);
+ const first=avatar.lowerArmParts.find(p=>p.side===1),hand=first.hand,P=hand.geometry.attributes.position;
+ const world=[];let top=-Infinity;
+ for(let i=0;i<P.count;i++){const v=new T.Vector3().fromBufferAttribute(P,i).applyMatrix4(hand.matrixWorld);world.push(v);top=Math.max(top,v.y);}
+ const pivotLocal=hand.worldToLocal(ballCentre(world.filter(v=>v.y>top-.05)));
+ // The turn axis is the avatar's sideways axis, written in the hand's parent space.
+ const parent=hand.parent,axis=new T.Vector3(1,0,0).transformDirection(parent.matrixWorld.clone().invert()).normalize();
+ const turn=new T.Quaternion().setFromAxisAngle(axis,-degrees*Math.PI/180);
+ for(const part of avatar.lowerArmParts){
+  const h=part.hand,pivot=pivotLocal.clone().applyMatrix4(h.matrix);
+  h.position.sub(pivot).applyQuaternion(turn).add(pivot);h.quaternion.premultiply(turn);h.updateMatrix();
+ }
+ avatar.rig.root.updateMatrixWorld(true);
+}
+
 // Reuse the saved upper body and hands verbatim. Mount the fitted lower legs
 // at their original knee contacts, with mirrored big toes facing inward.
-export function createAssembledAvatar(){
+export function createAssembledAvatar(options={}){
  const avatar=createApprovedAvatar(),{rig}=avatar,lowerLegs=[];
+ tiltHands(avatar,options.handTilt??HAND_TILT_DEGREES);
  rig.root.updateMatrixWorld(true);
  for(const [knee,side] of [[rig.kneeLeft,-1],[rig.kneeRight,1]]){
   const oldCalf=knee.children[0],oldAnkle=knee.children[1];oldCalf.geometry.computeBoundingBox();

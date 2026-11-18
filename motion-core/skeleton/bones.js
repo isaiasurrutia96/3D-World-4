@@ -29,6 +29,15 @@
 
 const deg = v => v * 180 / Math.PI;
 
+/**
+ * The live avatar's hands rest turned 8° at the wrist, fingertips slightly
+ * forward (avatar-lab/src/avatar.js HAND_TILT_DEGREES). The finger and hand
+ * points below were measured straight; they are turned by this tilt about
+ * the wrist ball, so the skeleton matches the live avatar.
+ */
+export const HAND_TILT = -8; // degrees about the avatar's sideways (x) axis
+const WRIST = [0.4088,0.6778,0.1284];
+
 /** Centre-line bones. */
 export const CENTRE = [
  {name:'pelvis', parent:null, head:[0,0.9895,0], tail:[0,0.9695,0.025], frame:'body',
@@ -53,9 +62,9 @@ export const RIGHT = [
  {name:'lowerArm', parent:'upperArm', head:[0.3596,0.9441,0.0331], tail:[0.4088,0.6778,0.1284], frame:'body',
   note:'Elbow. Bends only forward (-x), never backwards. y turns the forearm.',
   rest:{x:deg(-0.22),y:0,z:0}, limits:{x:[-150,0], y:[-80,80], z:[0,0]}},
- {name:'hand', parent:'lowerArm', head:[0.4088,0.6778,0.1284], tail:[0.4296,0.6005,0.1116], frame:'body',
-  note:'Wrist. The approved model has no wrist movement yet; rest is straight.',
-  rest:{x:0,y:0,z:0}, limits:{x:[-70,70], y:[0,0], z:[-20,30]}},
+ {name:'hand', parent:'lowerArm', head:WRIST, tail:null, frame:'body',
+  note:'Wrist. Rests turned 8° (fingertips slightly forward); 0 is the hand hanging straight.',
+  rest:{x:HAND_TILT,y:0,z:0}, limits:{x:[-70,70], y:[0,0], z:[-20,30]}},
 
  // Leg.
  {name:'thigh', parent:'pelvis', head:[0.15,0.8395,0.025], tail:[0.15,0.4724,0.025], frame:'body',
@@ -110,9 +119,10 @@ function turn(p,c,axis,deg){
  * so the rest pose matches the approved, gently curled hand.
  */
 export function fingerBones(){
- const bones=[];
+ const bones=[],X=[1,0,0],O=[0,0,0];
  for(const [id,f] of Object.entries(FINGERS)){
-  const pts=f.straight.map(p=>[...p]),axes=f.axes.map(a=>[...a]);
+  // The hand's rest tilt first, then each joint's rest curl.
+  const pts=f.straight.map(p=>turn(p,WRIST,X,HAND_TILT)),axes=f.axes.map(a=>turn(a,O,X,HAND_TILT));
   for(let j=0;j<3;j++){
    const origin=[0,0,0];
    for(let k=j+1;k<4;k++)pts[k]=turn(pts[k],pts[j],axes[j],f.rest[j]);
@@ -132,6 +142,9 @@ export function fingerBones(){
  }
  return bones;
 }
+
+// The hand bone points from the wrist to the middle knuckle (tilted).
+RIGHT.find(b=>b.name==='hand').tail=turn([0.4296,0.6005,0.1116],WRIST,[1,0,0],HAND_TILT).map(v=>+v.toFixed(6));
 
 /** Points on each foot that can touch the ground (right foot, avatar space). */
 export const FOOT_CONTACTS = {
