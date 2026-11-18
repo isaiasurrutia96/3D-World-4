@@ -2,7 +2,7 @@
 
 Current avatar: **Checkpoint 2**, saved on 17 November 2026.
 
-[Drive the Racing Lab](https://isaiasurrutia96.github.io/3D-World-4/racing-lab/): choose any of the four tracks and race a placeholder kart against four opponents using keyboard, phone touch or a controller.
+[Drive the Racing Lab](https://isaiasurrutia96.github.io/3D-World-4/racing-lab/): section 1 tests solo driving on any of the four tracks, using Left/Right and Gas buttons on phones, keyboard or a controller. No NPC racers are spawned.
 
 [Racing core](racing-core/README.md) is the code-first rebuild of Original, Skyline, Suzuka and Winding from 3D-World-3. It separates track geometry, kart physics, four NPC opponents, race rules and ghost records from presentation. Run `npm run test:racing-core`; [recorded test results](racing-core/TEST-RESULTS.json) include five-kart, three-lap races on every circuit.
 
