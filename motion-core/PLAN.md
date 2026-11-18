@@ -46,3 +46,39 @@ The rules, in plain words (ported from 3D-WORLD-3 `Player.updateGround`):
 
 Results: the new code matches the old code exactly (0.000 mm, 0.000 m/s,
 0.000°) on all 10 scripted stick tests at 60 fps.
+
+## Skeleton (approved plan, 18 Nov 2026)
+
+The owner chose to build the body's joints before hands, feet and walking,
+the way game developers do: an invisible skeleton of bones joined at
+pivots, with the clay parts hung on the bones later. Order:
+
+1. The skeleton (built, waiting for approval).
+2. Attach the clay body parts to the bones, sockets staying seated.
+3. Poses: set and blend joint angles smoothly.
+4. Reaching: work out joint angles from where a hand or foot must go.
+5. Hands and feet detail (finger curl, spread, thumb, toes, ball of the
+   foot, tiptoe), rebuilt to match the approved Codex hand and foot.
+6. Then the movement layers: balance, foot planning, legs, upper body.
+Grips for mini games come later, built on the hand layer.
+
+### Section 1 · The skeleton
+
+Files: `skeleton/bones.js` (the bones, measured from Checkpoint 2),
+`skeleton/skeleton.js` (building, limits, mirroring, forward kinematics),
+`tests/skeleton.mjs` (`npm run test:skeleton`).
+
+1. 48 bones: pelvis (root), spine, neck, head; each side upper arm, lower
+   arm, hand, thigh, shin, foot, toes, and three bones per finger and thumb.
+2. Every joint pivot was measured from the approved Checkpoint 2 model.
+   Angles are absolute (0 = limb hanging straight, finger straight); the
+   rest angles reproduce the approved model exactly.
+3. Each joint has limits: knees only bend backwards, elbows only forwards,
+   ankle and toes use the approved foot's range, fingers the approved
+   hand's curl range.
+4. Only the right side is written; the left is its exact mirror.
+5. Fingers: pivots at the middle of the approved hand's three bending
+   zones. Curling them lands each fingertip within 4 mm (rest) and 6 mm
+   (fully curled) of the approved hand. The exact finger surface will come
+   from the approved hand's own bending in section 5.
+6. No visuals yet; shown in the Test Lab once the body parts are attached.
