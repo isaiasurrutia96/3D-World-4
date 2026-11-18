@@ -160,12 +160,17 @@ export function thighRests(avatar){
  * thigh. At k = 1: palm centre on the thigh rest point, palm against the
  * thigh, fingers along the thigh toward the knee.
  */
+/** How far the seated hands turn in toward the middle of the body (degrees). */
+export const HANDS_IN = 20;
+
 export function sittingHands(solved, rests, k = 1, base = solved, skeleton = null){
  const goals = {};
  for(const s of ['L', 'R']){
   const t = solved.get('thigh.' + s), r = rests[s];
   const point = r.point.clone().sub(r.head).applyQuaternion(t.rotation).add(t.head), into = r.normal.clone().applyQuaternion(t.rotation).negate();
-  const along = t.tail.clone().sub(t.head).normalize();
+  // Fingers along the thigh, turned 20° toward the middle of the body (about the way
+  // the palm faces), so each thumb sits closer to the body.
+  const along = t.tail.clone().sub(t.head).normalize().applyAxisAngle(into, (s === 'L' ? 1 : -1) * HANDS_IN * Math.PI / 180);
   if(!skeleton){ goals['hand.' + s] = {palm: point.toArray(), face: into.toArray(), fingers: along.toArray()}; continue; }
   // Where the palm is now, which way it faces and points (hands hanging).
   const h = base.get('hand.' + s), b = skeleton.bones[skeleton.index.get('hand.' + s)], H0 = new Vector3(...b.head);
