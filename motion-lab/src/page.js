@@ -17,12 +17,12 @@ export function createMotionLab({title,section,videos=[],createSimulation=null,h
  const simulation=createSimulation?.({scene,renderer,stage,floor})||null;
  const marker=simulation?.marker||new T.Group();
  if(!simulation){const disc=new T.Mesh(new T.CylinderGeometry(.34,.34,.08,32),new T.MeshStandardMaterial({color:'#b9b2a6',roughness:.8}));disc.position.y=.045;marker.add(disc);marker.add(new T.ArrowHelper(new T.Vector3(0,0,1),new T.Vector3(0,.12,-.18),.95,0x333a3e,.24,.19));scene.add(marker);}
- const controller=simulation?.controller||createMoveController(),input=createInput(renderer.domElement),camera=new T.PerspectiveCamera(45,1,.05,simulation?20000:500),target=new T.Vector3(0,.1,0);
+ const controller=simulation?.controller||createMoveController(),input=createInput(renderer.domElement),camera=new T.PerspectiveCamera(45,1,.05,simulation?20000:500),target=new T.Vector3(0,.1,0),inspectionOffset=new T.Vector3();let inspectionZoom=null;
  let yaw=Math.PI,pitch=.5,distance=simulation?.distance||10,last=0,active=true,viewName='back';
  const cameraRay=new T.Raycaster(),rayDirection=new T.Vector3();
  function resize(){const rect=stage.getBoundingClientRect();camera.aspect=Math.max(1,rect.width)/Math.max(1,rect.height);camera.updateProjectionMatrix();renderer.setSize(Math.max(1,rect.width),Math.max(1,rect.height));if(simulation?.fitDistance&&viewName!=='free')distance=simulation.fitDistance(camera.aspect,yaw,pitch);}new ResizeObserver(resize).observe(stage);resize();
- function setView(name){const views={back:[Math.PI,simulation?.chasePitch??.5],front:[0,.5],side:[Math.PI/2,.4],top:[Math.PI,Math.PI/2],angled:[Math.PI*.78,.6]};const entry=views[name];if(!entry)return;yaw=controller.state.facing+entry[0];pitch=entry[1];if(simulation?.fitDistance)distance=simulation.fitDistance(camera.aspect,yaw,pitch);viewName=name;for(const button of document.querySelectorAll('[data-view]'))button.setAttribute('aria-pressed',String(button.dataset.view===name));}
- function reset(){input.reset();controller.place();const s=controller.state;target.set(s.x,(s.y||0)+(simulation?.targetHeight??.1),s.z);distance=simulation?.distance||10;setView('back');}
+ function setView(name){const views={back:[Math.PI,simulation?.chasePitch??.5],front:[0,.5],side:[Math.PI/2,.4],top:[Math.PI,Math.PI/2],angled:[Math.PI*.78,.6]};const entry=views[name];if(!entry)return;inspectionZoom?.reset();if(simulation?.fitDistance){inspectionOffset.set(0,0,0);const s=controller.state;target.set(s.x,(s.y||0)+(simulation?.targetHeight??.1),s.z);}yaw=controller.state.facing+entry[0];pitch=entry[1];if(simulation?.fitDistance)distance=simulation.fitDistance(camera.aspect,yaw,pitch);viewName=name;for(const button of document.querySelectorAll('[data-view]'))button.setAttribute('aria-pressed',String(button.dataset.view===name));}
+ function reset(){inspectionZoom?.reset();inspectionOffset.set(0,0,0);input.reset();controller.place();const s=controller.state;target.set(s.x,(s.y||0)+(simulation?.targetHeight??.1),s.z);distance=simulation?.distance||10;setView('back');}
  for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>setView(button.dataset.view);document.querySelector('#reset').onclick=reset;
  function setActive(value){active=value&&!document.hidden;input.setEnabled(active);}
  new IntersectionObserver(entries=>setActive(entries[0].isIntersecting),{threshold:0.02}).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;setActive(!document.hidden&&stage.getBoundingClientRect().bottom>topbar.getBoundingClientRect().bottom);});
@@ -33,8 +33,8 @@ export function createMotionLab({title,section,videos=[],createSimulation=null,h
   marker.position.set(state.x,state.y||0,state.z);marker.rotation.set(state.pitch||0,state.facing,state.bank||0);
   // The plain test slab grows if a long test travels beyond its starting area.
   if(!simulation){floor.scale.x=Math.max(1,Math.ceil((Math.abs(state.x)+50)/100));floor.scale.z=Math.max(1,Math.ceil((Math.abs(state.z)+50)/100));}
-  target.x=simulation?.chase?state.x:T.MathUtils.damp(target.x,state.x,10,seconds);target.z=simulation?.chase?state.z:T.MathUtils.damp(target.z,state.z,10,seconds);
-  target.y=T.MathUtils.damp(target.y,(state.y||0)+(simulation?.targetHeight??.1),10,seconds);
+  target.x=simulation?.chase?state.x+inspectionOffset.x:T.MathUtils.damp(target.x,state.x+inspectionOffset.x,10,seconds);target.z=simulation?.chase?state.z+inspectionOffset.z:T.MathUtils.damp(target.z,state.z+inspectionOffset.z,10,seconds);
+  target.y=T.MathUtils.damp(target.y,(state.y||0)+(simulation?.targetHeight??.1)+inspectionOffset.y,10,seconds);
   if(simulation?.chase&&viewName==='back')yaw+=Math.atan2(Math.sin(state.facing+Math.PI-yaw),Math.cos(state.facing+Math.PI-yaw))*(1-Math.exp(-(simulation.chaseRate??8)*seconds));
   camera.fov=simulation?.fov??(simulation?60+Math.min(6,Math.max(0,state.speed)/10):45);camera.updateProjectionMatrix();
   camera.position.set(target.x+Math.sin(yaw)*Math.cos(pitch)*distance,target.y+Math.sin(pitch)*distance,target.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.up.set(0,pitch>1.55?0:1,pitch>1.55?-1:0);camera.lookAt(target);camera.updateMatrixWorld(true);
@@ -43,8 +43,8 @@ export function createMotionLab({title,section,videos=[],createSimulation=null,h
   simulation?.afterFrame?.(seconds);renderer.render(scene,camera);
  }
  renderer.setAnimationLoop(ms=>{const dt=Math.min(simulation?.maxFrameSeconds??.05,last?(ms-last)/1000:1/60);last=ms;if(active)tick(dt);});
- simulation?.bind?.({input,camera,reset,setView,canvas:renderer.domElement});if(simulation)reset();
- installTestLabScene({scene,camera,renderer,floors:simulation?[]:[floor],createFloor:!simulation,getTarget:()=>target});
- window.motionLab={controller,input,marker,floor,renderer,scene,camera,view:setView,setCamera:(y,p)=>{yaw=y;pitch=p;viewName='free';},reset,tick,getState:()=>({movement:{...controller.state},input:input.getState(),camera:{yaw,pitch,distance,view:viewName},active})};
+ simulation?.bind?.({input,camera,target,reset,setView,canvas:renderer.domElement});if(simulation)reset();
+ inspectionZoom=installTestLabScene({scene,camera,renderer,floors:simulation?[]:[floor],createFloor:!simulation,getTarget:()=>target,canPinch:()=>Boolean(input.pinch),onTargetShift:shift=>inspectionOffset.add(shift),onFocusDistance:value=>{distance=value;}});
+ window.motionLab={controller,input,zoom:inspectionZoom,marker,floor,renderer,scene,camera,view:setView,setCamera:(y,p)=>{yaw=y;pitch=p;viewName='free';},reset,tick,getState:()=>({movement:{...controller.state},input:input.getState(),camera:{yaw,pitch,distance,view:viewName,target:target.toArray()},active})};
  window.motionLabReady=true;setView('back');
 }

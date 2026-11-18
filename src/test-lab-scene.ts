@@ -1,3 +1,4 @@
+import {installInspectionZoom} from './inspection-zoom';
 import {
   Box3, BoxGeometry, Mesh, MeshStandardMaterial, Object3D, OrthographicCamera, PerspectiveCamera,
   Scene, Vector3, WebGLRenderer,
@@ -6,13 +7,20 @@ import {
 type Options = {
   scene: Scene; camera: PerspectiveCamera; renderer: WebGLRenderer;
   getTarget: () => Vector3; floors?: Object3D[]; floorY?: number;
+  onTargetShift?: (shift: Vector3) => void; onFocusDistance?: (distance: number) => void; canPinch?: () => boolean;
   floorSize?: number; createFloor?: boolean; shadows?: Object3D[]; updateControls?: () => void;
 };
 
 /** Shared presentation only. Physics, subject geometry and animation stay in each test. */
-export function installTestLabScene(options: Options): void {
-  if (!new URLSearchParams(location.search).has('lab')) return;
-  const {scene, camera, renderer, getTarget, updateControls} = options;
+export function installTestLabScene(options: Options) {
+  const {scene,camera,renderer,getTarget,updateControls}=options;
+  let activeCamera: PerspectiveCamera|OrthographicCamera=camera;
+  const zoom=installInspectionZoom({scene,camera,canvas:renderer.domElement,getTarget,getCamera:()=>activeCamera,canPinch:options.canPinch,onTargetShift:options.onTargetShift,onFocusDistance:options.onFocusDistance});
+  if(!new URLSearchParams(location.search).has('lab')){
+    const render=renderer.render.bind(renderer);
+    renderer.render=(s,c)=>{if(s===scene&&c===camera)zoom.apply(camera);return render(s,c);};
+    return zoom;
+  }
   const floors = options.floors ?? [];
   if (!floors.length && options.createFloor !== false) {
     // No floor of its own: make one sized to the subject (its widest
@@ -57,7 +65,7 @@ export function installTestLabScene(options: Options): void {
   renderer.render = (renderScene, renderCamera) => {
     if (renderScene !== scene || renderCamera !== camera) return render(renderScene,renderCamera);
     for (const floor of [...floors,...(options.shadows ?? [])]) floor.visible = floorVisible;
-    if (!isometric) return render(scene,camera);
+    if (!isometric){activeCamera=camera;zoom.apply(camera);return render(scene,camera);}
     const target = getTarget(), distance = camera.position.distanceTo(target);
     const halfHeight = Math.tan(camera.fov*Math.PI/360)*distance*2.4;
     orthographic.left = -halfHeight*camera.aspect;
@@ -74,6 +82,7 @@ export function installTestLabScene(options: Options): void {
     orthographic.up.copy(camera.up);
     orthographic.lookAt(target);
     orthographic.updateProjectionMatrix();
+    orthographic.updateMatrixWorld(true);activeCamera=orthographic;zoom.apply(orthographic);
     // The isometric camera sits far away, so any fog would fade the whole
     // scene: switch fog off for this view only.
     const fog = scene.fog;
@@ -82,9 +91,9 @@ export function installTestLabScene(options: Options): void {
     scene.fog = fog;
   };
   window.testLabScene = {
-    camera, orthographic, floors,
+    camera, orthographic, floors, zoom,
     setIsometric(enabled: boolean) {
-      isometric = enabled;
+      zoom.reset();isometric = enabled;
       if (enabled) {
         const target = getTarget(), distance = camera.position.distanceTo(target);
         camera.position.copy(target).addScaledVector(direction,distance);
@@ -97,12 +106,13 @@ export function installTestLabScene(options: Options): void {
     },
     getState: () => ({isometric,floorVisible,floorColor:material.color.getHexString()}),
   };
+  return zoom;
 }
 
 declare global {
   interface Window {
     testLabScene?: {
-      camera: PerspectiveCamera; orthographic: OrthographicCamera; floors: Object3D[];
+      camera: PerspectiveCamera; orthographic: OrthographicCamera; floors: Object3D[]; zoom: ReturnType<typeof installInspectionZoom>;
       setIsometric: (enabled: boolean) => void; setFloorVisible: (visible: boolean) => void;
       getState: () => {isometric: boolean; floorVisible: boolean; floorColor: string};
     };

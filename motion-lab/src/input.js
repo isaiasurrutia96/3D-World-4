@@ -17,7 +17,7 @@ class LabInput{
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.reset();});
   canvas.addEventListener('pointerdown',event=>this.down(event));canvas.addEventListener('pointermove',event=>this.drag(event));
   for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,event=>this.up(event));
-  canvas.addEventListener('wheel',event=>{if(!this.enabled)return;event.preventDefault();this.zoom+=event.deltaY*.0015;},{passive:false});
+  canvas.addEventListener('wheel',event=>{if(!this.enabled)return;this.focused=true;event.preventDefault();this.zoom+=event.deltaY*.0015;},{passive:false});
   canvas.addEventListener('contextmenu',event=>event.preventDefault());
  }
  setTouchStick(enabled){this.touchStickEnabled=Boolean(enabled);this.reset();}
