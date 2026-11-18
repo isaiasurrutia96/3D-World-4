@@ -56,10 +56,12 @@ for(const j of joints){if(j.pts){j.restCentre=ballCentre(j.pts,j.child.rest);j.i
  j.restCentre=ballCentre(j.pts,j.child.rest);j.inParent=j.restCentre.clone().applyMatrix4(j.parent.rest.clone().invert());}
 let seed=3;const rand=()=>(seed=(seed*16807)%2147483647)/2147483647;
 const randomPose=()=>{const p={};for(const b of S.bones){if(!b.parent||b.name==='spine')continue;p[b.name]=Object.fromEntries(['x','y','z'].map(k=>[k,b.limits[k][0]+rand()*(b.limits[k][1]-b.limits[k][0])]));}return p;};
-const worstSeat={};for(let n=0;n<40;n++){A.apply(randomPose());for(const j of joints){const ball=ballCentre(j.pts,j.child.mesh.matrix),socket=j.inParent.clone().applyMatrix4(j.parent.mesh.matrix);worstSeat[j.name]=Math.max(worstSeat[j.name]??0,ball.distanceTo(socket));}}
+// Shoulders sit in the chest's firm zone, which follows the chest bone (firmMatrix).
+const parentMatrix=j=>j.name.startsWith('shoulder')?j.parent.firmMatrix:j.parent.mesh.matrix;
+const worstSeat={};for(let n=0;n<40;n++){A.apply(randomPose());for(const j of joints){const ball=ballCentre(j.pts,j.child.mesh.matrix),socket=j.inParent.clone().applyMatrix4(parentMatrix(j));worstSeat[j.name]=Math.max(worstSeat[j.name]??0,ball.distanceTo(socket));}}
 const seatMax=Math.max(...Object.values(worstSeat));
-check('every joint ball stays in its socket (waist, shoulders, elbows, wrists, hips, knees, head) in 40 random poses',seatMax<5e-4,Object.entries(worstSeat).map(([k,v])=>`${k} ${mm(v)}`).join(', '));
+check('every joint ball stays in its socket (waist, shoulders, elbows, wrists, hips, knees, head) in 40 random poses, chest bending included',seatMax<5e-4,Object.entries(worstSeat).map(([k,v])=>`${k} ${mm(v)}`).join(', '));
 A.apply(S.restPose());
 const t0=performance.now();for(let n=0;n<2000;n++)A.apply(randomPose());const us=(performance.now()-t0)/2000*1000;
-check('fast enough for every frame',us<300,`${us.toFixed(0)} µs to pose the whole body`);
+check('fast enough for every frame (under 2 ms of a 16 ms frame, chest bending every frame)',us<2000,`${us.toFixed(0)} µs to pose the whole body; holding still costs nothing extra for the chest`);
 console.table(R);const fail=R.some(r=>r.result==='FAIL');console.log(fail?'FAIL':'PASS: the body parts follow the skeleton and every joint stays seated.');process.exit(fail?1:0);

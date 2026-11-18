@@ -9,8 +9,12 @@
 // Not yet bending: the hand mesh's fingers and the foot's toes are part of
 // one piece each (their own bending comes back in the hands-and-feet
 // section). The torso is now a chest on a pelvis (ball-and-socket waist):
-// the chest turns on the hips; leaning is kept at 0 for now.
+// the chest turns on the hips; leaning is kept at 0 for now. The chest
+// rides on the waist bone and its surface bends softly toward the chest bone
+// (avatar-lab/src/chest-bend.js): a slight twist and small forward bend,
+// still one smooth piece.
 import * as T from 'three';
+import {createChestBend} from '../avatar-lab/src/chest-bend.js';
 import {createAssembledAvatar} from '../avatar-lab/src/avatar.js';
 import {createSkeleton} from '../motion-core/skeleton/skeleton.js';
 
@@ -38,6 +42,11 @@ export function createSkeletonAvatar(){
   const b=skeleton.bones[skeleton.index.get(bone)];
   return {label,mesh:m,bone,rest,restHead:new T.Vector3(...b.head)};
  });
+ // The chest surface bends between the waist and the chest bone.
+ const chestPart=attached.find(a=>a.label==='chest'),bone=n=>new T.Vector3(...skeleton.bones[skeleton.index.get(n)].head);
+ const chestBend=createChestBend(chestPart.mesh,chestPart.rest,bone('chest'));
+ chestPart.firmMatrix=new T.Matrix4();
+ const relTurn=new T.Quaternion();
  const delta=new T.Matrix4(),move=new T.Matrix4(),back=new T.Matrix4(),turn=new T.Matrix4();
  let solved=skeleton.solve(skeleton.restPose());
  /** Pose the body: each part = (move to the bone's joint now) · turn · (from its rest joint) · rest placement. */
@@ -48,8 +57,12 @@ export function createSkeletonAvatar(){
    move.makeTranslation(s.head.x,s.head.y,s.head.z);turn.makeRotationFromQuaternion(s.rotation);back.makeTranslation(-a.restHead.x,-a.restHead.y,-a.restHead.z);
    delta.copy(move).multiply(turn).multiply(back);a.mesh.matrix.multiplyMatrices(delta,a.rest);a.mesh.matrixWorldNeedsUpdate=true;
   }
+  // Chest bone's turn relative to the waist bone bends the chest surface.
+  relTurn.copy(solved.get('spine').rotation).invert().multiply(solved.get('chest').rotation);
+  chestBend.apply(relTurn);
+  chestPart.firmMatrix.multiplyMatrices(chestPart.mesh.matrix,chestBend.firmLocal);
   return solved;
  }
  apply(skeleton.restPose());
- return {root,skeleton,attached,apply,get solved(){return solved;},avatar};
+ return {root,skeleton,attached,apply,chestBend,get solved(){return solved;},avatar};
 }

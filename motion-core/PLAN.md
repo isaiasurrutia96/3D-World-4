@@ -68,7 +68,7 @@ Files: `skeleton/bones.js` (the bones, measured from Checkpoint 2),
 `skeleton/skeleton.js` (building, limits, mirroring, forward kinematics),
 `tests/skeleton.mjs` (`npm run test:skeleton`).
 
-1. 52 bones: pelvis (root), spine, neck, head; each side collarbone, upper
+1. 53 bones: pelvis (root), spine (waist), chest (upper chest), neck, head; each side collarbone, upper
    arm, lower arm, hand, hip bone, thigh, shin, foot, toes, and three bones
    per finger and thumb.
 2. Every joint pivot was measured from the approved Checkpoint 2 model.
@@ -145,3 +145,16 @@ shoulder forward needs that socket redesigned before the collarbone moves.
 The root (pelvis bone) sits exactly between the two hip balls and reaches
 up to the waist pivot, like the owner's reference picture. Moving or
 turning it carries the whole body; the hip bones start from it.
+
+### Chest bending (18 Nov 2026)
+
+The upper-chest bone (pivot on the centre line, level with the shoulder
+balls; order YXZ: bend, then twist) bends forward 0–15° and twists ±15°.
+The chest stays one piece: its surface bends softly
+(`avatar-lab/src/chest-bend.js`). Each point turns about the pivot by its
+own share of the bend (shared evenly by height above the seam rim) and of
+the twist (full at the sides where the shoulder sockets are, lagging at
+the front and back). Checks (`npm run test:chest`): exact at rest, seam and
+waist ball unchanged, top of chest firm, shoulder sockets snug (under
+1 mm), no folds, no pinching below 60%, no new crease over 8°, volume kept,
+about 1.3 ms per changing frame and nothing when still.

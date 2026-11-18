@@ -16,6 +16,10 @@ export const POSES={
  knee:{'thigh.R':{x:-95,y:0,z:0},'shin.R':{x:115,y:0,z:0},'foot.R':{x:30,y:0,z:0},'upperArm.L':{x:-30,y:0,z:20},'upperArm.R':{x:20,y:0,z:-20}},
  look:{'neck':{x:5,y:25,z:0},'head':{x:-10,y:15,z:6}},
  // The chest turns on the hips (the start of a throw); the head keeps facing forward.
+ 'chest-bend':{'chest':{x:15,y:0,z:0}},
+ 'chest-twist':{'chest':{x:0,y:15,z:0}},
+ // Winding up to throw: waist and chest turn together, the head keeps looking ahead.
+ 'wind-up':{'spine':{x:0,y:30,z:0},'chest':{x:6,y:15,z:0},'neck':{x:0,y:-30,z:0},'head':{x:0,y:-15,z:0},'upperArm.L':{x:-25,y:0,z:30},'upperArm.R':{x:-40,y:0,z:-20},'lowerArm.L':{x:-40,y:0,z:0},'lowerArm.R':{x:-70,y:0,z:0}},
  turn:{'spine':{x:0,y:35,z:0},'neck':{x:0,y:-20,z:0},'head':{x:0,y:-15,z:0},'upperArm.L':{x:-20,y:0,z:25},'upperArm.R':{x:-35,y:0,z:-15}},
 };
 

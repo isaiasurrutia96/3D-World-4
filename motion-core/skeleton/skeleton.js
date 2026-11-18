@@ -49,7 +49,8 @@ export function createSkeleton(){
   b.parentIndex=b.parent===null?-1:index.get(b.parent);
   if(b.parentIndex===undefined)throw Error(`Bone ${b.name}: unknown parent ${b.parent}`);
   b.frameQ=frameOf(b);b.frameInv=b.frameQ.clone().invert();
-  b.restQ=new Quaternion().setFromEuler(new Euler(b.rest.x*RAD,b.rest.y*RAD,b.rest.z*RAD,'XYZ'));
+  b.order=b.order??'XYZ';
+  b.restQ=new Quaternion().setFromEuler(new Euler(b.rest.x*RAD,b.rest.y*RAD,b.rest.z*RAD,b.order));
   b.restInv=b.restQ.clone().invert();
   b.length=new Vector3(...b.tail).distanceTo(new Vector3(...b.head));
  }
@@ -85,7 +86,7 @@ export function createSkeleton(){
   bones.forEach((b,i)=>{
    const a=p[b.name]??b.rest;
    // Change from rest, in avatar space: frame · R(angles) · R(rest)⁻¹ · frame⁻¹.
-   e.set(a.x*RAD,a.y*RAD,a.z*RAD,'XYZ');
+   e.set(a.x*RAD,a.y*RAD,a.z*RAD,b.order);
    d.copy(b.frameQ).multiply(q.setFromEuler(e)).multiply(b.restInv).multiply(b.frameInv);
    let head,rot;
    if(b.parentIndex<0){

@@ -91,14 +91,20 @@ Recorded 17 November 2026.
     thin links where a bone does not start at its parent's end (pelvis to
     waist, wrist to each knuckle). Nothing on the clay avatar changed.
 
-## Pelvis control moved low (18 Nov 2026, owner chose it)
+## Pelvis control moved low and chest bending (18 Nov 2026)
 
 16. The pelvis control (the skeleton's root, the one handle that moves and
     turns the whole body) now sits exactly between the two hip balls, as in
     the owner's reference picture, and reaches up to the waist. It was 15 cm
     higher. The clay avatar did not change. Kept: one waist joint (no extra
     chest pieces).
-17. Proposed, not approved: subtle chest movement by gentle bending of the
-    chest surface (slight upper twist and small forward bend, shoulders
-    following), instead of cutting the chest into more pieces. Waiting for
-    the owner's go-ahead.
+17. Owner said go: subtle chest movement by gentle bending of the chest
+    surface instead of more pieces (`avatar-lab/src/chest-bend.js`; checks:
+    `npm run test:chest`). A new upper-chest bone (53 bones) bends forward
+    up to 15° and twists ±15°, pivoting on the chest's centre line level
+    with the shoulder balls. Forward bend: shared evenly up the chest, so
+    each shoulder ball turns in place and the waist seam never moves.
+    Twist: the sides (shoulder sockets) turn fully, the front and back of
+    the belly lag smoothly; the rim and waist ball only slide round
+    themselves. Collarbones following the shoulders (shrugs) is the next
+    step, after the owner checks this. Waiting for the owner's check.

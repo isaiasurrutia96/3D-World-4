@@ -15,7 +15,8 @@
 //   x = bend (flex), y = twist, z = side (out/in).
 // For body joints the axes are the avatar's own (frame "body"). Fingers use
 // a frame built from their bend axis and the finger's direction.
-// Rotation order is x, then y, then z (three.js 'XYZ').
+// Rotation order is x, then y, then z (three.js 'XYZ'), except where a bone
+// names its own `order` (the upper chest bends forward, then twists: 'YXZ').
 //
 // Pivots are the centres of each joint's rounded ball (the end of the child
 // part that sits in its socket), so turning a joint keeps the ball in place
@@ -47,12 +48,19 @@ export const CENTRE = [
   note:'Root, the body\'s main control: it sits low, exactly between the two hip balls, and '
    +'reaches up to the waist. Moving or turning it carries the whole body; it has no limits.',
   rest:{x:0,y:0,z:0}, limits:null},
- {name:'spine', parent:'pelvis', head:[0,1.0572,0], tail:[0,1.2965,0.004], frame:'body',
+ {name:'spine', parent:'pelvis', head:[0,1.0572,0], tail:[0,1.2464,0], frame:'body',
   note:'Waist: the centre of the chest\'s ball in the pelvis socket (avatar-lab/src/torso-split.js). '
    +'y turns the chest on the hips (throwing, swinging). Leaning (x, z) is kept at 0 for now: the '
    +'chest rim meets the pelvis rim when it tilts.',
   rest:{x:0,y:0,z:0}, limits:{x:[0,0], y:[-35,35], z:[0,0]}},
- {name:'neck', parent:'spine', head:[0,1.2965,0.004], tail:[0,1.6745,0], frame:'body',
+ {name:'chest', parent:'spine', head:[0,1.2464,0], tail:[0,1.2965,0.004], frame:'body',
+  note:'Upper chest. Pivots on the chest\'s centre line, level with both shoulder balls, so a '
+   +'forward bend turns each ball in place and a twist turns around the waist\'s own axis. The chest surface bends softly between the waist and the shoulders '
+   +'(avatar-lab/src/chest-bend.js), so it stays one smooth piece. Small on purpose: '
+   +'+x bends forward up to 15°, y twists ±15°. No side bend (not asked for). Order YXZ: the '
+   +'bend happens first, then the twist, so the shoulder balls stay snug in the chest.',
+  order:'YXZ', rest:{x:0,y:0,z:0}, limits:{x:[0,15], y:[-15,15], z:[0,0]}},
+ {name:'neck', parent:'chest', head:[0,1.2965,0.004], tail:[0,1.6745,0], frame:'body',
   rest:{x:0,y:0,z:0}, limits:{x:[-20,25], y:[-40,40], z:[-20,20]}},
  {name:'head', parent:'neck', head:[0,1.6745,0], tail:[0,1.8945,0], frame:'body',
   note:'Pivots at the centre of the round head, so it turns in place over the neck.',
@@ -65,7 +73,7 @@ export const SIDE = [
  // arm hangs from it like a real skeleton. Locked for now: the shoulder
  // ball sits in a socket in the one-piece chest, so a shrug would pull it
  // out. Moving it (shrugs, reaching forward) needs that socket redesigned.
- {name:'clavicle', parent:'spine', head:[0,1.2965,0.004], tail:[0.2979,1.2464,0.0035], frame:'body',
+ {name:'clavicle', parent:'chest', head:[0,1.2965,0.004], tail:[0.2979,1.2464,0.0035], frame:'body',
   note:'Collarbone. Locked (0) until the shoulder socket allows shrugging.',
   rest:{x:0,y:0,z:0}, limits:{x:[0,0], y:[0,0], z:[0,0]}},
  // Arm. The approved model holds the arms a little out (z) and forward (x).

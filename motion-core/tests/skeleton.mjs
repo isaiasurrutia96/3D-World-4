@@ -73,7 +73,7 @@ const randomPose=(wild=1)=>{const p={};for(const b of S.bones){if(!b.parent)cont
 
 // ---- 1. Structure ----
 const names=new Set(S.bones.map(b=>b.name));
-check('52 bones: body, collarbones, hip bones, both arms and legs, 15 finger bones per hand',S.bones.length===52&&names.size===52,`${S.bones.length} bones`);
+check('53 bones: body (with an upper chest), collarbones, hip bones, both arms and legs, 15 finger bones per hand',S.bones.length===53&&names.size===53,`${S.bones.length} bones`);
 check('one root (pelvis); every other bone has a real parent listed before it',S.bones.filter(b=>b.parentIndex<0).length===1&&S.bones.every((b,i)=>b.parentIndex<i));
 check('names match his own left and right (he faces +Z, so his left is +X)',S.bones.filter(b=>b.side==='L').every(b=>b.head[0]>=0&&b.tail[0]>0)&&S.bones.filter(b=>b.side==='R').every(b=>b.head[0]<=0&&b.tail[0]<0)&&S.bones.every(b=>b.side==='C'||b.name.endsWith('.'+b.side)));
 
@@ -115,11 +115,18 @@ check('turning the shoulder moves the whole arm, hand and fingers, nothing else 
 const bend=S.solve({spine:{x:0,y:30,z:0}}),legStill=S.bones.filter(b=>/thigh|shin|foot|toes/.test(b.name)).every(b=>bend.get(b.name).head.distanceTo(rest.get(b.name).head)<1e-9);
 check('turning the waist turns the chest, arms and head but not the legs',legStill&&bend.get('upperArm.L').head.distanceTo(rest.get('upperArm.L').head)>.1,`shoulder moved ${mm(bend.get('upperArm.L').head.distanceTo(rest.get('upperArm.L').head))}`);
 const linked=['L','R'].every(sd=>{const c=S.bones[S.index.get('clavicle.'+sd)],u=S.bones[S.index.get('upperArm.'+sd)],h=S.bones[S.index.get('hip.'+sd)],t=S.bones[S.index.get('thigh.'+sd)];
- return u.parent==='clavicle.'+sd&&t.parent==='hip.'+sd&&dist(c.tail,u.head)<1e-9&&dist(h.tail,t.head)<1e-9&&dist(c.head,S.bones[S.index.get('spine')].tail)<1e-9&&dist(h.head,S.bones[S.index.get('pelvis')].head)<1e-9;});
+ return u.parent==='clavicle.'+sd&&t.parent==='hip.'+sd&&dist(c.tail,u.head)<1e-9&&dist(h.tail,t.head)<1e-9&&dist(c.head,S.bones[S.index.get('chest')].tail)<1e-9&&dist(h.head,S.bones[S.index.get('pelvis')].head)<1e-9;});
 const lockedOk=S.bones.filter(b=>/^(clavicle|hip)\./.test(b.name)).every(b=>['x','y','z'].every(k=>b.limits[k][0]===0&&b.limits[k][1]===0));
 check('arms hang from collarbones (neck base to shoulder) and legs from hip bones (pelvis to hip), both locked for now',linked&&lockedOk);
 const pv=S.bones[S.index.get('pelvis')],tl=S.bones[S.index.get('thigh.L')],tr=S.bones[S.index.get('thigh.R')];
 check('the pelvis control sits exactly between the two hip balls and reaches up to the waist',dist(pv.head,tl.head.map((v,i)=>(v+tr.head[i])/2))<1e-9&&dist(pv.tail,S.bones[S.index.get('spine')].head)<1e-9,`control at ${pv.head.map(v=>v.toFixed(4)).join(', ')} m`);
+// Chest: a small forward bend and twist carry the shoulders, arms and head, never the waist or legs.
+const fwd=S.solve({chest:{x:15,y:0,z:0}}),tw=S.solve({chest:{x:0,y:15,z:0}}),sideAsk=S.solve({chest:{x:0,y:0,z:20}});
+const still=s=>S.bones.filter(b=>/^(pelvis|spine|hip|thigh|shin|foot|toes)/.test(b.name)).every(b=>s.get(b.name).head.distanceTo(rest.get(b.name).head)<1e-9&&s.get(b.name).tail.distanceTo(rest.get(b.name).tail)<1e-9);
+const shT=tw.get('upperArm.L').head.distanceTo(rest.get('upperArm.L').head);
+const noSide=S.bones.every(b=>sideAsk.get(b.name).head.distanceTo(rest.get(b.name).head)<1e-9);
+const shB=fwd.get('upperArm.L').head.distanceTo(rest.get('upperArm.L').head);
+check('the upper chest bends forward (shoulder balls turn in place, head goes forward) and twists a little (shoulders swing round), never moving the waist or legs; no side bend',still(fwd)&&still(tw)&&shB<.002&&shT>.02&&fwd.get('head').head.z>rest.get('head').head.z+.08&&noSide,`15° bend: head ${mm(fwd.get('head').head.z-rest.get('head').head.z)} forward, shoulders move ${mm(shB)}; 15° twist: shoulders swing ${mm(shT)}`);
 let mirErr=0;for(let n=0;n<500;n++){const p=randomPose(),a=S.solve(p),b=S.solve(S.mirrorPose(p));for(const bone of S.bones){const other=bone.name.endsWith('.L')?bone.name.slice(0,-2)+'.R':bone.name.endsWith('.R')?bone.name.slice(0,-2)+'.L':bone.name;
  const h=a.get(bone.name).head,m=b.get(other).head;mirErr=Math.max(mirErr,Math.hypot(h.x+m.x,h.y-m.y,h.z-m.z));}}
 check('left and right are exact mirror images in every pose',mirErr<1e-9,`500 random poses, largest difference ${mirErr.toExponential(1)} m`);
@@ -135,7 +142,7 @@ const curlTip=four.map((f,i)=>dist(curl.get(`${f}3.L`).tail.toArray(),M.tipCurl[
 check('at rest, fingertips are within 4 mm of the approved hand',Math.max(...restTip)<.004,`${restTip.map(mm).join(', ')}`);
 check('fully curled, fingertips land within 6 mm of where the approved hand puts them',Math.max(...curlTip)<.006,`${curlTip.map(mm).join(', ')}`);
 const t0=performance.now();for(let n=0;n<2000;n++)S.solve(randomPose());const ms=(performance.now()-t0)/2000;
-check('fast enough for every frame',ms<.2,`${(ms*1000).toFixed(0)} µs to solve all 52 bones`);
+check('fast enough for every frame',ms<.2,`${(ms*1000).toFixed(0)} µs to solve all 53 bones`);
 
 console.table(R);const fail=R.some(r=>r.result==='FAIL');
 console.log(fail?'FAIL':'PASS: the skeleton matches the approved avatar and behaves as planned.');process.exit(fail?1:0);
