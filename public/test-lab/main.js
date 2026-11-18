@@ -58,6 +58,7 @@ function mirrorControls(doc){
 async function setTest(id){
  setMotionOpen(false);$('#motion-toggle').disabled=true;syncMotion=()=>{};
  if(!tests[id])return;subject=id;ready=false;window.testLabReady=false;const token=++generation;clock=null;syncControls=()=>{};controls.replaceChildren();loading.hidden=false;loading.textContent='Preparing '+tests[id].name.toLowerCase()+'…';$('#subject').value=id;$('#subject-status').textContent=tests[id].name;
+ $('#test-context').textContent=$('#subject').selectedOptions[0].textContent;
  const url=new URL(location.href);if(id==='avatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
  const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=universal-23';frame=node;host.replaceChildren(node);
  node.onload=async()=>{
