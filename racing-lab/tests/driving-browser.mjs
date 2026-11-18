@@ -16,12 +16,7 @@ catch {
 } });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }), base = `http://127.0.0.1:${server.address().port}/racing-lab/?drive=1`, errors = [], results = [];
-async function openOptions(page) {
-    if (await page.locator('#driving-options-toggle').isVisible() && await page.locator('#driving-options').isHidden())
-        await page.locator('#driving-options-toggle').click();
-}
 async function pressOption(page, selector) {
-    await openOptions(page);
     await page.locator(selector).click();
 }
 const settle = page => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
@@ -162,59 +157,60 @@ try {
     await mobile.waitForFunction(y=>Math.abs(drivingLab.getCameraState().headYaw-y)>.1,fpvBefore);assert.equal(await mobile.evaluate(()=>motionLab.getState().camera.view),'fpv');
     await pressOption(mobile, '#reset');assert.equal(await mobile.evaluate(()=>motionLab.getState().camera.view),'fpv');
     results.push('Phone FPV toggles, touch look and Reset preserve the first-person view.');
-    // The menu overlays the stage instead of shrinking it; every actual option remains usable.
+    // Original controls remain visible, including after selecting a view or track.
     for (const view of ['back','front','side','top','angled','fpv']) {
         await pressOption(mobile, `[data-view=${view}]`);
         assert.equal(await mobile.evaluate(() => motionLab.getState().camera.view), view);
-        assert(await mobile.locator('#driving-options').isHidden());
         assert.equal(await mobile.evaluate(() => motionLab.zoom.getState().enabled), false);
     }
-    await openOptions(mobile);
     await mobile.locator('#race-track').selectOption('skyline');
     await mobile.waitForFunction(() => drivingLab.getState().trackId === 'skyline');
-    assert(await mobile.locator('#driving-options').isHidden());
-    await openOptions(mobile);
-    assert.equal(await mobile.evaluate(() => document.activeElement.id), 'driving-options-toggle');
-    await mobile.keyboard.press('Tab');
-    assert.equal(await mobile.evaluate(() => document.activeElement.id), 'race-track');
-    await mobile.keyboard.press('Escape');
-    assert(await mobile.locator('#driving-options').isHidden());
-    await openOptions(mobile);
-    await mobile.locator('#driving-options-toggle').tap();
-    assert(await mobile.locator('#driving-options').isHidden());
-    await openOptions(mobile);
-    await mobile.locator('#stage canvas').tap({ position: { x: 195, y: 320 } });
-    assert(await mobile.locator('#driving-options').isHidden());
-    results.push('Phone menu: all six views, track selection and Reset work; selecting, retapping, Escape and outside touch close it.');
+    assert.equal(await mobile.locator('#driving-options-toggle').count(), 0);
+    results.push('Original top controls stay visible: all six views, track selection and Reset work without a dropdown.');
     const layouts = [];
     for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 768, height: 1024 }, { width: 1280, height: 800 }]) {
         await mobile.setViewportSize(viewport);
+        await mobile.evaluate(() => scrollTo(0,0));
+        await settle(mobile);
         await mobile.waitForFunction(() => Math.abs(document.querySelector('#stage').getBoundingClientRect().bottom - innerHeight) < 3);
         assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-        assert(await mobile.locator('#test-videos').isHidden());
-        assert(await mobile.locator('#driving-options').isHidden());
+        assert(await mobile.locator('#test-videos').isVisible());
         const stage = await mobile.locator('#stage').boundingBox();
-        assert(stage.y <= 64, `Header takes too much space: ${stage.y}`);
-        assert(stage.height >= viewport.height - 64);
+        assert(stage.y <= 120, `Compact original header takes too much space: ${stage.y}`);
+        assert(stage.height >= viewport.height - 120);
+        const videosTop = (await mobile.locator('#test-videos').boundingBox()).y;
+        assert(videosTop >= viewport.height - 2, JSON.stringify({rule:'Videos must start below the initial driving screen',viewport,stage,videosTop,scrollY:await mobile.evaluate(()=>window.scrollY)}));
+        await mobile.mouse.move(viewport.width*.6,stage.y+90);
         await mobile.mouse.wheel(0, 500);
         await settle(mobile);
         assert.equal(await mobile.evaluate(() => scrollY), 0);
         const left = await mobile.locator('#race-left').boundingBox(), right = await mobile.locator('#race-right').boundingBox();
         assert(right.x - left.x - left.width >= 12 - .1, 'Steering targets need a clear gap');
         assert(right.x + right.width < viewport.width / 2, 'Steering must stay on its own side');
-        if(viewport.width >= 768) assert(left.x > viewport.width * .15, 'Steering group should move inward');
-        await openOptions(mobile);
-        assert.deepEqual(await mobile.locator('#stage').boundingBox(), stage, 'Menu must not shrink the driving view');
-        const buttons = await mobile.locator('.drive-controls button,#race-boost,#reset,[data-view],#driving-options-toggle,#race-track').evaluateAll(bs => bs.map(b => { const r = b.getBoundingClientRect(); return { text: b.textContent, x: r.x, y: r.y, right: r.right, bottom: r.bottom, w: r.width, h: r.height }; }));
+        assert(left.x >= 20 && left.x <= 32, 'Steering should be only slightly inset from the original edge');
+        const buttons = await mobile.locator('.drive-controls button,#race-boost,#reset,[data-view],#race-track').evaluateAll(bs => bs.map(b => { const r = b.getBoundingClientRect(); return { text: b.textContent, x: r.x, y: r.y, right: r.right, bottom: r.bottom, w: r.width, h: r.height }; }));
         for (const b of buttons) {
             assert(b.w >= 44 && b.h >= 44, JSON.stringify(b));
             assert(b.x >= 0 && b.right <= viewport.width && b.y >= 0 && b.bottom <= viewport.height, JSON.stringify(b));
         }
-        await mobile.locator('#driving-options-toggle').tap();
-        assert(await mobile.locator('#driving-options').isHidden());
+        await mobile.locator('.drive-videos-link').tap();
+        await mobile.waitForFunction(() => scrollY > 0 && document.querySelector('#test-videos h2').getBoundingClientRect().bottom <= innerHeight);
+        assert.equal((await mobile.locator('#topbar').boundingBox()).y, 0);
+        await mobile.evaluate(() => scrollTo(0,0));
+        await mobile.waitForFunction(() => scrollY === 0 && motionLab.getState().active);
         layouts.push({ ...viewport, stageHeight:stage.height, headerHeight:stage.y, steeringGap:right.x-left.x-left.width, steeringLeft:left.x });
     }
-    results.push('Pinch/wheel zoom disabled without page zoom; full-height stage, hidden empty videos, inward separated steering targets and overlay menu pass five layouts.');
+    results.push('Five layouts: original header controls visible at full width, smaller header height, steering near edge, videos below the first screen and reachable by scrolling; driving zoom stays disabled.');
+    await mobile.setViewportSize({width:390,height:844});
+    await settle(mobile);
+    const scrollLink = await mobile.locator('.drive-videos-link').boundingBox(), scrollX=scrollLink.x+scrollLink.width/2, scrollY=scrollLink.y+scrollLink.height/2;
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{id:20,x:scrollX,y:scrollY}]});
+    for(let step=1;step<=6;step++) await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{id:20,x:scrollX,y:scrollY-step*50}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    await mobile.waitForFunction(()=>window.scrollY>40);
+    await mobile.evaluate(()=>scrollTo(0,0));
+    await mobile.waitForFunction(()=>window.scrollY===0&&motionLab.getState().active);
+    results.push('Phone touch swipe from the video link scrolls to the video section; returning to the stage resumes driving.');
     await mobile.setViewportSize({width:844,height:390});
     await settle(mobile);
     // Prove separated targets still deliver the correct real touch input after rotating.
