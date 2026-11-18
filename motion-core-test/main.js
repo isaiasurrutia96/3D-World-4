@@ -6,9 +6,9 @@ import * as T from 'three';
 import {MovementInput} from '../movement/input.js';
 import {createMoveController} from '../motion-core/controller.js';
 
-const SLAB=80;
+const SLAB=30;
 const renderer=new T.WebGLRenderer({antialias:!matchMedia('(pointer:coarse)').matches});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));document.body.prepend(renderer.domElement);
-const scene=new T.Scene();scene.background=new T.Color('#405363');scene.fog=new T.Fog('#405363',40,90);
+const scene=new T.Scene();scene.background=new T.Color('#405363'); // no fog: the isometric camera sits far away and fog would hide everything
 
 // Floor with faint 1 m lines so speed is readable.
 const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');g.fillStyle='#8f9295';g.fillRect(0,0,128,128);g.strokeStyle='#868a8d';g.lineWidth=2;g.strokeRect(1,1,126,126);
@@ -28,6 +28,17 @@ scene.add(new T.HemisphereLight(0xffffff,0x9fa6b0,1.8));
 const sun=new T.DirectionalLight(0xffffff,2.2);scene.add(sun,sun.target);
 
 const move=createMoveController(),input=new MovementInput(renderer.domElement);
+// Keyboard: the 3D-WORLD-3 layout. E S D F or arrows move (full push = run),
+// Shift walks, J L I K turn the camera. The shared input keeps touch only.
+input.keys={add(){},delete(){},has(){return false;},clear(){}};
+const keys=new Set();
+addEventListener('keydown',e=>{if(e.code.startsWith('Arrow'))e.preventDefault();keys.add(e.code);});
+addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
+function keyboard(dt){
+ let x=0,y=0;if(keys.has('KeyE')||keys.has('ArrowUp'))y++;if(keys.has('KeyD')||keys.has('ArrowDown'))y--;if(keys.has('KeyS')||keys.has('ArrowLeft'))x--;if(keys.has('KeyF')||keys.has('ArrowRight'))x++;
+ if(x||y){const k=(keys.has('ShiftLeft')||keys.has('ShiftRight')?.45:1)/Math.hypot(x,y);x*=k;y*=k;}
+ const t=2.4*dt;return {move:{x,y},look:{x:(keys.has('KeyL')?t:0)-(keys.has('KeyJ')?t:0),y:(keys.has('KeyK')?t:0)-(keys.has('KeyI')?t*.7:0)}};
+}
 const camera=new T.PerspectiveCamera(50,1,.05,160),follow=new T.Vector3(0,.8,0);let yaw=Math.PI,pitch=.42,distance=7,override=null;
 function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}addEventListener('resize',resize);resize();
 
@@ -39,8 +50,8 @@ function gamepad(){for(const p of navigator.getGamepads?.()??[]){if(!p)continue;
 const status=document.querySelector('#status'),names={idle:'Standing',walk:'Walking',run:'Running',skid:'Skidding',brake:'Braking'};let last=0;
 renderer.setAnimationLoop(ms=>{
  const dt=Math.min(.05,last?(ms-last)/1000:1/60);last=ms;
- const look=input.consumeLook(),pad=gamepad();yaw-=look.x+(pad?pad.look.x*2.4*dt:0);pitch=T.MathUtils.clamp(pitch+look.y+(pad?pad.look.y*1.6*dt:0),.05,Math.PI/2-.05);distance=T.MathUtils.clamp(distance*(1+look.zoom),3,20);
- let stick=override||input.update();if(!override&&pad&&(pad.move.x||pad.move.y)&&!stick.x&&!stick.y)stick=pad.move;
+ const look=input.consumeLook(),pad=gamepad(),kb=keyboard(dt);yaw-=look.x+kb.look.x+(pad?pad.look.x*2.4*dt:0);pitch=T.MathUtils.clamp(pitch+look.y+kb.look.y+(pad?pad.look.y*1.6*dt:0),.05,Math.PI/2-.05);distance=T.MathUtils.clamp(distance*(1+look.zoom),3,20);
+ let stick=override||(kb.move.x||kb.move.y?kb.move:input.update());if(!override&&pad&&(pad.move.x||pad.move.y)&&!stick.x&&!stick.y)stick=pad.move;
  const fx=-Math.sin(yaw),fz=-Math.cos(yaw),s=move.advance(dt,fx*stick.y-fz*stick.x,fz*stick.y+fx*stick.x);
  if(Math.abs(s.x)>SLAB/2-1||Math.abs(s.z)>SLAB/2-1)move.place(0,0,s.facing); // off the slab: back to the middle
  marker.position.set(s.x,0,s.z);marker.rotation.y=s.facing;
