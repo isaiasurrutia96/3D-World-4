@@ -2,6 +2,8 @@
 
 Current avatar: **Checkpoint 2**, saved on 17 November 2026.
 
+[Racing core](racing-core/README.md) is the code-first rebuild of Original, Skyline, Suzuka and Winding from 3D-World-3. It separates track geometry, kart physics, four NPC opponents, race rules and ghost records from presentation. Run `npm run test:racing-core`; [recorded test results](racing-core/TEST-RESULTS.json) include five-kart, three-lap races on every circuit.
+
 [Open Motion Lab](https://isaiasurrutia96.github.io/3D-World-4/motion-lab/): the code-first movement test template, using one keyboard/mouse/touch/gamepad input module and Claude's unmodified motion core. It currently shows a marker, with placeholder visuals. [Motion Lab checkpoint 1](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/motion-lab-1/) preserves this working baseline.
 
 [Open Test Lab](https://isaiasurrutia96.github.io/3D-World-4/test-lab/): one workspace for the avatar, walking, running, hands, feet and world studies. View buttons sit below the model; scroll down for test controls and walking/running videos with slow playback. The avatar's athletic movement direction is saved in [AVATAR-DIRECTION.md](docs/AVATAR-DIRECTION.md).

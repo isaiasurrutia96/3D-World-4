@@ -1,0 +1,127 @@
+{
+  "generatedAt": "2026-11-18T01:51:38.419Z",
+  "sourceRevision": "573664e824a04234240a24dfc2eae2273e30a4ca",
+  "visuals": "No renderer is required by these checks",
+  "fullRaces": [
+    {
+      "track": "original",
+      "karts": 5,
+      "laps": 3,
+      "finished": 5,
+      "respawns": 0,
+      "raceSeconds": 364.075,
+      "finishTimes": [
+        {
+          "id": "player",
+          "seconds": 357.334
+        },
+        {
+          "id": "npc-1",
+          "seconds": 358.717
+        },
+        {
+          "id": "npc-3",
+          "seconds": 359.105
+        },
+        {
+          "id": "npc-2",
+          "seconds": 361.173
+        },
+        {
+          "id": "npc-4",
+          "seconds": 364.068
+        }
+      ]
+    },
+    {
+      "track": "skyline",
+      "karts": 5,
+      "laps": 3,
+      "finished": 5,
+      "respawns": 0,
+      "raceSeconds": 406.408,
+      "finishTimes": [
+        {
+          "id": "npc-1",
+          "seconds": 392.511
+        },
+        {
+          "id": "npc-3",
+          "seconds": 393.253
+        },
+        {
+          "id": "player",
+          "seconds": 397.807
+        },
+        {
+          "id": "npc-2",
+          "seconds": 402.258
+        },
+        {
+          "id": "npc-4",
+          "seconds": 406.404
+        }
+      ]
+    },
+    {
+      "track": "suzuka",
+      "karts": 5,
+      "laps": 3,
+      "finished": 5,
+      "respawns": 0,
+      "raceSeconds": 479.508,
+      "finishTimes": [
+        {
+          "id": "player",
+          "seconds": 467.665
+        },
+        {
+          "id": "npc-1",
+          "seconds": 470.365
+        },
+        {
+          "id": "npc-3",
+          "seconds": 470.597
+        },
+        {
+          "id": "npc-2",
+          "seconds": 474.465
+        },
+        {
+          "id": "npc-4",
+          "seconds": 479.506
+        }
+      ]
+    },
+    {
+      "track": "winding",
+      "karts": 5,
+      "laps": 3,
+      "finished": 5,
+      "respawns": 0,
+      "raceSeconds": 714.108,
+      "finishTimes": [
+        {
+          "id": "player",
+          "seconds": 706.303
+        },
+        {
+          "id": "npc-2",
+          "seconds": 709.699
+        },
+        {
+          "id": "npc-1",
+          "seconds": 712.299
+        },
+        {
+          "id": "npc-4",
+          "seconds": 712.884
+        },
+        {
+          "id": "npc-3",
+          "seconds": 714.104
+        }
+      ]
+    }
+  ]
+}
