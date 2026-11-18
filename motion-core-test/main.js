@@ -8,7 +8,7 @@ import {createMoveController} from '../motion-core/controller.js';
 
 const SLAB=80;
 const renderer=new T.WebGLRenderer({antialias:!matchMedia('(pointer:coarse)').matches});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));document.body.prepend(renderer.domElement);
-const scene=new T.Scene();scene.background=new T.Color('#405363');scene.fog=new T.Fog('#405363',40,90);
+const scene=new T.Scene();scene.background=new T.Color('#405363'); // no fog: the isometric camera sits far away and fog would hide everything
 
 // Floor with faint 1 m lines so speed is readable.
 const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');g.fillStyle='#8f9295';g.fillRect(0,0,128,128);g.strokeStyle='#868a8d';g.lineWidth=2;g.strokeRect(1,1,126,126);
