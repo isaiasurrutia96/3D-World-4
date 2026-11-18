@@ -139,3 +139,9 @@ and each leg from a hip bone (pelvis centre to the hip ball). Both are
 locked at 0: the hip bones are part of the solid pelvis, and the shoulder
 ball sits in a socket in the one-piece chest, so shrugging or reaching the
 shoulder forward needs that socket redesigned before the collarbone moves.
+
+### Pelvis control (18 Nov 2026)
+
+The root (pelvis bone) sits exactly between the two hip balls and reaches
+up to the waist pivot, like the owner's reference picture. Moving or
+turning it carries the whole body; the hip bones start from it.

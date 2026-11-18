@@ -81,7 +81,7 @@ Recorded 17 November 2026.
     view. Owner approved the look and the waist turn; Checkpoint 2 updated
     in place (same name).
 
-## Collarbones and hip bones (18 Nov 2026, waiting for owner check)
+## Collarbones and hip bones (approved 18 Nov 2026)
 
 15. The skeleton now has 52 bones: a collarbone on each side (base of the
     neck to the shoulder ball; the arm hangs from it) and a hip bone on
@@ -90,3 +90,15 @@ Recorded 17 November 2026.
     so a shrug needs that socket redesigned first. The bones view also draws
     thin links where a bone does not start at its parent's end (pelvis to
     waist, wrist to each knuckle). Nothing on the clay avatar changed.
+
+## Pelvis control moved low (18 Nov 2026, owner chose it)
+
+16. The pelvis control (the skeleton's root, the one handle that moves and
+    turns the whole body) now sits exactly between the two hip balls, as in
+    the owner's reference picture, and reaches up to the waist. It was 15 cm
+    higher. The clay avatar did not change. Kept: one waist joint (no extra
+    chest pieces).
+17. Proposed, not approved: subtle chest movement by gentle bending of the
+    chest surface (slight upper twist and small forward bend, shoulders
+    following), instead of cutting the chest into more pieces. Waiting for
+    the owner's go-ahead.

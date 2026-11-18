@@ -43,8 +43,9 @@ const WRIST = [0.4088,0.6778,0.1284];
 
 /** Centre-line bones. */
 export const CENTRE = [
- {name:'pelvis', parent:null, head:[0,0.9895,0], tail:[0,0.9695,0.025], frame:'body',
-  note:'Root. Moves and turns freely with the body; its joint has no limits.',
+ {name:'pelvis', parent:null, head:[0,0.8395,0.025], tail:[0,1.0572,0], frame:'body',
+  note:'Root, the body\'s main control: it sits low, exactly between the two hip balls, and '
+   +'reaches up to the waist. Moving or turning it carries the whole body; it has no limits.',
   rest:{x:0,y:0,z:0}, limits:null},
  {name:'spine', parent:'pelvis', head:[0,1.0572,0], tail:[0,1.2965,0.004], frame:'body',
   note:'Waist: the centre of the chest\'s ball in the pelvis socket (avatar-lab/src/torso-split.js). '
@@ -78,10 +79,10 @@ export const SIDE = [
   note:'Wrist. Rests turned 8° (fingertips slightly forward); 0 is the hand hanging straight.',
   rest:{x:HAND_TILT,y:0,z:0}, limits:{x:[-70,70], y:[0,0], z:[-20,30]}},
 
- // Hip bone: from the centre of the pelvis to the hip ball, so the leg
+ // Hip bone: from the pelvis control (between the hips) out to the hip ball, so the leg
  // hangs from the pelvis. Fixed: the pelvis is one solid piece (as in a
  // real body, where the two hip bones are part of the pelvis).
- {name:'hip', parent:'pelvis', head:[0,0.9895,0], tail:[0.15,0.8395,0.025], frame:'body',
+ {name:'hip', parent:'pelvis', head:[0,0.8395,0.025], tail:[0.15,0.8395,0.025], frame:'body',
   note:'Hip bone (part of the pelvis). Fixed.',
   rest:{x:0,y:0,z:0}, limits:{x:[0,0], y:[0,0], z:[0,0]}},
  // Leg.
