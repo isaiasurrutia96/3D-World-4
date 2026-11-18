@@ -24,7 +24,7 @@ export function measure(){
  const W=o=>o.getWorldPosition(new T.Vector3()).toArray(),m={};
  const neck=r.torso.children.find(o=>o.name==='original-neck');neck.geometry.computeBoundingBox();
  m['neck']=neck.localToWorld(new T.Vector3(0,neck.geometry.boundingBox.min.y,0)).toArray();
- m['pelvis']=W(r.body);m['spine']=a.waist.chest.localToWorld(a.waist.pivotLocal.clone()).toArray();m['head']=W(r.head);
+ m['spine']=a.waist.chest.localToWorld(a.waist.pivotLocal.clone()).toArray();m['head']=W(r.head);
  const verts=mesh=>{const p=mesh.geometry.attributes.position,out=[];for(let i=0;i<p.count;i++)out.push(new T.Vector3(p.getX(i),p.getY(i),p.getZ(i)).applyMatrix4(mesh.matrixWorld));return out;};
  const end=(mesh,top,band)=>{const v=verts(mesh);let e=top?-1e9:1e9;for(const p of v)e=top?Math.max(e,p.y):Math.min(e,p.y);return v.filter(p=>top?p.y>e-band:p.y<e+band);};
  // Centre of a rounded joint end (least-squares sphere fit).
@@ -118,6 +118,8 @@ const linked=['L','R'].every(sd=>{const c=S.bones[S.index.get('clavicle.'+sd)],u
  return u.parent==='clavicle.'+sd&&t.parent==='hip.'+sd&&dist(c.tail,u.head)<1e-9&&dist(h.tail,t.head)<1e-9&&dist(c.head,S.bones[S.index.get('spine')].tail)<1e-9&&dist(h.head,S.bones[S.index.get('pelvis')].head)<1e-9;});
 const lockedOk=S.bones.filter(b=>/^(clavicle|hip)\./.test(b.name)).every(b=>['x','y','z'].every(k=>b.limits[k][0]===0&&b.limits[k][1]===0));
 check('arms hang from collarbones (neck base to shoulder) and legs from hip bones (pelvis to hip), both locked for now',linked&&lockedOk);
+const pv=S.bones[S.index.get('pelvis')],tl=S.bones[S.index.get('thigh.L')],tr=S.bones[S.index.get('thigh.R')];
+check('the pelvis control sits exactly between the two hip balls and reaches up to the waist',dist(pv.head,tl.head.map((v,i)=>(v+tr.head[i])/2))<1e-9&&dist(pv.tail,S.bones[S.index.get('spine')].head)<1e-9,`control at ${pv.head.map(v=>v.toFixed(4)).join(', ')} m`);
 let mirErr=0;for(let n=0;n<500;n++){const p=randomPose(),a=S.solve(p),b=S.solve(S.mirrorPose(p));for(const bone of S.bones){const other=bone.name.endsWith('.L')?bone.name.slice(0,-2)+'.R':bone.name.endsWith('.R')?bone.name.slice(0,-2)+'.L':bone.name;
  const h=a.get(bone.name).head,m=b.get(other).head;mirErr=Math.max(mirErr,Math.hypot(h.x+m.x,h.y-m.y,h.z-m.z));}}
 check('left and right are exact mirror images in every pose',mirErr<1e-9,`500 random poses, largest difference ${mirErr.toExponential(1)} m`);
