@@ -46,9 +46,11 @@ export const CENTRE = [
  {name:'pelvis', parent:null, head:[0,0.9895,0], tail:[0,0.9695,0.025], frame:'body',
   note:'Root. Moves and turns freely with the body; its joint has no limits.',
   rest:{x:0,y:0,z:0}, limits:null},
- {name:'spine', parent:'pelvis', head:[0,0.9895,0], tail:[0,1.2965,0.004], frame:'body',
-  note:'Waist. +x leans forward. Turns the whole upper body; the legs stay with the pelvis.',
-  rest:{x:0,y:0,z:0}, limits:{x:[-15,40], y:[-35,35], z:[-25,25]}},
+ {name:'spine', parent:'pelvis', head:[0,1.0572,0], tail:[0,1.2965,0.004], frame:'body',
+  note:'Waist: the centre of the chest\'s ball in the pelvis socket (avatar-lab/src/torso-split.js). '
+   +'y turns the chest on the hips (throwing, swinging). Leaning (x, z) is kept at 0 for now: the '
+   +'chest rim meets the pelvis rim when it tilts.',
+  rest:{x:0,y:0,z:0}, limits:{x:[0,0], y:[-35,35], z:[0,0]}},
  {name:'neck', parent:'spine', head:[0,1.2965,0.004], tail:[0,1.6745,0], frame:'body',
   rest:{x:0,y:0,z:0}, limits:{x:[-20,25], y:[-40,40], z:[-20,20]}},
  {name:'head', parent:'neck', head:[0,1.6745,0], tail:[0,1.8945,0], frame:'body',

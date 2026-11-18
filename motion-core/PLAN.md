@@ -124,3 +124,9 @@ Files: `skeleton/pose.js` (easing, blending, clips, pose player),
    put, the hand swings about 17 cm.
 5. Any future pose (point, thumbs up, grips, kart poses) is just a list of
    joint angles added to poses.js.
+
+### Waist (18 Nov 2026)
+
+The torso is a chest on a pelvis with a ball-and-socket waist. The spine
+bone now pivots at the chest ball's centre; it turns (y) ±35° and does not
+lean yet. The pelvis bone carries the pelvis piece and the legs.

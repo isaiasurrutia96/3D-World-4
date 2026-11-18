@@ -3,6 +3,7 @@ import {createApprovedAvatar} from '../../avatar/src/approved-avatar.js';
 import {createFootShape} from '../../foot-lab/src/foot-shape.js';
 import {createCalf} from '../../foot-lab/src/calf.js';
 import {createFootRig,REST_POSE} from '../../foot-lab/src/foot-rig.js';
+import {splitTorso} from './torso-split.js';
 
 // How far both hands turn at the wrist at rest (degrees): the fingertips
 // point slightly forward. Owner's change, 18 Nov 2026.
@@ -44,6 +45,8 @@ function tiltHands(avatar,degrees){
 export function createAssembledAvatar(options={}){
  const avatar=createApprovedAvatar(),{rig}=avatar,lowerLegs=[];
  tiltHands(avatar,options.handTilt??HAND_TILT_DEGREES);
+ // Chest and pelvis as two pieces joined by a ball-and-socket waist.
+ const waist=options.torsoSplit===false?null:splitTorso(rig);
  rig.root.updateMatrixWorld(true);
  for(const [knee,side] of [[rig.kneeLeft,-1],[rig.kneeRight,1]]){
   const oldCalf=knee.children[0],oldAnkle=knee.children[1];oldCalf.geometry.computeBoundingBox();
@@ -75,5 +78,5 @@ export function createAssembledAvatar(options={}){
   rig.root.updateMatrixWorld(true);
  }
  setFootPose(REST_POSE);
- return {...avatar,lowerLegs,setFootPose,bodyRest};
+ return {...avatar,lowerLegs,setFootPose,bodyRest,waist};
 }
