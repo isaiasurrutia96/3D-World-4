@@ -13,3 +13,5 @@ Build with `npm run build` (or `npm run build:racing-lab` after dependencies exi
 The earlier `src/simulation.js`, `src/track-view.js` and old capture script are unused prototype files, kept temporarily for history. They are not the foundation for subsequent approved layers.
 
 The default preview omits the former hub connectors in both logic and rendering. Curbs and guardrails close those entry gaps; the main loops and internal overpasses stay intact. Seven static mesh objects make up each track view. Optional source-fidelity tests enable the original connector explicitly.
+
+Inspection supports off-center pinch and cursor-focused wheel zoom, plus two-finger panning, through the shared viewer. Camera near/far precision follows the current inspection target rather than the course center, allowing close inspection of outer turns and elevated sections.

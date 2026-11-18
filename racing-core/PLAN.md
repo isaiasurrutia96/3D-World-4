@@ -98,3 +98,7 @@ Five Node presentation checks pass before the preview build; the build runs them
 - Node checks verify absent support on connector-only points, null entrance/access values, empty connector geometry, closed walls/curbs and unchanged loop/gates. The presentation consumes that same profile; it creates seven static track mesh objects per circuit and no access bridge/curb objects.
 
 Continue to wait for visual approval before kart handling.
+
+## Owner-requested inspection controls
+
+18 November 2026: visual approval is paused while the shared Test Lab viewer gains off-center inspection. Pinch focuses beneath the two-finger midpoint and moving the midpoint pans; wheel/trackpad zoom focuses beneath the cursor. Perspective focus depth follows the picked surface so a close zoom approaches that part without crossing it. The shared Motion Lab camera retains the target offset until Reset or an explicit fitted view. Isometric presentation and ordinary OrbitControls labs use the same correction. Camera gestures do not alter the checked track geometry or any movement-core code. Ten Node point/depth/picking tests include frame-split equivalence; browser checks measure projected pixel stability for off-center track perspective/isometric gestures and an avatar part, wheel focus, release stability and page-zoom suppression. This is an inspection fix, not approval to start kart handling.
