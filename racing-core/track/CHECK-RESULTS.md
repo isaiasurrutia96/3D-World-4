@@ -1,10 +1,10 @@
 # Track layer 1: measured results
 
-This is track logic only. No avatar, kart handling, visual preview or later racing layer is approved by these checks.
+This is track logic only. The owner approved track logic and the Original Circuit seam fix. These checks do not approve kart handling or later racing layers.
 
 Source: LetsGo Racing `573664e824a04234240a24dfc2eae2273e30a4ca`. Every rule below is executed in Node.
 
-| Track | Road segments | Rails | Physical length (m) | Source station length (m) | Source seam gap (m) | Proposed seam gap (m) | Source seam closed? |
+| Track | Road segments | Rails | Physical length (m) | Source station length (m) | Source seam gap (m) | Approved seam gap (m) | Source seam closed? |
 |---|---:|---:|---:|---:|---:|---:|---|
 | Original Circuit | 1200 | 2395 | 3682.701867103 | 3679.832947424 | 0.046163501 | 0 | FAIL |
 | Skyline Circuit | 1800 | 3594 | 4513.430721129 | 4510.258330488 | 0 | 0 | PASS |
@@ -13,7 +13,7 @@ Source: LetsGo Racing `573664e824a04234240a24dfc2eae2273e30a4ca`. Every rule bel
 
 The source station length comes from its spline lookup table. Physical length is measured along the actual 3D road samples; gates keep their exact source positions.
 
-**Open decision:** Original Circuit has a 0.046163501 m (4.62 cm) road-edge seam mismatch in the source. Its centerline closes. Reference mode preserves it. The tested weld option closes that seam and adjusts two rail endpoints by at most 4.67 cm, without moving the centerline or gates. The repair is not enabled by default and needs owner approval. The other three seams are already closed.
+**Approved fix:** Original Circuit has a 0.046163501 m (4.62 cm) road-edge seam mismatch in the source. Its centerline closes. Reference mode preserves it. The tested weld option closes that seam and adjusts two rail endpoints by at most 4.67 cm, without moving the centerline or gates. The owner approved this repair; it is now enabled by default. Reference mode remains available for source-fidelity checks. The other three seams are already closed.
 
 **Node verification: 50 PASS, 0 FAIL.** This verifies the recorded reference issue and the candidate repair; it does not mean the reference seam is watertight.
 
@@ -94,11 +94,11 @@ The source station length comes from its spline lookup table. Physical length is
 - Measured result: `{"branchChecks":2}`
 - **PASS**
 
-### original — Reference seam mismatch is measured; the proposed weld closes only the seam
+### original — Approved seam weld closes only the source seam
 
 - Rule: Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.
-- Scripted input: Compare reference mode against the explicit, unapproved seam-weld option.
-- Measured result: `{"referenceEdgeGap":0.04616350088989525,"proposedEdgeGap":0,"changedCorners":2,"maximumRoadEdit":0.04616350088989525,"changedWallEnds":2,"maximumWallEdit":0.04665460196316793,"enabledByDefault":"reference"}`
+- Scripted input: Compare reference mode against the approved default seam weld.
+- Measured result: `{"referenceEdgeGap":0.04616350088989525,"proposedEdgeGap":0,"changedCorners":2,"maximumRoadEdit":0.04616350088989525,"changedWallEnds":2,"maximumWallEdit":0.04665460196316793,"enabledByDefault":"weld"}`
 - **PASS**
 
 ### skyline — Road corners and wall endpoints exactly match the pinned source
@@ -178,11 +178,11 @@ The source station length comes from its spline lookup table. Physical length is
 - Measured result: `{"branchChecks":20}`
 - **PASS**
 
-### skyline — Reference seam mismatch is measured; the proposed weld closes only the seam
+### skyline — Approved seam weld closes only the source seam
 
 - Rule: Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.
-- Scripted input: Compare reference mode against the explicit, unapproved seam-weld option.
-- Measured result: `{"referenceEdgeGap":0,"proposedEdgeGap":0,"changedCorners":0,"maximumRoadEdit":0,"changedWallEnds":0,"maximumWallEdit":0,"enabledByDefault":"reference"}`
+- Scripted input: Compare reference mode against the approved default seam weld.
+- Measured result: `{"referenceEdgeGap":0,"proposedEdgeGap":0,"changedCorners":0,"maximumRoadEdit":0,"changedWallEnds":0,"maximumWallEdit":0,"enabledByDefault":"weld"}`
 - **PASS**
 
 ### suzuka — Road corners and wall endpoints exactly match the pinned source
@@ -262,11 +262,11 @@ The source station length comes from its spline lookup table. Physical length is
 - Measured result: `{"branchChecks":2}`
 - **PASS**
 
-### suzuka — Reference seam mismatch is measured; the proposed weld closes only the seam
+### suzuka — Approved seam weld closes only the source seam
 
 - Rule: Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.
-- Scripted input: Compare reference mode against the explicit, unapproved seam-weld option.
-- Measured result: `{"referenceEdgeGap":0,"proposedEdgeGap":0,"changedCorners":0,"maximumRoadEdit":0,"changedWallEnds":0,"maximumWallEdit":0,"enabledByDefault":"reference"}`
+- Scripted input: Compare reference mode against the approved default seam weld.
+- Measured result: `{"referenceEdgeGap":0,"proposedEdgeGap":0,"changedCorners":0,"maximumRoadEdit":0,"changedWallEnds":0,"maximumWallEdit":0,"enabledByDefault":"weld"}`
 - **PASS**
 
 ### winding — Road corners and wall endpoints exactly match the pinned source
@@ -346,11 +346,11 @@ The source station length comes from its spline lookup table. Physical length is
 - Measured result: `{"branchChecks":14}`
 - **PASS**
 
-### winding — Reference seam mismatch is measured; the proposed weld closes only the seam
+### winding — Approved seam weld closes only the source seam
 
 - Rule: Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.
-- Scripted input: Compare reference mode against the explicit, unapproved seam-weld option.
-- Measured result: `{"referenceEdgeGap":0,"proposedEdgeGap":0,"changedCorners":0,"maximumRoadEdit":0,"changedWallEnds":0,"maximumWallEdit":0,"enabledByDefault":"reference"}`
+- Scripted input: Compare reference mode against the approved default seam weld.
+- Measured result: `{"referenceEdgeGap":0,"proposedEdgeGap":0,"changedCorners":0,"maximumRoadEdit":0,"changedWallEnds":0,"maximumWallEdit":0,"enabledByDefault":"weld"}`
 - **PASS**
 
 ### All tracks — Fresh track TypeScript passes strict checking without a browser library

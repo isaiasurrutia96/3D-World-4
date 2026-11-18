@@ -8,7 +8,7 @@ Run `node --test racing-core/track/check.test.mjs` from the repository root with
 
 Import `createTrack`, `TRACK_IDS`, `SOURCE` and `APPEARANCE` from `index.ts`.
 
-`createTrack(id, placement?, options?)` accepts `original`, `skyline`, `suzuka` and `winding`. Placement is a rigid `{x,y,z,yaw}` transform in metres/radians, applied about the original scene origin. It preserves scale. `options.seam` is `reference` by default; `weld` is an explicitly proposed, unapproved seam correction. Keep it opt-in until owner approval.
+`createTrack(id, placement?, options?)` accepts `original`, `skyline`, `suzuka` and `winding`. Placement is a rigid `{x,y,z,yaw}` transform in metres/radians, applied about the original scene origin. It preserves scale. `options.seam` is `weld` by default: the owner approved the Original Circuit seam correction on 18 November 2026. Use explicit `reference` only for source-fidelity diagnostics.
 
 Public geometry is immutable:
 
@@ -34,4 +34,4 @@ Y is up. Yaw zero faces +Z; positive yaw turns toward +X. The source data is kep
 
 `node racing-core/tools/capture-track-reference.mjs /path/to/3D-World-3` reads a fixed Git archive at revision `573664e824a04234240a24dfc2eae2273e30a4ca`. It uses Three.js 0.180.0 solely to evaluate the original generators, records source file hashes, and captures independent height/crossing expectations with the original road-surface function. It writes `reference.json` without timestamps or rounding. This explicit tool is not run during a game build and never changes the reference repository.
 
-Original Circuit's source seam issue and the proposed repair are documented in PLAN.md and the results. The authored below-zero dip is preserved. No existing demo or archived checkpoint uses this module yet.
+Original Circuit's source seam issue and the approved repair are documented in PLAN.md and the results. The authored below-zero dip is preserved. The track-only Racing Lab now uses this module; frozen checkpoints remain unchanged.

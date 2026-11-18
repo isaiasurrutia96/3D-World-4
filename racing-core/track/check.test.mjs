@@ -25,9 +25,9 @@ function check(track, rule, input, expected, measure, verify) {
     });
 }
 for (const id of TRACK_IDS) {
-    const raw = reference.tracks.find(t => t.id === id), track = createTrack(id), candidate = createTrack(id, {}, { seam: 'weld' });
-    trackMetrics.push({ id, name: track.name, segments: track.segments.length, rails: track.rails.length, roadWidth: track.halfWidth * 2, curbWidth: track.curbWidth, totalWidth: track.outer * 2, physicalLength: track.length, sourceLength: track.sourceLength, referenceEdgeGap: track.seamEdgeGap, proposedEdgeGap: candidate.seamEdgeGap, bridgeCrossings: raw.expected.crossings.length, referenceSeamStatus: track.seamEdgeGap <= tolerance ? 'PASS' : 'FAIL', proposedSeamStatus: candidate.seamEdgeGap <= tolerance ? 'PASS' : 'FAIL' });
-    check(id, 'Road corners and wall endpoints exactly match the pinned source', 'Hash every double-precision road corner and rail endpoint, without rounding.', 'Both SHA256 digests equal the independent source capture.', () => ({ road: hash(track.segments.map(s => s.corners.map(xyz))), walls: hash(track.rails.map(r => [...xyz(r.a), ...xyz(r.b)])) }), m => { assert.equal(m.road, raw.expected.roadCornersSHA256); assert.equal(m.walls, raw.expected.railsSHA256); });
+    const raw = reference.tracks.find(t => t.id === id), referenceTrack = createTrack(id, {}, { seam: 'reference' }), track = createTrack(id), candidate = track;
+    trackMetrics.push({ id, name: track.name, segments: track.segments.length, rails: track.rails.length, roadWidth: track.halfWidth * 2, curbWidth: track.curbWidth, totalWidth: track.outer * 2, physicalLength: track.length, sourceLength: track.sourceLength, referenceEdgeGap: referenceTrack.seamEdgeGap, proposedEdgeGap: candidate.seamEdgeGap, bridgeCrossings: raw.expected.crossings.length, referenceSeamStatus: referenceTrack.seamEdgeGap <= tolerance ? 'PASS' : 'FAIL', proposedSeamStatus: candidate.seamEdgeGap <= tolerance ? 'PASS' : 'FAIL' });
+    check(id, 'Road corners and wall endpoints exactly match the pinned source', 'Hash every double-precision road corner and rail endpoint, without rounding.', 'Both SHA256 digests equal the independent source capture.', () => ({ road: hash(referenceTrack.segments.map(s => s.corners.map(xyz))), walls: hash(referenceTrack.rails.map(r => [...xyz(r.a), ...xyz(r.b)])) }), m => { assert.equal(m.road, raw.expected.roadCornersSHA256); assert.equal(m.walls, raw.expected.railsSHA256); });
     check(id, 'Road width, height and triangle data are finite and nondegenerate', 'Visit every road segment and its four corners.', 'Asphalt is 26 m wide, each curb is 1.1 m, total is 28.2 m; both triangle areas are positive.', () => {
         let widthError = 0, minArea = Infinity, nonFinite = 0;
         for (const s of track.segments) {
@@ -177,28 +177,28 @@ for (const id of TRACK_IDS) {
         assert.equal(track.project(p, { hintDistance: 0, maxDelta: .001 }), null);
         return { branchChecks: checks };
     }, m => assert(m.branchChecks >= 2));
-    check(id, 'Reference seam mismatch is measured; the proposed weld closes only the seam', 'Compare reference mode against the explicit, unapproved seam-weld option.', 'Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.', () => {
+    check(id, 'Approved seam weld closes only the source seam', 'Compare reference mode against the approved default seam weld.', 'Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.', () => {
         let changedCorners = 0, maximumRoadEdit = 0, changedWallEnds = 0, maximumWallEdit = 0;
-        for (let i = 0; i < track.segments.length; i++)
+        for (let i = 0; i < referenceTrack.segments.length; i++)
             for (let j = 0; j < 4; j++) {
-                const d = distance(track.segments[i].corners[j], candidate.segments[i].corners[j]);
+                const d = distance(referenceTrack.segments[i].corners[j], candidate.segments[i].corners[j]);
                 if (d > 1e-12)
                     changedCorners++;
                 maximumRoadEdit = Math.max(maximumRoadEdit, d);
             }
-        for (let i = 0; i < track.rails.length; i++) {
-            const d = distance(track.rails[i].b, candidate.rails[i].b);
+        for (let i = 0; i < referenceTrack.rails.length; i++) {
+            const d = distance(referenceTrack.rails[i].b, candidate.rails[i].b);
             if (d > 1e-12)
                 changedWallEnds++;
             maximumWallEdit = Math.max(maximumWallEdit, d);
         }
-        assert.equal(track.length, candidate.length);
+        assert.equal(referenceTrack.length, candidate.length);
         for (let i = 0; i < 13; i++)
-            assert.deepEqual(track.gates[i], candidate.gates[i]);
-        for (let i = 0; i < track.segments.length; i++)
-            assert.deepEqual(track.segments[i].a, candidate.segments[i].a);
-        return { referenceEdgeGap: track.seamEdgeGap, proposedEdgeGap: candidate.seamEdgeGap, changedCorners, maximumRoadEdit, changedWallEnds, maximumWallEdit, enabledByDefault: track.seamMode };
-    }, m => { near(m.proposedEdgeGap, 0); assert.equal(m.enabledByDefault, 'reference'); assert(m.maximumRoadEdit < .05 && m.maximumWallEdit < .05); assert.equal(m.changedCorners, id === 'original' ? 2 : 0); assert.equal(m.changedWallEnds, id === 'original' ? 2 : 0); });
+            assert.deepEqual(referenceTrack.gates[i], candidate.gates[i]);
+        for (let i = 0; i < referenceTrack.segments.length; i++)
+            assert.deepEqual(referenceTrack.segments[i].a, candidate.segments[i].a);
+        return { referenceEdgeGap: referenceTrack.seamEdgeGap, proposedEdgeGap: candidate.seamEdgeGap, changedCorners, maximumRoadEdit, changedWallEnds, maximumWallEdit, enabledByDefault: candidate.seamMode };
+    }, m => { near(m.proposedEdgeGap, 0); assert.equal(m.enabledByDefault, 'weld'); assert(m.maximumRoadEdit < .05 && m.maximumWallEdit < .05); assert.equal(m.changedCorners, id === 'original' ? 2 : 0); assert.equal(m.changedWallEnds, id === 'original' ? 2 : 0); });
 }
 check(null, 'Fresh track TypeScript passes strict checking without a browser library', 'Run the TypeScript compiler on track/tsconfig.json with ES2022 libraries and strict checking.', 'Compiler exits successfully with zero diagnostics.', () => {
     const diagnostics = execFileSync(process.execPath, [fileURLToPath(new URL('../../node_modules/typescript/bin/tsc', import.meta.url)), '-p', fileURLToPath(new URL('./tsconfig.json', import.meta.url))], { encoding: 'utf8', timeout: 30000 });
@@ -215,15 +215,15 @@ check(null, 'Invalid inputs fail explicitly and exposed geometry cannot be chang
     return { rejected };
 }, m => assert.equal(m.rejected, 12));
 test.after(() => {
-    const result = { section: 1, source: SOURCE, referenceDataSHA256: createHash('sha256').update(readFileSync(new URL('./reference.json', import.meta.url))).digest('hex'), fps: rates, approval: 'Awaiting owner review; seam repair is proposed, not enabled.', summary: { passed: checks.filter(c => c.status === 'PASS').length, failed: checks.filter(c => c.status === 'FAIL').length }, tracks: trackMetrics, checks };
+    const result = { section: 1, source: SOURCE, referenceDataSHA256: createHash('sha256').update(readFileSync(new URL('./reference.json', import.meta.url))).digest('hex'), fps: rates, approval: 'Owner approved section 1 and the Original Circuit seam repair on 18 November 2026.', summary: { passed: checks.filter(c => c.status === 'PASS').length, failed: checks.filter(c => c.status === 'FAIL').length }, tracks: trackMetrics, checks };
     writeFileSync(new URL('./CHECK-RESULTS.json', import.meta.url), JSON.stringify(result, null, 2) + '\n');
     const n = value => Number(value.toFixed(9));
-    let md = '# Track layer 1: measured results\n\nThis is track logic only. No avatar, kart handling, visual preview or later racing layer is approved by these checks.\n\nSource: LetsGo Racing `' + SOURCE.revision + '`. Every rule below is executed in Node.\n\n';
-    md += '| Track | Road segments | Rails | Physical length (m) | Source station length (m) | Source seam gap (m) | Proposed seam gap (m) | Source seam closed? |\n|---|---:|---:|---:|---:|---:|---:|---|\n';
+    let md = '# Track layer 1: measured results\n\nThis is track logic only. The owner approved track logic and the Original Circuit seam fix. These checks do not approve kart handling or later racing layers.\n\nSource: LetsGo Racing `' + SOURCE.revision + '`. Every rule below is executed in Node.\n\n';
+    md += '| Track | Road segments | Rails | Physical length (m) | Source station length (m) | Source seam gap (m) | Approved seam gap (m) | Source seam closed? |\n|---|---:|---:|---:|---:|---:|---:|---|\n';
     for (const t of trackMetrics)
         md += `| ${t.name} | ${t.segments} | ${t.rails} | ${n(t.physicalLength)} | ${n(t.sourceLength)} | ${n(t.referenceEdgeGap)} | ${n(t.proposedEdgeGap)} | ${t.referenceSeamStatus} |\n`;
     md += '\nThe source station length comes from its spline lookup table. Physical length is measured along the actual 3D road samples; gates keep their exact source positions.\n\n';
-    md += '**Open decision:** Original Circuit has a 0.046163501 m (4.62 cm) road-edge seam mismatch in the source. Its centerline closes. Reference mode preserves it. The tested weld option closes that seam and adjusts two rail endpoints by at most 4.67 cm, without moving the centerline or gates. The repair is not enabled by default and needs owner approval. The other three seams are already closed.\n\n';
+    md += '**Approved fix:** Original Circuit has a 0.046163501 m (4.62 cm) road-edge seam mismatch in the source. Its centerline closes. Reference mode preserves it. The tested weld option closes that seam and adjusts two rail endpoints by at most 4.67 cm, without moving the centerline or gates. The owner approved this repair; it is now enabled by default. Reference mode remains available for source-fidelity checks. The other three seams are already closed.\n\n';
     md += `**Node verification: ${result.summary.passed} PASS, ${result.summary.failed} FAIL.** This verifies the recorded reference issue and the candidate repair; it does not mean the reference seam is watertight.\n\n`;
     for (const c of checks)
         md += `### ${c.track || 'All tracks'} — ${c.rule}\n\n- Rule: ${c.expected}\n- Scripted input: ${c.input}\n- Measured result: \`${JSON.stringify(c.measured)}\`\n- **${c.status}**${c.error ? ': ' + c.error : ''}\n\n`;

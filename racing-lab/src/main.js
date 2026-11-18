@@ -1,3 +1,3 @@
 import {createMotionLab} from '../../motion-lab/src/page.js';
-import {createRacingSimulation} from './simulation.js';
-createMotionLab({title:'Racing Lab',section:'Section 1: solo driving',createSimulation:createRacingSimulation,helpText:'E / Up: gas. S F / Left Right: steer. D / Down: brake then reverse. Space / LT: brake. Shift / A: boost. Phone: hold Gas to accelerate and Left/Right to steer; drag the stage to look; pinch zooms. Pick a track, then Start drive.',videos:[{src:'./videos/drive.mp4',title:'Solo driving controls',description:'One player kart tests steering, acceleration and braking, without NPCs. The road is drawn from the same triangles used for support.',passed:true}]});
+import {createTrackPreview} from './track-preview.js';
+createMotionLab({title:'Track Lab',section:'Section 1 · Track inspection',createSimulation:createTrackPreview,helpText:'Choose a track. Drag to orbit, use the wheel or pinch to zoom, and use the view buttons to inspect it. This section shows the tracks only.',videos:[]});
