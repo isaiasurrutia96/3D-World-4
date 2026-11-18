@@ -187,7 +187,7 @@ try {
         const left = await mobile.locator('#race-left').boundingBox(), right = await mobile.locator('#race-right').boundingBox();
         assert(right.x - left.x - left.width >= 12 - .1, 'Steering targets need a clear gap');
         assert(right.x + right.width < viewport.width / 2, 'Steering must stay on its own side');
-        assert(left.x >= 20 && left.x <= 32, 'Steering should be only slightly inset from the original edge');
+        assert(left.x >= 32 && left.x <= 44, 'Steering should stay near the edge after the small 12 px inward adjustment');
         const buttons = await mobile.locator('.drive-controls button,#race-boost,#reset,[data-view],#race-track').evaluateAll(bs => bs.map(b => { const r = b.getBoundingClientRect(); return { text: b.textContent, x: r.x, y: r.y, right: r.right, bottom: r.bottom, w: r.width, h: r.height }; }));
         for (const b of buttons) {
             assert(b.w >= 44 && b.h >= 44, JSON.stringify(b));

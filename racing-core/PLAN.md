@@ -204,3 +204,9 @@ The owner reports Safari's URL/tab bars repeatedly appearing and asks for a fix.
 - Two Node checks validate scoped app identity/start URL and all declared PNG dimensions; they run in the racing build. Browser checks parse the manifest with Chromium's actual manifest API, fetch all installation icons under the project prefix, verify Apple metadata, launch the real start URL, and exercise Gas/brake and video scrolling. Native iOS installation/browser bars cannot be tested in this Linux environment. `npm run test:racing-app` records the browser results in `APP-BROWSER-CHECKS.json`.
 
 Stop after delivering the working link and the short Home Screen instructions. Handling/speed tuning remains pending.
+
+## Steering buttons — small inward adjustment
+
+The owner accepted the Home Screen setup and requested both steering buttons slightly closer to center. Translate only the steering group 12 CSS pixels inward; retain button widths, 12 px button gap, pedal positions, header, video scrolling, installed-app setup and handling. The normal inset becomes 36 px, rather than the previously rejected large centered placement. Update the existing browser layout bounds to check this modest offset. Stop for the owner's feedback after publishing the checked change.
+
+Verification: 12 build-time Node checks and the complete driving browser suite pass with zero page errors. All five layouts measure the new 36 px inset and unchanged 12 px steering gap. Portrait Left + Gas and landscape Right + Gas/cancellation still work; header, camera, video-scroll, keyboard and controller regressions pass.
