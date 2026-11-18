@@ -1,0 +1,2915 @@
+{
+  "section": 2,
+  "source": {
+    "repository": "isaiasurrutia96/3D-World-3",
+    "revision": "573664e824a04234240a24dfc2eae2273e30a4ca",
+    "files": {
+      "vehicle-controller.js": "fef96e40349b1702bdb40372fab3fc61069ca1126adfeea223349b9c48edf23e",
+      "vehicle-contact.js": "bd0a18e689e98271c6d7d834c1cbd49b15a9a90bb48305c7b1686d9055b79504",
+      "running-controller.js": "f55ccf1bb3512238f5f61ae884d7f665ccba7d4d89534c963ea3a5af695abe91",
+      "animation/backflip-motion.js": "706dba2008e5dfc5f8772e4305e831b729e00e87580cbf8bf428c058e49c755a",
+      "kart.js": "35509730bd5d91554e4a93a43c7f584b1b9ffb3a88aa6c43c5d5846ee6e5c481",
+      "items.js": "e10216ee175147272640e37f7c61a305b1937fa5bf1b77e95812376e0b72e429",
+      "world.js": "4392bed61d2c6318cacb444644df2a54e178b1320af1f76d8669fb2f4a5fad30"
+    }
+  },
+  "referenceDataSHA256": "6f6d3a969c7536eaba385080bcb8675a3480472a5d942b6a79f10ac61a315f72",
+  "fps": [
+    30,
+    60,
+    120,
+    144
+  ],
+  "approval": "Owner authorized implementation; results await review. Contacts, race rules, opponents, input devices and visuals are later approvals.",
+  "summary": {
+    "passed": 50,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "Matches original LetsGo: accelerate to normal cap",
+      "input": {
+        "world": "flat",
+        "initial": {},
+        "phases": [
+          {
+            "ticks": 480,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 81,
+            "maximumError": 1.9895196601282805e-12
+          },
+          {
+            "fps": 60,
+            "compared": 81,
+            "maximumError": 1.9895196601282805e-12
+          },
+          {
+            "fps": 120,
+            "compared": 81,
+            "maximumError": 1.9895196601282805e-12
+          },
+          {
+            "fps": 144,
+            "compared": 81,
+            "maximumError": 1.9895196601282805e-12
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 154.8491466666661,
+          "yaw": 0,
+          "speed": 53.6448,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 407.497754385962,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: coast from normal cap",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 53.6448
+        },
+        "phases": [
+          {
+            "ticks": 480,
+            "input": {},
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 81,
+            "maximumError": 5.684341886080801e-13
+          },
+          {
+            "fps": 60,
+            "compared": 81,
+            "maximumError": 5.684341886080801e-13
+          },
+          {
+            "fps": 120,
+            "compared": 81,
+            "maximumError": 5.684341886080801e-13
+          },
+          {
+            "fps": 144,
+            "compared": 81,
+            "maximumError": 5.684341886080801e-13
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 149.49559980164298,
+          "yaw": 0,
+          "speed": 25.97186033554822,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 393.40947316221906,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: brake to rest without reversing",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 53.6448
+        },
+        "phases": [
+          {
+            "ticks": 240,
+            "input": {
+              "throttle": 1,
+              "brake": true
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 41,
+            "maximumError": 1.4210854715202004e-14
+          },
+          {
+            "fps": 60,
+            "compared": 41,
+            "maximumError": 1.4210854715202004e-14
+          },
+          {
+            "fps": 120,
+            "compared": 41,
+            "maximumError": 1.4210854715202004e-14
+          },
+          {
+            "fps": 144,
+            "compared": 41,
+            "maximumError": 1.4210854715202004e-14
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 39.74562000000021,
+          "yaw": 0,
+          "speed": 0,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 104.59373684210583,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: reverse braking and reverse cap",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 24
+        },
+        "phases": [
+          {
+            "ticks": 360,
+            "input": {
+              "throttle": -1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 61,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 61,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 61,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 61,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": -6.800000000000052,
+          "yaw": 0,
+          "speed": -8,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": -17.894736842105427,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: forward recovery from reverse",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": -8
+        },
+        "phases": [
+          {
+            "ticks": 180,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 31,
+            "maximumError": 7.105427357601002e-15
+          },
+          {
+            "fps": 60,
+            "compared": 31,
+            "maximumError": 7.105427357601002e-15
+          },
+          {
+            "fps": 120,
+            "compared": 31,
+            "maximumError": 7.105427357601002e-15
+          },
+          {
+            "fps": 144,
+            "compared": 31,
+            "maximumError": 7.105427357601002e-15
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 18.90749999999996,
+          "yaw": 0,
+          "speed": 30.69999999999992,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 49.756578947368325,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: short left tap and release",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 12
+        },
+        "phases": [
+          {
+            "ticks": 12,
+            "input": {
+              "throttle": 1,
+              "steer": 1
+            },
+            "boost": false
+          },
+          {
+            "ticks": 48,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 12,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 12,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 12,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 12,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": -0.6135243372751632,
+          "y": 0,
+          "z": 9.02650054421152,
+          "yaw": -0.08423503091398109,
+          "speed": 23.99999999999995,
+          "lateralSpeed": 0,
+          "steering": 0.0003305436785985351,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 23.81578947368418,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: held left turn and release",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 25
+        },
+        "phases": [
+          {
+            "ticks": 180,
+            "input": {
+              "throttle": 1,
+              "steer": 1
+            },
+            "boost": false
+          },
+          {
+            "ticks": 48,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 40,
+            "maximumError": 1.7053025658242404e-13
+          },
+          {
+            "fps": 60,
+            "compared": 40,
+            "maximumError": 1.7053025658242404e-13
+          },
+          {
+            "fps": 120,
+            "compared": 40,
+            "maximumError": 1.7053025658242404e-13
+          },
+          {
+            "fps": 144,
+            "compared": 40,
+            "maximumError": 1.7053025658242404e-13
+          }
+        ],
+        "final": {
+          "x": -50.34068766934783,
+          "y": 0,
+          "z": -10.7784169388212,
+          "yaw": -2.8535931028849464,
+          "speed": 53.64479999999999,
+          "lateralSpeed": 5.329070518200751e-15,
+          "steering": 0.0003133096725538778,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 223.5528070175443,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: countersteering",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 20
+        },
+        "phases": [
+          {
+            "ticks": 36,
+            "input": {
+              "throttle": 1,
+              "steer": 1
+            },
+            "boost": false
+          },
+          {
+            "ticks": 36,
+            "input": {
+              "throttle": 1,
+              "steer": -1
+            },
+            "boost": false
+          },
+          {
+            "ticks": 48,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 23,
+            "maximumError": 2.842170943040401e-14
+          },
+          {
+            "fps": 60,
+            "compared": 23,
+            "maximumError": 2.842170943040401e-14
+          },
+          {
+            "fps": 120,
+            "compared": 23,
+            "maximumError": 2.842170943040401e-14
+          },
+          {
+            "fps": 144,
+            "compared": 23,
+            "maximumError": 2.842170943040401e-14
+          }
+        ],
+        "final": {
+          "x": -2.6219230995111764,
+          "y": 0,
+          "z": 31.76641992395757,
+          "yaw": 0.03125078998641471,
+          "speed": 44.000000000000114,
+          "lateralSpeed": 1.3322676295501878e-15,
+          "steering": -0.00031698306146413804,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 84.47368421052633,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: analog steering",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 20
+        },
+        "phases": [
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": 1,
+              "steer": 0.2
+            },
+            "boost": false
+          },
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": 1,
+              "steer": 0.5
+            },
+            "boost": false
+          },
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": 1,
+              "steer": 0.8
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 33,
+            "maximumError": 1.1368683772161603e-13
+          },
+          {
+            "fps": 60,
+            "compared": 33,
+            "maximumError": 1.1368683772161603e-13
+          },
+          {
+            "fps": 120,
+            "compared": 33,
+            "maximumError": 1.1368683772161603e-13
+          },
+          {
+            "fps": 144,
+            "compared": 33,
+            "maximumError": 1.1368683772161603e-13
+          }
+        ],
+        "final": {
+          "x": -24.588285964934638,
+          "y": 0,
+          "z": 47.32896339278362,
+          "yaw": -1.1887707751590213,
+          "speed": 53.64479999999999,
+          "lateralSpeed": 0,
+          "steering": 0.056760287352152605,
+          "steerHoldTime": 0.5000000000000007,
+          "steerHoldDirection": 1,
+          "wheelRotation": 150.06442105263193,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: reference button throttle semantics",
+      "input": {
+        "world": "flat",
+        "initial": {},
+        "phases": [
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": 0.2
+            },
+            "boost": false
+          },
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": 0.8
+            },
+            "boost": false
+          },
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": -0.4
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 33,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 33,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 33,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 33,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 19.524999999999945,
+          "yaw": 0,
+          "speed": 5.99999999999991,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 51.38157894736827,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: reverse steering",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": -8
+        },
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {
+              "throttle": -1,
+              "steer": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 21,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": -2.7400289831611877,
+          "y": 0,
+          "z": -7.2459375587587616,
+          "yaw": 0.8187534371348755,
+          "speed": -8,
+          "lateralSpeed": 0,
+          "steering": 0.23990193684652936,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": -21.052631578947366,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: steering while stopped",
+      "input": {
+        "world": "flat",
+        "initial": {},
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {
+              "steer": 1
+            },
+            "boost": false
+          },
+          {
+            "ticks": 120,
+            "input": {
+              "steer": -1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 42,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 42,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 42,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 42,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 0,
+          "yaw": 0,
+          "speed": 0,
+          "lateralSpeed": 0,
+          "steering": -0.4141430076624921,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 0,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: lateral grip decay",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 20,
+          "lateralSpeed": 8
+        },
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {},
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 21,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": 1.1088358149673698,
+          "y": 0,
+          "z": 18.456142727763368,
+          "yaw": 0,
+          "speed": 17.001946194643992,
+          "lateralSpeed": 0.0072950557244361326,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 48.56879665200889,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: boost acceleration and expiry recovery",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 53.6448
+        },
+        "phases": [
+          {
+            "ticks": 420,
+            "input": {
+              "throttle": 1
+            },
+            "boost": true
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 71,
+            "maximumError": 1.1709744285326451e-11
+          },
+          {
+            "fps": 60,
+            "compared": 71,
+            "maximumError": 1.1709744285326451e-11
+          },
+          {
+            "fps": 120,
+            "compared": 71,
+            "maximumError": 1.1709744285326451e-11
+          },
+          {
+            "fps": 144,
+            "compared": 71,
+            "maximumError": 1.1709744285326451e-11
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 260.8276933333333,
+          "yaw": 0,
+          "speed": 62.567200000000916,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 686.3886666666648,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: boost from rest without gas",
+      "input": {
+        "world": "flat",
+        "initial": {},
+        "phases": [
+          {
+            "ticks": 360,
+            "input": {},
+            "boost": true
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 61,
+            "maximumError": 3.069544618483633e-12
+          },
+          {
+            "fps": 60,
+            "compared": 61,
+            "maximumError": 3.069544618483633e-12
+          },
+          {
+            "fps": 120,
+            "compared": 61,
+            "maximumError": 3.069544618483633e-12
+          },
+          {
+            "fps": 144,
+            "compared": 61,
+            "maximumError": 3.069544618483633e-12
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 164.01021559489305,
+          "yaw": 0,
+          "speed": 61.44341079268564,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 431.6058305128765,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: brake overrides boost",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 30
+        },
+        "phases": [
+          {
+            "ticks": 180,
+            "input": {
+              "throttle": 1,
+              "brake": true
+            },
+            "boost": true
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 31,
+            "maximumError": 3.552713678800501e-15
+          },
+          {
+            "fps": 60,
+            "compared": 31,
+            "maximumError": 3.552713678800501e-15
+          },
+          {
+            "fps": 120,
+            "compared": 31,
+            "maximumError": 3.552713678800501e-15
+          },
+          {
+            "fps": 144,
+            "compared": 31,
+            "maximumError": 3.552713678800501e-15
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 12.374999999999973,
+          "yaw": 0,
+          "speed": 0,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 32.56578947368414,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0.5000000000000053
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: reverse overrides boost",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": 10
+        },
+        "phases": [
+          {
+            "ticks": 180,
+            "input": {
+              "throttle": -1
+            },
+            "boost": true
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 31,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 31,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 31,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 31,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": -4.617500000000003,
+          "yaw": 0,
+          "speed": -8,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": -12.151315789473706,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0.5000000000000053
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: boost activation cancels reverse speed",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "speed": -8
+        },
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {},
+            "boost": true
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 21,
+            "maximumError": 2.842170943040401e-14
+          },
+          {
+            "fps": 60,
+            "compared": 21,
+            "maximumError": 2.842170943040401e-14
+          },
+          {
+            "fps": 120,
+            "compared": 21,
+            "maximumError": 2.842170943040401e-14
+          },
+          {
+            "fps": 144,
+            "compared": 21,
+            "maximumError": 2.842170943040401e-14
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 24.199999999999967,
+          "yaw": 0,
+          "speed": 47.99999999999989,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 63.684210526315695,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 1.0000000000000036
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: slope height pitch and bank",
+      "input": {
+        "world": "slope",
+        "initial": {},
+        "phases": [
+          {
+            "ticks": 180,
+            "input": {
+              "throttle": 1,
+              "steer": 0.15
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 31,
+            "maximumError": 3.552713678800501e-14
+          },
+          {
+            "fps": 60,
+            "compared": 31,
+            "maximumError": 3.552713678800501e-14
+          },
+          {
+            "fps": 120,
+            "compared": 31,
+            "maximumError": 3.552713678800501e-14
+          },
+          {
+            "fps": 144,
+            "compared": 31,
+            "maximumError": 3.552713678800501e-14
+          }
+        ],
+        "final": {
+          "x": -4.536720166687957,
+          "y": 1.99807660119923,
+          "z": 26.677227577498357,
+          "yaw": -0.2910166778233273,
+          "speed": 36.000000000000014,
+          "lateralSpeed": 0,
+          "steering": 0.01511146558364279,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 71.4473684210525,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": -0.06897187413088807,
+          "bank": 0.05019992754914902,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: airborne steering and landing",
+      "input": {
+        "world": "flat",
+        "initial": {
+          "y": 8,
+          "grounded": false,
+          "verticalVelocity": -1,
+          "speed": 12
+        },
+        "phases": [
+          {
+            "ticks": 180,
+            "input": {
+              "steer": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 31,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 31,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 31,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 31,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": -2.2468265150329274,
+          "y": 0,
+          "z": 14.944881681266116,
+          "yaw": -0.7189739352709592,
+          "speed": 8.733358953701234,
+          "lateralSpeed": -8.881784197001252e-16,
+          "steering": 0.23006152670297225,
+          "steerHoldTime": 0.6916666666666667,
+          "steerHoldDirection": 1,
+          "wheelRotation": 40.76847553761164,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: leaving a ledge",
+      "input": {
+        "world": "ledge",
+        "initial": {
+          "speed": 25
+        },
+        "phases": [
+          {
+            "ticks": 180,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 31,
+            "maximumError": 9.947598300641403e-13
+          },
+          {
+            "fps": 60,
+            "compared": 31,
+            "maximumError": 9.947598300641403e-13
+          },
+          {
+            "fps": 120,
+            "compared": 31,
+            "maximumError": 9.947598300641403e-13
+          },
+          {
+            "fps": 144,
+            "compared": 31,
+            "maximumError": 9.947598300641403e-13
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": -8.827500000000004,
+          "z": 63.49214666666681,
+          "yaw": 0,
+          "speed": 53.6448,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 167.08459649122847,
+          "verticalVelocity": -19.616666666666685,
+          "grounded": false,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: lower deck stays below upper deck",
+      "input": {
+        "world": "decks",
+        "initial": {
+          "y": 0,
+          "speed": 10
+        },
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 21,
+            "maximumError": 1.4210854715202004e-14
+          },
+          {
+            "fps": 60,
+            "compared": 21,
+            "maximumError": 1.4210854715202004e-14
+          },
+          {
+            "fps": 120,
+            "compared": 21,
+            "maximumError": 1.4210854715202004e-14
+          },
+          {
+            "fps": 144,
+            "compared": 21,
+            "maximumError": 1.4210854715202004e-14
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 0,
+          "z": 22.099999999999962,
+          "yaw": 0,
+          "speed": 33.99999999999995,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 58.15789473684199,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: upper deck remains on upper deck",
+      "input": {
+        "world": "decks",
+        "initial": {
+          "y": 12,
+          "speed": 10
+        },
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 21,
+            "maximumError": 1.4210854715202004e-14
+          },
+          {
+            "fps": 60,
+            "compared": 21,
+            "maximumError": 1.4210854715202004e-14
+          },
+          {
+            "fps": 120,
+            "compared": 21,
+            "maximumError": 1.4210854715202004e-14
+          },
+          {
+            "fps": 144,
+            "compared": 21,
+            "maximumError": 1.4210854715202004e-14
+          }
+        ],
+        "final": {
+          "x": 0,
+          "y": 12,
+          "z": 22.099999999999962,
+          "yaw": 0,
+          "speed": 33.99999999999995,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 58.15789473684199,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: original original start",
+      "input": {
+        "world": "original",
+        "initial": {
+          "x": 416.86341999732963,
+          "y": 0,
+          "z": -227.16209457485502,
+          "yaw": 1.6035274566524564
+        },
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 21,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": 428.95693904844825,
+          "y": 0,
+          "z": -227.55807053401313,
+          "yaw": 1.6035274566524564,
+          "speed": 23.99999999999991,
+          "lateralSpeed": -3.3306690738754696e-16,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 31.842105263157908,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: original ramp",
+      "input": {
+        "world": "original",
+        "initial": {
+          "x": 458.0334921090204,
+          "y": 4.4209576934993535,
+          "z": -0.9479697963257788,
+          "yaw": 0.17113783735334112,
+          "speed": 8
+        },
+        "phases": [
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 11,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": 459.23413301403184,
+          "y": 5.5625294945484045,
+          "z": 5.999041173667924,
+          "yaw": 0.17113783735334112,
+          "speed": 19.999999999999915,
+          "lateralSpeed": 4.440892098500626e-16,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 18.552631578947274,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": -0.15508793791577447,
+          "bank": -0.011688963350731559,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: skyline original start",
+      "input": {
+        "world": "skyline",
+        "initial": {
+          "x": -300.3220344947846,
+          "y": 0,
+          "z": 74.16181838515892,
+          "yaw": -0.013883538313832083
+        },
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 21,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": -300.4900199116552,
+          "y": 0,
+          "z": 86.2606522504419,
+          "yaw": -0.013883538313832083,
+          "speed": 23.99999999999989,
+          "lateralSpeed": 5.551115123125783e-17,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 31.842105263157812,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: skyline ramp",
+      "input": {
+        "world": "skyline",
+        "initial": {
+          "x": -417.199671799374,
+          "y": 5.027857594723086,
+          "z": 38.08593617989493,
+          "yaw": 0.6147494716465163,
+          "speed": 8
+        },
+        "phases": [
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 11,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": -413.133556950489,
+          "y": 3.6681353976902056,
+          "z": 43.84520783833201,
+          "yaw": 0.6147494716465163,
+          "speed": 20.000000000000007,
+          "lateralSpeed": -5.329070518200751e-15,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 18.55263157894736,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0.18408644631074178,
+          "bank": 0.011277793681280405,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: suzuka original start",
+      "input": {
+        "world": "suzuka",
+        "initial": {
+          "x": -399.83000000000004,
+          "y": 0,
+          "z": -1102.65,
+          "yaw": 0.7670096014737701
+        },
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 21,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": -391.4327779881917,
+          "y": 0,
+          "z": -1093.9381309419623,
+          "yaw": 0.7670096014737701,
+          "speed": 23.999999999999787,
+          "lateralSpeed": 0,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 31.842105263157368,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: suzuka ramp",
+      "input": {
+        "world": "suzuka",
+        "initial": {
+          "x": -823.2445362958334,
+          "y": 6.290800658336085,
+          "z": -1109.461903588881,
+          "yaw": 2.3974194032889637,
+          "speed": 8
+        },
+        "phases": [
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 11,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": -818.4691211877318,
+          "y": 5.849157121325526,
+          "z": -1114.648223145687,
+          "yaw": 2.3974194032889637,
+          "speed": 20,
+          "lateralSpeed": 3.552713678800501e-15,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 18.552631578946517,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0.0622353463987983,
+          "bank": 0.00033198708411075423,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: winding original start",
+      "input": {
+        "world": "winding",
+        "initial": {
+          "x": 0,
+          "y": 0,
+          "z": 985.4176755950099,
+          "yaw": -1.7683977906081099
+        },
+        "phases": [
+          {
+            "ticks": 120,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 21,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 21,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": -11.864537313163146,
+          "y": 0,
+          "z": 983.0422273542439,
+          "yaw": -1.7683977906081099,
+          "speed": 23.999999999999805,
+          "lateralSpeed": -8.881784197001252e-16,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 31.842105263157766,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0,
+          "bank": 0,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Matches original LetsGo: winding ramp",
+      "input": {
+        "world": "winding",
+        "initial": {
+          "x": 144.29140205532963,
+          "y": 10.014361154322254,
+          "z": 1411.013522348601,
+          "yaw": 1.5697738067239122,
+          "speed": 8
+        },
+        "phases": [
+          {
+            "ticks": 60,
+            "input": {
+              "throttle": 1
+            },
+            "boost": false
+          }
+        ],
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ]
+      },
+      "expected": "Every captured numeric state field is within 0.00000001 of the unmodified original; booleans and physics tick counts agree at every FPS.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 60,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 120,
+            "compared": 11,
+            "maximumError": 0
+          },
+          {
+            "fps": 144,
+            "compared": 11,
+            "maximumError": 0
+          }
+        ],
+        "final": {
+          "x": 151.34139836977582,
+          "y": 9.137181600442188,
+          "z": 1411.0207311138454,
+          "yaw": 1.5697738067239122,
+          "speed": 20.00000000000003,
+          "lateralSpeed": -1.734723475976807e-17,
+          "steering": 0,
+          "steerHoldTime": 0,
+          "steerHoldDirection": 0,
+          "wheelRotation": 18.552631578947597,
+          "verticalVelocity": 0,
+          "grounded": true,
+          "pitch": 0.12340512698005293,
+          "bank": -0.01598700884933318,
+          "boostTime": 0
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Normal acceleration, cap, braking time and stopping distance are measured",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Gas for 4 s, then Brake for 2 s on an unbounded flat plane."
+      },
+      "expected": "At 1 s speed=24 m/s and distance=12.1 m; normal cap=53.6448 m/s; stop takes 1.491666667 s and 39.74562 m, without reversing.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "atOne": {
+              "speed": 23.999999999999947,
+              "distance": 12.099999999999984
+            },
+            "cap": 53.6448,
+            "stopSeconds": 1.4916666666666663,
+            "stopDistance": 39.7456200000002,
+            "finalSpeed": 0
+          },
+          {
+            "fps": 60,
+            "atOne": {
+              "speed": 23.999999999999947,
+              "distance": 12.099999999999984
+            },
+            "cap": 53.6448,
+            "stopSeconds": 1.4916666666666663,
+            "stopDistance": 39.7456200000002,
+            "finalSpeed": 0
+          },
+          {
+            "fps": 120,
+            "atOne": {
+              "speed": 23.999999999999947,
+              "distance": 12.099999999999984
+            },
+            "cap": 53.6448,
+            "stopSeconds": 1.4916666666666663,
+            "stopDistance": 39.7456200000002,
+            "finalSpeed": 0
+          },
+          {
+            "fps": 144,
+            "atOne": {
+              "speed": 23.999999999999947,
+              "distance": 12.099999999999984
+            },
+            "cap": 53.6448,
+            "stopSeconds": 1.4916666666666663,
+            "stopDistance": 39.7456200000002,
+            "finalSpeed": 0
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Opposite steering produces mirrored paths at every FPS",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Gas + full left/right for 2 s."
+      },
+      "expected": "Left/right positions, headings, wheel angles and distances mirror to within 1e-10; both move forward initially.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "mirrorError": 0,
+            "leftYaw": -3.2209087447201132,
+            "rightYaw": 3.2209087447201132
+          },
+          {
+            "fps": 60,
+            "mirrorError": 0,
+            "leftYaw": -3.2209087447201132,
+            "rightYaw": 3.2209087447201132
+          },
+          {
+            "fps": 120,
+            "mirrorError": 0,
+            "leftYaw": -3.2209087447201132,
+            "rightYaw": 3.2209087447201132
+          },
+          {
+            "fps": 144,
+            "mirrorError": 0,
+            "leftYaw": -3.2209087447201132,
+            "rightYaw": 3.2209087447201132
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Steering holds ramp only after the reference delay and clear on release or reversal",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Start at 20 m/s; hold left 0.5 s, continue 0.8 s, release one tick, hold and reverse."
+      },
+      "expected": "No held gain at 0.5 s; full +20% gain at 1.3 s; hold timer clears on release and restarts at one tick on reversal.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "delayedGain": 1,
+            "heldGain": 1.2,
+            "released": 0,
+            "reversedTimer": 0.008333333333333333,
+            "reversedDirection": -1,
+            "beforeAngle": 0.07062823292377428,
+            "afterAngle": 0.05507459522357484
+          },
+          {
+            "fps": 60,
+            "delayedGain": 1,
+            "heldGain": 1.2,
+            "released": 0,
+            "reversedTimer": 0.008333333333333333,
+            "reversedDirection": -1,
+            "beforeAngle": 0.07062823292377428,
+            "afterAngle": 0.05507459522357484
+          },
+          {
+            "fps": 120,
+            "delayedGain": 1,
+            "heldGain": 1.2,
+            "released": 0,
+            "reversedTimer": 0.008333333333333333,
+            "reversedDirection": -1,
+            "beforeAngle": 0.07062823292377428,
+            "afterAngle": 0.05507459522357484
+          },
+          {
+            "fps": 144,
+            "delayedGain": 1,
+            "heldGain": 1.2,
+            "released": 0,
+            "reversedTimer": 0.008333333333333333,
+            "reversedDirection": -1,
+            "beforeAngle": 0.07062823292377428,
+            "afterAngle": 0.05507459522357484
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Analog steering strength is preserved without adding a speed-target shortcut",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "At 20 m/s apply 0.25, 0.5 and 1.0 steering for 0.25 s, before held gain begins."
+      },
+      "expected": "Wheel response scales in 1:2:4 proportion. Positive pedal magnitude retains original button acceleration rather than a fractional top-speed target.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "halfRatio": 0.5000000000000002,
+            "quarterRatio": 0.2500000000000001
+          },
+          {
+            "fps": 60,
+            "halfRatio": 0.5000000000000002,
+            "quarterRatio": 0.2500000000000001
+          },
+          {
+            "fps": 120,
+            "halfRatio": 0.5000000000000002,
+            "quarterRatio": 0.2500000000000001
+          },
+          {
+            "fps": 144,
+            "halfRatio": 0.5000000000000002,
+            "quarterRatio": 0.2500000000000001
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Coasting cannot add energy and lateral grip decays at its measured rate",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Release inputs for 1 s from forward=20 m/s and sideways=8 m/s."
+      },
+      "expected": "Kinetic-speed squared never increases; sideways speed after one second equals 8*exp(-7); grip never shifts the kart toward a track center.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "sideways": 0.0072950557244361326,
+            "expectedSideways": 0.00729505572443613,
+            "largestIncrease": 0
+          },
+          {
+            "fps": 60,
+            "sideways": 0.0072950557244361326,
+            "expectedSideways": 0.00729505572443613,
+            "largestIncrease": 0
+          },
+          {
+            "fps": 120,
+            "sideways": 0.0072950557244361326,
+            "expectedSideways": 0.00729505572443613,
+            "largestIncrease": 0
+          },
+          {
+            "fps": 144,
+            "sideways": 0.0072950557244361326,
+            "expectedSideways": 0.00729505572443613,
+            "largestIncrease": 0
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "A held boost grants one bounded activation and returns gradually to normal speed",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Start at normal cap, hold granted boost + Gas for 5 s, then release/repress boost."
+      },
+      "expected": "Peak reaches 80.4672 m/s; the held command does not refill its timer; after 5 s speed is normal cap; releasing/repressing activates a new 2-second boost.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "peak": 80.4672,
+            "activeTicks": 240,
+            "expired": 0,
+            "finalSpeed": 53.6448,
+            "repressed": 1.9916666666666667
+          },
+          {
+            "fps": 60,
+            "peak": 80.4672,
+            "activeTicks": 240,
+            "expired": 0,
+            "finalSpeed": 53.6448,
+            "repressed": 1.9916666666666667
+          },
+          {
+            "fps": 120,
+            "peak": 80.4672,
+            "activeTicks": 240,
+            "expired": 0,
+            "finalSpeed": 53.6448,
+            "repressed": 1.9916666666666667
+          },
+          {
+            "fps": 144,
+            "peak": 80.4672,
+            "activeTicks": 240,
+            "expired": 0,
+            "finalSpeed": 53.6448,
+            "repressed": 1.9916666666666667
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "A boost press shorter than one physics tick is retained",
+      "input": {
+        "script": "Press boost for 1/240 s, release for 1/240 s."
+      },
+      "expected": "Exactly one physics tick executes and starts boost; the release does not lose the pending press.",
+      "measured": {
+        "before": 0,
+        "after": 1.9916666666666667,
+        "ticks": 1,
+        "speed": 0.4
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Jittered frames and 250 ms catch-up preserve the same timeline",
+      "input": {
+        "script": "12 s of tick-timed accelerate/tap/boost/brake/reverse; compare fixed 30/60/120/144 FPS, alternating 1/55,1/144,1/30,1/240, and 0.25 s batches."
+      },
+      "expected": "All state fields match within 1e-10, with exactly 1440 physics ticks and no discarded elapsed time.",
+      "measured": {
+        "patterns": [
+          "30 FPS",
+          "60 FPS",
+          "120 FPS",
+          "144 FPS",
+          "jitter",
+          "catch-up"
+        ],
+        "ticks": 1440,
+        "maximumStateError": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Render interpolation is smooth and never advances physics",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Advance 0.1 s, sample 101 fractions between the last two fixed states; try to modify the returned pose."
+      },
+      "expected": "Interpolated travel is continuous and bounded between physics ticks; snapshots are immutable; simulation state/clock remain unchanged.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "largestStep": 0.00020000000000000313,
+            "tickTravel": 0.020000000000000007
+          },
+          {
+            "fps": 60,
+            "largestStep": 0.00020000000000000313,
+            "tickTravel": 0.020000000000000007
+          },
+          {
+            "fps": 120,
+            "largestStep": 0.00020000000000000313,
+            "tickTravel": 0.020000000000000007
+          },
+          {
+            "fps": 144,
+            "largestStep": 0.00020000000000000313,
+            "tickTravel": 0.020000000000000007
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Invalid time, controls, world data and scripts cannot corrupt the controller",
+      "input": {
+        "script": "Submit NaN/infinite/negative/oversized time, malformed input, invalid initial state, bad surface heights, and a script failing midway through a catch-up batch."
+      },
+      "expected": "All invalid operations throw, state/clock stay unchanged after failed batches, and a subsequent valid step still works.",
+      "measured": {
+        "rejected": 17,
+        "validStepSpeed": 0.2
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Reset clears momentum, clock remainder and queued boost without changing track data",
+      "input": {
+        "script": "Advance 1/240 s with boost queued, reset onto an elevated track start, then advance one tick with no input."
+      },
+      "expected": "All motion and timers reset; no old boost fires; track geometry remains byte-identical.",
+      "measured": {
+        "boost": 0,
+        "speed": 0,
+        "ticks": 1,
+        "remainder": 0,
+        "grounded": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Both road levels remain seated at every captured overpass",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Place a stopped kart on each lower and upper source crossing, then brake for 0.25 s."
+      },
+      "expected": "Every kart stays grounded on its initial deck; zero false lifts to an upper road and height error below 1e-8 m.",
+      "measured": {
+        "probes": 152,
+        "maximumHeightError": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Rigidly placed island tracks preserve handling and support",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Drive 1 s from the same Original start before/after translation (500,70,-900) and yaw=0.73."
+      },
+      "expected": "Rotating/translating the road and initial pose produces the same local kart trajectory, wheel rotation, pitch and bank to within 1e-8.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "positionError": 2.0495186137532014e-13,
+            "yawError": 4.440892098500626e-16,
+            "wheelError": 8.064660050877137e-13,
+            "pitchError": 6.943299060835704e-17,
+            "bankError": 8.472350204659596e-16
+          },
+          {
+            "fps": 60,
+            "positionError": 2.0495186137532014e-13,
+            "yawError": 4.440892098500626e-16,
+            "wheelError": 8.064660050877137e-13,
+            "pitchError": 6.943299060835704e-17,
+            "bankError": 8.472350204659596e-16
+          },
+          {
+            "fps": 120,
+            "positionError": 2.0495186137532014e-13,
+            "yawError": 4.440892098500626e-16,
+            "wheelError": 8.064660050877137e-13,
+            "pitchError": 6.943299060835704e-17,
+            "bankError": 8.472350204659596e-16
+          },
+          {
+            "fps": 144,
+            "positionError": 2.0495186137532014e-13,
+            "yawError": 4.440892098500626e-16,
+            "wheelError": 8.064660050877137e-13,
+            "pitchError": 6.943299060835704e-17,
+            "bankError": 8.472350204659596e-16
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "No hidden wall collision, route centering or floor exists in this layer",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Drive across the checked Original road edge and out over empty space for 2 s."
+      },
+      "expected": "Kart crosses the edge according to its inputs and falls under gravity; it is never snapped back to the road or placed on an artificial floor.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "grounded": false,
+            "height": -28.30666666666669,
+            "offset": null,
+            "verticalVelocity": -35.199999999999974
+          },
+          {
+            "fps": 60,
+            "grounded": false,
+            "height": -28.30666666666669,
+            "offset": null,
+            "verticalVelocity": -35.199999999999974
+          },
+          {
+            "fps": 120,
+            "grounded": false,
+            "height": -28.30666666666669,
+            "offset": null,
+            "verticalVelocity": -35.199999999999974
+          },
+          {
+            "fps": 144,
+            "grounded": false,
+            "height": -28.30666666666669,
+            "offset": null,
+            "verticalVelocity": -35.199999999999974
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Airborne wheels and stopped steering cannot turn the chassis",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Full steering while parked for 1 s, then at 12 m/s in unsupported air for 1 s; compare forward and reverse steering."
+      },
+      "expected": "Parked/airborne heading change is zero. The same wheel input reverses the direction of chassis turning when backing up.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "parkedYaw": 0,
+            "airYaw": 0,
+            "forwardYaw": -0.5078926108938093,
+            "reverseYaw": 0.3415976345791029
+          },
+          {
+            "fps": 60,
+            "parkedYaw": 0,
+            "airYaw": 0,
+            "forwardYaw": -0.5078926108938093,
+            "reverseYaw": 0.3415976345791029
+          },
+          {
+            "fps": 120,
+            "parkedYaw": 0,
+            "airYaw": 0,
+            "forwardYaw": -0.5078926108938093,
+            "reverseYaw": 0.3415976345791029
+          },
+          {
+            "fps": 144,
+            "parkedYaw": 0,
+            "airYaw": 0,
+            "forwardYaw": -0.5078926108938093,
+            "reverseYaw": 0.3415976345791029
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Wheel rotation measures actual forward and reverse travel",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Drive straight in forward/reverse for 2 s, and drift sideways for 1 s."
+      },
+      "expected": "wheelRotation * 0.38 equals signed forward travel; sideways-only drift does not roll the wheels.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "maximumError": 4.796163466380676e-14,
+            "sidewaysWheelRotation": 0
+          },
+          {
+            "fps": 60,
+            "maximumError": 4.796163466380676e-14,
+            "sidewaysWheelRotation": 0
+          },
+          {
+            "fps": 120,
+            "maximumError": 4.796163466380676e-14,
+            "sidewaysWheelRotation": 0
+          },
+          {
+            "fps": 144,
+            "maximumError": 4.796163466380676e-14,
+            "sidewaysWheelRotation": 0
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Clamped input, immutable snapshots and independent controllers protect shared callers",
+      "input": {
+        "script": "Clamp steering/throttle outside [-1,1], try mutating state and control snapshots, alter the caller initial pose after construction, then reset."
+      },
+      "expected": "Controls clamp to [-1,1]; caller objects remain unchanged; snapshots reject mutation; reset retains the original copied pose; a second controller is unaffected.",
+      "measured": {
+        "throttle": 1,
+        "steer": -1,
+        "resetX": 3,
+        "otherX": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "A seeded one-minute mixed-input stress trace stays bounded and repeatable",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "60 s; change seeded throttle, steering, brake and granted boost every 30 physics ticks; use seed 0x415120."
+      },
+      "expected": "All fields remain finite, steering remains within 0.498 rad, reverse never exceeds 8 m/s, speed never exceeds the 180 mph cap, and all FPS results match to 1e-10.",
+      "measured": {
+        "seconds": 60,
+        "physicsTicks": 7200,
+        "maximumSpeed": 80.46720000000002,
+        "minimumSpeed": -4.000000000000001,
+        "maximumWheel": 0.36358048985343505,
+        "byRate": [
+          {
+            "fps": 30,
+            "state": {
+              "x": 1568.169796066906,
+              "y": 0,
+              "z": -1788.7648342691396,
+              "yaw": 3.113864148378353,
+              "speed": 47.64480000000069,
+              "lateralSpeed": -4.440892098500626e-16,
+              "steering": -0.012489237185714624,
+              "steerHoldTime": 0,
+              "steerHoldDirection": 0,
+              "wheelRotation": 8123.598257309927,
+              "verticalVelocity": 0,
+              "grounded": true,
+              "pitch": 0,
+              "bank": 0,
+              "boostTime": 0
+            }
+          },
+          {
+            "fps": 60,
+            "state": {
+              "x": 1568.169796066906,
+              "y": 0,
+              "z": -1788.7648342691396,
+              "yaw": 3.113864148378353,
+              "speed": 47.64480000000069,
+              "lateralSpeed": -4.440892098500626e-16,
+              "steering": -0.012489237185714624,
+              "steerHoldTime": 0,
+              "steerHoldDirection": 0,
+              "wheelRotation": 8123.598257309927,
+              "verticalVelocity": 0,
+              "grounded": true,
+              "pitch": 0,
+              "bank": 0,
+              "boostTime": 0
+            }
+          },
+          {
+            "fps": 120,
+            "state": {
+              "x": 1568.169796066906,
+              "y": 0,
+              "z": -1788.7648342691396,
+              "yaw": 3.113864148378353,
+              "speed": 47.64480000000069,
+              "lateralSpeed": -4.440892098500626e-16,
+              "steering": -0.012489237185714624,
+              "steerHoldTime": 0,
+              "steerHoldDirection": 0,
+              "wheelRotation": 8123.598257309927,
+              "verticalVelocity": 0,
+              "grounded": true,
+              "pitch": 0,
+              "bank": 0,
+              "boostTime": 0
+            }
+          },
+          {
+            "fps": 144,
+            "state": {
+              "x": 1568.169796066906,
+              "y": 0,
+              "z": -1788.7648342691396,
+              "yaw": 3.113864148378353,
+              "speed": 47.64480000000069,
+              "lateralSpeed": -4.440892098500626e-16,
+              "steering": -0.012489237185714624,
+              "steerHoldTime": 0,
+              "steerHoldDirection": 0,
+              "wheelRotation": 8123.598257309927,
+              "verticalVelocity": 0,
+              "grounded": true,
+              "pitch": 0,
+              "bank": 0,
+              "boostTime": 0
+            }
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Fresh handling is strict TypeScript with no browser, graphics or prototype dependencies",
+      "input": {
+        "script": "Compile kart/tsconfig.json with ES2022 only and no ambient types; inspect imports."
+      },
+      "expected": "Strict compilation passes and runtime imports no DOM/Three/old racing or motion modules.",
+      "measured": {
+        "typecheck": "PASS",
+        "runtimeImports": 0
+      },
+      "status": "PASS"
+    }
+  ]
+}
