@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#405363"><title>Test Lab</title>
- <link rel="stylesheet" href="./style.css?v=toggle-8">
+ <link rel="stylesheet" href="./style.css?v=live-14">
 </head>
 <body>
  <main>
@@ -21,19 +21,14 @@
    <div class="workspace-heading"><h1>Your workspace</h1><span id="subject-status">Avatar</span></div>
    <div class="mode-tabs" role="tablist" aria-label="Test mode"><button id="live-tab" role="tab" aria-selected="true" aria-controls="live-panel">Live test</button><button id="video-tab" role="tab" aria-selected="false" aria-controls="video-panel">Video animation</button></div>
    <section id="live-panel" role="tabpanel" aria-labelledby="live-tab">
-    <div class="test-picker"><label for="subject">Choose a test<select id="subject"><optgroup label="Avatar"><option value="avatar">Our avatar</option><option value="walk">Walking</option><option value="run">Running</option><option value="rules">Movement rules (section 1)</option><option value="skeleton">Skeleton (section 2)</option><option value="hands">Hands</option><option value="feet">Feet</option></optgroup><optgroup label="World & other studies"><option value="blocks">Blocks</option><option value="oval">Oval track</option><option value="island">Floating island</option><option value="motion">Motion study</option></optgroup></select></label><button id="reset">Reset</button></div>
+    <div class="test-picker"><label for="subject">Choose a test<select id="subject"><optgroup label="Avatar"><option value="avatar">Our avatar</option><option value="rules">Movement rules (section 1)</option><option value="skeleton">Skeleton (section 2)</option><option value="hands">Hands</option><option value="feet">Feet</option></optgroup><optgroup label="Racing"><option value="driving">Driving (solo kart)</option></optgroup><optgroup label="World & other studies"><option value="blocks">Blocks</option><option value="oval">Oval track</option><option value="island">Floating island</option><option value="motion">Motion study</option></optgroup></select></label><button id="reset">Reset</button></div>
     <p class="help" id="live-help">Drag the model to look around. Use the view buttons for a fixed angle.</p>
     <div id="live-controls" aria-label="Selected test controls"></div>
     <button class="return-button" id="return-to-viewer">Back to the model ↑</button>
    </section>
-   <section id="video-panel" role="tabpanel" aria-labelledby="video-tab" hidden>
-    <label for="clip">Animation<select id="clip"><option value="walk">Walking</option><option value="run">Running</option><option value="comparison">Run comparison</option></select></label>
-    <video id="animation-video" width="640" height="800" muted loop playsinline controls preload="none" aria-label="Selected animation video"></video>
-    <div class="rates" role="group" aria-label="Video speed"><button data-rate="0.25" aria-pressed="false">¼ speed</button><button data-rate="0.5" aria-pressed="false">½ speed</button><button data-rate="1" aria-pressed="true">Normal</button></div>
-    <p class="help">Pause or scrub to inspect a pose.</p><a id="download-video" href="./media/walk.mp4" download>Download video</a>
-   </section>
+   <section id="video-panel" role="tabpanel" aria-labelledby="video-tab" hidden></section>
   </section>
  </main>
- <script type="module" src="./main.js?v=toggle-13"></script>
+ <script type="module" src="./main.js?v=live-14"></script>
 </body>
 </html>

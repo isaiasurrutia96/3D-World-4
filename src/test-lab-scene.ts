@@ -6,7 +6,7 @@ import {
 type Options = {
   scene: Scene; camera: PerspectiveCamera; renderer: WebGLRenderer;
   getTarget: () => Vector3; floors?: Object3D[]; floorY?: number;
-  floorSize?: number; shadows?: Object3D[]; updateControls?: () => void;
+  floorSize?: number; createFloor?: boolean; shadows?: Object3D[]; updateControls?: () => void;
 };
 
 /** Shared presentation only. Physics, subject geometry and animation stay in each test. */
@@ -14,7 +14,7 @@ export function installTestLabScene(options: Options): void {
   if (!new URLSearchParams(location.search).has('lab')) return;
   const {scene, camera, renderer, getTarget, updateControls} = options;
   const floors = options.floors ?? [];
-  if (!floors.length) {
+  if (!floors.length && options.createFloor !== false) {
     // No floor of its own: make one sized to the subject (its widest
     // footprint × 1.6, at least 3 m), unless a size is given.
     const subject = new Box3().setFromObject(scene);

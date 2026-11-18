@@ -44,7 +44,7 @@ export function createMotionLab({title,section,videos=[],createSimulation=null,h
  }
  renderer.setAnimationLoop(ms=>{const dt=Math.min(simulation?.maxFrameSeconds??.05,last?(ms-last)/1000:1/60);last=ms;if(active)tick(dt);});
  simulation?.bind?.({input,camera,reset,setView,canvas:renderer.domElement});if(simulation)reset();
- if(!simulation)installTestLabScene({scene,camera,renderer,floors:[floor],getTarget:()=>target});
- window.motionLab={controller,input,marker,floor,renderer,scene,camera,view:setView,setCamera:(y,p)=>{yaw=y;pitch=p;},reset,tick,getState:()=>({movement:{...controller.state},input:input.getState(),camera:{yaw,pitch,distance,view:viewName},active})};
+ installTestLabScene({scene,camera,renderer,floors:simulation?[]:[floor],createFloor:!simulation,getTarget:()=>target});
+ window.motionLab={controller,input,marker,floor,renderer,scene,camera,view:setView,setCamera:(y,p)=>{yaw=y;pitch=p;viewName='free';},reset,tick,getState:()=>({movement:{...controller.state},input:input.getState(),camera:{yaw,pitch,distance,view:viewName},active})};
  window.motionLabReady=true;setView('back');
 }
