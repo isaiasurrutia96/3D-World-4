@@ -9,3 +9,10 @@
 
 /* New test controls share the floating Motion panel; reserve its measured size. */
 .motion-panel{max-height:max(120px,calc(100svh - var(--toolbar-space) - 210px));overflow-y:auto}.views button:disabled{opacity:.4;cursor:default}@media(max-width:600px){.viewer.motion-open #frame-host,.viewer.motion-open #loading{bottom:calc(var(--toolbar-space) + var(--motion-panel-height,166px) + 18px)}.viewer.motion-open::before{height:calc(var(--toolbar-space) + var(--motion-panel-height,166px) + 18px)}}
+
+/* The selected test stays beside the logo, including its existing section label. */
+.viewer-heading{position:absolute;z-index:5;top:max(20px,env(safe-area-inset-top));left:max(20px,env(safe-area-inset-left));right:max(20px,env(safe-area-inset-right));display:flex;align-items:center;gap:16px;pointer-events:none}
+.viewer-heading .brand{position:static;flex-shrink:0;pointer-events:auto}
+#test-context{min-width:0;font-size:13px;line-height:1.4;font-weight:500;color:#edf3f7;overflow-wrap:anywhere}
+@media(max-width:500px){.viewer-heading{left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));top:max(18px,env(safe-area-inset-top));gap:12px}#test-context{font-size:12px}}
+@media(max-height:450px) and (min-width:601px){.viewer-heading{top:max(12px,env(safe-area-inset-top))}#test-context{font-size:12px}}
