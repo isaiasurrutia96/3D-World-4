@@ -20,7 +20,7 @@
       "stageHeight": 465,
       "headerHeight": 103,
       "steeringGap": 12,
-      "steeringLeft": 36
+      "steeringLeft": 48
     },
     {
       "width": 390,
@@ -28,7 +28,7 @@
       "stageHeight": 743,
       "headerHeight": 101,
       "steeringGap": 12,
-      "steeringLeft": 36
+      "steeringLeft": 48
     },
     {
       "width": 844,
@@ -36,7 +36,7 @@
       "stageHeight": 337,
       "headerHeight": 53,
       "steeringGap": 12,
-      "steeringLeft": 36
+      "steeringLeft": 48
     },
     {
       "width": 768,
@@ -44,7 +44,7 @@
       "stageHeight": 923,
       "headerHeight": 101,
       "steeringGap": 12,
-      "steeringLeft": 36
+      "steeringLeft": 48
     },
     {
       "width": 1280,
@@ -52,7 +52,7 @@
       "stageHeight": 747,
       "headerHeight": 53,
       "steeringGap": 12,
-      "steeringLeft": 36
+      "steeringLeft": 48
     }
   ],
   "pageErrors": []
