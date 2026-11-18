@@ -82,7 +82,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const across = (v, t) => v.clone().sub(t.clone().multiplyScalar(v.dot(t)));
 
 /** Solve one limb. Returns the new angles for its three bones. */
-function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, targetOverride = null, spinOffset = 0){
+function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, targetOverride = null, spinOffset = null){
  const [uName, mName, eName] = LIMBS[kind].map(n => `${n}.${side}`);
  const B = n => skeleton.bones[skeleton.index.get(n)], U = B(uName), Mb = B(mName), E = B(eName);
  const cur = n => ({...B(n).rest, ...(pose[n] ?? {})});
@@ -141,8 +141,9 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
  // Ties go to the bend closest to the pose's own (so the arm never flips to the other answer).
  hinges.sort((a1, a2) => Math.abs(a1 - m.x) - Math.abs(a2 - m.x));
  let best = null;
- for(const hx of hinges){ const r = attempt(hx, spinOffset * RAD); if(!best || r.err < best.err - 1e-9) best = r; }
- if(best.err > 1e-4 && !spinOffset){
+ // A given spin (the palm solver chooses it) is used as is: no searching.
+ for(const hx of hinges){ const r = attempt(hx, (spinOffset ?? 0) * RAD); if(!best || r.err < best.err - 1e-9) best = r; }
+ if(best.err > 1e-4 && spinOffset === null){
   for(const hx of hinges) for(let k = -17; k <= 18; k++){ const r = attempt(hx, k * 10 * RAD); if(r.err < best.err - 1e-9 || (Math.abs(r.err - best.err) <= 1e-9 && Math.abs(r.spin) < Math.abs(best.spin))) best = r; }
   if(best.err < 1e-5){
    // It lands with some spin: find the smallest spin that still lands (the elbow/knee
@@ -223,7 +224,7 @@ function solvePalm(skeleton, out, solved, side, goal){
  // If a joint limit left it stuck short of facing the right way, try a few other
  // starting turns and keep the best (rare; normally the pose's own start is enough).
  const cost = x => residual(x).reduce((a, y) => a + y * y, 0), off = x => { const r3 = residual(x); return r3[0] ** 2 + r3[1] ** 2 + r3[2] ** 2; };
- if(off(v) > 1e-4){
+ if(off(v) > 1e-3){
   let best = cost(v);
   for(const seed of [[0, -60, 0, 0], [0, -30, 0, 0], [0, 40, 0, 0], [30, -45, 0, 15], [-30, -45, 0, 15]]){
    const w = leastSquares(residual, seed.map((x, j) => j === 0 ? x : x + (j === 1 ? 0 : start[j])), clampAt), c = cost(w);

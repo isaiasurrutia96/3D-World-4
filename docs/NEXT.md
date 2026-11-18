@@ -151,3 +151,10 @@ Recorded 17 November 2026.
     hanging to the thighs while he sits. Checked: under 2.2° change per frame
     while sitting, still once seated, palms flat within 0.6°, fingers along
     the thigh. Next: item 2 (squat smoothness), then item 3 (step).
+22. Seated hands turned 20° toward the middle of the body (thumbs closer to
+    the body), owner's request (skeleton-test/demos.js HANDS_IN = 20; easy to
+    change). Also: palm solver no longer searches spins inside its own steps
+    (was 85 ms a frame while sitting, now about 3 ms). Known, to fix next with
+    the smoothness items: at the very end of sitting the elbows swing out a
+    little quickly (3.8° a frame; the check's limit is 3°); standing up from
+    Sit snaps instead of rising smoothly.
