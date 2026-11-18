@@ -229,3 +229,11 @@ The owner requested Brake / Reverse above Gas at its existing size, noticeably l
 Stop after the verified link and wait for the owner's feedback.
 
 Final verification: 12 build-time Node checks and the complete driving browser suite pass with zero page errors. Seven touch layouts, actual portrait/landscape multi-touch steering/pedals, Reverse/cancellation, keyboard/gamepad, views/FPV, video scrolling and disabled driving zoom pass. The before/after sizing comparison above also passes. No handling or simulation source changed.
+
+## Mobile Gas/Boost inset and Boost size
+
+The owner requested Gas and Boost 24 px closer to center and a primary-sized Boost button. Normal touch/narrow layouts now shift Gas left 24 px and add a 24 px inset to the right-anchored Boost. Boost exactly matches Gas width and 74 px height, sharing the stage's responsive sizing variables; steering retains its existing width/height and Brake / Reverse stays in place. Both are unchanged by the sizing-variable refactor in measured before/after comparisons.
+
+Responsive fit exceptions are explicit: at widths up to 360 px Gas uses a 16 px shift so it does not overlap steering; at the existing shortest narrow-landscape layout Boost remains centered at the top. Those are layout guards, not changes to the driving model. Wide mouse-driven desktop controls, steering/brake geometry, input semantics, app launch, page layout and speed/handling are unchanged.
+
+Verification: 12 build Node checks and full driving browser checks pass, including actual simultaneous Gas + enlarged Boost, cancellation, portrait/landscape steering/pedals, FPV/views, scroll-to-videos and gamepad/keyboard paths. Independent before/after geometry checks pass at seven touch sizes; extra 340/355/360/361 px measurements check the narrow guard's boundary. Boost matches Gas dimensions, normal insets are 24 px, other control geometry is preserved, and no controls overlap. Stop after the verified live link for owner feedback.
