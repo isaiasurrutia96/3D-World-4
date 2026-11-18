@@ -42,3 +42,22 @@ Recorded 17 November 2026.
      (stone, rock, leaves, bush).
    - Flowers stay exactly as approved.
    - New materials get a style once, in `MATERIAL_STYLE` in `src/island.ts`.
+
+## Platform decision (approved 18 Nov 2026)
+
+8. Build the full game for the web first (Three.js + TypeScript): free,
+   works on the owner's 2015/2016 MacBook, and every version can be
+   played on a phone by link within minutes.
+9. Keep the rules (the "brain": movement, skeleton, balance, karts, races,
+   collisions) separate from the drawing (the "face"), each with automatic
+   checks and plan files, so the game can later be ported to consoles
+   (rebuilt in a console-ready engine such as Unity, Godot with a console
+   partner, or Unreal, by us or a porting studio).
+10. Shared controls layer for every device (keyboard, touch, controllers);
+    3D models and sounds in standard file types every engine can open.
+11. Selling before consoles: wrap the web game for Steam and the phone
+    stores. The iPhone store will need a recent Mac (or a rented cloud
+    Mac) only when it is time to submit.
+12. The owner wants to learn: Claude acts as a game-development mentor,
+    explaining each step in simple words with alternatives, never
+    assuming. Terms are collected in `docs/LEARNING.md`.
