@@ -7,6 +7,7 @@
     "FPV: seated eye, forward view, look/recenter, fixed eye on wheel input, live switches, Reset/track persistence; driving settings unchanged.",
     "Standard Gamepad API: three identities, analog steering, RT Gas, LT brake and disconnect.",
     "Phone: simultaneous Left + Gas, cancellation, Reverse, blur clears/pauses, Reset.",
+    "Phone: enlarged, inset Boost works with Gas and clears both holds on cancellation.",
     "Phone FPV toggles, touch look and Reset preserve the first-person view.",
     "Original top controls stay visible: all six views, track selection and Reset work without a dropdown.",
     "Seven touch layouts: larger primary controls, original-size brake above Gas, steering +12 px, separate controls, full header and video scrolling; driving zoom stays disabled.",
@@ -26,14 +27,20 @@
         "height": 74
       },
       "gas": {
-        "width": 80.1875,
+        "width": 80.18748474121094,
         "height": 74
       },
       "brake": {
         "width": 64.15625,
         "height": 58
       },
-      "pedalGap": 12
+      "pedalGap": 12,
+      "gasLeft": 211.1125030517578,
+      "boost": {
+        "x": 203.8125,
+        "width": 80.1875,
+        "height": 74
+      }
     },
     {
       "width": 390,
@@ -47,14 +54,20 @@
         "height": 74
       },
       "gas": {
-        "width": 101.1875,
+        "width": 101.18748474121094,
         "height": 74
       },
       "brake": {
         "width": 80.953125,
         "height": 58
       },
-      "pedalGap": 12
+      "pedalGap": 12,
+      "gasLeft": 247.8625030517578,
+      "boost": {
+        "x": 252.8125,
+        "width": 101.1875,
+        "height": 74
+      }
     },
     {
       "width": 568,
@@ -75,7 +88,13 @@
         "width": 123.671875,
         "height": 58
       },
-      "pedalGap": 12
+      "pedalGap": 12,
+      "gasLeft": 353.40625,
+      "boost": {
+        "x": 206.703125,
+        "width": 154.59375,
+        "height": 74
+      }
     },
     {
       "width": 667,
@@ -96,7 +115,13 @@
         "width": 147.4375,
         "height": 58
       },
-      "pedalGap": 12
+      "pedalGap": 12,
+      "gasLeft": 422.703125,
+      "boost": {
+        "x": 446.703125,
+        "width": 184.296875,
+        "height": 74
+      }
     },
     {
       "width": 844,
@@ -117,7 +142,13 @@
         "width": 106,
         "height": 58
       },
-      "pedalGap": 12
+      "pedalGap": 12,
+      "gasLeft": 651.5,
+      "boost": {
+        "x": 675.5,
+        "width": 132.5,
+        "height": 74
+      }
     },
     {
       "width": 768,
@@ -138,7 +169,13 @@
         "width": 106,
         "height": 58
       },
-      "pedalGap": 12
+      "pedalGap": 12,
+      "gasLeft": 575.5,
+      "boost": {
+        "x": 599.5,
+        "width": 132.5,
+        "height": 74
+      }
     },
     {
       "width": 1280,
@@ -159,7 +196,13 @@
         "width": 106,
         "height": 58
       },
-      "pedalGap": 12
+      "pedalGap": 12,
+      "gasLeft": 1087.5,
+      "boost": {
+        "x": 1111.5,
+        "width": 132.5,
+        "height": 74
+      }
     }
   ],
   "pageErrors": []

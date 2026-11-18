@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {createMoveController} from '../../motion-core/controller.js';
 import {createInput} from './input.js';
+import {updateFollowTarget} from './camera-follow.js';
 import {protectPage} from '../../public/test-lab/interactions.js';
 import {installTestLabScene} from '../../src/test-lab-scene.ts';
 export function createMotionLab({title,section,videos=[],createSimulation=null,helpText=null}){
@@ -33,8 +34,7 @@ export function createMotionLab({title,section,videos=[],createSimulation=null,h
   marker.position.set(state.x,state.y||0,state.z);marker.rotation.set(state.pitch||0,state.facing,state.bank||0);
   // The plain test slab grows if a long test travels beyond its starting area.
   if(!simulation){floor.scale.x=Math.max(1,Math.ceil((Math.abs(state.x)+50)/100));floor.scale.z=Math.max(1,Math.ceil((Math.abs(state.z)+50)/100));}
-  target.x=simulation?.chase?state.x+inspectionOffset.x:T.MathUtils.damp(target.x,state.x+inspectionOffset.x,10,seconds);target.z=simulation?.chase?state.z+inspectionOffset.z:T.MathUtils.damp(target.z,state.z+inspectionOffset.z,10,seconds);
-  target.y=T.MathUtils.damp(target.y,(state.y||0)+(simulation?.targetHeight??.1)+inspectionOffset.y,10,seconds);
+  updateFollowTarget(target,state,seconds,simulation,inspectionOffset);
   if(simulation?.chase&&viewName==='back')yaw+=Math.atan2(Math.sin(state.facing+Math.PI-yaw),Math.cos(state.facing+Math.PI-yaw))*(1-Math.exp(-(simulation.chaseRate??8)*seconds));
   camera.fov=simulation?.fov??(simulation?60+Math.min(6,Math.max(0,state.speed)/10):45);camera.updateProjectionMatrix();
   camera.position.set(target.x+Math.sin(yaw)*Math.cos(pitch)*distance,target.y+Math.sin(pitch)*distance,target.z+Math.cos(yaw)*Math.cos(pitch)*distance);camera.up.set(0,pitch>1.55?0:1,pitch>1.55?-1:0);camera.lookAt(target);camera.updateMatrixWorld(true);

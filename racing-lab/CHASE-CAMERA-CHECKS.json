@@ -1,0 +1,182 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "rule": "Reproduce the reported glitch with the original road meshes and old vertical lag.",
+      "input": "Replay stations 1300–1450 at 180 mph at four display rates.",
+      "measured": [
+        {
+          "fps": 30,
+          "minimumClearance": 0.013804346711244087,
+          "minimumDistance": 10.594810050208546,
+          "hits": 0
+        },
+        {
+          "fps": 60,
+          "minimumClearance": -0.07593376601140545,
+          "minimumDistance": 0.5,
+          "hits": 4
+        },
+        {
+          "fps": 120,
+          "minimumClearance": -0.12274599893098248,
+          "minimumDistance": 0.5,
+          "hits": 20
+        },
+        {
+          "fps": 144,
+          "minimumClearance": -0.13092717111221308,
+          "minimumDistance": 0.5,
+          "hits": 25
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "No road-triggered camera collapse at the reported climb.",
+      "input": "Identical boost-speed replay at 30/60/120/144 FPS using the shared camera target.",
+      "measured": [
+        {
+          "fps": 30,
+          "minimumClearance": 0.9999999999999991,
+          "minimumDistance": 10.594810050208546,
+          "hits": 0
+        },
+        {
+          "fps": 60,
+          "minimumClearance": 0.9999999999999991,
+          "minimumDistance": 10.594810050208546,
+          "hits": 0
+        },
+        {
+          "fps": 120,
+          "minimumClearance": 0.9999999999999991,
+          "minimumDistance": 10.594810050208546,
+          "hits": 0
+        },
+        {
+          "fps": 144,
+          "minimumClearance": 0.9999999999999991,
+          "minimumDistance": 10.594810050208546,
+          "hits": 0
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Ground support, speed and handling are independent of the camera fix.",
+      "input": "Two-second actual boosted drive up the climb; compare camera/no-camera runs and all four display rates.",
+      "measured": [
+        {
+          "fps": 30,
+          "airborneFrames": 0,
+          "state": {
+            "x": 419.3148690073825,
+            "y": 8.301371233704335,
+            "z": 71.91006746523107,
+            "yaw": -0.7928406026908582,
+            "speed": 80.46719999999999,
+            "lateralSpeed": -7.105427357601002e-15,
+            "steering": -0.011035426669295103,
+            "steerHoldTime": 0,
+            "steerHoldDirection": 0,
+            "wheelRotation": 423.5115789473681,
+            "verticalVelocity": 0,
+            "grounded": true,
+            "pitch": -0.011639107210371289,
+            "bank": 0.0008148821096419945,
+            "boostTime": 4.603956105242446e-15,
+            "impactYawRate": 0,
+            "railContactTime": 0,
+            "impactRecovery": 0,
+            "contacts": 0
+          }
+        },
+        {
+          "fps": 60,
+          "airborneFrames": 0,
+          "state": {
+            "x": 419.3148690073825,
+            "y": 8.301371233704335,
+            "z": 71.91006746523107,
+            "yaw": -0.7928406026908582,
+            "speed": 80.46719999999999,
+            "lateralSpeed": -7.105427357601002e-15,
+            "steering": -0.011035426669295103,
+            "steerHoldTime": 0,
+            "steerHoldDirection": 0,
+            "wheelRotation": 423.5115789473681,
+            "verticalVelocity": 0,
+            "grounded": true,
+            "pitch": -0.011639107210371289,
+            "bank": 0.0008148821096419945,
+            "boostTime": 4.603956105242446e-15,
+            "impactYawRate": 0,
+            "railContactTime": 0,
+            "impactRecovery": 0,
+            "contacts": 0
+          }
+        },
+        {
+          "fps": 120,
+          "airborneFrames": 0,
+          "state": {
+            "x": 419.3148690073825,
+            "y": 8.301371233704335,
+            "z": 71.91006746523107,
+            "yaw": -0.7928406026908582,
+            "speed": 80.46719999999999,
+            "lateralSpeed": -7.105427357601002e-15,
+            "steering": -0.011035426669295103,
+            "steerHoldTime": 0,
+            "steerHoldDirection": 0,
+            "wheelRotation": 423.5115789473681,
+            "verticalVelocity": 0,
+            "grounded": true,
+            "pitch": -0.011639107210371289,
+            "bank": 0.0008148821096419945,
+            "boostTime": 4.603956105242446e-15,
+            "impactYawRate": 0,
+            "railContactTime": 0,
+            "impactRecovery": 0,
+            "contacts": 0
+          }
+        },
+        {
+          "fps": 144,
+          "airborneFrames": 0,
+          "state": {
+            "x": 419.3148690073825,
+            "y": 8.301371233704335,
+            "z": 71.91006746523107,
+            "yaw": -0.7928406026908582,
+            "speed": 80.46719999999999,
+            "lateralSpeed": -7.105427357601002e-15,
+            "steering": -0.011035426669295103,
+            "steerHoldTime": 0,
+            "steerHoldDirection": 0,
+            "wheelRotation": 423.5115789473681,
+            "verticalVelocity": 0,
+            "grounded": true,
+            "pitch": -0.011639107210371289,
+            "bank": 0.0008148821096419945,
+            "boostTime": 4.603956105242446e-15,
+            "impactYawRate": 0,
+            "railContactTime": 0,
+            "impactRecovery": 0,
+            "contacts": 0
+          }
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Keep non-driving inspection behavior.",
+      "input": "One-second damped target plus inspection offset at four rates.",
+      "measured": {
+        "maximumAllowedError": 1e-12
+      },
+      "status": "PASS"
+    }
+  ]
+}

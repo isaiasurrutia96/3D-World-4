@@ -141,6 +141,13 @@ try {
     await mobile.evaluate(() => window.dispatchEvent(new Event('focus')));
     await pressOption(mobile, '#reset');
     results.push('Phone: simultaneous Left + Gas, cancellation, Reverse, blur clears/pauses, Reset.');
+    const boostTouch=await touch('boost',30), gasBoostTouch=await touch('gas',31);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[boostTouch,gasBoostTouch]});
+    await mobile.waitForFunction(()=>drivingLab.test.controller.state.boostTime>0&&drivingLab.test.controller.state.speed>3);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+    await mobile.waitForFunction(()=>!motionLab.input.actions.gas&&!motionLab.input.actions.boost);
+    await pressOption(mobile,'#reset');
+    results.push('Phone: enlarged, inset Boost works with Gas and clears both holds on cancellation.');
     const stage = await mobile.locator('#stage').boundingBox(), d = await mobile.evaluate(() => motionLab.getState().camera.distance);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ id: 5, x: 210, y: stage.y + 140 }, { id: 6, x: 310, y: stage.y + 140 }] });
     const anchoredDistance = await mobile.evaluate(() => motionLab.getState().camera.distance);
@@ -190,6 +197,9 @@ try {
         assert(gasBounds.x - right.x - right.width >= 4, 'Steering and pedals must remain separate on narrow phones');
         assert(left.x >= 56 && left.x <= 64, 'Mobile steering should move another 12 px inward');
         const brakeBounds = await mobile.locator('#race-reverse').boundingBox();
+        const boostBounds = await mobile.locator('#race-boost').boundingBox();
+        assert(Math.abs(boostBounds.width-gasBounds.width)<.1,'Boost should match Gas width');
+        assert.equal(boostBounds.height,gasBounds.height,'Boost should match primary button height');
         assert(brakeBounds.y + brakeBounds.height + 11.9 <= gasBounds.y, 'Brake must sit above Gas');
         assert.equal(brakeBounds.height,58);
         for(const b of [left,right,gasBounds]) assert.equal(b.height,74,'Primary controls should be noticeably taller');
@@ -203,7 +213,7 @@ try {
         assert.equal((await mobile.locator('#topbar').boundingBox()).y, 0);
         await mobile.evaluate(() => scrollTo(0,0));
         await mobile.waitForFunction(() => scrollY === 0 && motionLab.getState().active);
-        layouts.push({ ...viewport, stageHeight:stage.height, headerHeight:stage.y, steeringGap:right.x-left.x-left.width, steeringLeft:left.x, steeringButton:{width:left.width,height:left.height}, gas:{width:gasBounds.width,height:gasBounds.height}, brake:{width:brakeBounds.width,height:brakeBounds.height}, pedalGap:gasBounds.y-brakeBounds.y-brakeBounds.height });
+        layouts.push({ ...viewport, stageHeight:stage.height, headerHeight:stage.y, steeringGap:right.x-left.x-left.width, steeringLeft:left.x, steeringButton:{width:left.width,height:left.height}, gas:{width:gasBounds.width,height:gasBounds.height}, brake:{width:brakeBounds.width,height:brakeBounds.height}, pedalGap:gasBounds.y-brakeBounds.y-brakeBounds.height, gasLeft:gasBounds.x, boost:{x:boostBounds.x,width:boostBounds.width,height:boostBounds.height} });
     }
     results.push('Seven touch layouts: larger primary controls, original-size brake above Gas, steering +12 px, separate controls, full header and video scrolling; driving zoom stays disabled.');
     await mobile.setViewportSize({width:390,height:844});
