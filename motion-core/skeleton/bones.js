@@ -4,8 +4,10 @@
 // points. Later layers hang the clay body parts on these bones, pose them,
 // and solve reaching (put a foot here, a hand there).
 //
-// Units: metres. Avatar space: standing at rest, soles on y = 0, facing +Z,
-// +X is the avatar's right. Every position below was measured from the
+// Units: metres. Avatar space: standing at rest, soles on y = 0, facing +Z.
+// He faces +Z, so +X is HIS LEFT. (The approved model's code calls the +X
+// parts "right", meaning screen-right when you face him; bone names here
+// use his own left and right: .L and .R.) Every position below was measured from the
 // approved Checkpoint 2 avatar (avatar-lab/src/avatar.js); the checks in
 // motion-core/tests/skeleton.mjs re-measure the live model to prove it.
 //
@@ -24,8 +26,9 @@
 // finger). `rest` is the angle the approved model is built at, so the rest
 // pose reproduces Checkpoint 2 exactly. `limits` are [min, max] per axis.
 //
-// Only the centre line and the RIGHT side are written here; the left side is
-// the exact mirror (see skeleton.js), so the two sides can never drift apart.
+// Only the centre line and HIS LEFT side (+X) are written here; his right
+// side is the exact mirror (see skeleton.js), so the two sides can never
+// drift apart.
 
 const deg = v => v * 180 / Math.PI;
 
@@ -53,8 +56,8 @@ export const CENTRE = [
   rest:{x:0,y:0,z:0}, limits:{x:[-25,30], y:[-40,40], z:[-20,20]}},
 ];
 
-/** Right-side bones (mirrored to make the left). */
-export const RIGHT = [
+/** His left side's bones (+X), mirrored to make his right. */
+export const SIDE = [
  // Arm. The approved model holds the arms a little out (z) and forward (x).
  {name:'upperArm', parent:'spine', head:[0.2979,1.2464,0.0035], tail:[0.3596,0.9441,0.0331], frame:'body',
   note:'Shoulder. -x swings forward/up, +z raises out to the side.',
@@ -84,7 +87,7 @@ export const RIGHT = [
 ];
 
 /**
- * Finger data, right hand, measured from the approved hand (hand-lab).
+ * Finger data, his left hand (+X), measured from the approved hand (hand-lab).
  * straight: the three joint pivots and the fingertip with the finger
  *   straight (all angles 0), on the approved hand's own finger centre line.
  * axes: the axis each joint curls about (positive = toward the palm).
@@ -144,9 +147,9 @@ export function fingerBones(){
 }
 
 // The hand bone points from the wrist to the middle knuckle (tilted).
-RIGHT.find(b=>b.name==='hand').tail=turn([0.4296,0.6005,0.1116],WRIST,[1,0,0],HAND_TILT).map(v=>+v.toFixed(6));
+SIDE.find(b=>b.name==='hand').tail=turn([0.4296,0.6005,0.1116],WRIST,[1,0,0],HAND_TILT).map(v=>+v.toFixed(6));
 
-/** Points on each foot that can touch the ground (right foot, avatar space). */
+/** Points on each foot that can touch the ground (his left foot, +X, avatar space). */
 export const FOOT_CONTACTS = {
  heel:[0.15,0,-0.12], heelInner:[0.06,0,-0.08], heelOuter:[0.24,0,-0.08],
  ballInner:[0.035,0,0.2153], ballOuter:[0.265,0,0.2153], toe:[0.1494,0,0.345],

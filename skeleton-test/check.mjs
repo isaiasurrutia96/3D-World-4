@@ -36,7 +36,7 @@ const endPoints=(a,top,band)=>{const p=a.mesh.geometry.attributes.position,pts=[
 const ballCentre=(pts,M)=>{const ATA=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],N=[0,0,0,0];for(const l of pts){const q=l.clone().applyMatrix4(M),a=[2*q.x,2*q.y,2*q.z,1],b=q.lengthSq();for(let i=0;i<4;i++){N[i]+=a[i]*b;for(let j=0;j<4;j++)ATA[i][j]+=a[i]*a[j];}}
  const e=new T.Matrix4().set(...ATA.flat()).invert().elements,s=[0,1,2,3].map(i=>e[i]*N[0]+e[4+i]*N[1]+e[8+i]*N[2]+e[12+i]*N[3]);return new T.Vector3(s[0],s[1],s[2]);};
 const joints=[];
-for(const s of ['R','L'])joints.push(
+for(const s of ['L','R'])joints.push(
  {name:'shoulder '+s,child:part('upper-arm.'+s),parent:part('socket-torso'),top:true,band:.06},
  {name:'elbow '+s,child:part('forearm.'+s),parent:part('upper-arm.'+s),top:true,band:.05},
  {name:'wrist '+s,child:part('hand.'+s),parent:part('forearm.'+s),top:true,band:.05},
@@ -47,7 +47,7 @@ joints.push({name:'head',child:part('head'),parent:part('neck'),all:true});
 const flat=createAssembledAvatar({handTilt:0});flat.rig.root.updateMatrixWorld(true);
 const flatTop=side=>{const h=flat.lowerArmParts.find(p=>p.side===side).hand,P=h.geometry.attributes.position,ys=[];let e=-1e9;for(let i=0;i<P.count;i++){const y=new T.Vector3().fromBufferAttribute(P,i).applyMatrix4(h.matrixWorld).y;ys.push(y);e=Math.max(e,y);}
  const out=[];for(let i=0;i<P.count;i++)if(ys[i]>e-.05)out.push(new T.Vector3().fromBufferAttribute(P,i));return out;};
-for(const j of joints){if(j.name.startsWith('wrist'))j.pts=flatTop(j.name.endsWith('R')?1:-1);}
+for(const j of joints){if(j.name.startsWith('wrist'))j.pts=flatTop(j.name.endsWith('L')?1:-1);}
 for(const j of joints){if(j.pts){j.restCentre=ballCentre(j.pts,j.child.rest);j.inParent=j.restCentre.clone().applyMatrix4(j.parent.rest.clone().invert());continue;}
  j.pts=j.all?(()=>{const p=j.child.mesh.geometry.attributes.position,o=[];for(let i=0;i<p.count;i++)o.push(new T.Vector3().fromBufferAttribute(p,i));return o;})():endPoints(j.child,j.top,j.band);
  j.restCentre=ballCentre(j.pts,j.child.rest);j.inParent=j.restCentre.clone().applyMatrix4(j.parent.rest.clone().invert());}

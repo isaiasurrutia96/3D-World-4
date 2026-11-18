@@ -8,14 +8,14 @@ import {createSkeletonAvatar} from './attach.js';
 
 const POSES={
  rest:{},
- 'arms-out':{'upperArm.R':{x:0,y:0,z:88},'upperArm.L':{x:0,y:0,z:-88},'lowerArm.R':{x:0,y:0,z:0},'lowerArm.L':{x:0,y:0,z:0}},
- 'arms-up':{'upperArm.R':{x:-165,y:0,z:8},'upperArm.L':{x:-165,y:0,z:-8},'lowerArm.R':{x:-5,y:0,z:0},'lowerArm.L':{x:-5,y:0,z:0}},
+ 'arms-out':{'upperArm.L':{x:0,y:0,z:88},'upperArm.R':{x:0,y:0,z:-88},'lowerArm.L':{x:0,y:0,z:0},'lowerArm.R':{x:0,y:0,z:0}},
+ 'arms-up':{'upperArm.L':{x:-165,y:0,z:8},'upperArm.R':{x:-165,y:0,z:-8},'lowerArm.L':{x:-5,y:0,z:0},'lowerArm.R':{x:-5,y:0,z:0}},
  // Natural wave: upper arm out at shoulder height, forearm straight up, palm forward;
  // the hand tilted 10° back (clockwise seen from his waving side) about its own middle.
- wave:{'upperArm.R':{x:-83.2,y:-5.1,z:79.2},'lowerArm.R':{x:-74.6,y:-14.6,z:0},'hand.R':{x:-1.2,y:0,z:8.5}},
- elbows:{'upperArm.R':{x:-15,y:0,z:12},'upperArm.L':{x:-15,y:0,z:-12},'lowerArm.R':{x:-120,y:0,z:0},'lowerArm.L':{x:-120,y:0,z:0},'hand.R':{x:30,y:0,z:0},'hand.L':{x:30,y:0,z:0}},
- kick:{'thigh.R':{x:-70,y:0,z:0},'shin.R':{x:35,y:0,z:0},'foot.R':{x:20,y:0,z:0},'upperArm.R':{x:25,y:0,z:12},'upperArm.L':{x:-35,y:0,z:-12}},
- knee:{'thigh.L':{x:-95,y:0,z:0},'shin.L':{x:115,y:0,z:0},'foot.L':{x:30,y:0,z:0},'upperArm.R':{x:-30,y:0,z:20},'upperArm.L':{x:20,y:0,z:-20}},
+ wave:{'upperArm.L':{x:-83.2,y:-5.1,z:79.2},'lowerArm.L':{x:-74.6,y:-14.6,z:0},'hand.L':{x:-1.2,y:0,z:8.5}},
+ elbows:{'upperArm.L':{x:-15,y:0,z:12},'upperArm.R':{x:-15,y:0,z:-12},'lowerArm.L':{x:-120,y:0,z:0},'lowerArm.R':{x:-120,y:0,z:0},'hand.L':{x:30,y:0,z:0},'hand.R':{x:30,y:0,z:0}},
+ kick:{'thigh.L':{x:-70,y:0,z:0},'shin.L':{x:35,y:0,z:0},'foot.L':{x:20,y:0,z:0},'upperArm.L':{x:25,y:0,z:12},'upperArm.R':{x:-35,y:0,z:-12}},
+ knee:{'thigh.R':{x:-95,y:0,z:0},'shin.R':{x:115,y:0,z:0},'foot.R':{x:30,y:0,z:0},'upperArm.L':{x:-30,y:0,z:20},'upperArm.R':{x:20,y:0,z:-20}},
  look:{'neck':{x:5,y:25,z:0},'head':{x:-10,y:15,z:6}},
 };
 

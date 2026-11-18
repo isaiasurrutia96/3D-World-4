@@ -1,6 +1,6 @@
 // Skeleton · layer 1: building the bones and moving them.
 //
-// createSkeleton() returns the full bone list (centre, right, mirrored left,
+// createSkeleton() returns the full bone list (centre, his left side, its mirror his right,
 // fingers) and three operations:
 //   restPose()        the angles that reproduce the approved model
 //   clampPose(pose)   keeps every joint inside its limits
@@ -10,7 +10,7 @@
 // with angles in degrees; any bone left out stays at its rest angle.
 // Moving a bone turns everything below it; bone lengths never change.
 import {Euler, Matrix4, Quaternion, Vector3} from 'three';
-import {CENTRE, RIGHT, FOOT_CONTACTS, fingerBones} from './bones.js';
+import {CENTRE, SIDE, FOOT_CONTACTS, fingerBones} from './bones.js';
 
 const RAD = Math.PI / 180;
 const mirrorPoint = ([x,y,z]) => [-x,y,z];
@@ -25,24 +25,25 @@ function frameOf(bone){
 }
 
 /**
- * Mirror a right-side bone to the left. Positions flip across x. Angles: x
+ * Mirror a bone from his left side to his right. Positions flip across x. Angles: x
  * (bend) stays the same, y (twist) and z (side) change sign, so the left
- * side moves as the exact mirror image of the right.
+ * side moves as the exact mirror image of the other.
  */
 function mirrorBone(b){
  const flip=([a,c])=>[-c,-a];
  const frame=b.frame==='body'?'body':{bendAxis:[b.frame.bendAxis[0],-b.frame.bendAxis[1],-b.frame.bendAxis[2]]};
- return {...b, name:b.name+'.L', parent:b.parent&&!CENTRE.some(c=>c.name===b.parent)?b.parent+'.L':b.parent,
+ return {...b, name:b.name+'.R', parent:b.parent&&!CENTRE.some(c=>c.name===b.parent)?b.parent+'.R':b.parent,
   head:mirrorPoint(b.head), tail:mirrorPoint(b.tail), frame,
   rest:{x:b.rest.x,y:-b.rest.y,z:-b.rest.z},
-  limits:b.limits&&{x:[...b.limits.x], y:flip(b.limits.y), z:flip(b.limits.z)}, side:'L'};
+  limits:b.limits&&{x:[...b.limits.x], y:flip(b.limits.y), z:flip(b.limits.z)}, side:'R'};
 }
 
 export function createSkeleton(){
- const right=[...RIGHT,...fingerBones()].map(b=>({...b, name:b.name+'.R',
-  parent:b.parent&&!CENTRE.some(c=>c.name===b.parent)?b.parent+'.R':b.parent, side:'R'}));
- const left=[...RIGHT,...fingerBones()].map(mirrorBone);
- const bones=[...CENTRE.map(b=>({...b,side:'C'})),...right,...left];
+ // Bone names use his own left (.L) and right (.R). He faces +Z, so +X is his left.
+ const left=[...SIDE,...fingerBones()].map(b=>({...b, name:b.name+'.L',
+  parent:b.parent&&!CENTRE.some(c=>c.name===b.parent)?b.parent+'.L':b.parent, side:'L'}));
+ const right=[...SIDE,...fingerBones()].map(mirrorBone);
+ const bones=[...CENTRE.map(b=>({...b,side:'C'})),...left,...right];
  const index=new Map(bones.map((b,i)=>[b.name,i]));
  for(const b of bones){
   b.parentIndex=b.parent===null?-1:index.get(b.parent);
@@ -113,6 +114,6 @@ export function createSkeleton(){
   return out;
  }
 
- const contacts=side=>Object.fromEntries(Object.entries(FOOT_CONTACTS).map(([k,pnt])=>[k,side==='L'?mirrorPoint(pnt):[...pnt]]));
+ const contacts=side=>Object.fromEntries(Object.entries(FOOT_CONTACTS).map(([k,pnt])=>[k,side==='R'?mirrorPoint(pnt):[...pnt]]));
  return {bones,index,restPose,clampPose,solve,mirrorPose,footContacts:{R:contacts('R'),L:contacts('L')}};
 }

@@ -99,3 +99,9 @@ page "Skeleton (section 2)"), `skeleton-test/check.mjs` (`npm run test:attach`).
 3. Not bending yet: fingers and toes (one piece each, hands-and-feet
    section), the waist (the torso is one piece from hips to shoulders), and
    the ankle socket lip (Codex's foot rebuilds it; hands-and-feet section).
+
+### Naming fix (approved 18 Nov 2026)
+
+Bone names now use the avatar's own left and right (.L / .R). He faces +Z,
+so +X is his left. The approved model's older code calls +X parts "right"
+(screen-right when facing him); the skeleton no longer follows that.

@@ -30,7 +30,7 @@ export function measure(){
  // Centre of a rounded joint end (least-squares sphere fit).
  const ball=pts=>{const ATA=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],N=[0,0,0,0];for(const p of pts){const a=[2*p.x,2*p.y,2*p.z,1],b=p.lengthSq();for(let i=0;i<4;i++){N[i]+=a[i]*b;for(let j=0;j<4;j++)ATA[i][j]+=a[i]*a[j];}}
   const M=new T.Matrix4().set(...ATA.flat()).invert(),e=M.elements,sol=[0,1,2,3].map(i=>e[i]*N[0]+e[4+i]*N[1]+e[8+i]*N[2]+e[12+i]*N[3]);return [sol[0],sol[1],sol[2]];};
- for(const [s,side] of [['R',1],['L',-1]]){
+ for(const [s,side] of [['L',1],['R',-1]]){
   const k=side===1?'Right':'Left';
   const part0=a.lowerArmParts.find(p=>p.side===side),upper=r['shoulder'+k].children.find(o=>o.isMesh),thighMesh=r['hip'+k].children.find(o=>o.isMesh),calf=a.lowerLegs.find(l=>l.side===side).calf;
   m['upperArm.'+s]=ball(end(upper,true,.06));m['armBottom.'+s]=ball(end(upper,false,.06));m['lowerArm.'+s]=ball(end(part0.forearm,true,.05));
@@ -75,24 +75,25 @@ const randomPose=(wild=1)=>{const p={};for(const b of S.bones){if(!b.parent)cont
 const names=new Set(S.bones.map(b=>b.name));
 check('48 bones: body, both arms and legs, 15 finger bones per hand',S.bones.length===48&&names.size===48,`${S.bones.length} bones`);
 check('one root (pelvis); every other bone has a real parent listed before it',S.bones.filter(b=>b.parentIndex<0).length===1&&S.bones.every((b,i)=>b.parentIndex<i));
+check('names match his own left and right (he faces +Z, so his left is +X)',S.bones.filter(b=>b.side==='L').every(b=>b.head[0]>0)&&S.bones.filter(b=>b.side==='R').every(b=>b.head[0]<0)&&S.bones.every(b=>b.side==='C'||b.name.endsWith('.'+b.side)));
 
 // ---- 2. Matches the approved model ----
 let worst=0,worstName='';
 for(const b of S.bones){const ref=M[b.name];if(!ref)continue;const e=dist(b.head,ref);if(e>worst){worst=e;worstName=b.name;}}
 const measured=S.bones.filter(b=>M[b.name]).length;
 check('every joint sits at the centre of its ball on the approved Checkpoint 2 model',worst<.0002,`${measured} joints measured, largest difference ${mm(worst)} (${worstName})`);
-const restOk=['R','L'].every(s=>{const sh=S.bones[S.index.get('upperArm.'+s)],el=S.bones[S.index.get('lowerArm.'+s)],rs=M['restShoulder.'+s],re=M['restElbow.'+s],rad=Math.PI/180;
+const restOk=['L','R'].every(s=>{const sh=S.bones[S.index.get('upperArm.'+s)],el=S.bones[S.index.get('lowerArm.'+s)],rs=M['restShoulder.'+s],re=M['restElbow.'+s],rad=Math.PI/180;
  return Math.abs(sh.rest.x*rad-rs[0])<1e-9&&Math.abs(sh.rest.y*rad-rs[1])<1e-9&&Math.abs(sh.rest.z*rad-rs[2])<1e-9&&Math.abs(el.rest.x*rad-re[0])<1e-9;});
 check('rest angles are the ones the approved model is built with (shoulders, elbows)',restOk);
 // Angle 0 means hanging straight: a straight-down arm turned by the rest angles lines up with the real upper arm.
-const arm=S.bones[S.index.get('upperArm.R')],rad=Math.PI/180;
+const arm=S.bones[S.index.get('upperArm.L')],rad=Math.PI/180;
 const down=new T.Vector3(0,-1,0).applyEuler(new T.Euler(arm.rest.x*rad,0,arm.rest.z*rad,'XYZ'));
-const realAxis=new T.Vector3(...M['armBottom.R']).sub(new T.Vector3(...M['upperArm.R'])).normalize();
+const realAxis=new T.Vector3(...M['armBottom.L']).sub(new T.Vector3(...M['upperArm.L'])).normalize();
 const off=down.angleTo(realAxis)/rad;
 check('angle 0 means the limb hanging straight down',off<.5,`rest angles line the arm up with the real upper arm to within ${off.toFixed(2)}°`);
 const rest=S.solve(S.restPose());let restErr=0;for(const b of S.bones)restErr=Math.max(restErr,dist(rest.get(b.name).head.toArray(),b.head),dist(rest.get(b.name).tail.toArray(),b.tail));
 check('the rest pose reproduces the model exactly',restErr<1e-9,`largest difference ${restErr.toExponential(1)} m`);
-const fb=M['footBox.R'],inside=Object.values(S.footContacts.R).every(([x,y,z])=>x>=fb.min.x&&x<=fb.max.x&&z>=fb.min.z&&z<=fb.max.z&&y===0);
+const fb=M['footBox.L'],inside=Object.values(S.footContacts.L).every(([x,y,z])=>x>=fb.min.x&&x<=fb.max.x&&z>=fb.min.z&&z<=fb.max.z&&y===0);
 check('foot contact points are on the ground, inside the real foot',inside);
 
 // ---- 3. Moving ----
@@ -100,31 +101,31 @@ let lenErr=0;for(let n=0;n<1500;n++){const s=S.solve(randomPose());for(const b o
 check('bones never stretch or shrink, in 1,500 random poses',lenErr<1e-9,`largest change ${lenErr.toExponential(1)} m`);
 let outside=0;for(let n=0;n<1500;n++){const c=S.clampPose(randomPose(3));for(const b of S.bones){if(!b.limits)continue;for(const k of ['x','y','z'])if(c[b.name][k]<b.limits[k][0]-1e-9||c[b.name][k]>b.limits[k][1]+1e-9)outside++;}}
 check('no joint can go past its limits, even when asked to',outside===0,'1,500 wild poses, 3× past every limit');
-const bentKnee=S.solve({'shin.R':{x:90,y:0,z:0},'shin.L':{x:-90,y:0,z:0}}),kr=bentKnee.get('shin.R'),kl=bentKnee.get('shin.L');
+const bentKnee=S.solve({'shin.L':{x:90,y:0,z:0},'shin.R':{x:-90,y:0,z:0}}),kr=bentKnee.get('shin.L'),kl=bentKnee.get('shin.R');
 check('knees bend only backwards (asked to bend forward, they stay straight)',kr.tail.z<kr.head.z-.3&&Math.abs(kl.tail.z-kl.head.z)<1e-9,`bent knee: ankle ${mm(kr.head.z-kr.tail.z)} behind; wrong-way knee: ${mm(Math.abs(kl.tail.z-kl.head.z))}`);
-const bentElbow=S.solve({'lowerArm.R':{x:-90,y:0,z:0},'lowerArm.L':{x:60,y:0,z:0}}),er=bentElbow.get('lowerArm.R'),el=bentElbow.get('lowerArm.L'),elRest=rest.get('lowerArm.L');
-const straightL=S.solve({'lowerArm.L':{x:0,y:0,z:0}}).get('lowerArm.L');
+const bentElbow=S.solve({'lowerArm.L':{x:-90,y:0,z:0},'lowerArm.R':{x:60,y:0,z:0}}),er=bentElbow.get('lowerArm.L'),el=bentElbow.get('lowerArm.R'),elRest=rest.get('lowerArm.R');
+const straightL=S.solve({'lowerArm.R':{x:0,y:0,z:0}}).get('lowerArm.R');
 check('elbows bend only forwards (asked to bend backwards, they stay straight)',er.tail.z>er.head.z+.25&&el.tail.distanceTo(straightL.tail)<1e-9,`bent elbow: wrist ${mm(er.tail.z-er.head.z)} in front`);
-const raised=S.solve({'upperArm.R':{x:0,y:0,z:90},'lowerArm.R':{x:0,y:0,z:0}}),wr=raised.get('lowerArm.R').tail,sh=raised.get('upperArm.R').head;
+const raised=S.solve({'upperArm.L':{x:0,y:0,z:90},'lowerArm.L':{x:0,y:0,z:0}}),wr=raised.get('lowerArm.L').tail,sh=raised.get('upperArm.L').head;
 check('raising the arm 90° out to the side puts the wrist out at shoulder height',Math.abs(wr.y-sh.y)<.03&&wr.x>sh.x+.55,`wrist ${mm(wr.y-sh.y)} from shoulder height, ${mm(wr.x-sh.x)} out`);
 // Moving a parent moves its children only.
-const arm2=S.solve({'upperArm.R':{x:-60,y:0,z:30}}),moved=b=>arm2.get(b.name).head.distanceTo(rest.get(b.name).head)>1e-9;
-const rightArm=S.bones.filter(b=>b.side==='R'&&!/thigh|shin|foot|toes/.test(b.name)&&b.name!=='upperArm.R');
-check('turning the shoulder moves the whole arm, hand and fingers, nothing else',rightArm.every(moved)&&S.bones.filter(b=>b.side!=='R'||/thigh|shin|foot|toes/.test(b.name)).every(b=>!moved(b)),`${rightArm.length} bones moved`);
+const arm2=S.solve({'upperArm.L':{x:-60,y:0,z:30}}),moved=b=>arm2.get(b.name).head.distanceTo(rest.get(b.name).head)>1e-9;
+const rightArm=S.bones.filter(b=>b.side==='L'&&!/thigh|shin|foot|toes/.test(b.name)&&b.name!=='upperArm.L');
+check('turning the shoulder moves the whole arm, hand and fingers, nothing else',rightArm.every(moved)&&S.bones.filter(b=>b.side!=='L'||/thigh|shin|foot|toes/.test(b.name)).every(b=>!moved(b)),`${rightArm.length} bones moved`);
 const bend=S.solve({spine:{x:30,y:20,z:0}}),legStill=S.bones.filter(b=>/thigh|shin|foot|toes/.test(b.name)).every(b=>bend.get(b.name).head.distanceTo(rest.get(b.name).head)<1e-9);
 check('bending the waist moves the upper body but not the legs',legStill&&bend.get('head').head.distanceTo(rest.get('head').head)>.1);
-let mirErr=0;for(let n=0;n<500;n++){const p=randomPose(),a=S.solve(p),b=S.solve(S.mirrorPose(p));for(const bone of S.bones){const other=bone.name.endsWith('.R')?bone.name.slice(0,-2)+'.L':bone.name.endsWith('.L')?bone.name.slice(0,-2)+'.R':bone.name;
+let mirErr=0;for(let n=0;n<500;n++){const p=randomPose(),a=S.solve(p),b=S.solve(S.mirrorPose(p));for(const bone of S.bones){const other=bone.name.endsWith('.L')?bone.name.slice(0,-2)+'.R':bone.name.endsWith('.R')?bone.name.slice(0,-2)+'.L':bone.name;
  const h=a.get(bone.name).head,m=b.get(other).head;mirErr=Math.max(mirErr,Math.hypot(h.x+m.x,h.y-m.y,h.z-m.z));}}
 check('left and right are exact mirror images in every pose',mirErr<1e-9,`500 random poses, largest difference ${mirErr.toExponential(1)} m`);
 // Fingers: straight at angle 0, and curl to the same fingertip spots as the approved hand.
 const fingerNames=['thumb','index','middle','ring','little'];
-const straight=S.solve(Object.fromEntries(fingerNames.flatMap(f=>[1,2,3].flatMap(j=>['R','L'].map(s=>[`${f}${j}.${s}`,{x:0,y:0,z:0}])))));
-let sErr=0;for(const f of fingerNames)for(const j of [1,2,3])for(const s of ['R','L'])sErr=Math.max(sErr,dist(straight.get(`${f}${j}.${s}`).head.toArray(),M[`straight:${f}${j}.${s}`]));
+const straight=S.solve(Object.fromEntries(fingerNames.flatMap(f=>[1,2,3].flatMap(j=>['L','R'].map(s=>[`${f}${j}.${s}`,{x:0,y:0,z:0}])))));
+let sErr=0;for(const f of fingerNames)for(const j of [1,2,3])for(const s of ['L','R'])sErr=Math.max(sErr,dist(straight.get(`${f}${j}.${s}`).head.toArray(),M[`straight:${f}${j}.${s}`]));
 check('at angle 0 every finger lies straight along the approved hand\'s finger line',sErr<.0002,`largest difference ${mm(sErr)}`);
 const four=['index','middle','ring','little'];
-const restTip=four.map((f,i)=>dist(rest.get(`${f}3.R`).tail.toArray(),M.tipRest[i]));
-const curl=S.solve(Object.fromEntries(four.flatMap(f=>[1,2,3].map(j=>[`${f}${j}.R`,{x:S.bones[S.index.get(`${f}${j}.R`)].limits.x[1],y:0,z:0}]))));
-const curlTip=four.map((f,i)=>dist(curl.get(`${f}3.R`).tail.toArray(),M.tipCurl[i]));
+const restTip=four.map((f,i)=>dist(rest.get(`${f}3.L`).tail.toArray(),M.tipRest[i]));
+const curl=S.solve(Object.fromEntries(four.flatMap(f=>[1,2,3].map(j=>[`${f}${j}.L`,{x:S.bones[S.index.get(`${f}${j}.L`)].limits.x[1],y:0,z:0}]))));
+const curlTip=four.map((f,i)=>dist(curl.get(`${f}3.L`).tail.toArray(),M.tipCurl[i]));
 check('at rest, fingertips are within 4 mm of the approved hand',Math.max(...restTip)<.004,`${restTip.map(mm).join(', ')}`);
 check('fully curled, fingertips land within 6 mm of where the approved hand puts them',Math.max(...curlTip)<.006,`${curlTip.map(mm).join(', ')}`);
 const t0=performance.now();for(let n=0;n<2000;n++)S.solve(randomPose());const ms=(performance.now()-t0)/2000;

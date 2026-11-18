@@ -23,8 +23,9 @@ export function createSkeletonAvatar(){
   ['neck',rig.torso.children.find(o=>o.name==='original-neck'),'neck'],
   ['head',mesh(rig.head),'head'],
  ];
- for(const [side,k] of [['R','Right'],['L','Left']]){
-  const arm=avatar.lowerArmParts.find(p=>p.side===(side==='R'?1:-1)),leg=avatar.lowerLegs.find(l=>l.side===(side==='R'?1:-1));
+ // The old rig's "Right" parts (+x) are on HIS left; names below are his own left/right.
+ for(const [side,k] of [['L','Right'],['R','Left']]){
+  const arm=avatar.lowerArmParts.find(p=>p.side===(side==='L'?1:-1)),leg=avatar.lowerLegs.find(l=>l.side===(side==='L'?1:-1));
   parts.push([`upper-arm.${side}`,mesh(rig['shoulder'+k]),`upperArm.${side}`],[`forearm.${side}`,arm.forearm,`lowerArm.${side}`],[`hand.${side}`,arm.hand,`hand.${side}`],
    [`thigh.${side}`,mesh(rig['hip'+k]),`thigh.${side}`],[`calf.${side}`,leg.calf,`shin.${side}`],[`foot.${side}`,leg.foot,`foot.${side}`]);
  }
