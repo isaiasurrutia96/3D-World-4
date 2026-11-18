@@ -9,7 +9,8 @@ Updated 18 November 2026. This is the single plan and approval record for the fr
 - **Approved by owner:** section 1 and its measured results, in “Yes the fix in the original and everything else okay go.”
 - **Approved and enabled:** Original Circuit seam repair; welded geometry is now the default.
 - **Approved by owner:** the track preview and inspection controls, followed by the discussion of section 2 and the owner's “okay do the code first, really build a solid code as usual.”
-- **Authorized to implement:** section 2, headless kart handling. Results below await owner review. No authorization has been given for section 3 or a playable visual kart page.
+- **Approved to continue:** section 2 results, by the owner’s explicit instruction to build the next code layer after discussing contacts.
+- **Authorized to implement:** section 3, kart-contact response (“Okay focus on building the code first for the next part”). Owner clarified their block-collision work with Claude is still in progress. The response/interface can be checked independently; actual block integration remains pending. No playable visual kart page is authorized by this section.
 - **Rejected as the new foundation:** extending/tuning the earlier racing prototype. Its existing demo stays available while replacement layers are reviewed; none of its logic is imported by the new track module.
 
 The process applies to the owner's other projects as well: code first, one section at a time, automatic checks before visuals, plain-language results, then owner approval before continuing. Keep logic in `racing-core/` and the future visual adapter in `racing-lab/`. Do not edit `motion-core/` or frozen checkpoints.
@@ -68,8 +69,9 @@ These checks prove geometry/query behavior. They do **not** prove kart handling,
 |---|---|---|---|
 | 1 | Track geometry, access, walls, gate data | Source fidelity, surface support, bridge separation, dimensions, placement and frame-split gate probes | Approved; seam fix enabled |
 | 1V | Track-only visual inspection, no kart/avatar | Draw from the checked geometry; reproduce original materials/curbs/barriers; check views and device layouts | Owner accepted preview/inspection and authorized section 2 |
-| 2 | Kart speed, steering, grip, braking, boost, road following | Scripted reference input traces; numerical results at all four frame rates | Implemented: 50 Node checks pass; results await owner approval |
-| 3 | Wall and kart contacts | Head-on/glancing/resting contacts, deck separation, no tunnelling at maximum/boost speed | Not started; requires go |
+| 2 | Kart speed, steering, grip, braking, boost, road following | Scripted reference input traces; numerical results at all four frame rates | 50 Node checks pass; owner authorized the next contact layer |
+| 3 | Wall and kart contacts | Head-on/glancing/resting contacts, deck separation, no tunnelling at maximum/boost speed | Contact response built: 26 Node checks pass; block adapter pending Claude; review pending |
+| Driving feel | One original kart, checked handling/contacts and shared controls | 12 Node checks, browser controls/camera/layout checks and working link | Authorized; ready for owner feel feedback after verification |
 | 4 | Race rules | Countdown, ordered gates/laps, reverse/wrong-way, respawn, standings and interpolated finish times | Not started; requires go |
 | 5 | Computer opponents | Same vehicle and inputs as player; real completed laps, no position shortcuts | Not started; requires go |
 | 6 | Ghosts and time trials | Record/replay fidelity, per-track storage, malformed-data checks | Not started; requires go |
@@ -121,4 +123,34 @@ Reference decisions:
 
 Deployment integration: `npm run test:racing-core` passes all 128 checks: 50 fresh track, 50 fresh handling, and 28 separately retained prototype regressions. Re-running the source capture produces the same SHA256 reference-data hash. The prototype results are regression coverage, not approval of its architecture or later layers.
 
-**Stop here for owner approval. Section 3 (wall/kart contacts) remains unstarted.** No NPC, avatar/steering-wheel grips, race session, ghosts, device UI, scenery or visual polish is included.
+This section 2 stop was superseded by the owner’s explicit go for contact response. No later section starts automatically. No NPC, avatar/steering-wheel grips, race session, ghosts, device UI, scenery or visual polish is included.
+
+
+## Section 3 — kart-contact response; block integration pending
+
+The owner authorized the next code layer, then corrected that the block engine being built with Claude is **not complete**. Preserve that work and do not present it as finished. The workspace/GitHub connection recovered without repository settings changes. This section implements only the racing response and a numeric adapter contract, using existing rails/test barriers to prove it independently.
+
+- New `contacts/` module: full horizontal capsule translation sweeps, earliest impact time, height-aware rail adapter, friction/bounded rebound/yaw response, resting constraints, simultaneous moving-kart contacts, position-only overlap recovery and immutable diagnostics. No new block grid, block geometry, block runtime imports or changes to Claude’s files.
+- The original footprint/tuning is retained (1.18 m radius, 0.35 m half-axis, 1.8 m height, 0.075 restitution, capped 1.5 m/s normal rebound target, 0.10 friction). The solver is fresh continuous translation code, not an assertion of identical source collision trajectories. Yaw is held fixed during each contact sweep and bounded angular response is integrated on the next handling tick; a dissipative translational constraint prevents center motion into a barrier.
+- Handling exposes immutable prepare/finish fixed-tick phases plus an optional motion resolver. Single-kart and simultaneous-kart adapters share that same handling kernel; the 50 original handling checks still pass. No race coordinator, NPC or controls UI is built.
+- All touching neighbors are solved together. A three-kart pileup test caught repeated wall/pair ping-pong in the first implementation; adding resting-contact constraints fixed it. Three- and five-kart chain tests now pass without contact-budget failure.
+- `BarrierWorld` consumes sweep hits and current penetrations/resting contacts. It is a racing-side adapter boundary, not a demand that Claude change their final API. Once the block system is ready, connect it through an adapter and run actual voxel face/seam/edge integration checks. Those remain **pending**, not passed.
+- 26 Node response checks pass, including 30/60/120/144 FPS, jitter/catch-up, thin 10.75 cm test rails from both sides, all four track rail sets, bridge deck separation, oblique sliding/energy, held Gas/corners, steering away, moving pair momentum, crossing/side bumps, chain pressure, rotating footprint support, independent sweep-distance oracles and failed-adapter rollback. Detailed inputs, expected rules, measured results and PASS/FAIL are in `contacts/CHECK-RESULTS.{md,json}`. No final visual or subjective feel is claimed.
+
+Validation: `npm run test:racing-core` passes all **154** checks (50 track, 50 handling, 26 contact response and 28 retained prototype regressions). Independent rail-distance probes measure zero penetration in the four-track outward-shot cases. The five-kart pressure chain’s largest pair overlap is 1.215e-7 m, identical at all four rendering rates. This tolerance does not claim exact zero overlap in an iterative numerical solver.
+
+This contact-layer stop was superseded only for the owner-authorized driving-feel test below. Section 4 and further features still require a separate go.
+
+## Driving-feel test — immediate priority authorized by owner
+
+The owner corrected the proposed sequencing: after proving handling/contact code, the next step is to drive it and judge feel, not start another racing layer. “Make sure u completed all the code that has to do with the testing … and then we can test the driving feel” authorizes the necessary one-kart test adapter, original kart presentation, shared controls and automated browser checks. Keep this task strictly on that test. Do not begin race rules, additional features or visual polish while waiting for feel feedback.
+
+- `testing/drive.ts` composes the checked track/handling/contact code; one kart, explicit track selection and Reset, immutable authoritative state and interpolated render pose. A separate input mapper reconstructs axes from the existing shared device snapshot, with consistent kart-relative button steering and analog strength.
+- `/racing-lab/?drive=1` mounts the exact original LetsGo kart source, without additional actors, on any of the four checked tracks. Default track inspection is preserved. View/wheels/steering read the same checked pose. The camera uses the original chase dimensions and returns to normal framing on Behind. Controls remain accessible beside the stage on phones and desktops.
+- Phone Left/Right/Gas/Brake-Reverse hold buttons use the shared input module. Pointer capture, release/cancel, blur/reset clearing and simultaneous touches are checked. Shared input adds optional Reverse and RT Gas actions; movement pages ignore those actions. Keyboard and standard Gamepad API controls use the same path.
+- A small input-cancellation API clears a queued Boost during pause without teleporting the kart or altering its clock. The shared page resets its frame clock across active/inactive transitions; driving pauses when unfocused. This prevents a long inactive frame or stale held input from distorting the test.
+- 12 Node checks cover the complete test adapter, four-rate state equality, input direction/analog/no-creep behavior, Reset/selection, pending-input cancellation, real contact wiring, strict typechecking and the original model's hash/rig. Browser checks cover the actual controls, four tracks, chase visibility, touch combinations/cancel/reverse, blur pause, three injected standard controller identities, pinch and five device layouts.
+
+**Stop after delivering the verified driving-test link. The next action belongs to the owner: drive it and give handling feedback.** Do not interpret this test authorization as permission to advance another racing layer.
+
+Final local verification for the driving test: **166 racing Node checks pass**, including the 12 new test-wiring checks; the complete build passes. Browser validation covers the driving app plus shared input and default track-preview regressions. These are implementation checks; handling feel awaits the owner’s test.

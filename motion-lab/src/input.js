@@ -8,7 +8,7 @@ export function createInput(canvas){return new LabInput(canvas);}
 class LabInput{
  constructor(canvas){
   this.canvas=canvas;this.keys=new Set();this.pointers=new Map();this.look={x:0,y:0};this.zoom=0;this.enabled=true;this.focused=true;this.last={moveX:0,moveZ:0,strength:0,look:{x:0,y:0},zoom:0,source:'none'};
-  this.stick=null;this.pinch=null;this.radius=56;this.touchStickEnabled=true;this.actions={brake:false,boost:false,gas:false,left:false,right:false};
+  this.stick=null;this.pinch=null;this.radius=56;this.touchStickEnabled=true;this.actions={brake:false,boost:false,gas:false,reverse:false,left:false,right:false};
   this.base=document.createElement('div');this.base.className='input-stick';this.base.hidden=true;this.base.setAttribute('aria-hidden','true');this.knob=document.createElement('span');this.base.append(this.knob);canvas.parentElement.append(this.base);
   const codes=['KeyE','KeyS','KeyD','KeyF','ArrowUp','ArrowLeft','ArrowDown','ArrowRight','KeyJ','KeyL','KeyI','KeyK','Space','ShiftLeft','ShiftRight'];
   window.addEventListener('keydown',event=>{if(!this.enabled||event.target.closest?.('input,textarea,select,video,[contenteditable=true]'))return;if(event.code==='Space'&&event.target.closest?.('button'))return;if(codes.includes(event.code)){event.preventDefault();this.keys.add(event.code);}});
@@ -47,12 +47,12 @@ class LabInput{
   if(strength){const length=Math.hypot(x,y);x/=length;y/=length;}
   const touch=this.stick?radialStick((this.stick.x-this.stick.startX)/this.radius,-(this.stick.y-this.stick.startY)/this.radius):{x:0,y:0,strength:0};
   if(touch.strength>strength){({x,y,strength}=touch);source='touch';}
-  let padLook={x:0,y:0,strength:0},padBrake=false,padBoost=false;
+  let padLook={x:0,y:0,strength:0},padBrake=false,padBoost=false,padGas=false;
   let pads=[];try{pads=navigator.getGamepads?.()||[];}catch{}
-  for(const pad of pads){if(!pad?.connected)continue;padBrake||=(pad.buttons?.[6]?.value??0)>.15;padBoost||=Boolean(pad.buttons?.[0]?.pressed);const left=radialStick(pad.axes[0],-(pad.axes[1]||0)),right=radialStick(pad.axes[2],pad.axes[3]);if(left.strength>strength){({x,y,strength}=left);source='gamepad';}if(right.strength>padLook.strength)padLook=right;}
+  for(const pad of pads){if(!pad?.connected)continue;padBrake||=(pad.buttons?.[6]?.value??0)>.15;padBoost||=Boolean(pad.buttons?.[0]?.pressed);padGas||=(pad.buttons?.[7]?.value??0)>.15;const left=radialStick(pad.axes[0],-(pad.axes[1]||0)),right=radialStick(pad.axes[2],pad.axes[3]);if(left.strength>strength){({x,y,strength}=left);source='gamepad';}if(right.strength>padLook.strength)padLook=right;}
   const look={x:this.look.x+(key('KeyL')-key('KeyJ'))*2.2*dt+padLook.x*2.2*dt,y:this.look.y+(key('KeyK')-key('KeyI'))*1.6*dt+padLook.y*1.6*dt},zoom=this.zoom;
   const heading=cameraYaw-look.x;this.look.x=this.look.y=this.zoom=0;
-  return this.last={moveX:-Math.sin(heading)*y+Math.cos(heading)*x,moveZ:-Math.cos(heading)*y-Math.sin(heading)*x,strength,look,zoom,source,actions:{gas:this.actions.gas,left:this.actions.left,right:this.actions.right,brake:this.actions.brake||this.keys.has('Space')||padBrake,boost:this.actions.boost||this.keys.has('ShiftLeft')||this.keys.has('ShiftRight')||padBoost}};
+  return this.last={moveX:-Math.sin(heading)*y+Math.cos(heading)*x,moveZ:-Math.cos(heading)*y-Math.sin(heading)*x,strength,look,zoom,source,actions:{gas:this.actions.gas||padGas,reverse:this.actions.reverse,left:this.actions.left,right:this.actions.right,brake:this.actions.brake||this.keys.has('Space')||padBrake,boost:this.actions.boost||this.keys.has('ShiftLeft')||this.keys.has('ShiftRight')||padBoost}};
  }
  getState(){return {...this.last,look:{...this.last.look},pointers:this.pointers.size};}
 }

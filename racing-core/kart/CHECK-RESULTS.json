@@ -86,7 +86,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -151,7 +155,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -219,7 +227,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -286,7 +298,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -353,7 +369,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -428,7 +448,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -503,7 +527,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -586,7 +614,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -670,7 +702,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -749,7 +785,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -817,7 +857,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -889,7 +933,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -955,7 +1003,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1022,7 +1074,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1085,7 +1141,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1153,7 +1213,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0.5000000000000053
+          "boostTime": 0.5000000000000053,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1220,7 +1284,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0.5000000000000053
+          "boostTime": 0.5000000000000053,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1285,7 +1353,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 1.0000000000000036
+          "boostTime": 1.0000000000000036,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1351,7 +1423,11 @@
           "grounded": true,
           "pitch": -0.06897187413088807,
           "bank": 0.05019992754914902,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1421,7 +1497,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1488,7 +1568,11 @@
           "grounded": false,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1556,7 +1640,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1624,7 +1712,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1694,7 +1786,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1765,7 +1861,11 @@
           "grounded": true,
           "pitch": -0.15508793791577447,
           "bank": -0.011688963350731559,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1835,7 +1935,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1906,7 +2010,11 @@
           "grounded": true,
           "pitch": 0.18408644631074178,
           "bank": 0.011277793681280405,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -1976,7 +2084,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -2047,7 +2159,11 @@
           "grounded": true,
           "pitch": 0.0622353463987983,
           "bank": 0.00033198708411075423,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -2117,7 +2233,11 @@
           "grounded": true,
           "pitch": 0,
           "bank": 0,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -2188,7 +2308,11 @@
           "grounded": true,
           "pitch": 0.12340512698005293,
           "bank": -0.01598700884933318,
-          "boostTime": 0
+          "boostTime": 0,
+          "impactYawRate": 0,
+          "railContactTime": 0,
+          "impactRecovery": 0,
+          "contacts": 0
         }
       },
       "status": "PASS"
@@ -2832,7 +2956,11 @@
               "grounded": true,
               "pitch": 0,
               "bank": 0,
-              "boostTime": 0
+              "boostTime": 0,
+              "impactYawRate": 0,
+              "railContactTime": 0,
+              "impactRecovery": 0,
+              "contacts": 0
             }
           },
           {
@@ -2852,7 +2980,11 @@
               "grounded": true,
               "pitch": 0,
               "bank": 0,
-              "boostTime": 0
+              "boostTime": 0,
+              "impactYawRate": 0,
+              "railContactTime": 0,
+              "impactRecovery": 0,
+              "contacts": 0
             }
           },
           {
@@ -2872,7 +3004,11 @@
               "grounded": true,
               "pitch": 0,
               "bank": 0,
-              "boostTime": 0
+              "boostTime": 0,
+              "impactYawRate": 0,
+              "railContactTime": 0,
+              "impactRecovery": 0,
+              "contacts": 0
             }
           },
           {
@@ -2892,7 +3028,11 @@
               "grounded": true,
               "pitch": 0,
               "bank": 0,
-              "boostTime": 0
+              "boostTime": 0,
+              "impactYawRate": 0,
+              "railContactTime": 0,
+              "impactRecovery": 0,
+              "contacts": 0
             }
           }
         ]

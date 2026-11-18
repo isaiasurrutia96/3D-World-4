@@ -1,4 +1,4 @@
-/** Section 2: headless LetsGo-style handling. No renderer, contacts, or race rules. */
+/** Headless LetsGo-style handling. Optional numeric contact response; no renderer or race rules. */
 export const KART = Object.freeze({
     step: 1 / 120,
     maxFrameSeconds: .25,
@@ -60,14 +60,34 @@ export type KartState = Readonly<{
     pitch: number;
     bank: number;
     boostTime: number;
+    impactYawRate: number;
+    railContactTime: number;
+    impactRecovery: number;
+    contacts: number;
 }>;
 type MutableState = {
     -readonly [P in keyof KartState]: KartState[P];
 };
-export type KartInitial = Partial<Pick<KartState, 'x' | 'y' | 'z' | 'yaw' | 'speed' | 'lateralSpeed' | 'grounded' | 'verticalVelocity' | 'boostTime'>>;
+export type KartInitial = Partial<Pick<KartState, 'x' | 'y' | 'z' | 'yaw' | 'speed' | 'lateralSpeed' | 'grounded' | 'verticalVelocity' | 'boostTime' | 'impactYawRate' | 'railContactTime' | 'impactRecovery'>>;
 /** A script is sampled at physics time, allowing identical traces at any rendering rate. */
 export type InputScript = (tick: number, seconds: number, state: KartState) => KartInput;
 type Controls = Required<KartInput>;
+export type KartMotion = Readonly<{
+    state: KartState;
+    vx: number;
+    vz: number;
+}>;
+export type KartMovement = Readonly<{
+    x: number;
+    z: number;
+    vx: number;
+    vz: number;
+    impactYawRate?: number;
+    railContactTime?: number;
+    impactRecovery?: number;
+    contacts?: number;
+}>;
+export type KartMotionResolver = (motion: KartMotion) => KartMovement;
 const clamp = (n: number, low: number, high: number) => Math.max(low, Math.min(high, n));
 const approach = (n: number, target: number, step: number) => n < target ? Math.min(target, n + step) : Math.max(target, n - step);
 function finite(n: number, name: string): number {
@@ -86,14 +106,16 @@ export function normalizeKartInput(input: KartInput = {}): Controls {
 function initialState(initial: KartInitial): MutableState {
     if (!initial || typeof initial !== 'object')
         throw new TypeError('initial must be an object');
-    const state: MutableState = { x: 0, y: 0, z: 0, yaw: 0, speed: 0, lateralSpeed: 0, steering: 0, steerHoldTime: 0, steerHoldDirection: 0, wheelRotation: 0, verticalVelocity: 0, grounded: true, pitch: 0, bank: 0, boostTime: 0 };
-    for (const key of ['x', 'y', 'z', 'yaw', 'speed', 'lateralSpeed', 'verticalVelocity', 'boostTime'] as const)
+    const state: MutableState = { x: 0, y: 0, z: 0, yaw: 0, speed: 0, lateralSpeed: 0, steering: 0, steerHoldTime: 0, steerHoldDirection: 0, wheelRotation: 0, verticalVelocity: 0, grounded: true, pitch: 0, bank: 0, boostTime: 0, impactYawRate: 0, railContactTime: 0, impactRecovery: 0, contacts: 0 };
+    for (const key of ['x', 'y', 'z', 'yaw', 'speed', 'lateralSpeed', 'verticalVelocity', 'boostTime', 'impactYawRate', 'railContactTime', 'impactRecovery'] as const)
         state[key] = finite(initial[key] ?? state[key], key);
     if (initial.grounded !== undefined && typeof initial.grounded !== 'boolean')
         throw new TypeError('grounded must be boolean');
     state.grounded = initial.grounded ?? true;
     if (state.boostTime < 0 || state.boostTime > KART.boostDuration)
         throw new RangeError('boostTime must be between 0 and 2 seconds');
+    if (state.railContactTime < 0 || state.impactRecovery < 0 || Math.abs(state.impactYawRate) > .8)
+        throw new RangeError('Invalid contact recovery state');
     return state;
 }
 export function maxKartSteering(speed: number, holdSeconds = 0): number {
@@ -112,8 +134,13 @@ function support(world: SurfaceWorld, x: number, z: number, maximum: number): nu
         throw new TypeError('heightAt must return null or a finite height at/below maximum');
     return y;
 }
-function step(state: MutableState, input: Controls, world: SurfaceWorld, activateBoost: boolean): void {
-    const t = KART, dt = t.step;
+/** Shared first half of a physics tick, also used by the simultaneous kart-contact step. */
+export function prepareKartStep(source: KartState, raw: KartInput, activateBoost = false): KartMotion {
+    const state = { ...source }, input = normalizeKartInput(raw), t = KART, dt = t.step;
+    state.railContactTime = Math.max(0, state.railContactTime - dt);
+    state.impactRecovery = Math.max(0, state.impactRecovery - dt);
+    state.impactYawRate *= Math.exp(-6 * dt);
+    state.contacts = 0;
     // boost is a granted engine command, not an inventory/item system.
     if (activateBoost) {
         state.boostTime = t.boostDuration;
@@ -125,13 +152,15 @@ function step(state: MutableState, input: Controls, world: SurfaceWorld, activat
     const topSpeed = boosting ? t.boostSpeed : t.topSpeed;
     state.lateralSpeed *= Math.exp(-t.lateralGrip * dt);
     // Pedal signs retain LetsGo's button throttle; steering keeps full analog magnitude.
+    if (state.impactRecovery > 0 && input.throttle >= 0)
+        state.speed *= Math.exp(-6 * dt);
     if (input.brake)
         state.speed = approach(state.speed, 0, t.braking * dt);
-    else if (throttle > 0)
+    else if (throttle > 0 && state.impactRecovery <= 0)
         state.speed = state.speed > topSpeed ? approach(state.speed, topSpeed, t.boostRecoveryDeceleration * dt) : Math.min(topSpeed, state.speed + (state.speed < 0 ? t.braking : boosting ? t.boostAcceleration : t.acceleration) * dt);
     else if (throttle < 0)
         state.speed = clamp(state.speed - (state.speed > 0 ? t.braking : t.reverseAcceleration) * dt, -t.reverseSpeed, topSpeed);
-    else
+    else if (state.impactRecovery <= 0)
         state.speed = approach(state.speed, 0, (t.coastingResistance + t.coastingDrag * state.speed * state.speed) * dt);
     const heldDirection = Math.abs(input.steer) > t.heldSteerThreshold && state.speed > 2 && state.grounded && !input.brake ? Math.sign(input.steer) : 0;
     state.steerHoldTime = heldDirection ? (state.steerHoldDirection === heldDirection ? state.steerHoldTime : 0) + dt : 0;
@@ -139,19 +168,33 @@ function step(state: MutableState, input: Controls, world: SurfaceWorld, activat
     const target = input.steer * maxKartSteering(state.speed, state.steerHoldTime);
     const building = input.steer * state.steering >= 0 && Math.abs(target) > Math.abs(state.steering);
     state.steering += (target - state.steering) * (1 - Math.exp(-(building ? t.steeringBuild : t.steeringRelease) * dt));
-    if (state.grounded)
-        state.yaw -= state.speed / t.wheelbase * Math.tan(state.steering) * dt;
-    const sin = Math.sin(state.yaw), cos = Math.cos(state.yaw), velocity = kartVelocity(state);
-    let vx = velocity.x, vz = velocity.z;
+    const turnSpeed = state.railContactTime > 0 && throttle > 0 ? Math.max(state.speed, 2) : state.speed;
+    const travelYaw = state.yaw - (state.grounded ? turnSpeed / t.wheelbase * Math.tan(state.steering) * dt : 0);
+    state.yaw = travelYaw + state.impactYawRate * dt;
+    let vx = Math.sin(travelYaw) * state.speed + Math.cos(travelYaw) * state.lateralSpeed;
+    let vz = Math.cos(travelYaw) * state.speed - Math.sin(travelYaw) * state.lateralSpeed;
     const magnitude = Math.hypot(vx, vz), limit = Math.max(topSpeed, Math.abs(state.speed));
     if (magnitude > limit) {
         vx *= limit / magnitude;
         vz *= limit / magnitude;
     }
-    // Layer 3 will resolve contacts here. No invisible rails or route-centering forces.
-    const oldX = state.x, oldZ = state.z;
-    state.x += vx * dt;
-    state.z += vz * dt;
+    return Object.freeze({ state: Object.freeze(state), vx, vz });
+}
+/** Complete the same tick after free motion or a shared contact solve, then query the actual road. */
+export function finishKartStep(motion: KartMotion, movement: KartMovement, world: SurfaceWorld): KartState {
+    const state = { ...motion.state }, t = KART, dt = t.step;
+    const oldX = state.x, oldZ = state.z, sin = Math.sin(state.yaw), cos = Math.cos(state.yaw);
+    for (const key of ['x', 'z', 'vx', 'vz'] as const)
+        finite(movement[key], key);
+    for (const key of ['impactYawRate', 'railContactTime', 'impactRecovery', 'contacts'] as const) {
+        if (movement[key] !== undefined)
+            state[key] = finite(movement[key], key);
+    }
+    if (Math.abs(state.impactYawRate) > .8 + 1e-9 || state.railContactTime < 0 || state.impactRecovery < 0 || !Number.isInteger(state.contacts) || state.contacts < 0)
+        throw new RangeError('Invalid contact result');
+    const vx = movement.vx, vz = movement.vz;
+    state.x = movement.x;
+    state.z = movement.z;
     state.speed = vx * sin + vz * cos;
     state.lateralSpeed = vx * cos - vz * sin;
     state.wheelRotation += ((state.x - oldX) * sin + (state.z - oldZ) * cos) / t.wheelRadius;
@@ -183,10 +226,20 @@ function step(state: MutableState, input: Controls, world: SurfaceWorld, activat
         state.pitch += (clamp(pitch, -t.maxPitch, t.maxPitch) - state.pitch) * blend;
         state.bank += (clamp(bank, -t.maxBank, t.maxBank) - state.bank) * blend;
     }
+    for (const [key, value] of Object.entries(state))
+        if (typeof value === 'number')
+            finite(value, key);
+    return Object.freeze(state);
+}
+function step(state: KartState, input: Controls, world: SurfaceWorld, activateBoost: boolean, resolveMotion?: KartMotionResolver): KartState {
+    const motion = prepareKartStep(state, input, activateBoost);
+    const movement = resolveMotion ? resolveMotion(motion) : { x: state.x + motion.vx * KART.step, z: state.z + motion.vz * KART.step, vx: motion.vx, vz: motion.vz };
+    return finishKartStep(motion, movement, world);
 }
 export function createKartController(options: Readonly<{
     world: SurfaceWorld;
     initial?: KartInitial;
+    resolveMotion?: KartMotionResolver;
 }>) {
     if (typeof options?.world?.heightAt !== 'function')
         throw new TypeError('A numeric heightAt world is required');
@@ -201,8 +254,11 @@ export function createKartController(options: Readonly<{
             throw new RangeError('Physics clock exhausted');
         const literal = typeof input === 'function' ? null : normalizeKartInput(input);
         let latch = lastBoost, queued = pendingBoost;
-        const accept = (controls: Controls) => { if (controls.boost && !latch)
-            queued = true; latch = controls.boost; };
+        const accept = (controls: Controls) => {
+            if (controls.boost && !latch)
+                queued = true;
+            latch = controls.boost;
+        };
         // Preserve an activation shorter than one physics tick at high rendering rates.
         if (literal)
             accept(literal);
@@ -213,7 +269,7 @@ export function createKartController(options: Readonly<{
             if (!literal)
                 accept(controls);
             prior = Object.freeze({ ...next });
-            step(next, controls, world, queued);
+            next = { ...step(next, controls, world, queued, options.resolveMotion) };
             queued = false;
             for (const [key, value] of Object.entries(next))
                 if (typeof value === 'number')
@@ -243,6 +299,7 @@ export function createKartController(options: Readonly<{
         get state() { return current; },
         get clock() { return Object.freeze({ ticks, seconds: ticks * KART.step, remainder, alpha: remainder / KART.step }); },
         advance, sample,
+        cancelInput() { lastBoost = pendingBoost = false; },
         reset(initial: KartInitial = start) { const state = Object.freeze(initialState(initial)); current = previous = state; ticks = remainder = 0; lastBoost = pendingBoost = false; return current; },
     });
 }

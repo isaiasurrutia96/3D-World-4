@@ -1,0 +1,9 @@
+# Driving-feel test
+
+This is the small checked adapter used by `/racing-lab/?drive=1`. It creates one kart on a selected checked track, connects the approved handling and rail-contact modules, exposes their interpolated pose and offers explicit Reset/track selection. It does not implement a race session or move a kart through presentation code.
+
+`readDrivingInput` consumes the existing shared Motion Lab snapshot. It recovers independent throttle/steering axes, preserves analog steering, removes numerical residue and keeps keyboard diagonals at full strength. Phone Left/Right/Gas/Reverse actions are camera-independent. Brake/Reverse supplies the original negative pedal command; Space/LT supplies the independent stop brake. Gas + Reverse brakes rather than accelerating. Boost remains a granted test command with the checked edge behavior. A pause cancels a queued activation without resetting the kart's position or physics clock.
+
+`createDrivingTest` supports the four tracks and produces one physical kart with no other actors. Rendering reads `sample()`. `controller.state` remains authoritative and immutable. Select/Reset use the current track's supported start and clear speed, steering history, impacts, boost and clock. Invalid selection cannot partially replace the test.
+
+Run `npm run test:racing-drive`. Twelve Node checks prove the adapter, camera-independent input, cancellations, frame splits, original model hash/rig and strict ES2022 typechecking. Reports record rule/input/measurement/PASS in CHECK-RESULTS.md/json. The existing full racing test command imports these checks. Actual browser controls/layout are checked by `npm run test:racing-drive-browser` after building. The owner still needs to judge driving feel; code checks cannot approve it.

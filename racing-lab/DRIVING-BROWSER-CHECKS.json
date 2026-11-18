@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": [
+    "All four tracks: keyboard Gas, braking, Reset, one original kart.",
+    "Steering/wheels, boost, drag/wheel camera and Behind return pass.",
+    "Standard Gamepad API: three identities, analog steering, RT Gas, LT brake and disconnect.",
+    "Phone: simultaneous Left + Gas, cancellation, Reverse, blur clears/pauses, Reset.",
+    "Pinch zoom without page zoom and five phone/tablet/desktop layouts pass."
+  ],
+  "pageErrors": []
+}
