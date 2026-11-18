@@ -18,6 +18,7 @@
     "test:motion-core": "node motion-core/tests/compare.mjs",
     "test:skeleton": "node motion-core/tests/skeleton.mjs",
     "test:pose": "node motion-core/tests/pose.mjs",
+    "test:reach": "node motion-core/tests/reach.mjs",
     "test:island": "node tests/island/check.mjs && node tests/island/solid.mjs",
     "build:checkpoints": "node scripts/build-checkpoints.mjs",
     "test:movement": "node movement/tests/run.mjs",

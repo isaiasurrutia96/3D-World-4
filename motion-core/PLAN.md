@@ -168,3 +168,18 @@ sockets stay snug in every mix (checked: under 1 mm). The strip under each
 socket (4 cm, behind the upper arm) takes the shrug's stretch; it is
 checked on its own (67–173% with everything at its limit). Shoulders follow
 the arms automatically (`skeleton/shoulder.js`, added on top of any pose).
+
+### Section 4 · Reaching (18 Nov 2026)
+
+`skeleton/reach.js`: reach(skeleton, pose, goals, {follow}) → {pose, error}.
+Goals per hand/foot: wrist/ankle position, or a foot's ground point (sole)
+plus heading (foot set flat). Exact two-bone solve: the hinge (elbow/knee)
+from the distance, then point the limb, then spin it so the elbow/knee
+faces the pole (blending to a second pole near the line). When a joint
+limit blocks that, both hinge answers and the smallest workable spin are
+used, so motion stays continuous. Feet: the spin is fine-tuned so the
+ankle (which cannot twist) needs no twist, then the ankle sets the sole
+flat. Stateless (pure function of the pose), so any frame rate gives the
+same result. Checks: 600/600 random reachable targets within 0.5 mm, feet
+planted and flat through a 32 cm squat with sway and turn, smooth following
+(under 1° per step), exact mirror, about 0.1 ms for both feet and a hand.

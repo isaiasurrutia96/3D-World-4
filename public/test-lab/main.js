@@ -59,7 +59,7 @@ async function setTest(id){
  setMotionOpen(false);$('#motion-toggle').disabled=true;syncMotion=()=>{};
  if(!tests[id])return;subject=id;ready=false;window.testLabReady=false;const token=++generation;clock=null;syncControls=()=>{};controls.replaceChildren();loading.hidden=false;loading.textContent='Preparing '+tests[id].name.toLowerCase()+'…';$('#subject').value=id;$('#subject-status').textContent=tests[id].name;
  const url=new URL(location.href);if(id==='avatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
- const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=universal-21';frame=node;host.replaceChildren(node);
+ const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=universal-22';frame=node;host.replaceChildren(node);
  node.onload=async()=>{
   try{
    const w=node.contentWindow,doc=w.document,style=doc.createElement('style');style.textContent='html,body,body>main{height:100%!important;overflow:hidden!important;background:#405363!important}.app{display:block!important;height:100%!important}body>header,.app>header,nav.views,.stage-hint,.hint,.other-test,#status,aside,.floor-toggle,#test-videos{display:none!important}#stage{height:100%!important;width:100%!important;min-height:0!important}.race-hud{display:grid!important;top:64px!important}';doc.head.append(style);
