@@ -299,6 +299,7 @@ export function createKartController(options: Readonly<{
         get state() { return current; },
         get clock() { return Object.freeze({ ticks, seconds: ticks * KART.step, remainder, alpha: remainder / KART.step }); },
         advance, sample,
+        cancelInput() { lastBoost = pendingBoost = false; },
         reset(initial: KartInitial = start) { const state = Object.freeze(initialState(initial)); current = previous = state; ticks = remainder = 0; lastBoost = pendingBoost = false; return current; },
     });
 }
