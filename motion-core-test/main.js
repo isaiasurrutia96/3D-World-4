@@ -32,8 +32,13 @@ const move=createMoveController(),input=new MovementInput(renderer.domElement);
 // Shift walks, J L I K turn the camera. The shared input keeps touch only.
 input.keys={add(){},delete(){},has(){return false;},clear(){}};
 const keys=new Set();
-addEventListener('keydown',e=>{if(e.code.startsWith('Arrow'))e.preventDefault();keys.add(e.code);});
-addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>keys.clear());
+// Inside the Test Lab the keyboard focus is on the Test Lab page around this
+// one, so listen there too (same site), or keys would never arrive.
+const keyTargets=[window];try{if(window.parent!==window&&window.parent.document)keyTargets.push(window.parent);}catch{}
+for(const t of keyTargets){
+ t.addEventListener('keydown',e=>{if(e.code.startsWith('Arrow'))e.preventDefault();keys.add(e.code);});
+ t.addEventListener('keyup',e=>keys.delete(e.code));t.addEventListener('blur',()=>keys.clear());
+}
 function keyboard(dt){
  let x=0,y=0;if(keys.has('KeyE')||keys.has('ArrowUp'))y++;if(keys.has('KeyD')||keys.has('ArrowDown'))y--;if(keys.has('KeyS')||keys.has('ArrowLeft'))x--;if(keys.has('KeyF')||keys.has('ArrowRight'))x++;
  if(x||y){const k=(keys.has('ShiftLeft')||keys.has('ShiftRight')?.45:1)/Math.hypot(x,y);x*=k;y*=k;}

@@ -10,7 +10,8 @@ const POSES={
  rest:{},
  'arms-out':{'upperArm.R':{x:0,y:0,z:88},'upperArm.L':{x:0,y:0,z:-88},'lowerArm.R':{x:0,y:0,z:0},'lowerArm.L':{x:0,y:0,z:0}},
  'arms-up':{'upperArm.R':{x:-165,y:0,z:8},'upperArm.L':{x:-165,y:0,z:-8},'lowerArm.R':{x:-5,y:0,z:0},'lowerArm.L':{x:-5,y:0,z:0}},
- wave:{'upperArm.R':{x:-20,y:0,z:135},'lowerArm.R':{x:-95,y:0,z:0},'hand.R':{x:0,y:0,z:15}},
+ // Natural wave: upper arm out at shoulder height, elbow bent so the forearm points straight up, palm facing forward.
+ wave:{'upperArm.R':{x:-79.8,y:-4.7,z:84.4},'lowerArm.R':{x:-75.9,y:-12.7,z:0}},
  elbows:{'upperArm.R':{x:-15,y:0,z:12},'upperArm.L':{x:-15,y:0,z:-12},'lowerArm.R':{x:-120,y:0,z:0},'lowerArm.L':{x:-120,y:0,z:0},'hand.R':{x:30,y:0,z:0},'hand.L':{x:30,y:0,z:0}},
  kick:{'thigh.R':{x:-70,y:0,z:0},'shin.R':{x:35,y:0,z:0},'foot.R':{x:20,y:0,z:0},'upperArm.R':{x:25,y:0,z:12},'upperArm.L':{x:-35,y:0,z:-12}},
  knee:{'thigh.L':{x:-95,y:0,z:0},'shin.L':{x:115,y:0,z:0},'foot.L':{x:30,y:0,z:0},'upperArm.R':{x:-30,y:0,z:20},'upperArm.L':{x:20,y:0,z:-20}},
