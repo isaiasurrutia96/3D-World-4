@@ -44,7 +44,9 @@ export function createSkeletonAvatar(){
  });
  // The chest surface bends between the waist and the chest bone.
  const chestPart=attached.find(a=>a.label==='chest'),bone=n=>new T.Vector3(...skeleton.bones[skeleton.index.get(n)].head);
- const chestBend=createChestBend(chestPart.mesh,chestPart.rest,bone('chest'));
+ const chestBend=createChestBend(chestPart.mesh,chestPart.rest,bone('chest'),undefined,['L','R'].map(s=>({head:bone('clavicle.'+s),ball:bone('upperArm.'+s)})));
+ chestPart.shoulderMatrix=[new T.Matrix4(),new T.Matrix4()];
+ const clavTurn=[new T.Quaternion(),new T.Quaternion()],chestInv=new T.Quaternion();
  chestPart.firmMatrix=new T.Matrix4();
  const relTurn=new T.Quaternion();
  const delta=new T.Matrix4(),move=new T.Matrix4(),back=new T.Matrix4(),turn=new T.Matrix4();
@@ -59,8 +61,12 @@ export function createSkeletonAvatar(){
   }
   // Chest bone's turn relative to the waist bone bends the chest surface.
   relTurn.copy(solved.get('spine').rotation).invert().multiply(solved.get('chest').rotation);
-  chestBend.apply(relTurn);
+  // Each collarbone's turn relative to the chest bone moves its shoulder socket.
+  chestInv.copy(solved.get('chest').rotation).invert();
+  ['L','R'].forEach((s,j)=>clavTurn[j].copy(chestInv).multiply(solved.get('clavicle.'+s).rotation));
+  chestBend.apply(relTurn,clavTurn);
   chestPart.firmMatrix.multiplyMatrices(chestPart.mesh.matrix,chestBend.firmLocal);
+  chestPart.shoulderMatrix.forEach((m,j)=>m.multiplyMatrices(chestPart.mesh.matrix,chestBend.shoulderLocal[j]));
   return solved;
  }
  apply(skeleton.restPose());

@@ -158,3 +158,13 @@ the front and back). Checks (`npm run test:chest`): exact at rest, seam and
 waist ball unchanged, top of chest firm, shoulder sockets snug (under
 1 mm), no folds, no pinching below 60%, no new crease over 8°, volume kept,
 about 1.3 ms per changing frame and nothing when still.
+
+### Collarbones move (18 Nov 2026)
+
+Each collarbone shrugs (+z, up to 4°, down 1°) and moves forward/back
+(−y forward 4°, back 4°). The chest around each socket follows it, applied
+after the chest's own bend and twist from the chest's firm top, so the
+sockets stay snug in every mix (checked: under 1 mm). The strip under each
+socket (4 cm, behind the upper arm) takes the shrug's stretch; it is
+checked on its own (67–173% with everything at its limit). Shoulders follow
+the arms automatically (`skeleton/shoulder.js`, added on top of any pose).

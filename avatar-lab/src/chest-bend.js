@@ -22,6 +22,13 @@ import * as T from 'three';
 // behind smoothly, which is what makes it look like a twist. The rim at the
 // seam and the ball in the waist are circles and a sphere around that same
 // centre line, so turning them never opens the seam or unseats the ball.
+//
+// Shoulders (collarbones). Each shoulder ball hangs from a collarbone that
+// can shrug up a little and move forward or back. The chest around each
+// socket follows its collarbone exactly (so the socket moves with the
+// ball), fading smoothly into the rest of the chest. This step comes after
+// the chest's own bend and twist, measured from the chest's firm top, so
+// the sockets stay snug in every mix of bend, twist and shrug.
 
 /** Bend zone, in avatar space at rest (metres, soles on y = 0). */
 export const CHEST_BEND = {
@@ -32,6 +39,13 @@ export const CHEST_BEND = {
  sides: [0, 0.92],// twist: how far round from front to side the full turn takes over
                    // (0.92 = every point of both shoulder sockets turns fully)
  levels: 1024,     // how finely each turn is shared out (1024 steps, < 0.05 mm)
+ shoulderFirm: 0.108,       // collarbone: the whole socket (ball 10 cm + clearance) follows fully...
+ shoulderFade: 0.27,        // ...fading out by this distance from the ball's centre
+ shoulderGate: [1.115, 1.152], // ...and never below the seam rim (the socket starts at 1.159 m)
+ shoulderRamp: 0.2,         // ...easing in and out over this part of that strip (no crease)
+ neckClear: [0.16, 0.22],   // ...nor within this distance of the centre line around the neck...
+ neckHeight: [1.36, 1.40],  // ...on the top of the chest (above the shoulder sockets)
+ shoulderLevels: 256,       // how finely the collarbone's turn is shared out
 };
 
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
@@ -57,8 +71,13 @@ const even = (a, b, x, ramp = .2) => {
  * forward bend about x, then twist about y, three.js order 'YXZ'). weights(i) = [bend, twist]
  * share of point i (0 = follows the waist, 1 = follows the chest bone).
  * firmLocal is the change for the firm zone, in the mesh's own space.
+ * shoulders (optional): [{head, ball}] per side (his left, then right), the
+ * collarbone's pivot and the shoulder ball's centre, avatar space at rest.
+ * Then apply(q, [qL, qR]) also moves each socket by its collarbone's turn
+ * (relative to the chest bone), and shoulderLocal[side] is that socket's
+ * change in the mesh's own space.
  */
-export function createChestBend(mesh, rest, pivot, opts = CHEST_BEND){
+export function createChestBend(mesh, rest, pivot, opts = CHEST_BEND, shoulders = []){
  const g = mesh.geometry, P = g.attributes.position, N = g.attributes.normal, n = P.count;
  const original = P.array.slice(), originalNormals = N.array.slice();
  const wb = new Float32Array(n), wt = new Float32Array(n), L = opts.levels, FULL = L * (L + 1) + L;
@@ -70,11 +89,29 @@ export function createChestBend(mesh, rest, pivot, opts = CHEST_BEND){
   wt[i] = 1 - (1 - even(opts.twistFrom, opts.twistTo, v.y)) * (1 - side);
   key[i] = Math.round(wb[i] * L) * (L + 1) + Math.round(wt[i] * L);
  }
+ // Collarbone share: which socket (if any) each point follows, and how much.
+ const LS = opts.shoulderLevels, sideOf = new Int8Array(n).fill(-1), sLevel = new Uint16Array(n), ws = new Float32Array(n);
+ for(let i = 0; i < n; i++){
+  v.fromBufferAttribute(P, i).applyMatrix4(rest);
+  const gate = even(opts.shoulderGate[0], opts.shoulderGate[1], v.y, opts.shoulderRamp);
+  // ...and never round the neck, which sits in the top of the chest.
+  const neckFree = 1 - (1 - smooth(opts.neckClear[0], opts.neckClear[1], Math.hypot(v.x - pivot.x, v.z - pivot.z))) * smooth(opts.neckHeight[0], opts.neckHeight[1], v.y);
+  shoulders.forEach((sh, j) => {
+   const w = (1 - smooth(opts.shoulderFirm, opts.shoulderFade, v.distanceTo(sh.ball))) * gate * neckFree;
+   if(w > ws[i]){ ws[i] = w; sideOf[i] = j; }
+  });
+  sLevel[i] = Math.round(ws[i] * LS);
+  if(sLevel[i] === 0) sideOf[i] = -1;
+ }
+ const shoulderArr = []; for(let i = 0; i < n; i++) if(sideOf[i] >= 0) shoulderArr.push(i);
+ const shoulderPts = Int32Array.from(shoulderArr);
+ const S = new Float64Array(2 * (LS + 1) * 12), shoulderLocal = [new T.Matrix4(), new T.Matrix4()], clavActive = [false, false];
+ const NONE = [new T.Quaternion(), new T.Quaternion()];
  // Each distinct (bend share, twist share) pair gets one matrix per update.
  const usedKeys = [...new Set(key)].sort((a, b) => a - b), slot = new Map(usedKeys.map((k, j) => [k, j]));
  const level = Uint32Array.from(key, k => slot.get(k)), zero = slot.get(0) ?? -1, full = slot.get(FULL) ?? -1;
  const movingArr = [];
- for(let i = 0; i < n; i++) if(level[i] !== zero) movingArr.push(i);
+ for(let i = 0; i < n; i++) if(level[i] !== zero || sideOf[i] >= 0) movingArr.push(i);
  const moving = Int32Array.from(movingArr);
  // Each slot's bend and twist step (0..L), and one packed 3×4 matrix per slot.
  const slotBend = Int32Array.from(usedKeys, k => Math.floor(k / (L + 1))), slotTwist = Int32Array.from(usedKeys, k => k % (L + 1));
@@ -85,7 +122,7 @@ export function createChestBend(mesh, rest, pivot, opts = CHEST_BEND){
  const I = g.index.array, triCount = I.length / 3, soft = new Uint8Array(n);
  for(let t = 0; t < triCount; t++){
   const a = I[3*t], b = I[3*t+1], c = I[3*t+2], la = level[a];
-  if(la !== level[b] || la !== level[c] || (la !== zero && la !== full)) soft[a] = soft[b] = soft[c] = 1;
+  if(la !== level[b] || la !== level[c] || (la !== zero && la !== full) || sideOf[a] >= 0 || sideOf[b] >= 0 || sideOf[c] >= 0) soft[a] = soft[b] = soft[c] = 1;
  }
  const softArr = [], firmArr = [];
  for(let i = 0; i < n; i++){ if(soft[i]) softArr.push(i); else if(level[i] === full) firmArr.push(i); }
@@ -109,16 +146,20 @@ export function createChestBend(mesh, rest, pivot, opts = CHEST_BEND){
  const turnE = new T.Euler();
  const firmLocal = new T.Matrix4(), normalTurn = new T.Matrix3();
  let bent = false;
- const last = new T.Quaternion(2, 0, 0, 0);
+ const last = [new T.Quaternion(2, 0, 0, 0), new T.Quaternion(2, 0, 0, 0), new T.Quaternion(2, 0, 0, 0)];
+ const same = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + Math.abs(a.z - b.z) + Math.abs(a.w - b.w) < 1e-12;
+ const still = a => 1 - Math.abs(a.w) < 1e-12;
+ const F = new T.Matrix4(), Fi = new T.Matrix4(), A = new T.Matrix4(), B = new T.Matrix4(), C = new T.Matrix4(), tmp = new T.Matrix4(), part = new T.Quaternion(), restInv = rest.clone().invert();
 
- function apply(q){
-  // Same turn as last time (the body is holding still): nothing to do.
-  if(Math.abs(q.x - last.x) + Math.abs(q.y - last.y) + Math.abs(q.z - last.z) + Math.abs(q.w - last.w) < 1e-12) return;
-  last.copy(q);
-  if(1 - Math.abs(q.w) < 1e-12){
+ function apply(q, clav = NONE){
+  // Same turns as last time (the body is holding still): nothing to do.
+  if(same(q, last[0]) && same(clav[0], last[1]) && same(clav[1], last[2])) return;
+  last[0].copy(q); last[1].copy(clav[0]); last[2].copy(clav[1]);
+  clavActive[0] = shoulders.length > 0 && !still(clav[0]); clavActive[1] = shoulders.length > 1 && !still(clav[1]);
+  if(still(q) && !clavActive[0] && !clavActive[1]){
    // No turn: exactly the approved chest.
    if(bent){ P.array.set(original); N.array.set(originalNormals); P.needsUpdate = N.needsUpdate = true; bent = false; }
-   firmLocal.identity(); return;
+   firmLocal.identity(); shoulderLocal[0].identity(); shoulderLocal[1].identity(); return;
   }
   // One matrix per (bend, twist) share: rest⁻¹ · (turn about the pivot) · rest,
   // where the turn is the bend share about x, then the twist share about y.
@@ -144,12 +185,39 @@ export function createChestBend(mesh, rest, pivot, opts = CHEST_BEND){
    }
   }
   if(full >= 0){ const o = 12*full; firmLocal.set(K[o],K[o+1],K[o+2],K[o+3], K[o+4],K[o+5],K[o+6],K[o+7], K[o+8],K[o+9],K[o+10],K[o+11], 0,0,0,1); } else firmLocal.identity();
+  // Collarbones: each socket's share of its collarbone's turn about the
+  // collarbone pivot, measured from the chest's firm top (rest-space F):
+  // rest⁻¹ · F · (turn about the pivot) · F⁻¹ · rest.
+  F.copy(rest).multiply(firmLocal).multiply(restInv); Fi.copy(F).invert();
+  for(let j = 0; j < 2; j++){
+   shoulderLocal[j].copy(firmLocal);
+   if(!clavActive[j]) continue;
+   const h = shoulders[j].head;
+   // C = A · (turn by this share) · B, with A and B the same for every share.
+   A.copy(restInv).multiply(F).multiply(tmp.makeTranslation(h.x, h.y, h.z));
+   B.makeTranslation(-h.x, -h.y, -h.z).multiply(Fi).multiply(rest);
+   for(let l = 0; l <= LS; l++){
+    part.identity().slerp(clav[j], l / LS);
+    C.copy(A).multiply(tmp.makeRotationFromQuaternion(part)).multiply(B);
+    const e = C.elements, o = (j * (LS + 1) + l) * 12;
+    S[o] = e[0]; S[o+1] = e[4]; S[o+2] = e[8]; S[o+3] = e[12]; S[o+4] = e[1]; S[o+5] = e[5]; S[o+6] = e[9]; S[o+7] = e[13]; S[o+8] = e[2]; S[o+9] = e[6]; S[o+10] = e[10]; S[o+11] = e[14];
+    if(l === LS) shoulderLocal[j].premultiply(C);
+   }
+  }
   const a = P.array, nn = N.array;
   for(let m = 0; m < moving.length; m++){
    const i = moving[m], o = 12*level[i], x = original[3*i], y = original[3*i+1], z = original[3*i+2];
    a[3*i]   = K[o]*x   + K[o+1]*y + K[o+2]*z  + K[o+3];
    a[3*i+1] = K[o+4]*x + K[o+5]*y + K[o+6]*z  + K[o+7];
    a[3*i+2] = K[o+8]*x + K[o+9]*y + K[o+10]*z + K[o+11];
+  }
+  for(let m = 0; m < shoulderPts.length; m++){
+   const i = shoulderPts[m], j = sideOf[i];
+   if(!clavActive[j]) continue;
+   const o = (j * (LS + 1) + sLevel[i]) * 12, x = a[3*i], y = a[3*i+1], z = a[3*i+2];
+   a[3*i]   = S[o]*x   + S[o+1]*y + S[o+2]*z  + S[o+3];
+   a[3*i+1] = S[o+4]*x + S[o+5]*y + S[o+6]*z  + S[o+7];
+   a[3*i+2] = S[o+8]*x + S[o+9]*y + S[o+10]*z + S[o+11];
   }
   // Firm zone: turn the approved normals with the chest.
   const m = normalTurn.getNormalMatrix(firmLocal).elements;
@@ -178,5 +246,5 @@ export function createChestBend(mesh, rest, pivot, opts = CHEST_BEND){
   }
   P.needsUpdate = N.needsUpdate = true; bent = true;
  }
- return {weights: i => [wb[i], wt[i]], apply, firmLocal, original, stats: {points: n, moving: moving.length, soft: softList.length, levels: usedKeys.length}};
+ return {weights: i => [wb[i], wt[i]], shoulderWeight: i => [sideOf[i], ws[i]], apply, firmLocal, shoulderLocal, original, stats: {points: n, moving: moving.length, soft: softList.length, levels: usedKeys.length}};
 }

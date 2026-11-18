@@ -70,12 +70,14 @@ export const CENTRE = [
 /** His left side's bones (+X), mirrored to make his right. */
 export const SIDE = [
  // Collarbone: from the base of the neck out to the shoulder ball, so the
- // arm hangs from it like a real skeleton. Locked for now: the shoulder
- // ball sits in a socket in the one-piece chest, so a shrug would pull it
- // out. Moving it (shrugs, reaching forward) needs that socket redesigned.
+ // arm hangs from it like a real skeleton. It moves a little: a shrug
+ // (+z raises the shoulder) and forward/back (-y brings the shoulder
+ // forward). The chest around the shoulder socket follows it softly
+ // (avatar-lab/src/chest-bend.js), so the ball stays snug.
  {name:'clavicle', parent:'chest', head:[0,1.2965,0.004], tail:[0.2979,1.2464,0.0035], frame:'body',
-  note:'Collarbone. Locked (0) until the shoulder socket allows shrugging.',
-  rest:{x:0,y:0,z:0}, limits:{x:[0,0], y:[0,0], z:[0,0]}},
+  note:'Collarbone. Shrug up to 4° (about 2 cm), down 1°; forward 4°, back 4°. No roll. '
+   +'Kept small: the chest skin under each shoulder socket has only about 4 cm to stretch over.',
+  rest:{x:0,y:0,z:0}, limits:{x:[0,0], y:[-4,4], z:[-1,4]}},
  // Arm. The approved model holds the arms a little out (z) and forward (x).
  {name:'upperArm', parent:'clavicle', head:[0.2979,1.2464,0.0035], tail:[0.3596,0.9441,0.0331], frame:'body',
   note:'Shoulder. -x swings forward/up, +z raises out to the side.',

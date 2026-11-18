@@ -9,6 +9,7 @@ import {createSkeletonAvatar} from './attach.js';
 
 import {POSES,CLIPS} from '../motion-core/skeleton/poses.js';
 import {createPosePlayer} from '../motion-core/skeleton/pose.js';
+import {shoulderFollow} from '../motion-core/skeleton/shoulder.js';
 
 const stage=document.querySelector('#stage');
 const A=createSkeletonAvatar();
@@ -55,7 +56,7 @@ controls.addEventListener('start',()=>{for(const b of document.querySelectorAll(
 function resize(){const {width,height}=stage.getBoundingClientRect();camera.aspect=width/height;camera.fov=camera.aspect<.7?46:36;camera.updateProjectionMatrix();renderer.setSize(width,height);}
 new ResizeObserver(resize).observe(stage);resize();view('angled');setPose('rest');
 let last=0;
-renderer.setAnimationLoop(ms=>{const dt=Math.min(.1,last?(ms-last)/1000:0);last=ms;drawBones(A.apply(player.update(dt)));controls.update();renderer.render(scene,camera);});
+renderer.setAnimationLoop(ms=>{const dt=Math.min(.1,last?(ms-last)/1000:0);last=ms;drawBones(A.apply(shoulderFollow(A.skeleton,player.update(dt))));controls.update();renderer.render(scene,camera);});
 window.skeletonLab={camera,controls,scene,setPose,showBones,view,avatar:A,player,poses:Object.keys(POSES)};
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
 document.querySelector('#loading').hidden=true;window.skeletonTestReady=true;

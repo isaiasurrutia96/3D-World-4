@@ -16,6 +16,10 @@ export const POSES={
  knee:{'thigh.R':{x:-95,y:0,z:0},'shin.R':{x:115,y:0,z:0},'foot.R':{x:30,y:0,z:0},'upperArm.L':{x:-30,y:0,z:20},'upperArm.R':{x:20,y:0,z:-20}},
  look:{'neck':{x:5,y:25,z:0},'head':{x:-10,y:15,z:6}},
  // The chest turns on the hips (the start of a throw); the head keeps facing forward.
+ // Shoulders: a shrug (both collarbones up), and reaching forward (arms ahead; the
+ // shoulders follow forward on their own, see shoulder.js).
+ shrug:{'clavicle.L':{x:0,y:0,z:4},'clavicle.R':{x:0,y:0,z:-4}},
+ reach:{'upperArm.L':{x:-85,y:0,z:8},'upperArm.R':{x:-85,y:0,z:-8},'lowerArm.L':{x:-10,y:0,z:0},'lowerArm.R':{x:-10,y:0,z:0}},
  'chest-bend':{'chest':{x:15,y:0,z:0}},
  'chest-twist':{'chest':{x:0,y:15,z:0}},
  // Winding up to throw: waist and chest turn together, the head keeps looking ahead.

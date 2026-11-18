@@ -23,6 +23,9 @@ const world=(arr,i,M)=>new T.Vector3(arr[3*i],arr[3*i+1],arr[3*i+2]).applyMatrix
 
 // Poses: every mix of forward bend 0..15° and twist -15..15°, with and without the waist turned.
 const poses=[];for(const x of [0,5,10,15])for(const y of [-15,-7.5,0,7.5,15])for(const w of [0,35])if(x||y)poses.push({chest:{x,y,z:0},spine:{x:0,y:w,z:0}});
+// Collarbones: shrug up/down, forward/back, alone and mixed with the chest bend and twist (his two sides different).
+for(const [cz,cy] of [[4,0],[-1,0],[0,-4],[0,4],[4,-4],[4,4],[-1,-4]])for(const [x,y] of [[0,0],[15,0],[0,15],[15,-15],[8,8]])
+ poses.push({chest:{x,y,z:0},'clavicle.L':{x:0,y:cy,z:cz},'clavicle.R':{x:0,y:-cy*.5,z:-cz*.5}});
 
 // Rest-shape measures.
 const triArea=(a,t)=>{const i0=3*I[3*t],i1=3*I[3*t+1],i2=3*I[3*t+2],u=[a[i1]-a[i0],a[i1+1]-a[i0+1],a[i1+2]-a[i0+2]],v=[a[i2]-a[i0],a[i2+1]-a[i0+1],a[i2+2]-a[i0+2]];return [u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];};
@@ -35,7 +38,7 @@ const edge=new Map(),pairs=[];for(const t of bendTri)for(let k=0;k<3;k++){const 
 const angle=(a,b)=>{const d=(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])/(len(a)*len(b));return Math.acos(Math.max(-1,Math.min(1,d)));};
 const restCrease=pairs.map(([a,b])=>angle(restFace[a],restFace[b]));
 
-let minArea=1e9,maxArea=0,flips=0,creaseUp=0,volErr=0,waistMove=0,firmMove=0,snug=0,neckMove=0;
+let minArea=1e9,maxArea=0,stripMin=1e9,stripMax=0,stripCrease=0,flips=0,creaseUp=0,volErr=0,waistMove=0,firmMove=0,snug=0,neckMove=0;
 const shoulders=['upperArm.L','upperArm.R'].map(b=>new T.Vector3(...S.bones[S.index.get(b)].head));
 // Where the shoulder balls sit inside the chest (from 1.23 m up), and the chest around the neck.
 const neck=A.attached.find(a=>a.label==='neck'),NP=neck.mesh.geometry.attributes.position,neckPts=[];for(let i=0;i<NP.count;i+=4)neckPts.push(new T.Vector3().fromBufferAttribute(NP,i).applyMatrix4(neck.rest));
@@ -44,13 +47,16 @@ for(let i=0;i<n;i++){const p=world(restPos,i,chest.rest);if(isFirm(i))firmPts.pu
  const s=shoulders.find(s=>p.distanceTo(s)<.107);if(s)ringPts.push([i,s]);
  if(p.y>1.40&&Math.hypot(p.x,p.z)<.16)collarPts.push(i);}
 const visibleTri=[];for(let t=0;t<tris;t++)if(len(restFace[t])>1e-12&&[0,1,2].some(k=>world(restPos,I[3*t+k],chest.rest).y>=CHEST_BEND.from))visibleTri.push(t);
+// The narrow strip under each shoulder socket (between the seam rim and the bottom of the socket,
+// 4 cm tall, behind the hanging upper arm) has to take the whole shrug; it is measured on its own.
+const underArm=t=>[0,1,2].every(k=>{const p=world(restPos,I[3*t+k],chest.rest);return p.y<1.165&&Math.abs(p.x)>.17;});
 for(const pose of poses){
  A.apply(pose);const a=P.array;
  // Above the rim (the rim and waist ball are perfect circles round the waist's centre line, so twisting only slides them round themselves; check 1).
- for(const t of visibleTri){const r=len(restFace[t]),f=triArea(a,t),ratio=len(f)/r;minArea=Math.min(minArea,ratio);maxArea=Math.max(maxArea,ratio);}
+ for(const t of visibleTri){const r=len(restFace[t]),f=triArea(a,t),ratio=len(f)/r;if(underArm(t)){stripMin=Math.min(stripMin,ratio);stripMax=Math.max(stripMax,ratio);}else{minArea=Math.min(minArea,ratio);maxArea=Math.max(maxArea,ratio);}}
  // Folding: neighbouring bits of a bending surface must keep facing the same way (no surface turning inside out).
  pairs.forEach(([p,q],k)=>{if(restCrease[k]<Math.PI/4&&angle(triArea(a,p),triArea(a,q))>Math.PI/2)flips++;});
- pairs.forEach(([p,q],k)=>{creaseUp=Math.max(creaseUp,angle(triArea(a,p),triArea(a,q))-restCrease[k]);});
+ pairs.forEach(([p,q],k)=>{const d=angle(triArea(a,p),triArea(a,q))-restCrease[k];if(underArm(p)||underArm(q))stripCrease=Math.max(stripCrease,d);else creaseUp=Math.max(creaseUp,d);});
  volErr=Math.max(volErr,Math.abs(volume(a)/vol0-1));
  // Waist zone follows the waist exactly; the firm zone follows the chest bone exactly.
  // Below the bend: each point may only slide round its own circle about the waist's centre line (same height, same distance).
@@ -69,8 +75,9 @@ check('below the bend (rim and waist ball) every point stays on its own circle r
 check('the top of the chest moves as one firm piece with the chest bone, and the neck stays seated in it',firmMove<1e-6&&neckMove<.0005,`${firmPts.length.toLocaleString()} firm points, largest difference ${mm(firmMove)}; around the neck (${collarPts.length} points) ${mm(neckMove)}`);
 check('the chest stays snug around both shoulder balls: no gap opens and the ball never pokes out',snug<.001,`${ringPts.length} socket points; distance to the ball centre changes by at most ${mm(snug)}`);
 check('the surface never folds or turns inside out',flips===0,`${pairs.length.toLocaleString()} neighbouring pairs in the bend zone × ${poses.length} poses`);
-check('the visible chest never pinches or over-stretches (every bit of surface stays between 60% and 160% of its size)',minArea>.6&&maxArea<1.6,`smallest ${(minArea*100).toFixed(0)}%, largest ${(maxArea*100).toFixed(0)}% (the full forward bend squeezes the belly a little, like a real body)`);
+check('the open chest never pinches or over-stretches (every bit of surface stays between 60% and 160% of its size)',minArea>.6&&maxArea<1.6,`smallest ${(minArea*100).toFixed(0)}%, largest ${(maxArea*100).toFixed(0)}% (the full forward bend squeezes the belly a little, like a real body)`);
 check('it stays one smooth piece: no new creases appear (no fold sharper than 8° between neighbouring bits)',creaseUp<8*Math.PI/180,`sharpest new angle between neighbouring bits: ${deg(creaseUp)}`);
+check('under each arm (the 4 cm strip behind the hanging upper arm) it stretches for the shrug but never tears, pinches or folds sharply',stripMin>.5&&stripMax<1.8&&stripCrease<16*Math.PI/180,`size stays between ${(stripMin*100).toFixed(0)}% and ${(stripMax*100).toFixed(0)}%; sharpest new angle ${deg(stripCrease)} (only with everything at its limit at once)`);
 check('the chest keeps its size while bending and twisting',volErr<.02,`largest change ${(volErr*100).toFixed(2)}% of its volume`);
 // Speed: the bend itself, every frame while moving.
 const q=new T.Quaternion();let t0=performance.now();for(let k=0;k<400;k++){q.setFromEuler(new T.Euler((k%15+1)*Math.PI/180,((k%31)-15)*Math.PI/180,0));bend.apply(q);}const ms=(performance.now()-t0)/400;

@@ -107,4 +107,12 @@ Recorded 17 November 2026.
     Twist: the sides (shoulder sockets) turn fully, the front and back of
     the belly lag smoothly; the rim and waist ball only slide round
     themselves. Collarbones following the shoulders (shrugs) is the next
-    step, after the owner checks this. Waiting for the owner's check.
+    step, after the owner checks this. Owner approved ("looks good").
+18. Collarbones now move (waiting for the owner's check): shrug up 4°
+    (about 2 cm), down 1°, forward 4°, back 4°. The chest around each
+    shoulder socket follows its collarbone softly, so the ball stays snug.
+    Shoulders also follow the arms on their own
+    (`motion-core/skeleton/shoulder.js`): they lift when the arms go up
+    and come forward when reaching. Kept small because the chest has only
+    about 4 cm below each socket to stretch (behind the upper arm).
+    New poses: Shrug, Reach forward.

@@ -16,7 +16,9 @@ import {createHandRig,FINGERS} from '${root}/hand-lab/src/hand-rig.js';
 import {lengthenDigits} from '${root}/avatar/src/hand-study/lengthen-digits.js';
 import {easeDigitSweep} from '${root}/avatar/src/hand-study/ease-digit-sweep.js';
 import {createSkeleton} from '${root}/motion-core/skeleton/skeleton.js';
-export {createSkeleton,T};
+import {shoulderFollow} from '${root}/motion-core/skeleton/shoulder.js';
+import {POSES} from '${root}/motion-core/skeleton/poses.js';
+export {createSkeleton,shoulderFollow,POSES,T};
 // Measure the approved model the same way bones.js was written.
 export function measure(){
  const a=createAssembledAvatar(),r=a.rig;r.root.updateMatrixWorld(true);
@@ -62,7 +64,7 @@ export function measure(){
 const approvedHand=resolve(root,'avatar/src/hand-study/hand.js'),capture=resolve(root,'hand-lab/src/capture-rest.js');
 await build({entryPoints:[entry],bundle:true,platform:'node',format:'esm',outfile:join(dir,'out.mjs'),logLevel:'error',nodePaths:[join(root,'node_modules')],
  plugins:[{name:'hand-bind',setup(b){b.onResolve({filter:/^\.\/resting-digits\.js$/},a=>a.importer===approvedHand?{path:capture}:undefined);}}]});
-const {createSkeleton,measure,T}=await import(pathToFileURL(join(dir,'out.mjs')).href);
+const {createSkeleton,shoulderFollow,POSES,measure,T}=await import(pathToFileURL(join(dir,'out.mjs')).href);
 
 const S=createSkeleton(),M=measure(),R=[];
 const check=(name,ok,detail='')=>R.push({check:name,result:ok?'PASS':'FAIL',detail});
@@ -116,8 +118,17 @@ const bend=S.solve({spine:{x:0,y:30,z:0}}),legStill=S.bones.filter(b=>/thigh|shi
 check('turning the waist turns the chest, arms and head but not the legs',legStill&&bend.get('upperArm.L').head.distanceTo(rest.get('upperArm.L').head)>.1,`shoulder moved ${mm(bend.get('upperArm.L').head.distanceTo(rest.get('upperArm.L').head))}`);
 const linked=['L','R'].every(sd=>{const c=S.bones[S.index.get('clavicle.'+sd)],u=S.bones[S.index.get('upperArm.'+sd)],h=S.bones[S.index.get('hip.'+sd)],t=S.bones[S.index.get('thigh.'+sd)];
  return u.parent==='clavicle.'+sd&&t.parent==='hip.'+sd&&dist(c.tail,u.head)<1e-9&&dist(h.tail,t.head)<1e-9&&dist(c.head,S.bones[S.index.get('chest')].tail)<1e-9&&dist(h.head,S.bones[S.index.get('pelvis')].head)<1e-9;});
-const lockedOk=S.bones.filter(b=>/^(clavicle|hip)\./.test(b.name)).every(b=>['x','y','z'].every(k=>b.limits[k][0]===0&&b.limits[k][1]===0));
-check('arms hang from collarbones (neck base to shoulder) and legs from hip bones (pelvis to hip), both locked for now',linked&&lockedOk);
+const hipLocked=S.bones.filter(b=>/^hip\./.test(b.name)).every(b=>['x','y','z'].every(k=>b.limits[k][0]===0&&b.limits[k][1]===0));
+check('arms hang from collarbones (neck base to shoulder) and legs from hip bones (pelvis to hip); hip bones are fixed',linked&&hipLocked);
+// Collarbones: a small shrug lifts the whole arm about 3 cm; forward brings it forward; never more than the limits.
+const shrug=S.solve(POSES.shrug),fwdC=S.solve({'clavicle.L':{x:0,y:-4,z:0}}),over=S.solve({'clavicle.L':{x:20,y:-30,z:40}});
+const lift=shrug.get('upperArm.L').head.y-rest.get('upperArm.L').head.y,liftR=shrug.get('upperArm.R').head.y-rest.get('upperArm.R').head.y,ahead=fwdC.get('upperArm.L').head.z-rest.get('upperArm.L').head.z;
+const handUp=shrug.get('hand.L').head.y-rest.get('hand.L').head.y,maxLift=over.get('upperArm.L').head.y-rest.get('upperArm.L').head.y;
+check('collarbones shrug the shoulders up about 2 cm and bring them forward a little, carrying the whole arm with them, within small limits',lift>.017&&lift<.03&&Math.abs(lift-liftR)<1e-9&&ahead>.018&&handUp>=lift&&maxLift<=lift+1e-9,`shrug: shoulders up ${mm(lift)} (both sides equal), hand follows ${mm(handUp)}; forward: ${mm(ahead)}; asked for far more, still ${mm(maxLift)}`);
+// Shoulders follow the arms on their own.
+const F=p=>shoulderFollow(S,p),restF=F({}),up=F(POSES['arms-up']),reach=F({'upperArm.L':{x:-90,y:0,z:0}}),both=F({...POSES['arms-up'],...POSES.shrug});
+const lim=S.bones[S.index.get('clavicle.L')].limits;
+check('shoulders follow the arms: still at rest, lift when the arms go up, come forward when reaching, never past the limits',Math.abs(restF['clavicle.L'].z)<1e-9&&Math.abs(restF['clavicle.L'].y)<1e-9&&up['clavicle.L'].z>2&&Math.abs(up['clavicle.R'].z+up['clavicle.L'].z)<1e-9&&reach['clavicle.L'].y<-3.5&&both['clavicle.L'].z<=lim.z[1]+1e-9,`arms up: shoulders lift ${up['clavicle.L'].z.toFixed(1)}°; reaching ahead: shoulder forward ${(-reach['clavicle.L'].y).toFixed(1)}°; arms up + shrug: ${both['clavicle.L'].z.toFixed(1)}° (limit ${lim.z[1]}°)`);
 const pv=S.bones[S.index.get('pelvis')],tl=S.bones[S.index.get('thigh.L')],tr=S.bones[S.index.get('thigh.R')];
 check('the pelvis control sits exactly between the two hip balls and reaches up to the waist',dist(pv.head,tl.head.map((v,i)=>(v+tr.head[i])/2))<1e-9&&dist(pv.tail,S.bones[S.index.get('spine')].head)<1e-9,`control at ${pv.head.map(v=>v.toFixed(4)).join(', ')} m`);
 // Chest: a small forward bend and twist carry the shoulders, arms and head, never the waist or legs.

@@ -89,6 +89,14 @@
       "source": "avatar-lab/src/torso-split.js",
       "checks": "tests/avatar/torso-split.mjs",
       "updated_at_commit": "0059f40f1ea9f0c0bf8dc61f161b02cab26c08ca"
+    },
+    {
+      "date": "2026-11-18",
+      "approved_by_owner": true,
+      "change": "Chest bending approved: the chest bends forward (up to 15°) and twists (±15°) softly as one smooth piece, on a new upper-chest bone. The clay shape at rest is unchanged, so the saved viewer (index.html) is unchanged.",
+      "source": "avatar-lab/src/chest-bend.js, motion-core/skeleton/bones.js",
+      "checks": "tests/avatar/chest-bend.mjs",
+      "updated_at_commit": "457925c"
     }
   ],
   "tag_note": "The tag avatar-checkpoint-2-2026-11-17 still marks the original 17 Nov version; this in-place update (same checkpoint name) is recorded under 'updates'."
