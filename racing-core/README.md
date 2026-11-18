@@ -1,4 +1,4 @@
-> **Fresh restart:** the owner rejected extending this prototype. The approved track rebuild is in [track/](track/README.md); the newly authorized handling layer is in [kart/](kart/README.md), awaiting review of its measured results. Decisions and approvals are in [PLAN.md](PLAN.md). Everything below describes the previous prototype, retained temporarily for existing demos. Its checks do not approve the new rebuild.
+> **Fresh restart:** the owner rejected extending this prototype. The approved track rebuild is in [track/](track/README.md); the newly authorized handling layer is in [kart/](kart/README.md), awaiting review of its measured results. The authorized contact response is in [contacts/](contacts/README.md); its block-engine integration is pending Claude’s work. Decisions and approvals are in [PLAN.md](PLAN.md). Everything below describes the previous prototype, retained temporarily for existing demos. Its checks do not approve the new rebuild.
 
 # Racing core — code-first rebuild
 
