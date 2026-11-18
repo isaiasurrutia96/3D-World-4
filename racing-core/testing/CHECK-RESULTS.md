@@ -1,12 +1,19 @@
 # Driving test code checks
 
-12 PASS; 0 FAIL. These checks verify wiring and controls; the owner still needs to judge driving feel.
+13 PASS; 0 FAIL. These checks verify wiring and controls; the owner still needs to judge driving feel.
 
 ## Independent keyboard throttle and steering do not depend on the camera
 
-- Rule: Up=+throttle, Down=-throttle, Left=+steer, Right=-steer; diagonal keyboard commands remain full strength.
+- Rule: Up=+throttle, Down=-throttle, Left=-steer, Right=+steer; diagonal keyboard commands remain full strength.
 - Input: `{"yaws":[0,1.5707963267948966,3.141592653589793,-1.1],"script":"Up/Down/Left/Right and diagonals, including simultaneous camera look."}`
 - Measured: `{"probes":48}`
+- **PASS**
+
+## Left and right commands turn to the correct side of an actual chase camera
+
+- Rule: Left moves to negative screen X and Right to positive screen X for every device, heading and FPS.
+- Input: `{"fps":[30,60,120,144],"script":"Drive 0.5 s using keyboard, phone and analog left/right commands at four headings; project the actual path through a behind-camera matrix."}`
+- Measured: `{"probes":96,"minimumCorrectDisplacement":0.06773137021586664}`
 - **PASS**
 
 ## Analog steering survives mapping without accidental Gas
@@ -18,7 +25,7 @@
 
 ## Held phone buttons use fixed kart directions and a dedicated reverse command
 
-- Rule: Left is +steer, right -steer, both cancel; Reverse is -throttle; Gas+Reverse applies the brake; independent Brake/Boost are retained.
+- Rule: Left is -steer, right +steer, both cancel; Reverse is -throttle; Gas+Reverse applies the brake; independent Brake/Boost are retained.
 - Input: `{"script":"Left/Right/Gas/Reverse, opposites and independent Brake/Boost."}`
 - Measured: `{"combinations":7}`
 - **PASS**

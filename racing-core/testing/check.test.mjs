@@ -5,7 +5,8 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createDrivingTest, readDrivingInput, TRACK_IDS } from './drive.ts';
-import { KART } from '../kart/index.ts';
+import { KART, createKartController } from '../kart/index.ts';
+import { PerspectiveCamera, Vector3 } from 'three';
 import source from '../kart/reference.json' with { type: 'json' };
 import { createOriginalKartView } from '../../racing-lab/src/kart-view.js';
 const checks = [], rates = [30, 60, 120, 144], near = (a, b) => assert(Math.abs(a - b) < 1e-8, `${a} != ${b}`);
@@ -19,22 +20,34 @@ catch (e) {
     throw e;
 } }); }
 const snapshot = (x, y, yaw, source = 'keyboard', look = 0) => ({ moveX: -Math.sin(yaw - look) * y + Math.cos(yaw - look) * x, moveZ: -Math.cos(yaw - look) * y - Math.sin(yaw - look) * x, source, look: { x: look } });
-check('Independent keyboard throttle and steering do not depend on the camera', { yaws: [0, Math.PI / 2, Math.PI, -1.1], script: 'Up/Down/Left/Right and diagonals, including simultaneous camera look.' }, 'Up=+throttle, Down=-throttle, Left=+steer, Right=-steer; diagonal keyboard commands remain full strength.', () => { let probes = 0; for (const yaw of [0, Math.PI / 2, Math.PI, -1.1])
+check('Independent keyboard throttle and steering do not depend on the camera', { yaws: [0, Math.PI / 2, Math.PI, -1.1], script: 'Up/Down/Left/Right and diagonals, including simultaneous camera look.' }, 'Up=+throttle, Down=-throttle, Left=-steer, Right=+steer; diagonal keyboard commands remain full strength.', () => { let probes = 0; for (const yaw of [0, Math.PI / 2, Math.PI, -1.1])
     for (const look of [0, .2])
         for (const [x, y] of [[0, 1], [0, -1], [-1, 0], [1, 0], [-Math.SQRT1_2, Math.SQRT1_2], [Math.SQRT1_2, Math.SQRT1_2]]) {
             const c = readDrivingInput(snapshot(x, y, yaw, 'keyboard', look), yaw);
             near(c.throttle, Math.sign(y));
-            near(c.steer, -Math.sign(x));
+            near(c.steer, Math.sign(x));
             probes++;
         } return { probes }; }, m => assert.equal(m.probes, 48));
+check('Left and right commands turn to the correct side of an actual chase camera', {fps:rates,script:'Drive 0.5 s using keyboard, phone and analog left/right commands at four headings; project the actual path through a behind-camera matrix.'}, 'Left moves to negative screen X and Right to positive screen X for every device, heading and FPS.', () => {
+    let probes=0,minimumCorrectDisplacement=Infinity;
+    for(const yaw of [0,Math.PI/2,Math.PI,-1.1])for(const fps of rates)for(const direction of [-1,1])for(const device of ['keyboard','gamepad','buttons']){
+        const camera=new PerspectiveCamera(45,1,.05,1000);camera.position.set(-Math.sin(yaw)*10,4.5,-Math.cos(yaw)*10);camera.lookAt(0,1,0);camera.updateMatrixWorld(true);
+        const c=createKartController({world:{heightAt:(x,z,max)=>max>=0?0:null},initial:{yaw}}),input=device==='buttons'?readDrivingInput({actions:{gas:true,left:direction<0,right:direction>0}},yaw+Math.PI):readDrivingInput(snapshot(direction*Math.SQRT1_2,Math.SQRT1_2,yaw+Math.PI,device),yaw+Math.PI);
+        for(let frame=0;frame<fps/2;frame++)c.advance(1/fps,input);
+        const projected=new Vector3(c.state.x,c.state.y+.6,c.state.z).project(camera),correct=projected.x*direction;
+        assert(correct>1e-4,`${device} ${direction<0?'Left':'Right'} turns the wrong way at yaw ${yaw}, FPS ${fps}: screen X=${projected.x}`);
+        minimumCorrectDisplacement=Math.min(minimumCorrectDisplacement,correct);probes++;
+    }
+    return {probes,minimumCorrectDisplacement};
+}, m=>assert.equal(m.probes,96));
 check('Analog steering survives mapping without accidental Gas', { script: 'Three gentle stick strengths at four camera headings, with a sideways-only stick.' }, 'Analog steering stays 0.2/0.5/0.8, and floating-point residue cannot accelerate a steering-only kart.', () => { let probes = 0; for (const yaw of [0, .7, Math.PI / 2, Math.PI])
     for (const x of [.2, .5, .8]) {
         const c = readDrivingInput(snapshot(x, 0, yaw, 'gamepad'), yaw);
-        near(c.steer, -x);
+        near(c.steer, x);
         assert.equal(c.throttle, 0);
         probes++;
     } return { probes }; }, m => assert.equal(m.probes, 12));
-check('Held phone buttons use fixed kart directions and a dedicated reverse command', { script: 'Left/Right/Gas/Reverse, opposites and independent Brake/Boost.' }, 'Left is +steer, right -steer, both cancel; Reverse is -throttle; Gas+Reverse applies the brake; independent Brake/Boost are retained.', () => { const read = actions => readDrivingInput({ actions }, .8); near(read({ left: true }).steer, 1); near(read({ right: true }).steer, -1); near(read({ left: true, right: true }).steer, 0); near(read({ gas: true }).throttle, 1); near(read({ reverse: true }).throttle, -1); assert(read({ gas: true, reverse: true }).brake); assert(read({ brake: true, boost: true }).brake && read({ brake: true, boost: true }).boost); return { combinations: 7 }; }, m => assert.equal(m.combinations, 7));
+check('Held phone buttons use fixed kart directions and a dedicated reverse command', { script: 'Left/Right/Gas/Reverse, opposites and independent Brake/Boost.' }, 'Left is -steer, right +steer, both cancel; Reverse is -throttle; Gas+Reverse applies the brake; independent Brake/Boost are retained.', () => { const read = actions => readDrivingInput({ actions }, .8); near(read({ left: true }).steer, -1); near(read({ right: true }).steer, 1); near(read({ left: true, right: true }).steer, 0); near(read({ gas: true }).throttle, 1); near(read({ reverse: true }).throttle, -1); assert(read({ gas: true, reverse: true }).brake); assert(read({ brake: true, boost: true }).brake && read({ brake: true, boost: true }).boost); return { combinations: 7 }; }, m => assert.equal(m.combinations, 7));
 for (const id of TRACK_IDS)
     check(id + ': complete driving-test adapter is frame independent', { fps: rates, script: 'Eight seconds: Gas, Brake, Reverse, steering, boost, release; use checked track rails.' }, 'One kart, no other actors; identical authoritative state after exactly 960 physics ticks at all rendering rates.', () => { const byRate = []; for (const fps of rates) {
         const d = createDrivingTest(id);

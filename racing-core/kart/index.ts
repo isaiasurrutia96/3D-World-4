@@ -34,7 +34,7 @@ export const KART = Object.freeze({
     maxBank: .3,
     boostDuration: 2,
 });
-/** +Z forward, +Y up, yaw positive towards +X. Positive steer turns left, as in LetsGo. */
+/** +Z forward, +Y up, yaw positive towards +X. Positive steer turns right from the chase view, as in LetsGo. */
 export type KartInput = Readonly<{
     throttle?: number;
     steer?: number;

@@ -28,7 +28,7 @@ export function readDrivingInput(sample: DrivingSample, cameraYaw: number): Kart
     if (![x, z, yaw].every(Number.isFinite))
         throw new TypeError('Driving input must be finite');
     const clean = (value: number) => Math.abs(value) < 1e-8 ? 0 : Math.max(-1, Math.min(1, value));
-    let throttle = clean(-x * Math.sin(yaw) - z * Math.cos(yaw)), steer = clean(-x * Math.cos(yaw) + z * Math.sin(yaw));
+    let throttle = clean(-x * Math.sin(yaw) - z * Math.cos(yaw)), steer = clean(x * Math.cos(yaw) - z * Math.sin(yaw));
     if (sample.source === 'keyboard') {
         throttle = Math.sign(throttle);
         steer = Math.sign(steer);
@@ -37,7 +37,7 @@ export function readDrivingInput(sample: DrivingSample, cameraYaw: number): Kart
     if (a.gas || a.reverse)
         throttle = a.reverse ? -1 : 1;
     if (a.left || a.right)
-        steer = Number(Boolean(a.left)) - Number(Boolean(a.right));
+        steer = Number(Boolean(a.right)) - Number(Boolean(a.left));
     return normalizeKartInput({ throttle, steer, brake: Boolean(a.brake || a.gas && a.reverse), boost: Boolean(a.boost) });
 }
 export function createDrivingTest(initialId: TrackId = 'original') {
