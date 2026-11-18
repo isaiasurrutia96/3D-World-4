@@ -158,3 +158,23 @@ Recorded 17 November 2026.
     the smoothness items: at the very end of sitting the elbows swing out a
     little quickly (3.8° a frame; the check's limit is 3°); standing up from
     Sit snaps instead of rising smoothly.
+23. Mentor plan agreed (owner, 18 Nov 2026): stop tuning demo visuals; build the
+    fundamentals in order: (1) smooth switching in the core, (2) Section 5
+    hands and feet (fingers bend and grip; fixes overlapping fingers and
+    holding the knee), (3) balance and weight shift (makes squat and step
+    athletic). Demos are only checked, not tweaked.
+24. Step 1 done: smooth switching in the core (`motion-core/skeleton/pose.js`).
+    The body's position (root) moves through the same quintic transitions and
+    clips as the joints; reaching is a player layer (setGoals/clearGoals) that
+    fades in and out, carries on from last frame, and can be released after a
+    wait; layers can follow a function of time; fades that change course keep
+    their speed (no kink); the shoulders follow inside the player. Demos now
+    run through the player (`createDemoRunner` in skeleton-test/demos.js):
+    Sit stands back up smoothly (hands travel back, feet released when
+    standing); Squat and Step stop smoothly; Squat/Sit are driven by bend angle
+    (no corner near standing). Core fixes found by the new checks: a partly
+    flat foot crept toward flat over reaching passes; ankles now ease into
+    their limits (tanh, 3°). Known (step 3): when the stepping knee is high the
+    ankle reaches its limit (a small jolt), fixed by weight shift and foot
+    planning. Checks: `npm run test:pose`, `npm run test:demos` (start/stop of
+    every demo frame by frame).

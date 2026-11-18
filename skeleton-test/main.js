@@ -9,10 +9,9 @@ import {createSkeletonAvatar} from './attach.js';
 
 import {POSES,CLIPS} from '../motion-core/skeleton/poses.js';
 import {createPosePlayer} from '../motion-core/skeleton/pose.js';
-import {shoulderFollow} from '../motion-core/skeleton/shoulder.js';
 import {reach} from '../motion-core/skeleton/reach.js';
-import {createDemos,seatTop,sittingHands,thighRests,footReach} from './demos.js';
-import {blend,EASE} from '../motion-core/skeleton/pose.js';
+import {createDemos,seatTop,thighRests,footReach,createDemoRunner} from './demos.js';
+
 
 const stage=document.querySelector('#stage');
 const A=createSkeletonAvatar();
@@ -38,7 +37,7 @@ const bonesView=new T.Group();bonesView.add(lines,linkLines,dots);bonesView.visi
 const m4=new T.Matrix4();
 function drawBones(s){s.bones.forEach((b,i)=>{b.head.toArray(linePos,i*6);b.tail.toArray(linePos,i*6+3);m4.makeTranslation(b.head.x,b.head.y,b.head.z);dots.setMatrixAt(i,m4);});links.forEach(([p,i],k)=>{s.bones[p].head.toArray(linkPos,k*6);s.bones[i].head.toArray(linkPos,k*6+3);});linkGeo.attributes.position.needsUpdate=true;lineGeo.attributes.position.needsUpdate=true;dots.instanceMatrix.needsUpdate=true;}
 
-const player=createPosePlayer(A.skeleton);let current='rest';
+const player=createPosePlayer(A.skeleton,{},{follow:true});let current='rest';
 // Reaching demos (section 4, skeleton-test/demos.js). Placeholder props: simple blocks and a ball.
 const sk=A.skeleton,D=createDemos(sk,footReach(A)),RESTS=thighRests(A);
 const prop=new T.MeshStandardMaterial({color:'#c9c4ba',roughness:1});
@@ -47,39 +46,20 @@ const ball=new T.Mesh(new T.SphereGeometry(D.BALL.radius,24,16),new T.MeshStanda
 // The seat: a simple block whose top is measured to touch him exactly when seated.
 const seatPose=reach(sk,D.sit(99).pose,D.sit(99).goals).pose,seatFit=seatTop(A,seatPose);A.apply(sk.restPose());
 const seat=new T.Mesh(new T.BoxGeometry(.5,seatFit.top,seatFit.front-seatFit.back+.04),prop);seat.position.set(0,seatFit.top/2,(seatFit.front+seatFit.back-.04)/2);seat.castShadow=seat.receiveShadow=true;seat.visible=false;scene.add(seat);
-let demo=null,demoTime=0,demoWeight=0,lastDemo=null,lastArms=null;
-const ARMS=['upperArm.L','lowerArm.L','hand.L','upperArm.R','lowerArm.R','hand.R'],armsOf=p=>Object.fromEntries(ARMS.map(n=>[n,p[n]]).filter(([,v])=>v));
+// Demos run on the pose player (smooth starts and stops); the shoulders follow inside the player.
+const runner=createDemoRunner(player,D,RESTS);
 function setDemo(name){
- demo=D[name]&&['squat','sit','step','ball'].includes(name)?name:null;demoTime=0;lastArms=null;step.visible=demo==='step';ball.visible=demo==='ball';seat.visible=demo==='sit';
- for(const b of document.querySelectorAll('[data-demo]'))b.setAttribute('aria-pressed',String(b.dataset.demo===demo));
- if(demo)for(const b of document.querySelectorAll('[data-pose]'))b.setAttribute('aria-pressed','false');
+ if(!name||name===runner.active)runner.stop();else runner.start(name);
+ const on=runner.active;step.visible=on==='step';ball.visible=on==='ball';seat.visible=on==='sit';
+ for(const b of document.querySelectorAll('[data-demo]'))b.setAttribute('aria-pressed',String(b.dataset.demo===on));
+ if(on)for(const b of document.querySelectorAll('[data-pose]'))b.setAttribute('aria-pressed','false');
 }
-for(const b of document.querySelectorAll('[data-demo]'))b.onclick=()=>{setPose('rest');setDemo(b.dataset.demo===demo?null:b.dataset.demo);};
-/** The pose for this frame: the pose player, then (fading in and out smoothly) the reaching demo. */
+for(const b of document.querySelectorAll('[data-demo]'))b.onclick=()=>setDemo(b.dataset.demo===runner.active?null:b.dataset.demo);
+/** The pose for this frame (the ball prop follows the ball demo's time). */
 function framePose(dt){
- let pose=player.update(dt);
- demoWeight=Math.min(1,Math.max(0,demoWeight+(demo?dt:-dt)/.5));
- if(demo)lastDemo=demo;
- if(demoWeight>0&&lastDemo){
-  demoTime+=dt;const d=D[lastDemo](demoTime),w=EASE.inOut(demoWeight);
-  if(d.ball)ball.position.set(...d.ball);
-  const mixed=blend(pose,{...pose,...d.pose},w),r=d.pose.root??{position:[0,0,0],rotation:{x:0,y:0,z:0}};
-  mixed.root={position:r.position.map(v=>v*w),rotation:{x:r.rotation.x*w,y:r.rotation.y*w,z:r.rotation.z*w}};
-  // Hands that place the palm start from where the arms were last frame (smooth, and quick).
-  const handGoal=Object.keys(d.goals).some(k=>k.startsWith('hand.'));
-  let reached=reach(sk,handGoal&&lastArms?{...mixed,...lastArms}:mixed,d.goals,{follow:true}).pose;
-  if(handGoal)lastArms=armsOf(reached);
-  if(d.handWeight!==undefined&&d.handWeight>0){
-   // Sitting: the hands travel from hanging to resting on top of the thighs (palm down,
-   // fingers toward the knees), arriving as he sits.
-   const now=sk.solve(reached),hands=reach(sk,lastArms?{...reached,...lastArms}:reached,sittingHands(now,RESTS,d.handWeight,now,sk),{follow:true}).pose;
-   lastArms=armsOf(hands);reached={...hands,root:mixed.root};
-  }
-  pose=w>=1?reached:{...blend(shoulderFollow(sk,mixed),reached,w),root:mixed.root};
-  if(!demo&&demoWeight===0)lastDemo=null;
-  return pose;
- }
- return shoulderFollow(sk,pose);
+ const pose=player.update(dt);
+ if(runner.active==='ball')ball.position.set(...D.ball(runner.time).ball);
+ return pose;
 }
 
 function setPose(name){
@@ -88,7 +68,7 @@ function setPose(name){
  else{player.clearLayer('wave',.4);player.transitionTo(POSES[name]??{},{duration:.6});}
  for(const b of document.querySelectorAll('[data-pose]'))b.setAttribute('aria-pressed',String(b.dataset.pose===name));
 }
-for(const b of document.querySelectorAll('[data-pose]'))b.onclick=()=>{setDemo(null);setPose(b.dataset.pose);};
+for(const b of document.querySelectorAll('[data-pose]'))b.onclick=()=>{if(runner.active)setDemo(null);setPose(b.dataset.pose);};
 const bonesButton=document.querySelector('#bones');
 function showBones(on){bonesView.visible=on;bonesButton.setAttribute('aria-pressed',String(on));bonesButton.textContent=on?'Hide bones':'Show bones';}
 bonesButton.onclick=()=>showBones(!bonesView.visible);

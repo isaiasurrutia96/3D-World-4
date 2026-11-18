@@ -68,6 +68,31 @@ const W=createPosePlayer(S);W.setLayer('wave',{clip:c,fade:0});let xs=[],elbow=[
 for(let i=0;i<72;i++){const pose=W.update(1/120),s=S.solve(pose);xs.push(s.get('hand.L').tail.x);elbow.push(s.get('lowerArm.L').head);}
 const sway=Math.max(...xs)-Math.min(...xs),elbowMove=Math.max(...elbow.map(v=>v.distanceTo(elbow[0])));
 check('in the wave the hand swings side to side from the elbow, which stays put',sway>.12&&elbowMove<1e-9,`hand swings ${(sway*100).toFixed(1)} cm; elbow moves ${(elbowMove*1000).toFixed(2)} mm`);
+// ---- The body's position moves through the same smooth machinery ----
+const B=createPosePlayer(S);B.transitionTo({root:{position:[0,-.3,-.2],rotation:{x:20,y:0,z:0}}},{duration:.8});
+const rootTrack=[];for(let i=0;i<48;i++)rootTrack.push(B.update(1/120).root);B.transitionTo({},{duration:.6});for(let i=0;i<96;i++)rootTrack.push(B.update(1/120).root);
+const rp=rootTrack.map(r=>[...r.position,r.rotation.x]),rv=rp.slice(1).map((p,i)=>p.map((v,k)=>(v-rp[i][k])*120)),ra=rv.slice(1).map((v,i)=>v.map((x,k)=>(x-rv[i][k])*120));
+const peakA=Math.max(...ra.flat().map(Math.abs)),switchJ=Math.max(...[45,46,47,48].map(i=>Math.max(...ra[i].map((x,k)=>Math.abs(x-ra[i-1][k])))));
+const home=rootTrack.at(-1),homeErr=Math.max(...home.position.map(Math.abs),Math.abs(home.rotation.x));
+check('the body\'s position and lean move smoothly, change course without a jolt, and arrive exactly',switchJ<=.15*peakA&&homeErr<1e-9,`acceleration changes by ${(100*switchJ/peakA).toFixed(1)}% of its peak at the switch; back home within ${homeErr.toExponential(1)}`);
+const rc=createClip([{time:0,pose:{root:{position:[0,0,0]}}},{time:.5,pose:{root:{position:[0,-.2,0]}}}],{loop:true,duration:1});
+check('a clip can move the body too (looping seamlessly)',Math.abs(rc.sample(0).root.position[1]-rc.sample(1).root.position[1])<1e-12&&rc.sample(.5).root.position[1]<-.19,`lowest ${rc.sample(.5).root.position[1].toFixed(3)} m`);
+
+// ---- Reaching layers: feet stay planted while the body moves, and every switch is smooth ----
+const soles={'foot.L':{sole:[.15,0,.025],heading:0},'foot.R':{sole:[-.15,0,.025],heading:0}};
+const G=createPosePlayer(S);G.setGoals('feet',soles,{fade:0});
+const track=[];let plantErr=0;
+const step=n=>{for(let i=0;i<n;i++){const p=G.update(1/60),q=S.solve(p);track.push(p);for(const f of ['foot.L','foot.R'])plantErr=Math.max(plantErr,q.get(f).head.distanceTo({x:soles[f].sole[0],y:.1635,z:soles[f].sole[2],distanceTo:null}?new (q.get(f).head.constructor)(soles[f].sole[0],S.bones[S.index.get(f)].head[1],soles[f].sole[2]):0));}};
+G.transitionTo({root:{position:[0,-.2,-.15],rotation:{x:0,y:0,z:0}}},{duration:1});step(60);
+G.setGoals('hand',{'hand.L':{position:[.3,.9,.3]}},{fade:.8});step(30);
+// Leave: stand up and let go of the hand goal at the same moment (the old "Sit" jolt).
+G.transitionTo({},{duration:1});G.clearGoals('hand',.8);step(90);
+const jj=(a,b)=>{let m=0;for(const n of names)for(const k of AX)m=Math.max(m,Math.abs(a[n][k]-b[n][k]));return m;};
+let worstStep=0,worstAccel=0;for(let i=2;i<track.length;i++){worstStep=Math.max(worstStep,jj(track[i],track[i-1]));let m=0,wn='';for(const n of names)for(const k of AX){const d=Math.abs(track[i][n][k]-2*track[i-1][n][k]+track[i-2][n][k]);if(d>m){m=d;wn=n+k;}}worstAccel=Math.max(worstAccel,m);}
+check('reaching layers: feet stay planted while the body lowers and rises',plantErr<5e-4,`feet off by at most ${(plantErr*1000).toFixed(2)} mm`);
+// A jolt is a sudden change in speed; at 60 frames a second, under 1° per frame per frame is smooth.
+check('switching between movements never jolts (lower, reach, then stand up and let go together)',worstAccel<1&&G.goalLayers.length===1,`largest change in speed between frames ${worstAccel.toFixed(2)}°; fastest joint ${(worstStep*60).toFixed(0)}°/s`);
+
 const t0=performance.now();const Q=createPosePlayer(S);Q.setLayer('wave',{clip:c});Q.transitionTo(POSES.kick,{duration:1});for(let i=0;i<3000;i++)Q.update(1/120);const us=(performance.now()-t0)/3000*1000;
 check('fast enough for every frame (well under 1 ms of a 16 ms frame)',us<1000,`${us.toFixed(0)} µs per frame for transition + layer`);
 console.table(R);const fail=R.some(r=>r.result==='FAIL');console.log(fail?'FAIL':'PASS: poses, blends, transitions, layers and clips behave as planned.');process.exit(fail?1:0);

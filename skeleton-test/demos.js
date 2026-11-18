@@ -3,9 +3,10 @@
 //
 // Every number here is either measured from the approved model, worked out
 // from the skeleton's own bone lengths, or a stated choice:
-//   squat / sit  thighs end exactly level (hips at knee height); the hips go
-//                back so each shin tips forward 10° (the approved ankle allows
-//                18°); feet stay planted and flat.
+//   squat / sit  driven by bend: the thighs turn from upright to exactly level
+//                while each shin tips forward up to 10° (the approved ankle
+//                allows 18°); the hips go down and back smoothly; feet stay
+//                planted and flat.
 //   squat        the upper body leans forward at the hips up to 28° at the
 //                bottom (gym squat), arms held level in front, eyes ahead.
 //                28° because level thighs plus the lean must stay inside the
@@ -28,6 +29,11 @@ import {EASE} from '../motion-core/skeleton/pose.js';
 
 const RAD = Math.PI / 180, ease = t => EASE.inOut(Math.min(1, Math.max(0, t)));
 const band = (a, b, t) => ease((t - a) / (b - a));
+/** From value p0 (speed v0, acceleration a0) to p1 at rest, over T seconds; the value at time t. */
+const quintic = (p0, v0, a0, p1, T, t) => {
+ const s = Math.min(1, Math.max(0, t / T)), s2 = s * s, s3 = s2 * s, s4 = s3 * s, s5 = s4 * s;
+ return (1 - 10 * s3 + 15 * s4 - 6 * s5) * p0 + (s - 6 * s3 + 8 * s4 - 3 * s5) * v0 * T + (.5 * s2 - 1.5 * s3 + 1.5 * s4 - .5 * s5) * a0 * T * T + (10 * s3 - 15 * s4 + 6 * s5) * p1;
+};
 
 /**
  * foot: the left foot model's reach in front of and behind the ankle at rest
@@ -42,17 +48,23 @@ export function createDemos(skeleton, foot = null){
  const heelReach = foot?.heel ?? B('foot.L').head[2] - Math.min(...Object.values(skeleton.footContacts.L).map(p => p[2]));
  const pelvis = new Vector3(...B('pelvis').head);
  const SHIN_TIP = 10 * RAD;
- /** Hip joints this far below standing, how far back they go so each shin tips SHIN_TIP. */
- const hipsBack = drop => {
-  const kz = L2 * Math.sin(SHIN_TIP), ky = L2 * Math.cos(SHIN_TIP), h = L1 + L2 - drop;
-  return Math.min(0, kz - Math.sqrt(Math.max(0, L1 * L1 - (h - ky) ** 2)));
+ /**
+  * Where the hip joints are for a bend k (0 standing, 1 thighs level): the
+  * thigh turns from upright to level (k × 90°) while the shin tips forward
+  * k × 10°, both smoothly, so the hips go down and back smoothly too (a
+  * squat moves by joint angle; measuring it by height instead puts a sharp
+  * corner at standing). Returns how far down and how far forward (−: back).
+  */
+ const hips = k => {
+  const th = k * Math.PI / 2, be = k * SHIN_TIP;
+  return {drop: L1 + L2 - (L2 * Math.cos(be) + L1 * Math.cos(th)), back: L2 * Math.sin(be) - L1 * Math.sin(th)};
  };
  /** The drop at which the thighs are exactly level. */
- const LEVEL = L1 + L2 * (1 - Math.cos(SHIN_TIP));
- /** Body position for a hip drop and a forward lean (turning about the pelvis control, between the hips). */
- const body = (drop, lean) => {
-  const q = new Quaternion().setFromEuler(new Euler(lean * RAD, 0, 0)), c = pelvis.clone();
-  const pos = c.clone().sub(c.clone().applyQuaternion(q)).add(new Vector3(0, -drop, hipsBack(drop)));
+ const LEVEL = hips(1).drop;
+ /** Body position for a bend k and a forward lean (turning about the pelvis control, between the hips). */
+ const body = (k, lean) => {
+  const q = new Quaternion().setFromEuler(new Euler(lean * RAD, 0, 0)), c = pelvis.clone(), h = hips(k);
+  const pos = c.clone().sub(c.clone().applyQuaternion(q)).add(new Vector3(0, -h.drop, h.back));
   return {position: pos.toArray(), rotation: {x: lean, y: 0, z: 0}};
  };
  const feet = {'foot.L': {sole: SOLE.L, heading: 0}, 'foot.R': {sole: SOLE.R, heading: 0}};
@@ -66,23 +78,25 @@ export function createDemos(skeleton, foot = null){
  const BALL = {radius: .035};
 
  return {
-  SOLE, STEP, BALL, LEVEL, hipsBack,
+  SOLE, STEP, BALL, LEVEL, hips, feet, body,
   squat(t){
-   const k = (1 - Math.cos(t * 1.8)) / 2, drop = LEVEL * k, lean = 28 * k, chest = 5 * k, tip = lean + chest;
+   const k = (1 - Math.cos(t * 1.8)) / 2, lean = 28 * k, chest = 5 * k, tip = lean + chest;
    const neck = Math.min(20, tip * .5), head = Math.min(25, tip - neck);
-   return {pose: {root: body(drop, lean), chest: {x: chest, y: 0, z: 0},
+   return {pose: {root: body(k, lean), chest: {x: chest, y: 0, z: 0},
     // Arms level in front: hanging is 0, level forward is -90 in the world, less the lean.
-    'upperArm.L': {x: -(90 - tip) * Math.min(1, k * 3), y: 0, z: 8}, 'upperArm.R': {x: -(90 - tip) * Math.min(1, k * 3), y: 0, z: -8},
+    'upperArm.L': {x: -(90 - tip) * band(0, 1 / 3, k), y: 0, z: 8}, 'upperArm.R': {x: -(90 - tip) * band(0, 1 / 3, k), y: 0, z: -8},
     'lowerArm.L': {x: -10, y: 0, z: 0}, 'lowerArm.R': {x: -10, y: 0, z: 0},
     neck: {x: -neck, y: 0, z: 0}, head: {x: -head, y: 0, z: 0}}, goals: feet};
   },
   /** Sitting: lowers over 1.4 s, then stays. handGoals(palms) gives the palm goals once the thigh tops are known. */
   sit(t){
-   const k = band(0, 1.4, t), drop = LEVEL * k;
-   return {pose: {root: body(drop, 0)}, goals: feet, handWeight: k};
+   const k = band(0, 1.4, t);
+   return {pose: {root: body(k, 0)}, goals: feet, handWeight: k};
   },
-  step(t){
-   const c = t % 5, up = c < 1.6 ? band(0, 1.6, c) : c < 2.6 ? 1 : c < 4.2 ? 1 - band(2.6, 4.2, c) : 0;
+  /** How far up onto the step the foot is (0 planted, 1 on the block) at a time in the 5 s cycle. */
+  stepUp(t){ const c = t % 5; return c < 1.6 ? band(0, 1.6, c) : c < 2.6 ? 1 : c < 4.2 ? 1 - band(2.6, 4.2, c) : 0; },
+  step(t){ return this.stepAt(this.stepUp(t)); },
+  stepAt(up){
    // Straight up first, over, then down onto the block (each overlapping smoothly).
    const clear = .10, y = (STEP.height + clear) * band(0, .32, up) - clear * band(.78, 1, up);
    const z = SOLE.L[2] + (stepSoleZ - SOLE.L[2]) * band(.3, .85, up);
@@ -184,4 +198,59 @@ export function sittingHands(solved, rests, k = 1, base = solved, skeleton = nul
   goals['hand.' + s] = {palm: palm0.lerp(point, k).toArray(), face: turn(n0, into).toArray(), fingers: turn(f0, along).toArray(), pole: pole.toArray()};
  }
  return goals;
+}
+
+/**
+ * Runs the demos on the pose player, through its smooth layers, so every start
+ * and every stop is smooth (nothing is computed outside the player):
+ *   sit    the body lowers (a transition), feet planted (a reaching layer), the
+ *          hands fade onto the thighs (a reaching layer). Stop: stands up the same
+ *          way, hands let go, and the feet are released only once he is standing.
+ *   squat  a moving layer, feet planted. Stop: the layer fades out (he rises),
+ *          feet released once he is up.
+ *   step   a moving layer and a moving feet layer. Stop: the foot goes back
+ *          down the same path it came, then both are released.
+ *   ball   a hand reaching layer. Stop: it fades out.
+ */
+export function createDemoRunner(player, D, rests){
+ let active = null, began = 0;
+ const now = () => player.time;
+ /** Hands layer for sitting: k(t) = how far the hands are along their path to the thighs. */
+ const sitHands = k => player.setGoals('hands', (t, pose, sk) => { const q = sk.solve(pose); return sittingHands(q, rests, k(t), q, sk); }, {fade: 0});
+ const run = {
+  sit(){ player.transitionTo({root: D.body(1, 0)}, {duration: 1.4}); player.setGoals('feet', D.feet, {fade: 0});
+   // The hands travel from hanging to the thighs along a path, arriving as he sits.
+   sitHands(t => band(0, 1.4, t)); },
+  squat(){ player.setLayer('squat', {fn: t => D.squat(t).pose, fade: .5}); player.setGoals('feet', D.feet, {fade: 0}); },
+  step(){ player.setLayer('step', {fn: t => D.step(t).pose, fade: .3}); player.setGoals('feet', t => D.step(t).goals, {fade: 0}); },
+  ball(){ player.setGoals('ball', t => ({'hand.L': D.ball(t).goals['hand.L']}), {fade: .6}); },
+ };
+ const end = {
+  sit(){
+   // Stand up the same way: the hands travel back to hanging (from wherever they are, at
+   // the speed they are moving), then everything lets go.
+   const t0 = now() - began, k0 = band(0, 1.4, t0), h = 1 / 240, v0 = (band(0, 1.4, t0 + h) - band(0, 1.4, t0 - h)) / (2 * h);
+   player.transitionTo({}, {duration: 1.4}); sitHands(t => quintic(k0, v0, 0, 0, 1.4, t));
+   // The hands layer fades out over the same time, so letting go at the end is invisible.
+   player.clearGoals('hands', 1.4); player.clearGoals('feet', 0, {after: 1.4});
+  },
+  squat(){ player.clearLayer('squat', .8); player.clearGoals('feet', 0, {after: .8}); },
+  step(){
+   // Back down the same path from wherever the foot is, then let go.
+   // It carries on from where the foot is and how fast it is moving (a quintic curve), so
+   // turning back never jolts.
+   const t0 = now() - began, h = 1 / 240, u0 = D.stepUp(t0), v0 = (D.stepUp(t0 + h) - D.stepUp(t0 - h)) / (2 * h), a0 = (D.stepUp(t0 + h) - 2 * u0 + D.stepUp(t0 - h)) / (h * h);
+   const back = t => quintic(u0, v0, a0, 0, 1.6, t);
+   player.setLayer('step', {fn: t => D.stepAt(back(t)).pose, fade: 0}); player.setGoals('feet', t => D.stepAt(back(t)).goals, {fade: 0});
+   player.clearLayer('step', 0, {after: 1.6}); player.clearGoals('feet', 0, {after: 1.6});
+  },
+  ball(){ player.clearGoals('ball', .6); },
+ };
+ return {
+  start(name){ if(active) this.stop(); if(!run[name]) return; active = name; began = now(); run[name](); },
+  stop(){ if(!active) return; end[active](); active = null; },
+  get active(){ return active; },
+  /** Time since the current demo began (for props such as the ball). */
+  get time(){ return now() - began; },
+ };
 }

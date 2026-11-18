@@ -18,10 +18,14 @@
 //               fingers: which way the fingers should point (along the palm)
 //     touch     for a hand: the centre of a ball to touch, with radius: the palm
 //               centre lands on its surface, facing its centre
-//     flat      for a foot: keep it flat on the ground (default true with sole)
+//     flat      for a foot: keep it flat on the ground (default true with sole); a
+//               number 0..1 mixes flat with the ankle's own angle (relaxed in the air)
 //     heading   for a foot: which way it faces (degrees about the vertical; default:
 //               the way the body faces). Planted feet keep their own heading.
 //   options.follow  let the shoulders follow the arms (shoulder.js) while reaching
+//   options.clavicles  the pose's own collarbones (if the pose already includes a follow)
+//   options.continuing the pose's limbs are last frame's answer: carry on smoothly from
+//                      it (never jump to a different answer)
 //
 // How it works (the standard "two-bone" method, solved exactly, no guessing
 // loops):
@@ -56,14 +60,28 @@ function deltaOf(bone, a, out = new Quaternion()){
  * limits. Every turn has two angle triples; pick the one that fits the
  * limits best (closest to `near` if both fit), then clamp.
  */
-function anglesFor(bone, delta, near){
+/**
+ * Ease into a limit instead of hitting it: inside [lo + m, hi − m] nothing
+ * changes; closer to a limit the angle approaches it smoothly (never past it),
+ * so a joint arriving at its limit slows down instead of stopping dead.
+ */
+function softClamp(v, lo, hi, m){
+ // tanh: same angle, speed and acceleration where it joins, so the ease-in has no corner.
+ if(v > hi - m) return hi - m + m * Math.tanh((v - (hi - m)) / m);
+ if(v < lo + m) return lo + m + m * Math.tanh((v - (lo + m)) / m);
+ return v;
+}
+/** Margin (degrees) for joints that should ease into their limits (the ankle keeping the foot flat). */
+const SOFT = 3;
+
+function anglesFor(bone, delta, near, soft = 0){
  const q = delta.clone().multiply(bone.restQ), e = new Euler().setFromQuaternion(q, bone.order);
  const o = bone.order.toLowerCase(), one = {x: e.x / RAD, y: e.y / RAD, z: e.z / RAD};
  const two = {...one}; two[o[0]] = wrap(one[o[0]] + 180); two[o[1]] = wrap(180 - one[o[1]]); two[o[2]] = wrap(one[o[2]] + 180);
  const L = bone.limits, over = a => ['x', 'y', 'z'].reduce((s, k) => s + Math.max(0, L[k][0] - a[k], a[k] - L[k][1]), 0);
  const dist = a => near ? ['x', 'y', 'z'].reduce((s, k) => s + Math.abs(wrap(a[k] - near[k])), 0) : 0;
  const pick = over(one) < over(two) - 1e-9 || (Math.abs(over(one) - over(two)) <= 1e-9 && dist(one) <= dist(two)) ? one : two;
- return Object.fromEntries(['x', 'y', 'z'].map(k => [k, Math.min(L[k][1], Math.max(L[k][0], pick[k]))]));
+ return Object.fromEntries(['x', 'y', 'z'].map(k => [k, soft && L[k][1] - L[k][0] > 2 * soft ? softClamp(pick[k], L[k][0], L[k][1], soft) : Math.min(L[k][1], Math.max(L[k][0], pick[k]))]));
 }
 
 /**
@@ -82,7 +100,7 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 const across = (v, t) => v.clone().sub(t.clone().multiplyScalar(v.dot(t)));
 
 /** Solve one limb. Returns the new angles for its three bones. */
-function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, targetOverride = null, spinOffset = null){
+function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, targetOverride = null, spinOffset = null, own = pose){
  const [uName, mName, eName] = LIMBS[kind].map(n => `${n}.${side}`);
  const B = n => skeleton.bones[skeleton.index.get(n)], U = B(uName), Mb = B(mName), E = B(eName);
  const cur = n => ({...B(n).rest, ...(pose[n] ?? {})});
@@ -158,11 +176,13 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
    }
   }
  }
- let end = cur(eName);
+ // The hand / foot starts from the pose as given (not an earlier pass), so a partly flat
+ // foot never creeps toward flat over passes or frames.
+ let end = {...E.rest, ...(own[eName] ?? {})};
  // 5. Feet flat, facing their heading: the ankle undoes the leg's turn. The ankle
  //    cannot twist, so the leg's spin is fine-tuned until the twist the ankle would
  //    need is zero (the foot decides exactly where the knee points).
- if(kind === 'foot' && (goal.flat ?? !!goal.sole)){
+ if(kind === 'foot' && (goal.flat ?? !!goal.sole) !== false && (goal.flat ?? !!goal.sole) !== 0){
   const twistNeeded = r => new Euler().setFromQuaternion(r.W2a.clone().invert().multiply(headingQ).multiply(E.restQ), E.order).y;
   let s0 = best.spin, f0 = twistNeeded(best), s1 = s0 + .01, f1 = twistNeeded(attempt(best.mid.x, s1));
   for(let k = 0; k < 12 && Math.abs(f1) > 1e-10 && Math.abs(f1 - f0) > 1e-14; k++){
@@ -170,7 +190,10 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
   }
   const tuned = attempt(best.mid.x, s1);
   if(tuned.err <= best.err + 1e-6 && Math.abs(f1) < Math.abs(twistNeeded(best))) best = tuned;
-  end = anglesFor(E, best.W2a.clone().invert().multiply(headingQ), end);
+  // flat may be a number 0..1: how flat (1) versus the ankle's own angle in the pose (0),
+  // e.g. fully flat near the ground and relaxed while the foot is in the air.
+  const flatAngles = anglesFor(E, best.W2a.clone().invert().multiply(headingQ), end, SOFT), w = typeof goal.flat === 'number' ? Math.min(1, Math.max(0, goal.flat)) : 1;
+  end = Object.fromEntries(['x', 'y', 'z'].map(k => [k, end[k] + (flatAngles[k] - end[k]) * w]));
  }
  return {[uName]: best.upper, [mName]: best.mid, [eName]: end, forearm: best.W2a, err: best.err};
 }
@@ -185,7 +208,7 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
  * roll and wrist near the pose's own), so a small change in the target always
  * gives a small change in the arm. Then a final exact solve lands the palm.
  */
-function solvePalm(skeleton, out, solved, side, goal){
+function solvePalm(skeleton, out, solved, side, goal, continuing = false){
  const name = 'hand.' + side, fname = 'lowerArm.' + side, hand = skeleton.bones[skeleton.index.get(name)], fore = skeleton.bones[skeleton.index.get(fname)];
  const H0 = new Vector3(...hand.head), palm0 = new Vector3(...skeleton.palms[side].point), n0 = new Vector3(...skeleton.palms[side].normal);
  const f0 = new Vector3(...hand.tail).sub(H0); f0.sub(n0.clone().multiplyScalar(f0.dot(n0))).normalize();
@@ -224,7 +247,8 @@ function solvePalm(skeleton, out, solved, side, goal){
  // If a joint limit left it stuck short of facing the right way, try a few other
  // starting turns and keep the best (rare; normally the pose's own start is enough).
  const cost = x => residual(x).reduce((a, y) => a + y * y, 0), off = x => { const r3 = residual(x); return r3[0] ** 2 + r3[1] ** 2 + r3[2] ** 2; };
- if(off(v) > 1e-3){
+ // (Not when carrying on from last frame: jumping to another answer would be a visible snap.)
+ if(!continuing && off(v) > 1e-3){
   let best = cost(v);
   for(const seed of [[0, -60, 0, 0], [0, -30, 0, 0], [0, 40, 0, 0], [30, -45, 0, 15], [-30, -45, 0, 15]]){
    const w = leastSquares(residual, seed.map((x, j) => j === 0 ? x : x + (j === 1 ? 0 : start[j])), clampAt), c = cost(w);
@@ -271,18 +295,19 @@ function solveLinear(A, b){
 }
 
 /** Reach every goal; see the top of this file. */
-export function reach(skeleton, pose, goals, {follow = false, passes = 2} = {}){
+export function reach(skeleton, pose, goals, {follow = false, passes = 2, clavicles = null, continuing = false} = {}){
  let out = {...pose};
  const rounds = follow ? passes : 1, palmGoals = {};
  for(let r = 0; r < rounds; r++){
   // The follow is worked out afresh from the pose's own collarbones each pass (never piled up).
-  if(follow) out = shoulderFollow(skeleton, {...out, 'clavicle.L': pose['clavicle.L'], 'clavicle.R': pose['clavicle.R']});
+  // (clavicles: the pose's own collarbones before any follow, when the pose already has it.)
+  if(follow) out = shoulderFollow(skeleton, {...out, 'clavicle.L': (clavicles ?? pose)['clavicle.L'], 'clavicle.R': (clavicles ?? pose)['clavicle.R']});
   const solved = skeleton.solve(out);
   for(const [name, goal] of Object.entries(goals)){
    const [kind, side] = name.split('.');
    if(!LIMBS[kind]) throw Error('Can only reach with hand.L/R or foot.L/R, not ' + name);
-   if(kind === 'hand' && (goal.palm || goal.touch)){ palmGoals[name] = solvePalm(skeleton, out, solved, side, goal); continue; }
-   const res = solveLimb(skeleton, out, solved, kind, side, goal);
+   if(kind === 'hand' && (goal.palm || goal.touch)){ palmGoals[name] = solvePalm(skeleton, out, solved, side, goal, continuing); continue; }
+   const res = solveLimb(skeleton, out, solved, kind, side, goal, null, null, null, pose);
    delete res.forearm; delete res.err; Object.assign(out, res);
   }
  }
