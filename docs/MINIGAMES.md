@@ -75,6 +75,17 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
    ramps, tunnels), flags. Prizes: ball colours, putters. Putting feel is
    tuned with the owner.
 
+### 4. Full golf (approved 19 Nov)
+1. 9 holes per island course (tee, fairway, green) on bigger islands.
+   Turns, strokes counted. Pick a club (driver, iron, wedge, putter), aim,
+   swing with a power meter. No wind. The ground (fairway, grass, sand,
+   water) affects where the ball ends up. Fewest total strokes wins.
+2. Water: +1, dropped near where it went in. Out of bounds: +1, hit again.
+   Par per hole; birdies and holes in one give bonus coins.
+3. Blocks: fairway, green, green with cup, grass (as rough), sand (bunkers),
+   water. Objects: ball, clubs, tee markers, flags. Walk between shots, or a
+   golf cart later. Prizes: clubs, balls, outfits.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
