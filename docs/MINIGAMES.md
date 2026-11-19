@@ -50,6 +50,16 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
    and dirt off track. Objects: turn arrow signs, start lights, barriers,
    mystery boxes. Prizes: kart colours and parts. Where: race islands.
 
+### 2. Time trial (approved 19 Nov)
+1. Solo on the track: no other racers, no mystery boxes. A see-through ghost
+   kart replays his best lap (racing-core already saves ghosts).
+2. 3 timed laps; best lap and total time saved; leaderboard with friends
+   (everyone once online exists).
+3. Respawning makes that lap not count for a record. Nitro as decided with
+   Codex for kart racing.
+4. Controls and tracks as kart racing. Prizes for beating target times
+   (bronze, silver, gold).
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
