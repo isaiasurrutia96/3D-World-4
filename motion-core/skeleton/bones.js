@@ -219,7 +219,7 @@ SIDE.find(b=>b.name==='hand').tail=turn([0.4296,0.6005,0.1116],WRIST,[1,0,0],HAN
  * across between the index and little knuckles, on the palm's surface); the
  * checks re-measure the live model. Hands reach with this point.
  */
-export const PALM = {point:[0.35087,0.63836,0.12305], normal:[-0.89553,-0.44485,-0.01159]};
+export const PALM = {point:[0.36178,0.62116,0.11822], normal:[-0.81474,-0.57927,-0.02537]};
 
 /** Points on each foot that can touch the ground (his left foot, +X, avatar space). */
 export const FOOT_CONTACTS = {

@@ -175,8 +175,8 @@ export function thighRests(avatar){
  * thigh. At k = 1: palm centre on the thigh rest point, palm against the
  * thigh, fingers along the thigh toward the knee.
  */
-/** How far along the thigh (hip 0, knee 1) the seated palms rest: near the knee, so the fingers hold it. */
-export const PALM_ALONG = .78;
+/** How far along the thigh (hip 0, knee 1) the seated palm centres rest: near the knee, so the fingers hold it (the palm centre is halfway along the palm). */
+export const PALM_ALONG = .73;
 
 /** How far the seated hands turn in toward the middle of the body (degrees). */
 export const HANDS_IN = 20;

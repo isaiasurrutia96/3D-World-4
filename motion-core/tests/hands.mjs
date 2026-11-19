@@ -30,7 +30,7 @@ const overlap=(caps)=>{let worst=0;const order=['thumb','index','middle','ring',
 const placed=reach(S,{},{'hand.L':{palm:[.3,1.0,.4],face:[-1,0,0],fingers:[0,-1,0]}},{follow:true}).pose,pq=S.solve(placed),hb=pq.get('hand.L'),H0=new T.Vector3(...S.bones[S.index.get('hand.L')].head);
 const palmP=new T.Vector3(...S.palms.L.point).sub(H0).applyQuaternion(hb.rotation).add(hb.head),nrm=new T.Vector3(...S.palms.L.normal).applyQuaternion(hb.rotation);
 const fdir=new T.Vector3(...S.bones[S.index.get('hand.L')].tail).sub(H0).applyQuaternion(hb.rotation);fdir.sub(nrm.clone().multiplyScalar(fdir.dot(nrm))).normalize();
-const across=nrm.clone().cross(fdir).normalize(),RAD_=.025,mid=palmP.clone().addScaledVector(nrm,RAD_+.002).addScaledVector(fdir,.03);
+const across=nrm.clone().cross(fdir).normalize(),RAD_=.025,mid=palmP.clone().addScaledVector(nrm,RAD_+.002).addScaledVector(fdir,.009);
 const rod={capsule:[mid.clone().addScaledVector(across,-.12).toArray(),mid.clone().addScaledVector(across,.12).toArray()],radius:RAD_};
 const hold={...placed,...grip(S,placed,'L',[rod],{opposition:.4})};
 const caps=capsules(hold,'L');let deepest=0,touch=0,closed=0,curls={};const shape=handShape(S,hold,'L');

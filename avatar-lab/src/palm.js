@@ -31,8 +31,10 @@ export function measurePalm(hand, wrist, fingers){
  const along = centre.clone().sub(wrist).normalize(), across = palmDir.clone().cross(along).normalize();
  const side = knuckles.map(k => k.clone().sub(wrist).dot(across)), mid = (Math.max(...side) + Math.min(...side)) / 2;
  const spot = wrist.clone().addScaledVector(along, centre.distanceTo(wrist) / 2).addScaledVector(across, mid);
- // Come in from outside the palm toward the hand: the first surface met is the palm.
- const hit = new T.Raycaster(spot.clone().addScaledVector(palmDir, .2), palmDir.clone().negate(), 0, 1).intersectObject(hand, false)[0];
+ // Come in from outside the palm toward the hand, square to the hand's length (so the point
+ // stays halfway along the palm): the first surface met is the palm.
+ const inDir = palmDir.clone().addScaledVector(along, -palmDir.dot(along)).normalize();
+ const hit = new T.Raycaster(spot.clone().addScaledVector(inDir, .2), inDir.clone().negate(), 0, 1).intersectObject(hand, false)[0];
  if(!hit) throw Error('Palm surface not found');
  const P = hand.geometry.attributes.position, N = hand.geometry.attributes.normal, nm = new T.Matrix3().getNormalMatrix(hand.matrixWorld);
  const normal = new T.Vector3(), v = new T.Vector3(), n = new T.Vector3();
