@@ -1,5 +1,7 @@
 // Shared mechanical ankle contract. Metres and degrees; no rendering dependencies.
 export const ANKLE_RADIUS=.115;
+// Existing ankle center above the flat sole, measured on the live lower leg.
+export const ANKLE_REST_HEIGHT=.163520006775856;
 export const ANKLE_CLEARANCE=.0006;
 export const ANKLE_CAP_ANGLE=Math.PI/4;
 // The foot wraps modestly farther up the ball than the unchanged calf cup.

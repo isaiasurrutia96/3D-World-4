@@ -261,3 +261,16 @@ Fundamental checks passed before updating the viewer:4 study checks, including t
 Owner will continue refining both sockets and ball placement before the next checkpoint. Stop after the verified live review link; do not advance to another layer automatically.
 
 Viewer checks pass on desktop and3 phone layouts, including actual contact-point radius, upper-only carving, unchanged calf/sole/toes/topology, floor, camera reset/orbit and framing; no page errors. Actual maximum vertex displacement32.0128mm across713 affected points;503 core points match the original ball radius within7.4nm. Internal Top/Angle inspection confirms the ball-shaped bowl and soft intersection. Full production build and frozen-checkpoint integrity pass. Publish only this foot refinement and wait for owner feedback.
+
+
+### Lower the mold to the real ankle height and soften the edge — owner go, 19 Nov 2026
+
+Target the measured existing ankle center height0.163520006775856m (new shared ANKLE_REST_HEIGHT, crosschecked against actual original calf/foot geometry). Keep current socket X/Z[0,0] and original ball radius115mm. This lowers the prior high mold by119mm and derives about151mm of press from the original dome, leaving48.52mm above the sole at the center. No calf socket, visible ball, motion or checkpoint change.
+
+Numerical shape first: exact sphere through70° followed by a C2 Taylor continuation, then increase the compact soft-min blend6→10mm. A raw full-hemisphere cutoff would become a seam at this low height; the smooth continuation avoids it without adding trim or an outer dip. Conforming local shared-edge refinement to49176 vertices brings actual face chord error1.060→0.0544mm, below the old ball mesh0.200mm. All source vertices remain an exact prefix and all refinement preserves the original surface before carving.
+
+Five geometry checks pass before the viewer build. Independently fit actual cavity points to the115mm sphere at the ankle height; verify actual center depth/sole thickness, preserved sole/toes/calf/source outline, closed directed-edge winding/positive volume/finite noncollapsed faces,49 vertical shell rays without extra crossings, and C2 edge continuity. The old normal-dot no-flip check would reject correctly concave faces at this depth; replace it with projected winding and measured upper/lower separation. Do not weaken the actual solid/closure tests.
+
+Continue the owner's foot/calf socket and ball-placement refinements one layer at a time. Checkpoint remains pending final approval.
+
+Final browser checks pass desktop and3 phone layouts, preserving original source vertices/outline/sole/toes and raw calf, with no ball or motion added and no page errors. Actual cavity bottom0.048520252m matches the target within0.000245mm;26,963 core samples match the115mm ball within3.27nm. Actual maximum vertex displacement150.9998mm. Internal Top/Angle review and read-only mathematical review completed. Full production build and frozen integrity pass. Publish this intermediate foot refinement; checkpoint stays pending the owner's remaining socket/ball-placement refinements.
