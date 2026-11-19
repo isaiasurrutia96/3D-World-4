@@ -113,12 +113,26 @@ timings, limits). The cards below are being redone with it, one at a time.
    12. Numbers later: swim speed, breath time, air-tank time, flipper boost,
        current strength.
 
-16. **Big connected world** (approved 19 Nov): every island and game can be
-    reached by walking, driving or swimming; the watch door is a shortcut.
-    Walking bridges and connecting roads between islands. Each island has
-    its own theme (town, forest, canyon, snow, volcano, tropical). Minigames
-    spread across islands to match their theme. Nearby islands load as he
-    gets close (no loading screen). Start small (a few islands), grow later.
+16. **Big connected world** (approved 19 Nov, detailed)
+    1. Why: one world; every island and game reachable by walking, driving
+       or swimming (the watch door is a shortcut).
+    2. How: islands linked by walking bridges, roads and rivers; nearby
+       islands load as he gets close, far ones unload to stay fast. Each
+       island has a theme (town, forest, canyon, snow, volcano, tropical);
+       minigames match their island.
+    3. Get it: from the start; some islands open at higher levels.
+    4. Lose or keep: nothing to lose; falling off respawns him near where he
+       fell.
+    5. Where: the shared world (home islands are separate: door or menu only).
+    6. Screen: a world map in the watch (islands, minigames, where he is).
+    7. Works with: watch door, minigame gates, island themes, levels.
+    8. Online: other players share the same world.
+    9. Saved: islands visited and unlocked.
+    10. Edge cases: an island not loaded yet shows a simple version until
+        ready; falling between islands → respawn near the edge.
+    11. Movements: walk, run, cross bridges (nothing new).
+    12. Numbers later: islands at launch (start small), loading distance,
+        which levels unlock which islands.
 
 ## B. Money and items
 
