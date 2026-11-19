@@ -345,3 +345,30 @@ One-off before/after SHA-256 comparison confirms forearm and ball position/norma
 Final viewer verification passes desktop and3 phone layouts, all views/framing, static parts, touch orbit and floor inspection, with Motion disabled and no page errors. Publish only this smaller hand socket for owner review.
 
 Stop after live visual review. Checkpoint remains pending the owner's final socket/ball-placement refinements.
+
+### Elbow, three separate parts — owner go, 19 Nov 2026
+
+After approving the shallower wrist socket, the owner requested the same
+separated presentation for the elbow: original upper arm above, one ball in
+the middle, approved forearm below. This section adds no elbow sockets or
+movement. Preserve the Wrist study and all skeleton source coordinates.
+
+`elbow-lab/src/study.js` clones the original upper-arm mesh and reuses the
+approved molded forearm factory, including its wrist-end socket. Only display
+translations change. The ball is90% of the narrower transverse limb width
+(181.454mm), centered at the existing lowerArm.L point
+[0.3596,0.9441,0.0331]. Both parts have45mm clear gaps from the ball.
+
+All3 numerical checks pass before the viewer build: every source attribute
+and index buffer remains exact, local orientation/scale and source colors
+stay fixed, wrist mold metadata stays exact, the ball uses the existing
+elbow point, and all three parts are centered, separate and finite. Verify
+the desktop/phone viewer and full build before publishing this appearance
+study. Stop for owner review before carving sockets or saving a checkpoint.
+
+Final verification: full production build and frozen-checkpoint integrity
+pass. Browser checks pass desktop and3 phone layouts, all five view buttons
+and framing, real touch orbit, floor inspection, static placements and
+disabled Motion controls, with no page errors. Internal Front review confirms
+the original upper arm, separate ball and approved forearm. Publish only
+this separated study for owner review; no next joint layer or checkpoint.

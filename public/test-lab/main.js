@@ -8,6 +8,7 @@ const tests={
  rules:{name:'Movement rules',path:'motion-core-test',ready:w=>w.rulesTestReady,move:true},
  hands:{name:'Hands',path:'hand-lab',ready:w=>w.handLabReady},
  wrist:{name:'Wrist',path:'wrist-lab',ready:w=>w.wristLabReady},
+ elbow:{name:'Elbow',path:'elbow-lab',ready:w=>w.elbowLabReady},
  feet:{name:'Feet',path:'foot-lab',ready:w=>w.footLabReady},
  blocks:{name:'Blocks',path:'lab'},oval:{name:'Oval track',path:'oval'},island:{name:'Floating island',path:'island'},
  motion:{name:'Motion study',path:'motion-lab',ready:w=>!!w.motionLab,move:true},
@@ -61,7 +62,7 @@ async function setTest(id){
  if(!tests[id])return;subject=id;ready=false;window.testLabReady=false;const token=++generation;clock=null;syncControls=()=>{};controls.replaceChildren();loading.hidden=false;loading.textContent='Preparing '+tests[id].name.toLowerCase()+'…';$('#subject').value=id;$('#subject-status').textContent=tests[id].name;
  $('#test-context').textContent=$('#subject').selectedOptions[0].textContent;
  const url=new URL(location.href);if(id==='avatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
- const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=wrist-shallow-43';frame=node;host.replaceChildren(node);
+ const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=elbow-parts-44';frame=node;host.replaceChildren(node);
  node.onload=async()=>{
   try{
    const w=node.contentWindow,doc=w.document,style=doc.createElement('style');style.textContent='html,body,body>main{height:100%!important;overflow:hidden!important;background:#405363!important}.app{display:block!important;height:100%!important}body>header,.app>header,nav.views,.stage-hint,.hint,.other-test,#status,aside,.floor-toggle,#test-videos{display:none!important}#stage{height:100%!important;width:100%!important;min-height:0!important}.race-hud{display:grid!important;top:64px!important}';doc.head.append(style);

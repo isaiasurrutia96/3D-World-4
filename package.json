@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:wrist-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints && npm run build:run-test && npm run build:walk-test && npm run build:motion-core-test && npm run build:racing-lab && npm run build:skeleton-test",
+    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:wrist-lab && npm run build:elbow-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints && npm run build:run-test && npm run build:walk-test && npm run build:motion-core-test && npm run build:racing-lab && npm run build:skeleton-test",
     "preview": "vite preview",
     "build:hand-lab": "node hand-lab/build.mjs",
     "test:hand-lab": "node hand-lab/tests/browser.mjs",
@@ -46,7 +46,9 @@
     "test:racing-app": "node --test racing-lab/tests/app.test.mjs && node racing-lab/tests/app-browser.mjs",
     "build:racing-lab": "node racing-lab/build.mjs",
     "test:racing-lab": "node racing-lab/tests/browser.mjs",
-    "test:inspection-zoom": "node --test test-lab/zoom.test.mjs"
+    "test:inspection-zoom": "node --test test-lab/zoom.test.mjs",
+    "build:elbow-lab": "node elbow-lab/build.mjs",
+    "test:elbow-lab": "node elbow-lab/tests/browser.mjs"
   },
   "dependencies": {
     "three": "0.180.0"
