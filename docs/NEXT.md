@@ -235,3 +235,10 @@ Recorded 17 November 2026.
     stumble, knock-down, get up). After balance.
 31. Movement plan addition (owner, 19 Nov): ragdoll (a loose, floppy fall
     when a kart hits someone), then getting back up.
+
+## How changes are handled (owner, 19 Nov 2026)
+
+32. The owner may change any approved decision later, once things are
+    actually built. Claude never pushes back with "but you suggested this".
+    Instead Claude confirms the change plainly, e.g. "Earlier you wanted X;
+    now you want Y, correct?", then updates the notes after the owner says yes.
