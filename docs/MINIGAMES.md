@@ -129,6 +129,16 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 2. Blocks: fairway with painted lines; goal built from small concrete blocks.
    Objects: soccer ball, net, goalie. Prizes: any prize.
 
+### 9. Baseball batting (approved 19 Nov)
+1. 10 pitches from an NPC pitcher or a pitching machine (fastball, slow,
+   curve; harder each round). Swing timing and aim (controls chosen after
+   testing). Scored by distance and zone (ground ball, line drive, deep hit,
+   home run). Highest score wins; multiplayer takes turns. Home runs in a
+   row: extra coins.
+2. Blocks: fairway field with painted lines, dirt infield, concrete fence.
+   Objects: bat, baseballs, pitcher NPC or pitching machine (built from small
+   blocks), distance markers. Prizes: any prize.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
