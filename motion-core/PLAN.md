@@ -250,3 +250,14 @@ Code-first checks:3 study tests pass before the viewer build. Actual socket dept
 Checkpoint decision: the owner will continue refining this foot socket, then the calf socket and ball placement. Save the next checkpoint only after those refinements are approved. Do not freeze this intermediate study or start another layer automatically.
 
 Viewer verification: focused browser suite passes desktop and3 phone layouts, real orbit, floor, view reset and framing, with no page errors. Actual maximum depth15.9983mm across261 vertices. Top/angle internal inspection confirms the deeper bowl retains its blended edge. Full production build, existing joint checks and frozen integrity pass. Publish this refinement for review; checkpoint remains pending the owner's continuing socket and ball refinements.
+
+
+### Mold the socket with the original ankle ball — owner go, 19 Nov 2026
+
+Owner explicitly requested the same most recent ankle ball as a mold, pressed farther down exactly at the current socket. Use ANKLE_RADIUS=.115 (230mm diameter), without resizing. Replace the polynomial dimple with actual lower-sphere subtraction in ball-mold.js,32mm below the measured original surface at X/Z[0,0]. Compact6mm C2 smooth-min rounds the intersection with the original clay, with no rolled rim or extra material. The geometric cut naturally widens as the sphere presses deeper. No visible ball, calf socket, movement changes or checkpoint is added.
+
+Fundamental checks passed before updating the viewer:4 study checks, including the original baseline, mesh-measured32mm press, original calf/sole/toes/outline/topology, nonflipped/closed/wound surfaces with positive volume and finite normals, and independent sphere fitting from actual core vertices. Every-face distance measures maximum cavity chord error0.129mm, below the last rendered ball's own0.200mm faceting; no unapproved resizing/clearance is used. Contact points and exact local ball center are exposed for the later placement layer.
+
+Owner will continue refining both sockets and ball placement before the next checkpoint. Stop after the verified live review link; do not advance to another layer automatically.
+
+Viewer checks pass on desktop and3 phone layouts, including actual contact-point radius, upper-only carving, unchanged calf/sole/toes/topology, floor, camera reset/orbit and framing; no page errors. Actual maximum vertex displacement32.0128mm across713 affected points;503 core points match the original ball radius within7.4nm. Internal Top/Angle inspection confirms the ball-shaped bowl and soft intersection. Full production build and frozen-checkpoint integrity pass. Publish only this foot refinement and wait for owner feedback.

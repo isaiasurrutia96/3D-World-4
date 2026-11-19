@@ -1,11 +1,13 @@
-# Foot socket study
+# Ball-molded foot socket study
 
-The live study shows a tiny shallow socket in the foot and the original calf separately. No calf socket, ankle ball or movement rig is created. Existing camera/zoom/floor controls work on phone and desktop.
+The original ankle ball is now the geometric mold:115mm radius,230mm diameter, imported from the shared ankle contract. `src/ball-mold.js` measures the untouched foot's actual top at the current socket X/Z[0,0], then presses that exact sphere32mm down from that surface. It subtracts the lower hemisphere and rounds the intersection into the original foot with a6mm compact C2 smooth-min. The old polynomial dimple has been replaced. There is no raised rim, visible ball, calf socket or motion rig.
 
-`src/small-socket.js` is independent of the earlier joint prototype. It carves a circular depression at foot-local X/Z[0,0], radius40mm and depth16mm. The radial displacement reaches zero with zero first and second derivatives at its edge; a smooth height mask protects the sole. No raised rim or extra mesh is added. Original topology, X/Z outline, sole and toes stay unchanged.
+The imprint can become wider naturally as the full-size ball presses into the clay. Core cavity points match the actual115mm sphere; the soft intersection only removes extra material. The curve becomes inactive before the sphere's vertical tangent, so there is no cutoff seam. Calf, sole, toes, X/Z outline and source topology stay exact.
 
-`createFootStudy({socket:false})` retains the exact original two-shape baseline. `createFootStudy()` applies only this tiny foot socket. The calf remains uncarved and separated. Existing avatar/skeleton consumers and frozen checkpoints stay unchanged.
+`foot.userData.socketMold` records the measured original surface, local3D ball center, original ball radius, press depth and blend width. `geometry.userData.moldContactIndices` exposes exact spherical-core points. This gives later ball-placement work a measured reference. `createFootStudy({socket:false})` still provides the untouched two-shape baseline.
 
-`node --test foot-lab/tests/study.test.mjs` checks the baseline and measured tiny bowl, localized depth, original calf, topology, sole and toes. `npm run test:foot-lab` checks camera views, mobile framing, floor and touch orbit. The build retains separate joint checks for existing avatar consumers.
+Code-first checks:4 study tests prove the baseline, actual32mm press, unchanged parts, closed/wound/positive solid, finite normals and independent fitting of actual core vertices to the original sphere. All-face triangle distance also measures approximation error: current cavity chords deviate at most0.129mm from the ideal sphere, less than the original rendered ankle ball's own0.200mm faceting. No ball resizing or artificial clearance is hidden in the mold.
 
-The current refinement doubles the original8mm depth to16mm, keeping the same footprint and C2 edge. Checks also verify that every actual triangle remains oriented and the mesh stays closed with positive volume. Keep refining the foot socket, calf socket and ball placement with the owner; save a new checkpoint only after those refinements are approved. Open `/test-lab/?test=feet` or `/foot-lab/`.
+`node --test foot-lab/tests/study.test.mjs` runs these checks before the viewer build. `npm run test:foot-lab` checks desktop/phone views, floor, orbit and framing. Frozen checkpoints and Claude's avatar motion stay unchanged. The next checkpoint waits until the owner finishes refining the foot socket, calf socket and ball placement.
+
+Open `/test-lab/?test=feet` or `/foot-lab/`.

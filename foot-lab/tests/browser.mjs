@@ -9,6 +9,7 @@ import * as T from 'three';
 import {createFootStudy} from '../src/foot-study.js';
 import {createFootShape} from '../src/foot-shape.js';
 import {createCharacterRig} from '../../avatar/src/reference/PlayerModel.ts';
+import {ANKLE_RADIUS} from '../../avatar/src/joints/ankle-contract.js';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
 const hash=array=>createHash('sha256').update(new Uint8Array(array.buffer,array.byteOffset,array.byteLength)).digest('hex');
@@ -18,8 +19,12 @@ const rawCalf=reference.kneeRight.children[0],meshes=[];
 study.group.traverse(part=>{if(part.isMesh)meshes.push(part);});
 assert.equal(meshes.length,2,'The study must contain only one foot and one calf');
 assert.deepEqual(new Set(meshes),new Set([study.foot,study.calf]));
-const tiny=study.foot.userData.tinySocket;
-assert.deepEqual(tiny,{radius:.04,depth:.016,center:[0,0]},'Tiny socket dimensions or location changed');
+const mold=study.foot.userData.socketMold;
+assert.equal(study.foot.userData.tinySocket,undefined,'Old tiny-dimple metadata remains');
+assert.equal(mold.ballRadius,ANKLE_RADIUS,'Mold must use the exact last ankle ball');
+assert.equal(mold.ballRadius,.115);assert.equal(mold.pressDepth,.032);assert.equal(mold.blendWidth,.006);
+assert.equal(mold.center[0],0);assert.equal(mold.center[2],0);
+assert(Math.abs(mold.center[1]-(mold.originalHeight-mold.pressDepth+mold.ballRadius))<1e-12,'Mold was not pressed down from the measured original surface');
 const footPositions=study.foot.geometry.attributes.position,rawPositions=rawFoot.geometry.attributes.position;
 assert.equal(footPositions.count,rawPositions.count,'Socket should not rebuild the foot topology');
 assert.equal(hash(study.foot.geometry.index.array),hash(rawFoot.geometry.index.array),'Socket changed the foot triangles');
@@ -28,15 +33,23 @@ for(let i=0;i<footPositions.count;i++){
  assert.equal(footPositions.getX(i),rawPositions.getX(i),'Socket changed the foot width');
  assert.equal(footPositions.getZ(i),rawPositions.getZ(i),'Socket changed the foot outline');
  const depth=rawPositions.getY(i)-footPositions.getY(i);
- assert(depth>=-1e-7&&depth<=tiny.depth+1e-7,'Socket should be a tiny depression, not a raised cuff');
+ assert(depth>=-1e-7&&depth<=.0321,'Mold should cut a depression without a raised cuff');
  if(depth>1e-7){
   socketVertices++;maximumSocketDepth=Math.max(maximumSocketDepth,depth);
-  assert(Math.hypot(rawPositions.getX(i)-tiny.center[0],rawPositions.getZ(i)-tiny.center[1])<tiny.radius,'Socket changed a point outside its small patch');
+  assert(Math.hypot(rawPositions.getX(i)-mold.center[0],rawPositions.getZ(i)-mold.center[2])<mold.ballRadius,'Mold changed a point outside the ball footprint');
   assert(rawPositions.getY(i)>.025&&rawFoot.geometry.attributes.normal.getY(i)>0,'Socket changed the sole or lower side');
  }
  if(rawPositions.getY(i)<1e-7||rawPositions.getZ(i)>=.145)assert.equal(footPositions.getY(i),rawPositions.getY(i),'Socket changed the sole or toes');
 }
-assert(socketVertices>10&&maximumSocketDepth>.0159,'The requested deeper socket is missing');
+assert(socketVertices>10&&maximumSocketDepth>.0319,'The requested deeper molded socket is missing');
+const contact=study.foot.geometry.userData.moldContactIndices,moldCenter=new T.Vector3(...mold.center),point=new T.Vector3();
+assert(contact.length>10,'Mold has no actual spherical contact patch');
+let maximumMoldRadiusError=0;
+for(const i of contact){
+ assert(Number.isInteger(i)&&i>=0&&i<footPositions.count);
+ maximumMoldRadiusError=Math.max(maximumMoldRadiusError,Math.abs(point.fromBufferAttribute(footPositions,i).distanceTo(moldCenter)-ANKLE_RADIUS));
+}
+assert(maximumMoldRadiusError<1e-7,'Actual contact surface does not match the original ankle ball');
 assert.deepEqual(geometrySignature(study.calf),geometrySignature(rawCalf),'Calf is not the original uncarved shape');
 assert.equal(study.foot.material.color.getHex(),rawFoot.material.color.getHex());
 assert.equal(study.calf.material.color.getHex(),rawCalf.material.color.getHex());
@@ -137,5 +150,5 @@ try{
  await phone.getByRole('button',{name:'Angle',exact:true}).tap();
  assert.deepEqual(await fingerprint(phone),phoneInitial,'Phone inspection changed the original geometry');
  await phoneContext.close();assert.deepEqual(errors,[]);
- console.log(JSON.stringify({studyMeshes:2,smallFootSocket:true,socketVertices,maximumSocketDepth,rawCalfExact:true,separation,noBallOrCalfSocket:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
+ console.log(JSON.stringify({studyMeshes:2,moldedFootSocket:true,moldBallRadius:mold.ballRadius,socketVertices,contactVertices:contact.length,maximumSocketDepth,maximumMoldRadiusError,rawCalfExact:true,separation,noBallOrCalfSocket:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
