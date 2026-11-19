@@ -35,7 +35,7 @@ const special=[
  ['rock, leaves, cactus, cloud: separate blocks',['rock','leaves','cactus','cloud'].every(id=>b[id].style==='separate')],
  ['water: swim, current and falling current',b.water.body==='swim'&&b.water.ownSettings.includes('current')&&b.water.ownSettings.includes('falling-current')],
  ['flower: walk-through; decor: solid or walk-through by choice',b.flower.body==='walk-through'&&b.decor.body==='choice'&&b.decor.sizes.join()==='half,quarter'],
- ['lava: touching bumps, falling in respawns',b.lava.hazard.touch==='bump'&&b.lava.hazard.fallIn==='respawn'],
+ ['lava: touching bumps, falling in kills',b.lava.hazard.touch==='bump'&&b.lava.hazard.fallIn==='die'],
  ['cactus: touching bumps, landing on top kills',b.cactus.hazard.touch==='bump'&&b.cactus.hazard.landOnTop==='die'],
  ['cloud: big or half; leaves and trunk climbable',b.cloud.sizes.join()==='big,half'&&b.leaves.climbable&&b.trunk.climbable],
  ['removed blocks are gone (rough, field, mud, vines, lily pads, rail, curb)',['rough','field','mud','vines','lily-pads','rail','curb'].every(id=>!(id in b))],

@@ -88,7 +88,7 @@ Common to all unless noted: smooth (rounded) edges and corners; merged.
    hazards. See-through blue; underwater view in shades of blue with
    bubbles. One flat surface, edges as the current pond (small gap at the
    grass's outside corners, sharp inside corners). Any size. Cube. Not
-   solid: he swims (slower than walking). Kart respawns at the last safe
+   solid: he swims (slower than walking) and can drown (breath meter). Kart respawns at the last safe
    spot; golf ball is out (penalty); other balls float.
 7. Ice: frozen ponds, skating rink and race, tricky spots in mini golf only.
    Pale shiny blue. Any size. All shapes. Solid. He slides (glides fast on
@@ -136,7 +136,7 @@ Common to all unless noted: smooth (rounded) edges and corners; merged.
 23. Glass: windows, greenhouses, display cases. See-through, any tint. Any
     size. Cube. Solid.
 24. Lava: volcano islands. Glowing orange. Any size. All shapes. Touching it
-    bumps him away; falling in respawns him (kart too); balls are lost.
+    bumps him away; falling in kills him (a kart respawns); balls are lost.
 25. Cactus: desert/canyon islands. Green, separate blocks, half or quarter,
     cube. Solid. Touching bumps him back; landing directly on top kills him.
 26. Cloud: high up, hard to reach. Soft white, separate puffy blocks, big or

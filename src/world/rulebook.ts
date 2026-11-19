@@ -59,8 +59,8 @@ export interface Feel {
 export interface Hazard {
   /** Touching it bumps him away (lava strongly, cactus mildly). */
   touch: 'none' | 'bump';
-  /** Falling into it respawns him (and a kart) at the last safe spot. */
-  fallIn: 'none' | 'respawn';
+  /** Falling into it kills him (he respawns at the last safe spot, losing carried items). */
+  fallIn: 'none' | 'die';
   /** Landing directly on top of it kills him. */
   landOnTop: 'none' | 'die';
 }
@@ -129,7 +129,7 @@ export const BLOCKS = Object.freeze({
     name: 'Water', usedFor: 'ponds, lakes, the lazy river (also through tunnels), diving pool, golf hazards', colour: '#3f9fd6',
     style: 'water', sizes: ALL_SIZES, shapes: ['cube'], body: 'swim', climbable: false,
     ownSettings: ['current', 'falling-current'],
-    feel: 'swims slower than walking; underwater view: shades of blue with bubbles; a kart respawns; a golf ball is out; other balls float',
+    feel: 'swims slower than walking; he can drown (breath meter); underwater view: shades of blue with bubbles; a kart respawns; a golf ball is out; other balls float',
   }),
   ice: block({
     name: 'Ice', usedFor: 'frozen ponds, skating rink and race, tricky spots in mini golf', colour: '#cfeaf4',
@@ -220,8 +220,8 @@ export const BLOCKS = Object.freeze({
   lava: block({
     name: 'Lava', usedFor: 'volcano islands', colour: '#ff6a1a',
     style: 'merged', sizes: ALL_SIZES, shapes: ALL_SHAPES, body: 'solid', climbable: false,
-    hazard: { touch: 'bump', fallIn: 'respawn', landOnTop: 'none' },
-    feel: 'glowing; touching bumps him away; falling in respawns him (kart too); balls are lost',
+    hazard: { touch: 'bump', fallIn: 'die', landOnTop: 'none' },
+    feel: 'glowing; touching bumps him away; falling in kills him (a kart respawns); balls are lost',
   }),
   cactus: block({
     name: 'Cactus', usedFor: 'desert and canyon islands', colour: '#4f9a3a',

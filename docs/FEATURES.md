@@ -56,7 +56,14 @@ noted, not approved yet. Each one gets its own card, approved one at a time
    owns and carries (rides, sports gear, the watch door). Works anywhere,
    e.g. a golf club and ball to hit from any block, even a cloud. One item
    in hand at a time. Not during minigames (they give him the gear).
-8. **Losing loot when you die** (idea): decide later.
+8. **Losing loot and stealing** (approved 19 Nov): he dies from lava,
+   landing on a cactus, or drowning (swimming needs a breath meter). Falling
+   off an island is not a death: he respawns near where he fell, nothing
+   lost. On death his carried items disappear (rebuy or win them); coins,
+   cosmetics and his home island and its storage are kept; he respawns at
+   the last safe spot. Stealing: a punch while he holds an item (e.g. a
+   club) knocks it out of his hands; it drops and anyone can grab it. No
+   stealing during minigames.
 
 ## C. Riding
 
