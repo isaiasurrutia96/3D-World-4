@@ -7,8 +7,14 @@ noted, not approved yet. Each one gets its own card, approved one at a time
 
 ## A. Travel and home
 
-1. **Watch door** (idea): a futuristic watch zaps a door in front of him;
-   walking through it teleports him to other islands or to his home island.
+1. **Watch door** (approved 19 Nov): a shortcut to islands and minigames
+   with no menus or loading screens. Open the watch, pick a place or
+   Start minigame → pick a game; a plain door (no glow) appears; he walks up,
+   opens it and walks through. Goes to other islands, his home island, or the
+   gate right by the chosen minigame. The destination is already visible
+   through the open door (a portal; kept light for the old MacBook). Works
+   indoors and outdoors; in a tight spot a message says "Door needs space".
+   Bought with coins or won as a prize; lost when he dies (buy or win again).
 2. **Home island** (idea): unlocked by playing. Stores his stuff. The one
    place he can build and break blocks to make a shelter (an exception to
    "the world is fixed"; the home island must still pass the world checker).
@@ -17,9 +23,13 @@ noted, not approved yet. Each one gets its own card, approved one at a time
 4. **Swimming travel** (idea): a lazy river, partly through tunnels, to get
    around the islands.
 
+16. **Big connected world** (idea): islands linked by walking bridges and
+    connecting roads; every game can be reached by walking or driving.
+
 ## B. Money and items
 
 5. **Coins** (idea): won from minigames.
+17. **Prizes** (idea): winning a game gives coins and sometimes a prize item.
 6. **Shop** (idea): spend coins to rebuy lost items (like a skateboard) and
    buy upgrades.
 7. **Pull out any item anywhere** (idea, like GTA): a skateboard, or a golf
