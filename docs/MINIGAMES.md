@@ -192,6 +192,15 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
    bouncy setting. Objects: swinging bars, moving platforms (small blocks).
    Prizes: any prize. Where: themed obstacle islands.
 
+### 16. Long jump and high jump (approved 19 Nov)
+1. Long jump: sprint, jump before the foul line, land in the sand pit;
+   distance measured; 3 tries, best counts. High jump: run up, clear the
+   bar; it rises after each clear; 3 misses at a height and he is out.
+   Speed and takeoff timing (controls chosen after testing). Longest or
+   highest wins; multiplayer takes turns. Personal record: extra coins.
+2. Blocks: concrete or court-floor runway, sand pit. Objects: foul-line
+   board, bar and stands, landing mat. Prizes: any prize.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
