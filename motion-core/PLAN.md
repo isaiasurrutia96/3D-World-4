@@ -314,4 +314,14 @@ Code-first checks: all4 calf tests pass, including the new exact-buffer/transfor
 
 Verification completed: full production build and frozen integrity pass. Focused browser suite passes desktop and3 phone layouts, real orbit, floor/views/reset/framing, exact seated centers and the universal nested phone viewer, with no page errors. Internal Angle review confirms the assembled calf-ball-foot fit. Publish only this rigid placement; checkpoint still waits for owner approval.
 
+### Wrist study, original parts separated — owner request, 19 Nov 2026
+
+Owner rejected generalizing the ankle fit across all joints at once. The uncommitted full-body appearance draft was backed up outside the repository and removed from the live build. Continue one joint at a time, with owner appearance approval before mirroring or moving to another joint.
+
+First wrist layer: the original accepted forearm and hand from avatar/src/hand-study/assembly.js, with the forearm above, one separate ball in the middle and the hand below. No new carving, movement or avatar changes. All original position/normal/index buffers, hand scale and local orientation remain exact. The ball is90% of the narrower forearm width (181.454mm diameter), with45mm clear gaps above and below. Its center uses the existing hand.L bone point; the body parts move only for the separated presentation. Skeleton/bones remain unchanged.
+
+All3 numerical checks pass before the new wrist-lab viewer build. Full production build and frozen-checkpoint integrity pass. Add Wrist to the universal Test Lab; verify desktop/phone framing, views, inspection and touch orbit before the review link. Stop for owner feedback; no new checkpoint or next wrist layer yet.
+
+Final viewer checks pass desktop and3 phone layouts, all five views and framing, real touch orbit, floor inspection, unchanged geometry/placement and disabled movement controls, with no page errors. Internal Front review confirms the original forearm above the separate ball and original hand. Publish only this separated-parts study for owner review.
+
 Stop after live visual review. Checkpoint remains pending the owner's final socket/ball-placement refinements.
