@@ -97,8 +97,13 @@ noted, not approved yet. Each one gets its own card, approved one at a time
 
 ## F. People
 
-14. **Online players and NPCs** (idea): other players and running NPCs to
-    throw at, race and mess around with.
+14. **Online players and NPCs** (approved 19 Nov): meet other players in
+    the free world; race, play minigames and hit each other. Home islands:
+    visitors only through the owner's watch-door invite. NPCs walk and run
+    around the world, are targets for football throws, and are opponents
+    when no players are around. Minigames: single player against NPCs, or
+    multiplayer with friends. Build order: single player first; online
+    later (it needs a server).
 
 ## G. Next
 
