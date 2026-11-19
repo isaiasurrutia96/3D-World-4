@@ -1,41 +1,10 @@
 import * as T from 'three';
-import {ANKLE_RADIUS,ANKLE_CLEARANCE,ANKLE_CAP_ANGLE,FOOT_SOCKET_CAP_ANGLE,ANKLE_LIP_RADIUS} from '../../avatar/src/joints/ankle-contract.js';
+import {ANKLE_RADIUS,ANKLE_CLEARANCE,ANKLE_CAP_ANGLE,FOOT_SOCKET_CAP_ANGLE,FOOT_SOCKET_BLEND_WIDTH,ANKLE_LIP_RADIUS} from '../../avatar/src/joints/ankle-contract.js';
+import {createFootSocketProfile} from './socket-profile.js';
 
 // Original seating contour depth: preserves the measured legacy ankle pivot.
 export const SOCKET_DEPTH=.024;
 export const SOCKET_CLEARANCE=ANKLE_CLEARANCE;
-
-// Index the existing foot triangles in X/Z. Every cavity sample follows the
-// actual upper surface, including its asymmetric outline, without reshaping it.
-function footSurface(foot){
- const p=foot.geometry.attributes.position,n=foot.geometry.attributes.normal,ix=foot.geometry.index.array;
- const cells=new Map(),cellSize=.02;
- for(let i=0;i<ix.length;i+=3){
-  const ids=[ix[i],ix[i+1],ix[i+2]],v=ids.map(j=>new T.Vector3().fromBufferAttribute(p,j));
-  const [a,b,c]=v,det=(b.z-c.z)*(a.x-c.x)+(c.x-b.x)*(a.z-c.z);
-  if(Math.abs(det)<1e-12)continue;
-  const triangle={ids,v,det};
-  for(let x=Math.floor(Math.min(a.x,b.x,c.x)/cellSize);x<=Math.floor(Math.max(a.x,b.x,c.x)/cellSize);x++){
-   for(let z=Math.floor(Math.min(a.z,b.z,c.z)/cellSize);z<=Math.floor(Math.max(a.z,b.z,c.z)/cellSize);z++){
-    const key=`${x},${z}`;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(triangle);
-   }
-  }
- }
- return (x,z)=>{
-  let highest=-Infinity,normal;
-  for(const {ids,v:[a,b,c],det} of cells.get(`${Math.floor(x/cellSize)},${Math.floor(z/cellSize)}`)||[]){
-   const u=((b.z-c.z)*(x-c.x)+(c.x-b.x)*(z-c.z))/det;
-   const v=((c.z-a.z)*(x-c.x)+(a.x-c.x)*(z-c.z))/det,w=1-u-v;
-   if(Math.min(u,v,w)<-1e-7)continue;
-   const y=u*a.y+v*b.y+w*c.y;if(y<=highest)continue;
-   highest=y;normal=new T.Vector3().fromBufferAttribute(n,ids[0]).multiplyScalar(u)
-    .addScaledVector(new T.Vector3().fromBufferAttribute(n,ids[1]),v)
-    .addScaledVector(new T.Vector3().fromBufferAttribute(n,ids[2]),w).normalize();
-  }
-  if(!Number.isFinite(highest))throw Error('Socket sample is outside the foot');
-  return {point:new T.Vector3(x,highest,z),normal};
- };
-}
 
 function seatingSection(foot,y,segments){
  const p=foot.geometry.attributes.position,ix=foot.geometry.index.array,lines=[],points=[];
@@ -66,7 +35,7 @@ function seatingSection(foot,y,segments){
  return {center:new T.Vector3(cx,y,cz),radii};
 }
 
-// Split shared edges only around the small rolled lip. All original vertices
+// Refine the bowl and its outer blend together. All original vertices
 // remain in order, and neighbouring faces share each new midpoint: no T seams.
 function refineFootLip(geometry,center,rimRadius){
  const position=geometry.attributes.position,normal=geometry.attributes.normal;
@@ -77,7 +46,7 @@ function refineFootLip(geometry,center,rimRadius){
    const a=faces[i+edge],b=faces[i+(edge+1)%3],id=key(a,b);if(splits.has(id))continue;
    const x=(vertices[a*3]+vertices[b*3])/2,y=(vertices[a*3+1]+vertices[b*3+1])/2,z=(vertices[a*3+2]+vertices[b*3+2])/2;
    const radius=Math.hypot(x-center.x,z-center.z);
-   if(y<.025||(normals[a*3+1]+normals[b*3+1])/2<.15||Math.abs(radius-rimRadius)>.024)continue;
+   if(y<.025||(normals[a*3+1]+normals[b*3+1])/2<.15||Math.abs(radius-rimRadius)>.044)continue;
    if(Math.hypot(vertices[a*3]-vertices[b*3],vertices[a*3+2]-vertices[b*3+2])<=.00175)continue;
    const index=vertices.length/3;vertices.push(x,y,z);
    const n=new T.Vector3(normals[a*3]+normals[b*3],normals[a*3+1]+normals[b*3+1],normals[a*3+2]+normals[b*3+2]).normalize();normals.push(n.x,n.y,n.z);splits.set(id,index);
@@ -99,47 +68,28 @@ function refineFootLip(geometry,center,rimRadius){
  position.copy(new T.Float32BufferAttribute(vertices,3));normal.copy(new T.Float32BufferAttribute(normals,3));geometry.setIndex(faces);
 }
 
-// Round the upper foot into a shallow, true spherical cup. Only the ankle
-// patch changes: the sole, asymmetric outline and toe hinge keep their vertices.
+// One concave bowl, blended directly into the original foot. The continuation
+// matches the sphere's height, slope and curvature, without a rolled ridge or
+// an outer trough. Compact C2 smooth-min only carves; it never adds a cuff.
 function carveFootSocket(foot,center){
  const geometry=foot.geometry,p=geometry.attributes.position,n=geometry.attributes.normal;
  const radius=ANKLE_RADIUS+ANKLE_CLEARANCE,angle=FOOT_SOCKET_CAP_ANGLE,rim=radius*Math.sin(angle);
  refineFootLip(geometry,center,rim);
- const original=p.array.slice(),normals=n.array.slice(),surface=footSurface(foot);
- const rimY=center.y-radius*Math.cos(angle),fillet=ANKLE_LIP_RADIUS;
- // Roll over the spherical rim tangentially, then blend back to the foot.
- const lipCenterR=rim+fillet*Math.sin(angle),lipCenterY=rimY-fillet*Math.cos(angle),lipEnd=rim+2*fillet*Math.sin(angle);
- const cavityIndices=[],smoothNormals=[];
- function heightAt(x,z,oldY){
-  const dx=x-center.x,dz=z-center.z,r=Math.hypot(dx,dz),outer=.130+.030*Math.max(0,-dz/Math.max(r,1e-12));
-  if(r>=outer)return oldY;
-  if(r<=rim)return center.y-Math.sqrt(radius*radius-r*r);
-  if(r<lipEnd)return lipCenterY+Math.sqrt(Math.max(0,fillet*fillet-(r-lipCenterR)**2));
-  const t=T.MathUtils.clamp((r-lipEnd)/(outer-lipEnd),0,1),u=t*t,weight=u*u*(3-2*u);
-  return T.MathUtils.lerp(rimY,oldY,weight)-Math.tan(angle)*(r-lipEnd)*(1-t)**2;
- }
+ const original=p.array.slice(),normals=n.array.slice(),profile=createFootSocketProfile(center.y),blend=FOOT_SOCKET_BLEND_WIDTH;
+ const cavityIndices=[];
  for(let i=0;i<p.count;i++){
-  const x=original[i*3],y=original[i*3+1],z=original[i*3+2],dx=x-center.x,dz=z-center.z,r=Math.hypot(dx,dz);
-  const outer=.130+.030*Math.max(0,-dz/Math.max(r,1e-12));
-  if(r>=outer||y<.025||normals[i*3+1]<=0)continue;
-  if(Math.abs(surface(x,z).point.y-y)>1e-5)continue;
-  if(r<=rim)cavityIndices.push(i);
-  p.setY(i,heightAt(x,z,y));
-  // Use the smooth source normal for the unchanged surface's derivative, not
-  // a triangle fan's changing slopes around the small rounded lip.
-  const epsilon=.00001,dxdy=-normals[i*3]/normals[i*3+1],dzdy=-normals[i*3+2]/normals[i*3+1];
-  const gx=(heightAt(x+epsilon,z,y+dxdy*epsilon)-heightAt(x-epsilon,z,y-dxdy*epsilon))/(2*epsilon);
-  const gz=(heightAt(x,z+epsilon,y+dzdy*epsilon)-heightAt(x,z-epsilon,y-dzdy*epsilon))/(2*epsilon);
-  const normal=new T.Vector3(-gx,1,-gz).normalize();smoothNormals.push([i,normal.x,normal.y,normal.z]);
+  const x=original[i*3],y=original[i*3+1],z=original[i*3+2],r=Math.hypot(x-center.x,z-center.z),forward=r?(z-center.z)/r:0;
+  const bowl=profile.bowlHeight(r,forward);
+  p.setY(i,profile.heightAt(y,r,forward));
+  if(r<=rim&&y-bowl>=blend)cavityIndices.push(i);
  }
  geometry.computeVertexNormals();
- for(const [i,x,y,z] of smoothNormals)n.setXYZ(i,x,y,z);
  for(let i=0;i<p.count;i++)if(p.getZ(i)>=.145)n.setXYZ(i,normals[i*3],normals[i*3+1],normals[i*3+2]);
  for(const i of cavityIndices){const normal=center.clone().sub(new T.Vector3().fromBufferAttribute(p,i)).normalize();n.setXYZ(i,normal.x,normal.y,normal.z);}
  geometry.computeBoundingBox();geometry.computeBoundingSphere();p.needsUpdate=n.needsUpdate=true;
  const size=geometry.boundingBox.getSize(new T.Vector3());
  foot.userData.size={width:size.x,height:size.y,length:size.z};foot.userData.suggestedAnklePivot=center.toArray();foot.userData.ankleBallRadius=ANKLE_RADIUS;
- Object.assign(geometry.userData,{ankleCenter:center.toArray(),socketRadius:radius,socketCapAngle:angle,socketLipRadius:fillet,cavityIndices});
+ Object.assign(geometry.userData,{ankleCenter:center.toArray(),socketRadius:radius,socketCapAngle:angle,socketLipRadius:0,socketBlendWidth:blend,cavityIndices});
 }
 
 export function fitAnkleSocket(calf,foot){

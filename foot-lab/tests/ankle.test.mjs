@@ -5,6 +5,7 @@ import * as T from 'three';
 import {createFootShape} from '../src/foot-shape.js';
 import {createCalf} from '../src/calf.js';
 import {createFootRig,BEND_START,MOTIONS} from '../src/foot-rig.js';
+import {createFootSocketProfile} from '../src/socket-profile.js';
 import {createCharacterRig} from '../../avatar/src/reference/PlayerModel.ts';
 import {ANKLE_RADIUS,ANKLE_CLEARANCE,ANKLE_CAP_ANGLE,FOOT_SOCKET_CAP_ANGLE,ANKLE_LIP_RADIUS,ANKLE_LIMITS,ANKLE_MAX_COMBINED,normalizeAnklePose} from '../../avatar/src/joints/ankle-contract.js';
 
@@ -183,8 +184,26 @@ check('Both cups stay seated through combined ankle, roll, heel and toe poses',
   return {poses:trials.length,maxCentreError,maxGapError,maxRigidCalfDisplacement,maxBallRadiusError,maxFootCupAngleError};
  },m=>{assert(m.maxCentreError<2e-5);assert(m.maxGapError<2e-6);assert.equal(m.maxRigidCalfDisplacement,0);assert(m.maxBallRadiusError<1e-6);assert(m.maxFootCupAngleError<5e-4);});
 
+check('The simple foot socket has a soft continuous edge without a raised ridge or outer dip',
+ 'Sample five radial profiles, compare slopes and curvatures across the sphere join, and compare actual foot vertices with the original shape.',
+ 'Every bowl profile rises outward without a ridge/dip; height, slope and curvature join continuously; the carve never adds material.',()=>{
+  const profile=createFootSocketProfile(0),epsilon=.000002;let maxSlopeJump=0,maxCurvatureJump=0,samples=0;
+  for(const forward of [-1,-.5,0,.5,1]){
+   const height=r=>profile.bowlHeight(r,forward),r=profile.rim;
+   const leftSlope=(height(r)-height(r-epsilon))/epsilon,rightSlope=(height(r+epsilon)-height(r))/epsilon;
+   const leftCurvature=(height(r)-2*height(r-epsilon)+height(r-2*epsilon))/epsilon**2;
+   const rightCurvature=(height(r+2*epsilon)-2*height(r+epsilon)+height(r))/epsilon**2;
+   maxSlopeJump=Math.max(maxSlopeJump,Math.abs(rightSlope-leftSlope));maxCurvatureJump=Math.max(maxCurvatureJump,Math.abs(rightCurvature-leftCurvature));
+   let before=-Infinity;for(let radius=0;radius<=.18;radius+=.0005){const h=height(radius);assert(h>=before-1e-12,'A raised ridge or dip returned');before=h;samples++;}
+  }
+  const original=baselineFoot.attributes.position,current=foot.geometry.attributes.position;
+  for(let i=0;i<original.count;i++)assert(current.getY(i)<=original.getY(i)+1e-8,'Socket added a cuff above the original foot');
+  assert.equal(foot.geometry.userData.socketLipRadius,0);
+  return {samples,maxSlopeJump,maxCurvatureJump,raisedTrim:false};
+ },m=>{assert(m.maxSlopeJump<.001);assert(m.maxCurvatureJump<2);});
+
 check('Spherical cuff openings retain clearance at the maximum combined bend',
- 'Measure the angular envelope of roll × (ankle + heel) over all limit corners, allowing a 5 mm lip on both cups.',
+ 'Measure the angular envelope of roll × (ankle + heel) over all limit corners, including the unchanged calf lip.',
  'The slightly higher foot cap and unchanged calf cap cannot meet, including the measured-safe composed bend and 20° roll.',()=>{
   let worst=0;const q=new T.Quaternion();
   for(const requestAnkle of range('ankle'))for(const requestHeel of range('heel'))for(const roll of range('roll')){
@@ -194,7 +213,8 @@ check('Spherical cuff openings retain clearance at the maximum combined bend',
   }
   const footCap=foot.geometry.userData.socketCapAngle,calfCap=calf.geometry.userData.socketCapAngle;
   assert.equal(footCap,FOOT_SOCKET_CAP_ANGLE);assert.equal(calfCap,ANKLE_CAP_ANGLE);
-  const lipEnvelope=2*Math.asin(ANKLE_LIP_RADIUS/ANKLE_RADIUS),margin=Math.PI-worst-footCap-calfCap-lipEnvelope;
+  assert.equal(calf.geometry.userData.socketLipRadius,ANKLE_LIP_RADIUS);
+  const lipEnvelope=Math.asin(foot.geometry.userData.socketLipRadius/ANKLE_RADIUS)+Math.asin(calf.geometry.userData.socketLipRadius/ANKLE_RADIUS),margin=Math.PI-worst-footCap-calfCap-lipEnvelope;
   return {footCapDegrees:T.MathUtils.radToDeg(footCap),calfCapDegrees:T.MathUtils.radToDeg(calfCap),cuffRise:(ANKLE_RADIUS+ANKLE_CLEARANCE)*(Math.cos(calfCap)-Math.cos(footCap)),maximumJointAngleDegrees:T.MathUtils.radToDeg(worst),lipEnvelopeDegrees:T.MathUtils.radToDeg(lipEnvelope),minimumAngularMarginDegrees:T.MathUtils.radToDeg(margin)};
  },m=>assert(m.minimumAngularMarginDegrees>0));
 

@@ -1,6 +1,6 @@
 {
   "summary": {
-    "passed": 10,
+    "passed": 11,
     "failed": 0
   },
   "checks": [
@@ -28,9 +28,9 @@
       "measured": [
         {
           "name": "draft-rounded-foot",
-          "vertices": 47724,
-          "faces": 95444,
-          "volume": 0.010959592141425905
+          "vertices": 77378,
+          "faces": 154752,
+          "volume": 0.011358973552656982
         },
         {
           "name": "original-avatar-calf",
@@ -54,11 +54,11 @@
       "measured": [
         {
           "name": "draft-rounded-foot",
-          "samples": 16338,
-          "minimumGap": 0.0005999961613393223,
-          "maximumGap": 0.0006000027217369086,
+          "samples": 26324,
+          "minimumGap": 0.0005999959636258517,
+          "maximumGap": 0.0006000027999095436,
           "maximumNormalDot": -0.9999999999999988,
-          "centreError": 1.1409000388089253e-9
+          "centreError": 1.6390171965929325e-9
         },
         {
           "name": "original-avatar-calf",
@@ -105,7 +105,7 @@
       "expected": "Both socket centres remain within 0.02 mm of the ball and radial clearance stays within 0.002 mm of 0.6 mm.",
       "measured": {
         "poses": 145,
-        "maxCentreError": 1.0789951945830892e-8,
+        "maxCentreError": 4.670946369578561e-9,
         "maxGapError": 1.3939309522728767e-8,
         "maxRigidCalfDisplacement": 0,
         "maxBallRadiusError": 5.45858915013131e-9,
@@ -114,16 +114,28 @@
       "status": "PASS"
     },
     {
+      "rule": "The simple foot socket has a soft continuous edge without a raised ridge or outer dip",
+      "input": "Sample five radial profiles, compare slopes and curvatures across the sphere join, and compare actual foot vertices with the original shape.",
+      "expected": "Every bowl profile rises outward without a ridge/dip; height, slope and curvature join continuously; the carve never adds material.",
+      "measured": {
+        "samples": 1800,
+        "maxSlopeJump": 0.00007413759189889291,
+        "maxCurvatureJump": 0.32960439932949726,
+        "raisedTrim": false
+      },
+      "status": "PASS"
+    },
+    {
       "rule": "Spherical cuff openings retain clearance at the maximum combined bend",
-      "input": "Measure the angular envelope of roll × (ankle + heel) over all limit corners, allowing a 5 mm lip on both cups.",
+      "input": "Measure the angular envelope of roll × (ankle + heel) over all limit corners, including the unchanged calf lip.",
       "expected": "The slightly higher foot cap and unchanged calf cap cannot meet, including the measured-safe composed bend and 20° roll.",
       "measured": {
         "footCapDegrees": 52,
         "calfCapDegrees": 45,
         "cuffRise": 0.010571077357518801,
         "maximumJointAngleDegrees": 62.94989777837098,
-        "lipEnvelopeDegrees": 4.983812737959785,
-        "minimumAngularMarginDegrees": 15.06628948366925
+        "lipEnvelopeDegrees": 2.4919063689798926,
+        "minimumAngularMarginDegrees": 17.558195852649146
       },
       "status": "PASS"
     },
@@ -177,7 +189,7 @@
             "toes": 0,
             "heel": 0
           },
-          "footGap": 0.00041280829286380327,
+          "footGap": 0.0004610473908322338,
           "calfGap": 0.0005435607847351365
         },
         {
@@ -187,7 +199,7 @@
             "toes": 0,
             "heel": 0
           },
-          "footGap": 0.00041280482747504954,
+          "footGap": 0.0004610474008008708,
           "calfGap": 0.0005435607847351365
         },
         {
@@ -197,7 +209,7 @@
             "toes": 0,
             "heel": 0
           },
-          "footGap": 0.00041280575439353595,
+          "footGap": 0.0004610474360314254,
           "calfGap": 0.0005435607847352752
         },
         {
@@ -207,7 +219,7 @@
             "toes": 0,
             "heel": 0
           },
-          "footGap": 0.0004128076839190614,
+          "footGap": 0.0004610494537784643,
           "calfGap": 0.0005435607847349838
         },
         {
@@ -217,7 +229,7 @@
             "toes": 0,
             "heel": 0
           },
-          "footGap": 0.00041280605591879904,
+          "footGap": 0.0004610477432809845,
           "calfGap": 0.0005435607847351781
         },
         {
@@ -227,7 +239,7 @@
             "toes": 25,
             "heel": 30
           },
-          "footGap": 0.0004128116223775513,
+          "footGap": 0.00046105002845864274,
           "calfGap": 0.0005435607847350948
         },
         {
@@ -237,7 +249,7 @@
             "toes": 25,
             "heel": 30
           },
-          "footGap": 0.0004128074408140253,
+          "footGap": 0.0004610498757157133,
           "calfGap": 0.0005435607847351781
         }
       ],
@@ -255,7 +267,7 @@
             "toes": 0,
             "heel": 0
           },
-          "probes": 55902,
+          "probes": 85556,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -266,7 +278,7 @@
             "toes": 0,
             "heel": 0
           },
-          "probes": 55902,
+          "probes": 85556,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -277,7 +289,7 @@
             "toes": 0,
             "heel": 0
           },
-          "probes": 55902,
+          "probes": 85556,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -288,7 +300,7 @@
             "toes": 0,
             "heel": 0
           },
-          "probes": 55902,
+          "probes": 85556,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -299,7 +311,7 @@
             "toes": 25,
             "heel": 30
           },
-          "probes": 55902,
+          "probes": 85556,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -310,7 +322,7 @@
             "toes": 25,
             "heel": 30
           },
-          "probes": 55902,
+          "probes": 85556,
           "inside": 0,
           "maximumDepth": 0
         }
