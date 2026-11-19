@@ -86,6 +86,17 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
    water. Objects: ball, clubs, tee markers, flags. Walk between shots, or a
    golf cart later. Prizes: clubs, balls, outfits.
 
+### 5. Bowling (approved 19 Nov)
+1. 10 frames, up to 2 rolls each to knock down 10 pins; players take turns.
+   Pick a ball, step up, aim, swing, add spin to curve it. Standard bowling
+   scoring (strikes and spares earn bonus points). Highest score wins.
+2. Over the foul line: that roll scores 0. Gutter balls: 0. Strikes in a
+   row: bonus coins.
+3. Blocks: bowling lane; wood or concrete for the alley building. The
+   pin-setting machine and ball return are built from small blocks. Objects:
+   pins, balls (weights, colours). Prizes: ball colours and designs. Where:
+   town alleys; also a home-island game kit.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
