@@ -240,13 +240,27 @@ timings, limits). The cards below are being redone with it, one at a time.
 
 ## C. Riding
 
-9. **Skateboarding** (approved 19 Nov): shop or prize, pulled out from the
-   item wheel. Push to speed up, lean to steer, jump (ollie). Skate anywhere:
-   smooth ground (road, concrete, wood) is fast; grass, dirt, sand, snow are
-   slow. Skateparks (ramps, rails, bowls) around the free world. Skate
-   racing is a new minigame (courses with ramps, rails and more). Grinds
-   along rails and edges marked grindable. Can be swung as a weapon. A bad
-   landing knocks him off (no death). Tricks later.
+9. **Skateboarding** (approved 19 Nov, detailed)
+   1. Why: fun way to get around; skate racing and skateparks.
+   2. How: pull it out of the item wheel, hop on; push, lean to steer,
+      ollie, grind grindable rails; hop off and it goes back to his items.
+   3. Get it: shop or prize.
+   4. Lose or keep: carried, so lost on death (pull another from storage);
+      a punch can knock it loose.
+   5. Where: anywhere in the free world, skateparks, his home island. Not
+      indoors, in water, or in non-skating minigames.
+   6. Screen: a few coins pop up for cool tricks.
+   7. Works with: item wheel, shop, coins, grindable setting, hits (can be
+      swung; beats a punch). Skate racing is a minigame.
+   8. Online: others see his tricks; bumping can knock riders off.
+   9. Saved: boards owned, colours and designs.
+   10. Edge cases: smooth ground (road, concrete, wood) fast; grass, dirt,
+       sand, snow slow; a bad landing knocks him off (no death); into water
+       → he falls in, the board floats back to him.
+   11. Movements: stand on the board, push, lean, ollie, grind, land, fall
+       off, swing it.
+   12. Numbers later: speeds per block, jump height, trick coins. Tricks
+       later.
 10. **Bikes and scooters**: removed for now (owner, 19 Nov).
 
 ## D. Moving around
