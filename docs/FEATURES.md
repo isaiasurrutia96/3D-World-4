@@ -46,8 +46,11 @@ noted, not approved yet. Each one gets its own card, approved one at a time
     and outfits), game kits, rarely home-island land. Matched to the game
     (golf prizes lean golf, racing prizes lean racing). A duplicate turns into
     coins. A short prize reveal after the win.
-6. **Shop** (idea): spend coins to rebuy lost items (like a skateboard) and
-   buy upgrades.
+6. **Shop** (approved 19 Nov): opened from the watch, plus a few shop
+   buildings around the world. Sells rides (skateboard, bike, scooter), the
+   watch door, sports gear (clubs, balls, bat, cue), cosmetics, home-island
+   land and game kits. Items lost on death show first for easy rebuying.
+   Prices set later. Bought items go straight into his item pull-out.
 7. **Pull out any item anywhere** (idea, like GTA): a skateboard, or a golf
    club and ball to hit from any block, even a cloud.
 8. **Losing loot when you die** (idea): decide later.
