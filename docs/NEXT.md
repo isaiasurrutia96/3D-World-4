@@ -225,3 +225,8 @@ Recorded 17 November 2026.
     checked). The island now uses it: bedrock merged and smooth; roots are
     their own separate block again (owner, 19 Nov), not merged. Checks: npm run test:world, npm run test:island.
     Next: block numbers, one game at a time.
+
+29. Movement plan addition (owner, 19 Nov): ledge grab and climbing, after
+    balance and jumping. Grab edges and hang, pull up, shimmy sideways, let
+    go; climb almost any solid block (trees, leaves, rock, walls; not lava or
+    cactus); hands use the rod grip for poles and branches.

@@ -78,10 +78,10 @@ noted, not approved yet. Each one gets its own card, approved one at a time
 
 ## D. Moving around
 
-11. **Ledge grab and climbing** (idea): grab edges and hang; climb almost
-    any solid block, trees and leaves too. Movement step after jumping.
-12. **Clouds and secret ramps** (idea): hard-to-reach clouds; grab the edge,
-    pull up, then drop off (e.g. on a skateboard) onto secret ramps.
+11. **Ledge grab and climbing**: moved to the movement plan (it is a
+    movement, owner 19 Nov): grab edges and hang, pull up, shimmy, climb
+    almost any solid block (not lava or cactus), after balance and jumping.
+12. **Clouds and secret ramps**: covered by the cloud block and skateboarding.
 
 ## E. Messing around
 
