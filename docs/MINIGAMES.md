@@ -7,7 +7,7 @@ for more detail later.
 
 ## A. Shared template (all minigames) — saved, 19 Nov
 
-1. Join: walk, drive or swim to the game's gate, or use the watch door.
+1. Join: walk, drive or swim to the game's gate, or use the watch's door.
 2. Lobby: friends join; NPCs fill empty spots; choose NPC difficulty (easy,
    medium, hard).
 3. Own gear: he plays with the items he owns (kart, clubs, skateboard), with

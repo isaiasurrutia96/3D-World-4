@@ -18,14 +18,14 @@ timings, limits). The cards below are being redone with it, one at a time.
 
 ## A. Travel and home
 
-1. **Watch door** (approved 19 Nov, detailed)
+1. **The watch** (approved 19 Nov, detailed; renamed from "watch door")
    1. Why: a shortcut to islands and minigames, no menus or loading screens.
    2. How: open the watch, pick a place or Start minigame → pick a game; a
       plain door (no glow) appears in front of him; he walks up and opens
       it; the destination is already visible through it (a portal, kept
       light for the old MacBook); he walks through; it closes and vanishes.
-   3. Get it: bought with coins or won as a prize.
-   4. Lose or keep: lost when he dies; cannot be stolen (on his wrist).
+   3. Get it: from the start; the watch is always on him.
+   4. Lose or keep: never lost, never stolen.
    5. Where: indoors and outdoors, on land. Not underwater, mid-air, in a
       kart or during a minigame. Another player's home island only when
       invited.
@@ -39,11 +39,14 @@ timings, limits). The cards below are being redone with it, one at a time.
        he walks away → the door vanishes after a few seconds.
    11. Movements: opening a door, walking through.
    12. Numbers later: price, space needed, how long it stays open.
+   The watch also: zaps his kart next to him, opens the map, shop and
+   invites, and reaches his stored items from anywhere (take any stored
+   item into his carried items and use it anywhere).
    The watch's look is designed by the owner with Codex.
 2. **Home island** (approved 19 Nov, detailed)
    1. Why: his own place to store stuff, build and show off; a goal.
    2. How: unlock it; a small plain island (grass, dirt, bedrock) appears.
-      Reached only by the watch door or the menu screen (no bridges or
+      Reached only by the watch's door or the menu screen (no bridges or
       roads). Build, place game kits, store items; buy land to expand.
    3. Get it: unlocked around level 3.
    4. Lose or keep: never lost; stored items safe when he dies.
@@ -52,7 +55,7 @@ timings, limits). The cards below are being redone with it, one at a time.
       shapes (a whole wall or floor slab at once).
    6. Screen: build-mode menu (blocks, big shapes, colours, paint, kits),
       storage chest, land expansion in the watch.
-   7. Works with: coins, shop (land, kits), watch-door invites, rulebook
+   7. Works with: coins, shop (land, kits), watch invites, rulebook
       and world checker (every build must pass).
    8. Online: friends visit only by invite; he can zap a door to wherever
       the friend is and they walk through. He chooses whether guests can
@@ -115,7 +118,7 @@ timings, limits). The cards below are being redone with it, one at a time.
 
 16. **Big connected world** (approved 19 Nov, detailed)
     1. Why: one world; every island and game reachable by walking, driving
-       or swimming (the watch door is a shortcut).
+       or swimming (the watch's door is a shortcut).
     2. How: islands linked by walking bridges, roads and rivers; nearby
        islands load as he gets close, far ones unload to stay fast. Each
        island has a theme (town, forest, canyon, snow, volcano, tropical);
@@ -125,7 +128,7 @@ timings, limits). The cards below are being redone with it, one at a time.
        fell.
     5. Where: the shared world (home islands are separate: door or menu only).
     6. Screen: a world map in the watch (islands, minigames, where he is).
-    7. Works with: watch door, minigame gates, island themes, levels.
+    7. Works with: watch's door, minigame gates, island themes, levels.
     8. Online: other players share the same world.
     9. Saved: islands visited and unlocked.
     10. Edge cases: an island not loaded yet shows a simple version until
@@ -163,7 +166,7 @@ timings, limits). The cards below are being redone with it, one at a time.
     3. Get it: sometimes after a win, more often for 1st; bigger prizes for
        records and target times.
     4. Lose or keep: carried prizes follow the death rule (stored ones safe).
-    5. What: any prize (items, rides, gear, watch door, cosmetics, outfit
+    5. What: any prize (items, rides, gear, cosmetics, outfit
        pieces, kart parts, game kits, rarely land). This replaces "matched
        to the game".
     6. Screen: the prize reveal; a "new" badge in the item wheel.
@@ -182,7 +185,7 @@ timings, limits). The cards below are being redone with it, one at a time.
    3. Get it: from the start.
    4. Lose or keep: purchases follow the death rule; items lost on death
       show first for quick rebuying.
-   5. Sells: skateboard, karts, watch door, swim gear, sports gear (clubs,
+   5. Sells: skateboard, karts, swim gear, sports gear (clubs,
       balls, bat, cue, paint markers), outfits and cosmetics, kart parts,
       home-island land, game kits.
    6. Screen: categories, prices, coin count, a "rebuy" row at the top.
