@@ -36,7 +36,11 @@ noted, not approved yet. Each one gets its own card, approved one at a time
 
 ## B. Money and items
 
-5. **Coins** (idea): won from minigames.
+5. **Coins** (approved 19 Nov): the reward for playing. Earned by winning
+   minigames (more for 1st place, some just for playing), maybe small amounts
+   hidden around the world. Spent on shop items, the watch door, home-island
+   land, game kits and upgrades. Always kept when he dies (only carried items
+   are at risk). No real money for now. Shown in a screen corner and the watch.
 17. **Prizes** (idea): winning a game gives coins and sometimes a prize item.
 6. **Shop** (idea): spend coins to rebuy lost items (like a skateboard) and
    buy upgrades.
