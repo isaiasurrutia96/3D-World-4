@@ -28,9 +28,9 @@
       "measured": [
         {
           "name": "draft-rounded-foot",
-          "vertices": 43709,
-          "faces": 87414,
-          "volume": 0.010767564815445002
+          "vertices": 47724,
+          "faces": 95444,
+          "volume": 0.010959592141425905
         },
         {
           "name": "original-avatar-calf",
@@ -54,11 +54,11 @@
       "measured": [
         {
           "name": "draft-rounded-foot",
-          "samples": 13995,
-          "minimumGap": 0.0005999959928858628,
-          "maximumGap": 0.0006000027618887488,
-          "maximumNormalDot": -0.9999999999999989,
-          "centreError": 1.1645068100959139e-9
+          "samples": 16338,
+          "minimumGap": 0.0005999961613393223,
+          "maximumGap": 0.0006000027217369086,
+          "maximumNormalDot": -0.9999999999999988,
+          "centreError": 1.1409000388089253e-9
         },
         {
           "name": "original-avatar-calf",
@@ -105,7 +105,7 @@
       "expected": "Both socket centres remain within 0.02 mm of the ball and radial clearance stays within 0.002 mm of 0.6 mm.",
       "measured": {
         "poses": 145,
-        "maxCentreError": 8.940788765488929e-9,
+        "maxCentreError": 1.0789951945830892e-8,
         "maxGapError": 1.3939309522728767e-8,
         "maxRigidCalfDisplacement": 0,
         "maxBallRadiusError": 5.45858915013131e-9,
@@ -116,11 +116,14 @@
     {
       "rule": "Spherical cuff openings retain clearance at the maximum combined bend",
       "input": "Measure the angular envelope of roll × (ankle + heel) over all limit corners, allowing a 5 mm lip on both cups.",
-      "expected": "45° caps and their lips cannot meet, including the measured-safe composed bend and 20° roll.",
+      "expected": "The slightly higher foot cap and unchanged calf cap cannot meet, including the measured-safe composed bend and 20° roll.",
       "measured": {
+        "footCapDegrees": 52,
+        "calfCapDegrees": 45,
+        "cuffRise": 0.010571077357518801,
         "maximumJointAngleDegrees": 62.94989777837098,
         "lipEnvelopeDegrees": 4.983812737959785,
-        "minimumAngularMarginDegrees": 22.066289483669248
+        "minimumAngularMarginDegrees": 15.06628948366925
       },
       "status": "PASS"
     },
@@ -252,7 +255,7 @@
             "toes": 0,
             "heel": 0
           },
-          "probes": 51887,
+          "probes": 55902,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -263,7 +266,7 @@
             "toes": 0,
             "heel": 0
           },
-          "probes": 51887,
+          "probes": 55902,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -274,7 +277,7 @@
             "toes": 0,
             "heel": 0
           },
-          "probes": 51887,
+          "probes": 55902,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -285,7 +288,7 @@
             "toes": 0,
             "heel": 0
           },
-          "probes": 51887,
+          "probes": 55902,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -296,7 +299,7 @@
             "toes": 25,
             "heel": 30
           },
-          "probes": 51887,
+          "probes": 55902,
           "inside": 0,
           "maximumDepth": 0
         },
@@ -307,7 +310,7 @@
             "toes": 25,
             "heel": 30
           },
-          "probes": 51887,
+          "probes": 55902,
           "inside": 0,
           "maximumDepth": 0
         }

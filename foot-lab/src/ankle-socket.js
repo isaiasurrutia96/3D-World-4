@@ -1,5 +1,5 @@
 import * as T from 'three';
-import {ANKLE_RADIUS,ANKLE_CLEARANCE,ANKLE_CAP_ANGLE,ANKLE_LIP_RADIUS} from '../../avatar/src/joints/ankle-contract.js';
+import {ANKLE_RADIUS,ANKLE_CLEARANCE,ANKLE_CAP_ANGLE,FOOT_SOCKET_CAP_ANGLE,ANKLE_LIP_RADIUS} from '../../avatar/src/joints/ankle-contract.js';
 
 // Original seating contour depth: preserves the measured legacy ankle pivot.
 export const SOCKET_DEPTH=.024;
@@ -103,11 +103,12 @@ function refineFootLip(geometry,center,rimRadius){
 // patch changes: the sole, asymmetric outline and toe hinge keep their vertices.
 function carveFootSocket(foot,center){
  const geometry=foot.geometry,p=geometry.attributes.position,n=geometry.attributes.normal;
- const radius=ANKLE_RADIUS+ANKLE_CLEARANCE,rim=radius*Math.sin(ANKLE_CAP_ANGLE);
+ const radius=ANKLE_RADIUS+ANKLE_CLEARANCE,angle=FOOT_SOCKET_CAP_ANGLE,rim=radius*Math.sin(angle);
  refineFootLip(geometry,center,rim);
  const original=p.array.slice(),normals=n.array.slice(),surface=footSurface(foot);
- const rimY=center.y-radius*Math.cos(ANKLE_CAP_ANGLE),fillet=ANKLE_LIP_RADIUS;
- const lipCenterR=rim+fillet/Math.sqrt(2),lipCenterY=rimY-fillet/Math.sqrt(2),lipEnd=rim+Math.sqrt(2)*fillet;
+ const rimY=center.y-radius*Math.cos(angle),fillet=ANKLE_LIP_RADIUS;
+ // Roll over the spherical rim tangentially, then blend back to the foot.
+ const lipCenterR=rim+fillet*Math.sin(angle),lipCenterY=rimY-fillet*Math.cos(angle),lipEnd=rim+2*fillet*Math.sin(angle);
  const cavityIndices=[],smoothNormals=[];
  function heightAt(x,z,oldY){
   const dx=x-center.x,dz=z-center.z,r=Math.hypot(dx,dz),outer=.130+.030*Math.max(0,-dz/Math.max(r,1e-12));
@@ -115,7 +116,7 @@ function carveFootSocket(foot,center){
   if(r<=rim)return center.y-Math.sqrt(radius*radius-r*r);
   if(r<lipEnd)return lipCenterY+Math.sqrt(Math.max(0,fillet*fillet-(r-lipCenterR)**2));
   const t=T.MathUtils.clamp((r-lipEnd)/(outer-lipEnd),0,1),u=t*t,weight=u*u*(3-2*u);
-  return T.MathUtils.lerp(rimY,oldY,weight)-(r-lipEnd)*(1-t)**2;
+  return T.MathUtils.lerp(rimY,oldY,weight)-Math.tan(angle)*(r-lipEnd)*(1-t)**2;
  }
  for(let i=0;i<p.count;i++){
   const x=original[i*3],y=original[i*3+1],z=original[i*3+2],dx=x-center.x,dz=z-center.z,r=Math.hypot(dx,dz);
@@ -138,7 +139,7 @@ function carveFootSocket(foot,center){
  geometry.computeBoundingBox();geometry.computeBoundingSphere();p.needsUpdate=n.needsUpdate=true;
  const size=geometry.boundingBox.getSize(new T.Vector3());
  foot.userData.size={width:size.x,height:size.y,length:size.z};foot.userData.suggestedAnklePivot=center.toArray();foot.userData.ankleBallRadius=ANKLE_RADIUS;
- Object.assign(geometry.userData,{ankleCenter:center.toArray(),socketRadius:radius,socketCapAngle:ANKLE_CAP_ANGLE,socketLipRadius:fillet,cavityIndices});
+ Object.assign(geometry.userData,{ankleCenter:center.toArray(),socketRadius:radius,socketCapAngle:angle,socketLipRadius:fillet,cavityIndices});
 }
 
 export function fitAnkleSocket(calf,foot){

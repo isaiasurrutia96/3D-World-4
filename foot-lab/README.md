@@ -4,7 +4,7 @@ The live foot keeps the approved asymmetric toe outline, flat sole, ground-conta
 
 ## Mechanical contract
 
-`avatar/src/joints/ankle-contract.js` is the rendering-independent source of truth. The ball radius is115mm (230mm diameter, about90% of the calf's256mm depth). Both cavities use a115.6mm radius: the deliberate0.6mm radial clearance prevents coincident surfaces while keeping the joint visually seated. Each true cup covers a45° cap, with a5mm rolled lip. All three meshes are closed solids. The foot lip alone is locally refined so its small curve has sufficient geometry; original sole and toe vertices remain in place.
+`avatar/src/joints/ankle-contract.js` is the rendering-independent source of truth. The ball radius is115mm (230mm diameter, about90% of the calf's256mm depth). Both cavities use a115.6mm radius: the deliberate0.6mm radial clearance prevents coincident surfaces while keeping the joint visually seated. The calf cup covers a45° cap; the foot cup wraps to52°, raising its rim about10.6mm for a snugger fit. Both keep a5mm rolled lip and a tangent-continuous blend. All three meshes are closed solids. The foot lip alone is locally refined so its small curve has sufficient geometry; original sole and toe vertices remain in place.
 
 The original ankle center is measured before carving: foot-local `[0.0006089437,0.1635200068,0.0147097013]`. Calf placement, its upper profile/knee contact, and the standing sole stay fixed. `createFootRig` exposes `ankleBall` and `pivot`; foot/calf geometry exposes local `ankleCenter`, `socketRadius` and true spherical `cavityIndices`. `avatar.lowerLegs` exposes each ball for skeleton attachment.
 

@@ -6,7 +6,7 @@ import {createFootShape} from '../src/foot-shape.js';
 import {createCalf} from '../src/calf.js';
 import {createFootRig,BEND_START,MOTIONS} from '../src/foot-rig.js';
 import {createCharacterRig} from '../../avatar/src/reference/PlayerModel.ts';
-import {ANKLE_RADIUS,ANKLE_CLEARANCE,ANKLE_CAP_ANGLE,ANKLE_LIP_RADIUS,ANKLE_LIMITS,ANKLE_MAX_COMBINED,normalizeAnklePose} from '../../avatar/src/joints/ankle-contract.js';
+import {ANKLE_RADIUS,ANKLE_CLEARANCE,ANKLE_CAP_ANGLE,FOOT_SOCKET_CAP_ANGLE,ANKLE_LIP_RADIUS,ANKLE_LIMITS,ANKLE_MAX_COMBINED,normalizeAnklePose} from '../../avatar/src/joints/ankle-contract.js';
 
 const checks=[];
 const foot=createFootShape(),baselineFoot=foot.geometry.clone(),baselineContacts=structuredClone(foot.userData.contacts);
@@ -185,15 +185,17 @@ check('Both cups stay seated through combined ankle, roll, heel and toe poses',
 
 check('Spherical cuff openings retain clearance at the maximum combined bend',
  'Measure the angular envelope of roll × (ankle + heel) over all limit corners, allowing a 5 mm lip on both cups.',
- '45° caps and their lips cannot meet, including the measured-safe composed bend and 20° roll.',()=>{
+ 'The slightly higher foot cap and unchanged calf cap cannot meet, including the measured-safe composed bend and 20° roll.',()=>{
   let worst=0;const q=new T.Quaternion();
   for(const requestAnkle of range('ankle'))for(const requestHeel of range('heel'))for(const roll of range('roll')){
    const {ankle,heel}=normalizeAnklePose({ankle:requestAnkle,heel:requestHeel,roll});
    q.setFromEuler(new T.Euler(0,0,T.MathUtils.degToRad(roll),'XYZ')).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),T.MathUtils.degToRad(ankle+heel)));
    worst=Math.max(worst,q.angleTo(new T.Quaternion()));
   }
-  const lipEnvelope=2*Math.asin(ANKLE_LIP_RADIUS/ANKLE_RADIUS),margin=Math.PI-worst-2*ANKLE_CAP_ANGLE-lipEnvelope;
-  return {maximumJointAngleDegrees:T.MathUtils.radToDeg(worst),lipEnvelopeDegrees:T.MathUtils.radToDeg(lipEnvelope),minimumAngularMarginDegrees:T.MathUtils.radToDeg(margin)};
+  const footCap=foot.geometry.userData.socketCapAngle,calfCap=calf.geometry.userData.socketCapAngle;
+  assert.equal(footCap,FOOT_SOCKET_CAP_ANGLE);assert.equal(calfCap,ANKLE_CAP_ANGLE);
+  const lipEnvelope=2*Math.asin(ANKLE_LIP_RADIUS/ANKLE_RADIUS),margin=Math.PI-worst-footCap-calfCap-lipEnvelope;
+  return {footCapDegrees:T.MathUtils.radToDeg(footCap),calfCapDegrees:T.MathUtils.radToDeg(calfCap),cuffRise:(ANKLE_RADIUS+ANKLE_CLEARANCE)*(Math.cos(calfCap)-Math.cos(footCap)),maximumJointAngleDegrees:T.MathUtils.radToDeg(worst),lipEnvelopeDegrees:T.MathUtils.radToDeg(lipEnvelope),minimumAngularMarginDegrees:T.MathUtils.radToDeg(margin)};
  },m=>assert(m.minimumAngularMarginDegrees>0));
 
 check('Combined bend rejects the measured unsafe 66° request while preserving doubled ankle motion',
