@@ -20,6 +20,7 @@
   .views button{border:0;border-radius:10px;background:transparent;padding:0 14px;min-height:42px;color:#565c5d;font-size:12px}
   .views button[aria-pressed=true]{background:#dfdfd7;color:#303835}
   .views button{white-space:nowrap}@media(max-width:700px){.views button{padding:0 10px}.app{grid-template-rows:65px minmax(0,1fr)}header{padding:12px 18px}h1{font-size:20px}.sub{font-size:11px}.stage-hint{top:13px;left:18px;font-size:11px}}
+  .views.edges{bottom:auto;top:44px}
  </style>
 </head>
 <body>
@@ -30,6 +31,7 @@
    <nav class="views" aria-label="Views">
     <button data-view="front" aria-pressed="true">Front</button><button data-view="side" aria-pressed="false">Side</button><button data-view="back" aria-pressed="false">Back</button><button data-view="top" aria-pressed="false">Top</button><button data-view="angled" aria-pressed="false">Angled</button>
    </nav>
+   <nav class="views edges" aria-label="Stone edges"><button data-edge="round" aria-pressed="true">Stone: rounded (now)</button><button data-edge="tiny" aria-pressed="false">Tiny edge</button><button data-edge="sharp" aria-pressed="false">Sharp</button></nav>
   </section>
  </main>
  <script type="module" src="/src/island-lab.ts"></script>
