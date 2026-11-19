@@ -239,6 +239,30 @@ timings, limits). The cards below are being redone with it, one at a time.
    11. Movements: death fall, respawn, item flying out of his hands.
    12. Numbers later: respawn time, how long a dropped item stays.
 
+18. **Custom kart building** (approved 19 Nov, detailed)
+    1. Why: a kart that is truly his, to race and show off.
+    2. How: at a kart shop and garage in the world, or his home garage: pick
+       body, wheels, engine, spoiler, colours and paint; test drive; save.
+       The garage also upgrades karts. Karts are never damaged (no repairs).
+    3. Get it: almost anyone can build any type of kart; parts from the kart
+       shop, the main shop and prizes.
+    4. Lose or keep: never lost; his karts are kept at his home island.
+    5. Where: build and upgrade at the kart shop and garage; drive anywhere a
+       kart can go.
+    6. Screen: garage menu with parts, colours, a stats bar (speed, grip,
+       handling).
+    7. Works with: shops, prizes, levels, free-roam driving, kart racing,
+       time trial.
+    8. Fairness: custom karts are an advantage only to an extent: a high
+       level plus a well-balanced build gives a slight overall edge; more
+       speed does not always mean less grip.
+    9. Saved: every kart built, kept at home.
+    10. Edge cases: a missing part → the build will not save until complete.
+    11. Movements: none new.
+    12. Numbers later: part stats, prices, size of the advantage, how many
+        karts he can keep.
+19. **Outfit customizing** (idea, 19 Nov): customize his outfit.
+
 ## C. Riding
 
 9. **Skateboarding** (approved 19 Nov, detailed)
