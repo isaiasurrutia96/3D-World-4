@@ -23,7 +23,10 @@ for more detail later.
 12. Movements a game needs (getting in and out of karts, picking up gear)
     go in the movement plan.
 13. Feel: how every game controls and plays (putting, throwing, steering)
-    is tested by the owner and refined as he tests it.
+    is tested by the owner and refined as he tests it. How the avatar
+    performs each movement is tested on its own.
+14. Controls: the owner picks the keys or buttons for power and aim after
+    testing, maybe not the traditional way. Cards do not lock in controls.
 
 Racing games only (karts, skate racing, ice skating, skiing): checkpoints,
 wrong-way warning, lap times, respawn at the last checkpoint.
@@ -107,6 +110,16 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 3. Blocks: court floor indoors, concrete outdoors; hoops and backboards built
    from small concrete blocks. Objects: basketballs, rack, net. Prizes: ball
    designs, outfits. Where: indoor and outdoor courts; also a home kit.
+
+### 7. Football throwing (approved 19 Nov)
+1. 60 seconds or a set number of throws. Targets: nets, barrels, NPC
+   receivers running routes (slant, go, out; no defense) and other players.
+   Aim and power (controls chosen after testing). Farther and moving targets
+   score more; catches in a row build a streak. Highest score wins.
+2. Outside the game he can throw to NPCs and other players anytime, for fun,
+   no score.
+3. Blocks: fairway with painted lines, concrete for stands and barrels.
+   Objects: footballs, nets, barrels, receiver NPCs. Prizes: any prize.
 
 ## D. The 20 minigames
 
