@@ -19,7 +19,7 @@ study.group.traverse(part=>{if(part.isMesh)meshes.push(part);});
 assert.equal(meshes.length,2,'The study must contain only one foot and one calf');
 assert.deepEqual(new Set(meshes),new Set([study.foot,study.calf]));
 const tiny=study.foot.userData.tinySocket;
-assert.deepEqual(tiny,{radius:.04,depth:.008,center:[0,0]},'Tiny socket dimensions or location changed');
+assert.deepEqual(tiny,{radius:.04,depth:.016,center:[0,0]},'Tiny socket dimensions or location changed');
 const footPositions=study.foot.geometry.attributes.position,rawPositions=rawFoot.geometry.attributes.position;
 assert.equal(footPositions.count,rawPositions.count,'Socket should not rebuild the foot topology');
 assert.equal(hash(study.foot.geometry.index.array),hash(rawFoot.geometry.index.array),'Socket changed the foot triangles');
@@ -36,7 +36,7 @@ for(let i=0;i<footPositions.count;i++){
  }
  if(rawPositions.getY(i)<1e-7||rawPositions.getZ(i)>=.145)assert.equal(footPositions.getY(i),rawPositions.getY(i),'Socket changed the sole or toes');
 }
-assert(socketVertices>10&&maximumSocketDepth>.007,'The requested tiny socket is missing');
+assert(socketVertices>10&&maximumSocketDepth>.0159,'The requested deeper socket is missing');
 assert.deepEqual(geometrySignature(study.calf),geometrySignature(rawCalf),'Calf is not the original uncarved shape');
 assert.equal(study.foot.material.color.getHex(),rawFoot.material.color.getHex());
 assert.equal(study.calf.material.color.getHex(),rawCalf.material.color.getHex());

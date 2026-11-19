@@ -239,3 +239,14 @@ Reset verification: raw baseline Node check passes; both position/normal/index b
 Owner authorized a tiny socket in the foot only. Independent small-socket.js applies a shallow circular C2 indentation (40mm radius,8mm depth, X/Z[0,0] at the dome peak), with no raised lip. Does not reuse the rejected large joint/socket prototype. The raw calf stays separate; no calf socket, ball or movement rig is added. createFootStudy({socket:false}) preserves the original baseline. Shape checks confirm an actual concave bowl and exact original calf, X/Z/topology, sole and toes. Do not advance beyond this foot socket before owner appearance review.
 
 Verification: both study Node checks pass, including actual concavity measured from the mesh. The browser suite measures7.999mm maximum displacement across261 upper-patch vertices; original calf, sole, toes, X/Z outline and topology stay exact. Desktop and three phone layouts, framing, floor, orbit and camera reset pass with no errors. Full production build and existing joint/frozen checks pass. Internal Top-view review confirms a tiny soft depression with no raised rim. Stop for owner review after publishing; no next layer or checkpoint.
+
+
+### Deepen the foot socket — owner go, 19 Nov 2026
+
+Owner described pressing an invisible ball farther into the socket, keeping a soft blended edge, and requested the geometry code be checked before updating visuals. Increase only small-socket.js depth8→16mm. Keep radius40mm, center[0,0], C2 radial shape and height fade fixed; no added rim, calf socket or ball. The height mapping remains strictly ordered (minimum vertical derivative0.5 at16mm), while displacement and first/second derivatives remain zero at the radial edge.
+
+Code-first checks:3 study tests pass before the viewer build. Actual socket depth is measured from the mesh; original calf, X/Z/topology, sole and toes stay exact. Added full-mesh checks for noncollapsed/nonflipped triangles, closed and consistently wound seams, positive volume and finite normals. Original no-socket baseline remains available. No avatar motion or joint prototype changes.
+
+Checkpoint decision: the owner will continue refining this foot socket, then the calf socket and ball placement. Save the next checkpoint only after those refinements are approved. Do not freeze this intermediate study or start another layer automatically.
+
+Viewer verification: focused browser suite passes desktop and3 phone layouts, real orbit, floor, view reset and framing, with no page errors. Actual maximum depth15.9983mm across261 vertices. Top/angle internal inspection confirms the deeper bowl retains its blended edge. Full production build, existing joint checks and frozen integrity pass. Publish this refinement for review; checkpoint remains pending the owner's continuing socket and ball refinements.

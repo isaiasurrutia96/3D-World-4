@@ -1,6 +1,6 @@
 import * as T from 'three';
 
-export const TINY_SOCKET=Object.freeze({center:Object.freeze([0,0]),radius:.04,depth:.008});
+export const TINY_SOCKET=Object.freeze({center:Object.freeze([0,0]),radius:.04,depth:.016});
 
 // A shallow circular depression with no raised rim. Its displacement and first
 // two derivatives reach zero at the edge, blending into the original foot.
