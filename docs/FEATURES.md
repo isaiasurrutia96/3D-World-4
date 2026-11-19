@@ -5,6 +5,17 @@ noted, not approved yet. Each one gets its own card, approved one at a time
 (like the blocks), and then its status becomes **approved**. Blocks are in
 `docs/WORLD-RULES.md`.
 
+## Feature card template (approved 19 Nov)
+
+Every feature card answers: 1 Why. 2 How it works (start to finish). 3 Get
+it (start, unlock, buy, win). 4 Lose or keep (death, theft, leaving).
+5 Where it works and where not (minigames, home islands, water). 6 Screen
+(what shows on screen or in the watch). 7 Works with (coins, shop, hits...).
+8 Online (what changes with other players). 9 Saved (remembered between
+sessions). 10 Edge cases (tight space, mid-air, full inventory). 11 Movements
+needed (go into the movement plan). 12 Numbers to set later (prices,
+timings, limits). The cards below are being redone with it, one at a time.
+
 ## A. Travel and home
 
 1. **Watch door** (approved 19 Nov): a shortcut to islands and minigames
