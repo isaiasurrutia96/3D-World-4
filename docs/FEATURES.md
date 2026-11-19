@@ -51,8 +51,11 @@ noted, not approved yet. Each one gets its own card, approved one at a time
    watch door, sports gear (clubs, balls, bat, cue), cosmetics, home-island
    land and game kits. Items lost on death show first for easy rebuying.
    Prices set later. Bought items go straight into his item pull-out.
-7. **Pull out any item anywhere** (idea, like GTA): a skateboard, or a golf
-   club and ball to hit from any block, even a cloud.
+7. **Item pull-out** (approved 19 Nov, like GTA): hold a button, an item
+   wheel appears, pick an item and it is in his hands. Holds everything he
+   owns and carries (rides, sports gear, the watch door). Works anywhere,
+   e.g. a golf club and ball to hit from any block, even a cloud. One item
+   in hand at a time. Not during minigames (they give him the gear).
 8. **Losing loot when you die** (idea): decide later.
 
 ## C. Riding
