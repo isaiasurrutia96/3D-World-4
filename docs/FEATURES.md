@@ -261,7 +261,22 @@ timings, limits). The cards below are being redone with it, one at a time.
     11. Movements: none new.
     12. Numbers later: part stats, prices, size of the advantage, how many
         karts he can keep.
-19. **Outfit customizing** (idea, 19 Nov): customize his outfit.
+19. **Outfit customizing** (approved 19 Nov, detailed)
+    1. Why: his avatar looks like his own; shows off what he has won.
+    2. How: open the wardrobe at his house; pick shirt, pants, shoes, hat,
+       accessories, colours; preview on the avatar; save.
+    3. Get it: basic outfits from the start; more from the shop and prizes.
+    4. Lose or keep: never lost on death; cosmetic only.
+    5. Where: change only at his house (home island).
+    6. Screen: wardrobe with a turning preview of his avatar.
+    7. Works with: shop, prizes, coins, home storage.
+    8. Online: others see his outfit.
+    9. Saved: outfits owned, saved looks.
+    10. Edge cases: clothes must fit the moving body without poking through
+        when he bends (checked like the avatar's joints).
+    11. Movements: none new.
+    12. Numbers later: prices, how many saved looks.
+    The clothes' look is designed by the owner with Codex.
 
 ## C. Riding
 
