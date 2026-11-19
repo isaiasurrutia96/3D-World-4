@@ -35,7 +35,7 @@ world must pass it), `src/world/world.ts` (a world is a list of parts).
 14. Billiards (pool).
 15. Obstacle course.
 16. Long jump and high jump.
-17. Diving off a high board.
+17. Diving off a high board: just for fun, not a minigame (owner, 19 Nov).
 18. Ice skating race.
 19. Skiing down a slope (pushing with poles to go faster).
 20. Swimming for exploring and travel, like a lazy river, partly through

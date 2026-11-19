@@ -39,7 +39,7 @@ noted, not approved yet. Each one gets its own card, approved one at a time
    with underwater caves and secrets (like coins). Swim gear, bought or won
    and pulled out even while swimming: a snorkel with an air tank (stay under
    longer) and flippers (swim faster). Other items cannot be pulled out while
-   swimming.
+   swimming. Diving boards around the world, just for fun (not a minigame).
 
 16. **Big connected world** (approved 19 Nov): every island and game can be
     reached by walking, driving or swimming; the watch door is a shortcut.

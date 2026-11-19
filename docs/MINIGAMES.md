@@ -1,6 +1,6 @@
 # Minigames (19 Nov 2026)
 
-20 minigames. Every one follows the shared template (A); each game's own
+19 minigames. Every one follows the shared template (A); each game's own
 card (C) covers only what is unique to it. Status per card: proposed or
 approved. The owner wants to revisit the feature cards (docs/FEATURES.md)
 for more detail later.
@@ -201,10 +201,13 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 2. Blocks: concrete or court-floor runway, sand pit. Objects: foul-line
    board, bar and stands, landing mat. Prizes: any prize.
 
-## D. The 20 minigames
+### 17. Diving: not a minigame (owner, 19 Nov). Diving boards are just for
+fun in the free world (see docs/FEATURES.md).
+
+## D. The 19 minigames (diving is just for fun)
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
 6. Basketball. 7. Football throwing. 8. Soccer penalties. 9. Baseball
 batting. 10. Archery. 11. Darts. 12. Frisbee golf. 13. Skee-ball.
 14. Billiards. 15. Obstacle course. 16. Long jump and high jump.
-17. Diving. 18. Ice skating race. 19. Skiing. 20. Skate racing.
+(17. Diving: just for fun.) 18. Ice skating race. 19. Skiing. 20. Skate racing.
