@@ -143,3 +143,19 @@ test('Ray-measured cross-sections of the mesh show the rounded radius, not just 
  }
  probe.material.dispose();
 });
+
+test('Showing the original ball seats it at the exact mold center without changing either part',()=>{
+ const empty=createFootStudy(),seated=createFootStudy({ball:true});
+ assert.equal(seated.group.children.length,3);assert(seated.ankleBall.visible);
+ for(const name of ['foot','calf']){
+  for(const key of ['position','normal'])assert.deepEqual(seated[name].geometry.attributes[key].array,empty[name].geometry.attributes[key].array);
+  assert.deepEqual(seated[name].geometry.index.array,empty[name].geometry.index.array);
+  assert.deepEqual(seated[name].matrixWorld.toArray(),empty[name].matrixWorld.toArray());
+ }
+ const center=seated.foot.localToWorld(new T.Vector3(...seated.foot.userData.socketMold.center));
+ assert(seated.ankleBall.getWorldPosition(new T.Vector3()).distanceTo(center)<1e-12);
+ assert.equal(seated.ankleBall.geometry.parameters.radius,ANKLE_RADIUS);
+ assert.equal(seated.ankleBall.material,seated.foot.material);
+ const before=new T.Box3().setFromObject(empty.group),after=new T.Box3().setFromObject(seated.group);
+ assert(before.min.distanceTo(after.min)<1e-9&&before.max.distanceTo(after.max)<1e-9,'Existing view framing must remain unchanged');
+});

@@ -8,7 +8,7 @@ try{
  const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;stage.prepend(renderer.domElement);
  const scene=new T.Scene();scene.background=new T.Color('#405363');
- const study=createFootStudy(),{foot,calf}=study;scene.add(study.group);
+ const study=createFootStudy({ball:true}),{foot,calf,ankleBall}=study;scene.add(study.group);
  const ground=new T.Mesh(new T.PlaneGeometry(20,20),new T.MeshStandardMaterial({color:'#405363',roughness:1,metalness:0}));
  ground.name='inspection-floor';ground.rotation.x=-Math.PI/2;ground.position.set(0,-.001,.09);ground.receiveShadow=true;scene.add(ground);
  scene.add(new T.HemisphereLight(0xffffff,0xa8a89c,1.9));
@@ -28,7 +28,7 @@ try{
  function resize(){const {width,height}=stage.getBoundingClientRect();camera.aspect=width/height;camera.fov=camera.aspect<.7?52:38;camera.updateProjectionMatrix();renderer.setSize(width,height);view(currentView);}
  new ResizeObserver(resize).observe(stage);resize();view('angle');
  renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
- window.footLab={foot,calf,study,scene,camera,controls,ground,view,getState:()=>({stage:'foot-socket'})};
+ window.footLab={foot,calf,ankleBall,study,scene,camera,controls,ground,view,getState:()=>({stage:'foot-socket'})};
  installTestLabScene({scene,camera,renderer,floors:[ground],getTarget:()=>controls.target,updateControls:()=>controls.update()});
  window.footLabReady=true;loading.hidden=true;
 }catch(error){console.error(error);loading.textContent='The foot could not open. Please reload to try again.';}

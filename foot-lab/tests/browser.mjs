@@ -93,12 +93,12 @@ const base=`http://127.0.0.1:${server.address().port}`;
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const errors=[],shots=process.env.FOOT_LAB_SHOTS;if(shots)await mkdir(shots,{recursive:true});
 async function fingerprint(page){return page.evaluate(()=>{
- const parts=[footLab.foot,footLab.calf];
+ const parts=[footLab.foot,footLab.calf,footLab.ankleBall];
  return parts.map(part=>({positions:Array.from(part.geometry.attributes.position.array),normals:Array.from(part.geometry.attributes.normal.array),position:part.position.toArray(),rotation:part.rotation.toArray(),scale:part.scale.toArray()}));
 });}
 async function framing(page){return page.evaluate(()=>{
  const {foot,calf,camera}=footLab;camera.updateMatrixWorld(true);let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity,minZ=Infinity,maxZ=-Infinity;
- const point=foot.position.clone();for(const part of [foot,calf]){
+ const point=foot.position.clone();for(const part of [foot,calf,footLab.ankleBall]){
   part.updateWorldMatrix(true,false);const positions=part.geometry.attributes.position;
   for(let i=0;i<positions.count;i++){
    point.fromBufferAttribute(positions,i);part.localToWorld(point);point.project(camera);
@@ -116,11 +116,15 @@ try{
  const page=await browser.newPage({viewport:{width:1200,height:900}});page.on('pageerror',e=>errors.push(e.message));
  assert.equal((await page.goto(base+'/foot-lab/')).status(),200);
  await page.waitForFunction(()=>window.footLabReady,undefined,{timeout:60000});
- assert.equal(await page.evaluate(()=>['rig','ankleBall','applyPose','inspectParts'].some(key=>key in footLab)),false,'Movement or ankle ball API is still present');
+ assert.equal(await page.evaluate(()=>['rig','applyPose','inspectParts'].some(key=>key in footLab)),false,'Movement or ankle ball API is still present');
  assert.equal(await page.locator('[data-pose],[data-parts],input[type="range"],#play').count(),0,'Old joint or movement controls remain');
  assert.equal(await page.evaluate(()=>{
   const meshes=[];footLab.foot.parent.traverse(part=>{if(part.isMesh)meshes.push(part);});return meshes.length;
- }),2,'Study scene gained an extra joint or other part');
+ }),3,'Study must contain the foot, separate calf and seated ankle ball');
+ assert.equal(await page.evaluate(()=>{
+  const {foot,ankleBall}=footLab,center=foot.position.clone().set(...foot.userData.socketMold.center);foot.localToWorld(center);
+  return ankleBall.visible&&ankleBall.position.distanceTo(center)<1e-12&&ankleBall.geometry.parameters.radius===.115&&ankleBall.material===foot.material;
+ }),true,'Original ball must sit at the stored socket center');
  const initial=await fingerprint(page);
  assert.equal(await page.evaluate(()=>footLab.getState().stage),'foot-socket');
  assert.equal(await page.evaluate(()=>footLab.foot.visible&&footLab.calf.visible),true);
@@ -168,6 +172,9 @@ try{
  await phone.waitForFunction(before=>footLab.camera.position.toArray().some((v,i)=>Math.abs(v-before[i])>.01),before);
  await phone.getByRole('button',{name:'Angle',exact:true}).tap();
  assert.deepEqual(await fingerprint(phone),phoneInitial,'Phone inspection changed the original geometry');
+ await phone.goto(base+'/dist/test-lab/?test=feet');await phone.waitForFunction(()=>window.testLabReady,undefined,{timeout:60000});
+ assert(await phone.getByRole('button',{name:'Motion',exact:true}).isDisabled(),'Ball placement must not add motion controls');
+ assert.equal(await phone.evaluate(()=>{const w=testLab.frame.contentWindow,{foot,ankleBall,study}=w.footLab;const center=foot.position.clone().set(...foot.userData.socketMold.center);foot.localToWorld(center);return study.group.children.length===3&&ankleBall.visible&&ankleBall.position.distanceTo(center)<1e-12;}),true,'Shared viewer must show the ball seated in the same socket');
  await phoneContext.close();assert.deepEqual(errors,[]);
- console.log(JSON.stringify({studyMeshes:2,moldedFootSocket:true,moldBallRadius:mold.ballRadius,ankleCenterHeight:mold.center[1],refinedVertices:footPositions.count,socketVertices,contactVertices:contact.length,cavityBottom,maximumSocketDepth,maximumMoldRadiusError,maximumFilletRadiusError,rawCalfExact:true,separation,noBallOrCalfSocket:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
+ console.log(JSON.stringify({studyMeshes:3,ballSeated:true,moldedFootSocket:true,moldBallRadius:mold.ballRadius,ankleCenterHeight:mold.center[1],refinedVertices:footPositions.count,socketVertices,contactVertices:contact.length,cavityBottom,maximumSocketDepth,maximumMoldRadiusError,maximumFilletRadiusError,rawCalfExact:true,separation,noCalfSocket:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

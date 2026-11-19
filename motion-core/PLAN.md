@@ -285,3 +285,10 @@ Fundamental layer: socket-roundover.js samples original geometry/smooth source t
 Stop for owner visual review after live verification. Remaining calf-socket/ball-placement refinements still precede the next checkpoint.
 
 Final checks: full production build and all6 study tests pass. Focused browser suite passes desktop and3 phone layouts, actual sphere and fillet radius checks, source outline/sole/toes/raw calf preservation, views/floor/orbit/reset/framing, with no errors. The new rim contains real circular arc vertices (maximum radius error7.44nm); independent ray sections verify the rounded shape in the triangle mesh. Internal close-up/Top/Angle inspection confirms the broad curved lip. Same ball size, ankle height and cavity bottom are preserved. No checkpoint yet.
+
+
+### Place the ankle ball in the socket — owner go, 19 Nov 2026
+
+Owner requested placing the ball in the socket while leaving everything else. The live viewer opts into createFootStudy({ball:true}); add the original115mm-radius sphere using the existing foot material. Transform the exact stored local mold center through the foot's matrix into the study group; keep socket, foot, raw calf and all transforms fixed. Default geometry tests can still inspect the empty socket. No new motion, calf socket or checkpoint. A regression compares foot/calf position-normal-index buffers and world matrices with/without the ball, verifies exact sphere center/radius/material and unchanged overall framing bounds.
+
+Validation:7 Node study checks and full production build pass. Placement regression confirms foot/rim/calf buffers and world matrices remain bit-identical and camera framing bounds stay identical. Focused desktop/three-phone-layout browser checks and the nested universal phone viewer pass with no errors; exact23cm ball is visible at the mold center, Motion remains disabled. Internal close-up/Angle inspection completed. Publish only this placement update; no checkpoint yet.
