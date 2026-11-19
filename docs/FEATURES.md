@@ -32,8 +32,14 @@ noted, not approved yet. Each one gets its own card, approved one at a time
    respawns at the last safe spot (he does not die in a kart). Nobody can
    punch him while driving; a kart hitting someone sends them ragdolling,
    then they get back up. Hop out anytime; the kart goes back into his items.
-4. **Swimming travel** (idea): a lazy river, partly through tunnels, to get
-   around the islands.
+4. **Swimming travel** (approved 19 Nov): a lazy river with a current
+   carries him along, partly through tunnels. Swims slower than walking;
+   dives under and comes back up. Breath meter underwater; running out
+   drowns him (death). Underwater: shades of blue with bubbles; big ponds
+   with underwater caves and secrets (like coins). Swim gear, bought or won
+   and pulled out even while swimming: a snorkel with an air tank (stay under
+   longer) and flippers (swim faster). Other items cannot be pulled out while
+   swimming.
 
 16. **Big connected world** (idea): islands linked by walking bridges and
     connecting roads; every game can be reached by walking or driving.
@@ -52,7 +58,7 @@ noted, not approved yet. Each one gets its own card, approved one at a time
     coins. A short prize reveal after the win.
 6. **Shop** (approved 19 Nov): opened from the watch, plus a few shop
    buildings around the world. Sells rides (skateboard), the
-   watch door, sports gear (clubs, balls, bat, cue), cosmetics, home-island
+   watch door, swim gear, sports gear (clubs, balls, bat, cue), cosmetics, home-island
    land and game kits. Items lost on death show first for easy rebuying.
    Prices set later. Bought items go straight into his item pull-out.
 7. **Item pull-out** (approved 19 Nov, like GTA): hold a button, an item
