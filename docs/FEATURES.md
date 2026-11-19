@@ -175,11 +175,25 @@ timings, limits). The cards below are being redone with it, one at a time.
         duplicate → coins.
     11. Movements: none.
     12. Numbers later: drop chance, rarity.
-6. **Shop** (approved 19 Nov): opened from the watch, plus a few shop
-   buildings around the world. Sells rides (skateboard), the
-   watch door, swim gear, sports gear (clubs, balls, bat, cue), cosmetics, home-island
-   land and game kits. Items lost on death show first for easy rebuying.
-   Prices set later. Bought items go straight into his item pull-out.
+6. **Shop** (approved 19 Nov, detailed)
+   1. Why: where coins become items, land and kits.
+   2. How: open it in the watch or walk into a shop building; browse by
+      category; buy; items go to his items (land and kits to his home).
+   3. Get it: from the start.
+   4. Lose or keep: purchases follow the death rule; items lost on death
+      show first for quick rebuying.
+   5. Sells: skateboard, karts, watch door, swim gear, sports gear (clubs,
+      balls, bat, cue, paint markers), outfits and cosmetics, kart parts,
+      home-island land, game kits.
+   6. Screen: categories, prices, coin count, a "rebuy" row at the top.
+   7. Works with: coins, item wheel, home island, outfits, custom karts,
+      levels (some items unlock at higher levels).
+   8. Online: same shop for all; no trading between players for now.
+   9. Saved: everything bought.
+   10. Edge cases: not enough coins → how many more; owned → marked owned;
+       level-locked → shows the level needed.
+   11. Movements: none.
+   12. Numbers later: every price, level locks.
 7. **Item pull-out** (approved 19 Nov, like GTA): hold a button, an item
    wheel appears, pick an item and it is in his hands. Holds everything he
    owns and carries (rides, sports gear, the watch door). Works anywhere,
