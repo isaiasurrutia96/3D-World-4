@@ -164,6 +164,15 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 2. Blocks: fairway, grass, trees and rocks as obstacles. Objects: frisbees,
    baskets (small concrete blocks), tee markers. Prizes: any prize.
 
+### 13. Skee-ball (approved 19 Nov)
+1. 9 balls each; aim and power (controls chosen after testing); the ball
+   rolls up the lane and hops off the ramp. Rings 10–50, two corner holes
+   100. Highest score wins; side by side on own lanes. Arcade tickets by
+   score turn into coins.
+2. Blocks: bowling lane (rolling lane), wood or concrete machine body.
+   Objects: skee-balls, scoring rings, ball return. Prizes: any prize; also
+   a home kit. Where: arcade buildings in town.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
