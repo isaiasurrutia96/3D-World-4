@@ -156,6 +156,14 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 2. Blocks: wood or concrete wall, indoor rooms. Objects: dartboard, darts.
    Prizes: any prize. Also a home-island game kit.
 
+### 12. Frisbee golf (approved 19 Nov)
+1. 9 holes per course; metal baskets instead of cups. Turns, throws
+   counted. Aim, power and curve (controls chosen after testing). Fewest
+   total throws wins. Water or out of bounds: +1, thrown again from near
+   where it went out. Ace: extra coins.
+2. Blocks: fairway, grass, trees and rocks as obstacles. Objects: frisbees,
+   baskets (small concrete blocks), tee markers. Prizes: any prize.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
