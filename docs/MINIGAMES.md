@@ -35,7 +35,20 @@ wrong-way warning, lap times, respawn at the last checkpoint.
 
 ## C. Game cards
 
-(Filled in one at a time.)
+### 1. Kart racing (approved 19 Nov)
+Owner of the racing code: Codex (racing-core). Controls as in the other repo.
+1. Grid: up to 8 karts; NPCs fill empty spots. Start lights red, red, red,
+   green. 3 laps through checkpoints. First across the line after 3 laps wins.
+2. Mystery boxes on the track (Codex builds and refines after the avatar
+   visuals): boost, shield, torpedo, a smooth oval rock, banana; the player in
+   last place can get a shock that hits everyone else. Legal note
+   (docs/game-dev/19-legal.md): give items our own names and looks so the set
+   does not read as a copy of another kart game. Whether racers also start
+   with nitro charges (section B) is settled with Codex.
+3. Cutting across grass allowed but slow; bumping allowed.
+4. Blocks: road, concrete with painted curbs, checkered start/finish, grass
+   and dirt off track. Objects: turn arrow signs, start lights, barriers,
+   mystery boxes. Prizes: kart colours and parts. Where: race islands.
 
 ## D. The 20 minigames
 
