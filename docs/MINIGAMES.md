@@ -232,6 +232,22 @@ fun in the free world (see docs/FEATURES.md).
 2. Blocks: road, concrete, wood ramps and rails (grindable), wedges.
    Prizes: any prize.
 
+### 21. Paintball (approved 19 Nov)
+Shooter-style team play with paint only (our own names, not another game's).
+1. Team match (build first): two teams on a small arena, cover built from
+   blocks. Splatted players respawn after a few seconds on their side. First
+   team to a set number of splats, or the leader at time, wins. NPCs fill
+   teams. Players can juke to dodge.
+2. Big island survival (later, needs online): everyone drops onto a large
+   island, finds markers and gear, a shrinking zone pushes everyone
+   together, no respawns, last team standing wins. Build the foundation so
+   it can be added.
+3. Markers vary (fast-firing, long-range, splash). Aim without a guide
+   (controls chosen after testing). No punching during the game; paint
+   washes off after.
+4. Blocks: concrete, wood, decor for cover; grass or dirt field. Objects:
+   markers, paint pellets. Prizes: any prize, plus marker paint colours.
+
 ## E. Idea: open-world races with spectators (idea, 19 Nov)
 Some minigames (e.g. skate racing) run inside the open world, where other
 online players can watch and even intervene. Which games: decided later.
