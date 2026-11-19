@@ -41,8 +41,12 @@ noted, not approved yet. Each one gets its own card, approved one at a time
    longer) and flippers (swim faster). Other items cannot be pulled out while
    swimming.
 
-16. **Big connected world** (idea): islands linked by walking bridges and
-    connecting roads; every game can be reached by walking or driving.
+16. **Big connected world** (approved 19 Nov): every island and game can be
+    reached by walking, driving or swimming; the watch door is a shortcut.
+    Walking bridges and connecting roads between islands. Each island has
+    its own theme (town, forest, canyon, snow, volcano, tropical). Minigames
+    spread across islands to match their theme. Nearby islands load as he
+    gets close (no loading screen). Start small (a few islands), grow later.
 
 ## B. Money and items
 
