@@ -11,12 +11,13 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-function partsState(){const {group,ball,hand,forearm}=wristLab;return {parts:group.children.length,ballRadius:ball.geometry.parameters.radius,diameterRatio:ball.userData.diameterRatio,positions:[forearm.position.toArray(),ball.position.toArray(),hand.position.toArray()],buffers:group.children.map(p=>Object.values(p.geometry.attributes).map(a=>[a.count,a.version]))};}
+function partsState(){const {group,ball,hand,forearm}=wristLab;return {parts:group.children.length,ballRadius:ball.geometry.parameters.radius,diameterRatio:ball.userData.diameterRatio,forearmDepth:forearm.geometry.userData.wristMold?.depthFraction,handDepth:hand.geometry.userData.wristMold?.depthFraction,positions:[forearm.position.toArray(),ball.position.toArray(),hand.position.toArray()],buffers:group.children.map(p=>Object.values(p.geometry.attributes).map(a=>[a.count,a.version]))};}
 function framed(){const {group,camera}=wristLab;group.updateMatrixWorld(true);camera.updateMatrixWorld(true);let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;const point=group.position.clone();for(const part of group.children){const p=part.geometry.attributes.position;for(let i=0;i<p.count;i++){point.fromBufferAttribute(p,i).applyMatrix4(part.matrixWorld).project(camera);minX=Math.min(minX,point.x);maxX=Math.max(maxX,point.x);minY=Math.min(minY,point.y);maxY=Math.max(maxY,point.y);}}return minX>-.98&&maxX<.98&&minY>-.98&&maxY<.98;}
 try{
  const page=await browser.newPage({viewport:{width:1200,height:900}});page.on('pageerror',e=>errors.push(e.message));
  await page.goto(base+'/wrist-lab/',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.wristLabReady,undefined,{timeout:60000});
- const initial=await page.evaluate(partsState);assert.equal(initial.parts,3);assert.equal(initial.diameterRatio,.9);
+ const initial=await page.evaluate(partsState);assert.equal(initial.parts,3);assert.equal(initial.diameterRatio,.9);assert.equal(initial.forearmDepth,1/3);assert.equal(initial.handDepth,1/6);
+ await page.waitForTimeout(400);assert.deepEqual(await page.evaluate(partsState),initial,'The fitted parts must remain still');
  for(const name of ['Front','Side','Back','Top','Angle']){
   await page.getByRole('button',{name,exact:true}).click();assert(await page.evaluate(framed),'Desktop framing '+name);
   if(shots&&['Front','Angle'].includes(name))await page.screenshot({path:resolve(shots,'desktop-'+name.toLowerCase()+'.png')});
@@ -40,5 +41,5 @@ try{
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});for(let i=1;i<=7;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+i*9,y}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  await frame.waitForFunction(before=>wristLab.camera.position.toArray().some((v,i)=>Math.abs(v-before[i])>.01),before);
  assert.deepEqual(await frame.evaluate(partsState),saved,'Touch inspection must not change geometry or placement');
- assert.deepEqual(errors,[]);await context.close();console.log(JSON.stringify({parts:3,originalShapes:true,diameterRatio:.9,desktop:true,mobileLayouts:3,framing:true,touchOrbit:true,floorInspection:true,motionDisabled:true,errors}));
+ assert.deepEqual(errors,[]);await context.close();console.log(JSON.stringify({parts:3,staticFit:true,forearmDepth:1/3,handDepth:1/6,diameterRatio:.9,desktop:true,mobileLayouts:3,framing:true,touchOrbit:true,floorInspection:true,motionDisabled:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

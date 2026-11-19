@@ -324,4 +324,16 @@ All3 numerical checks pass before the new wrist-lab viewer build. Full productio
 
 Final viewer checks pass desktop and3 phone layouts, all five views and framing, real touch orbit, floor inspection, unchanged geometry/placement and disabled movement controls, with no page errors. Internal Front review confirms the original forearm above the separate ball and original hand. Publish only this separated-parts study for owner review.
 
+### Static wrist sockets — owner go and hand-size clarification, 19 Nov 2026
+
+Owner requested first filling/rounding the old forearm recess, then molding both sockets with the existing ball, roughly one-third captured per side. Explicitly no movement or animation. The ball is181.454mm across; the original upper palm is only113.75mm thick. On this measured constraint the owner chose a slightly larger overall hand and a shallower hand socket, preserving the skeleton.
+
+New wrist-lab/src/round-forearm.js replaces only the older wrist recess with a solid rounded elliptical cap, joining the unchanged original cylinder/elbow. mold-socket.js uses the actual accepted ankle's rolling-circle solver. Wrist rim radius5mm fits the deeper captured cap without the rejected flat cap trims. Hand grows by a2mm surface offset; mesh scale and orientation stay fixed, as do all skeleton source points. The ball and both cavity centers coincide at the existing hand.L point. This remains a standalone static study; no full-avatar mounting, hand motion or checkpoint is added.
+
+Depth correction during verification: a mold travel of one-third diameter from the rounded tip captures much less than one-third of the ball. Solve instead for the actual spherical cap captured from contact rim to pole, averaged over8 radial sections. Targets60.4845mm forearm (one-third diameter) and30.2423mm hand (one-sixth). Actual triangle-mesh ray means60.3383mm/30.2296mm; differing rim heights follow the curved outer shapes. Keep0.25mm axial probe tolerance for flat triangle chord error and an independent0.2mm all-triangle intrusion limit.
+
+All8 numerical checks pass before the visual build. Coincident centers have zero measured error; sphere/rounded rim vertex errors below5.4nm. Maximum actual triangle intrusion0.0422mm. Original baseline, upper forearm and finger-region growth checks pass; both fitted shells are closed/outward-wound/finite with positive volume. Index-only removal of existing collapsed/opposite hand faces preserves vertex numbering. Calibration uses8 sections then full256 anchors, avoiding repeated full construction during phone loading. Existing ankle helper defaults remain unchanged and are checked in the full build. Finish static desktop/phone inspection before publishing, then stop for owner feedback.
+
+Final full build, existing ankle checks and frozen integrity pass. Browser checks pass desktop and3 phone layouts, all views/framing, static placement, touch orbit and floor inspection with Motion disabled and no page errors. Internal Angle review confirms the corrected capture depth and smooth molded rims. Publish this standalone wrist fit for owner review; no further joints, full-avatar mounting or checkpoint yet.
+
 Stop after live visual review. Checkpoint remains pending the owner's final socket/ball-placement refinements.

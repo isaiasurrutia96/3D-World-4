@@ -5,7 +5,7 @@ import {createWristStudy} from './study.js';
 
 const stage=document.querySelector('#stage');
 try{
- const study=createWristStudy(),scene=new T.Scene();scene.background=new T.Color('#405363');scene.add(study.group);
+ const study=createWristStudy({stage:'molded'}),scene=new T.Scene();scene.background=new T.Color('#405363');scene.add(study.group);
  const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));stage.prepend(renderer.domElement);
  scene.add(new T.HemisphereLight(0xffffff,0xb6b2aa,2));
  for(const [color,intensity,position] of [[0xffffff,2.4,[-3,5,5]],[0xffffff,1.1,[4,1,-4]],[0xffffff,.65,[-1,-3,4]]]){const light=new T.DirectionalLight(color,intensity);light.position.set(...position);scene.add(light);}

@@ -1,6 +1,6 @@
 // Sample the actual original foot, including its asymmetric dome. Smooth
 // source normals give the tangent of that rounded surface at the contact.
-function originalSurface(geometry){
+export function originalSurface(geometry){
  const p=geometry.attributes.position,n=geometry.attributes.normal,index=geometry.index.array,grid=new Map(),cell=.015;
  for(let i=0;i<index.length;i+=3){
   const ids=Array.from(index.slice(i,i+3)),v=ids.map(j=>[p.getX(j),p.getY(j),p.getZ(j)]),[a,b,c]=v;
@@ -28,8 +28,9 @@ function originalSurface(geometry){
 // A rolling-circle fillet: its center stays one fillet radius below the outer
 // foot and exactly (ball radius + fillet radius) from the ankle-ball center.
 // Its upper arc therefore joins both surfaces tangentially, like a cube bevel.
-export function createSocketRoundover(geometry,mold){
- const sample=originalSurface(geometry),f=mold.filletRadius,R=mold.ballRadius,cy=mold.center[1],cache=new Map();let anchors=null;
+export function createSocketRoundover(geometry,mold,sample=originalSurface(geometry),anchorCount=256){
+ if(!Number.isInteger(anchorCount)||anchorCount<8||anchorCount%8)throw Error('Rounded rim anchors must be a positive multiple of eight');
+ const f=mold.filletRadius,R=mold.ballRadius,cy=mold.center[1],cache=new Map();let anchors=null;
  function profileAt(theta){
   theta=((theta%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
   if(cache.has(theta))return cache.get(theta);
@@ -68,7 +69,7 @@ export function createSocketRoundover(geometry,mold){
   return profile.centerY+Math.sqrt(Math.max(0,f*f-(r-profile.centerR)**2));
  }
  // Cardinal and diagonal sections are also exposed for geometric verification.
- anchors=Array.from({length:256},(_,i)=>profileAt(i*Math.PI*2/256));
- const sections=anchors.filter((_,i)=>i%32===0);
+ anchors=Array.from({length:anchorCount},(_,i)=>profileAt(i*Math.PI*2/anchorCount));
+ const sections=anchors.filter((_,i)=>i%(anchorCount/8)===0);
  return {profileAt,surfaceAt,sections};
 }
