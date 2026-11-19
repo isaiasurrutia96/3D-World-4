@@ -242,3 +242,15 @@ Recorded 17 November 2026.
     actually built. Claude never pushes back with "but you suggested this".
     Instead Claude confirms the change plainly, e.g. "Earlier you wanted X;
     now you want Y, correct?", then updates the notes after the owner says yes.
+
+## Plan for the movement restart (owner, 19 Nov 2026; after the jointed avatar is approved)
+
+33. Go back to the last movement state with no issues or glitches, from
+    before the owner started asking for quick visual changes. Claude finds
+    that point in the history and confirms it with the owner before
+    restoring anything.
+34. Focus hard on the code: build the foundational movements first, the ones
+    that open up the others (balance and weight shift, standing, stepping),
+    each layer solid and checked before the next.
+35. Known issue to fix: in "follow the ball", the ball is no longer centred,
+    probably since the joints were added. Check it on the new body.
