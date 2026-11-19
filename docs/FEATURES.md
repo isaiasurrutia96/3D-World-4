@@ -40,17 +40,31 @@ timings, limits). The cards below are being redone with it, one at a time.
    11. Movements: opening a door, walking through.
    12. Numbers later: price, space needed, how long it stays open.
    The watch's look is designed by the owner with Codex.
-2. **Home island** (approved 19 Nov): his own place to store stuff and
-   build. Unlocked by playing (how much: open). Starts small and plain
-   (grass, dirt, bedrock). The one place he can add and break blocks
-   (rulebook blocks only; must pass the world checker). Stored items are
-   safe when he dies. More coins = more he can do: buy land to expand it,
-   build his own tracks and skateparks from blocks, and buy ready-made game
-   kits for fun (bowling alley, hoop, pool table; a home track comes with a
-   start/finish kit). Players cannot design their own minigame rules.
-   He reaches it through the watch door or from the menu screen. Friends:
-   invited through an option in the watch; other players can only enter
-   through his door. Size limit: decided later, maybe by device.
+2. **Home island** (approved 19 Nov, detailed)
+   1. Why: his own place to store stuff, build and show off; a goal.
+   2. How: unlock it; a small plain island (grass, dirt, bedrock) appears.
+      Reached only by the watch door or the menu screen (no bridges or
+      roads). Build, place game kits, store items; buy land to expand.
+   3. Get it: unlocked around level 3.
+   4. Lose or keep: never lost; stored items safe when he dies.
+   5. Where: no stealing on home islands. Build mode: the avatar disappears
+      and he builds freely with a camera, any block anywhere, plus big
+      shapes (a whole wall or floor slab at once).
+   6. Screen: build-mode menu (blocks, big shapes, colours, paint, kits),
+      storage chest, land expansion in the watch.
+   7. Works with: coins, shop (land, kits), watch-door invites, rulebook
+      and world checker (every build must pass).
+   8. Online: friends visit only by invite; he can zap a door to wherever
+      the friend is and they walk through. He chooses whether guests can
+      build, hit or just look.
+   9. Saved: every block placed, kits, stored items, land size.
+   10. Edge cases: a build that fails the checker will not place (message
+       says why); storage full → message; a friend inside when he leaves is
+       sent back to their last spot.
+   11. Movements: none for building (avatar hidden).
+   12. Numbers later: land prices, size limits, storage size. Which devices
+       can run the full game: decided later (older laptops may not).
+   Players cannot design their own minigame rules; game kits are for fun.
 3. **Free-roam driving** (approved 19 Nov): a kart from the shop or a
    prize, pulled out from the item wheel. Drives on any ground it can reach;
    each block's grip decides speed and sliding. Into water or lava: the kart
@@ -103,6 +117,10 @@ timings, limits). The cards below are being redone with it, one at a time.
    the last safe spot. Stealing: a punch while he holds an item (e.g. a
    club) knocks it out of his hands; it drops and anyone can grab it. No
    stealing during minigames.
+
+18. **Custom kart building** (idea, 19 Nov): build and customize his own
+    go-kart.
+19. **Outfit customizing** (idea, 19 Nov): customize his outfit.
 
 ## C. Riding
 
