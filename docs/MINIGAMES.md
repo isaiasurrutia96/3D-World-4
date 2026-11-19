@@ -97,6 +97,17 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
    pins, balls (weights, colours). Prizes: ball colours and designs. Where:
    town alleys; also a home-island game kit.
 
+### 6. Basketball, shooting hoops (approved 19 Nov)
+1. 60-second rounds; everyone shoots at once on their own hoop, side by side
+   (arcade style). Pick up a ball from the rack, aim, shoot with a power and
+   timing meter. 2 points close, 3 from behind the 3-point line. Highest
+   score wins.
+2. Money ball (special colour) is worth double; 3 in a row starts a short
+   bonus streak; the last 10 seconds count extra.
+3. Blocks: court floor indoors, concrete outdoors; hoops and backboards built
+   from small concrete blocks. Objects: basketballs, rack, net. Prizes: ball
+   designs, outfits. Where: indoor and outdoor courts; also a home kit.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
