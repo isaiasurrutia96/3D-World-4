@@ -147,7 +147,8 @@ timings, limits). The cards below are being redone with it, one at a time.
       prizes, arcade tickets, small amounts hidden around the world, and a
       few coins for cool moments in the free world (a skateboard trick,
       hitting a target, shooting a hoop).
-   4. Lose or keep: always kept; never lost on death or stolen.
+   4. Lose or keep: kept on death and never stolen. One exception: a few
+      coins are lost when knocked down in a fight (see Hits).
    5. Where: earned anywhere; spent in the shop, watch, home build mode.
    6. Screen: coin count in a corner and in the watch; a +coins pop-up.
    7. Works with: shop, prizes, home-island land, game kits, levels.
@@ -272,15 +273,28 @@ timings, limits). The cards below are being redone with it, one at a time.
 
 ## E. Messing around
 
-13. **Hits** (approved 19 Nov): punch, kick, throw a ball at someone, or
-    swing a held item (club, bat, cue, skateboard). The person stumbles; a
-    hard hit knocks them down; they get back up (no death, no damage). A
-    swing beats a punch; a punch knocks an item out of someone's hands and
-    anyone can grab it. Not during minigames, and not on someone's home
-    island unless its owner allows it. Spam guard: about a second between
-    hits from the same player, plus a moment after getting up when he cannot
-    be knocked down again (no stun-locking). He can juke (dodge) a hit; the
-    juke itself is in the movement plan. Movements need balance first.
+13. **Hits** (approved 19 Nov, detailed)
+    1. Why: funny random fun, and real fights between players who want them.
+    2. How: any two or more players (or NPCs) can fight: punch, kick, throw a
+       ball, swing a held item, dodge (juke) and counter. The first to take a
+       set number of hits is knocked down for a second and loses a few coins.
+    3. Get it: always on.
+    4. Lose or keep: no damage, no death; a few coins lost on a knock-down;
+       a punch knocks a held item loose (anyone can grab it).
+    5. Where: anywhere, but not while a minigame is in progress. Home
+       islands: only if the owner allows it.
+    6. Screen: a small hit counter during a fight.
+    7. Works with: items (a swing beats a punch), losing loot, karts (a kart
+       hit sends people ragdolling), coins.
+    8. Online: players and NPCs; spam guard (about a second between hits
+       from the same player, plus a moment after getting up when he cannot
+       be knocked down again).
+    9. Saved: nothing.
+    10. Edge cases: hit near an edge → can fall off (respawns nearby); no
+        hits underwater; holding nothing → just stumbles.
+    11. Movements: punch, kick, throw, swing, dodge, counter, stumble,
+        knock-down, get up, ragdoll (all after balance).
+    12. Numbers later: hits for a knock-down, coins lost, spam-guard timing.
 
 ## F. People
 
