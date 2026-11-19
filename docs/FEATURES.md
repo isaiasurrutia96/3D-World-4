@@ -298,13 +298,25 @@ timings, limits). The cards below are being redone with it, one at a time.
 
 ## F. People
 
-14. **Online players and NPCs** (approved 19 Nov): meet other players in
-    the free world; race, play minigames and hit each other. Home islands:
-    visitors only through the owner's watch invite. NPCs walk and run
-    around the world, are targets for football throws, and are opponents
-    when no players are around. Minigames: single player against NPCs, or
-    multiplayer with friends. Build order: single player first; online
-    later (it needs a server).
+14. **Online players and NPCs** (approved 19 Nov, detailed)
+    1. Why: the world feels alive; friends to race, play and fight with.
+    2. How: log in, appear in the shared world, see nearby players; play
+       minigames, race, fight, hang out. NPCs walk, run and play (targets
+       for throws, opponents when no players are around).
+    3. Get it: single player first; online later (needs a server). Build a
+       solid game first, ready for online players to join.
+    4. Lose or keep: leaving mid-minigame counts as last; an NPC takes over.
+    5. Where: the shared world and minigames; home islands only by invite.
+    6. Screen: names above heads, a friends list in the watch, invite pop-ups.
+    7. Works with: watch (invites, door to a friend), minigame lobbies, hits,
+       the spectators idea.
+    8. Online: quick text or emote chat; block or report players.
+    9. Saved: friends list, blocked players.
+    10. Edge cases: a disconnect → avatar disappears, an NPC takes the
+        minigame spot; crowded areas → far players drawn simpler.
+    11. Movements: emotes (wave, dance, cheer).
+    12. Numbers later: about 100–200 players per world (later); players per
+        minigame; server costs.
 
 ## G. Next
 
