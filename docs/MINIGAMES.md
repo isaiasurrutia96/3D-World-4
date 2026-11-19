@@ -27,6 +27,7 @@ for more detail later.
     performs each movement is tested on its own.
 14. Controls: the owner picks the keys or buttons for power and aim after
     testing, maybe not the traditional way. Cards do not lock in controls.
+15. No aiming guide lines in (almost) any aiming game, to feel more real.
 
 Racing games only (karts, skate racing, ice skating, skiing): checkpoints,
 wrong-way warning, lap times, respawn at the last checkpoint.
@@ -172,6 +173,15 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 2. Blocks: bowling lane (rolling lane), wood or concrete machine body.
    Objects: skee-balls, scoring rings, ball return. Prizes: any prize; also
    a home kit. Where: arcade buildings in town.
+
+### 14. Billiards, pool (approved 19 Nov)
+1. 8-ball: solids or stripes, then the 8-ball last. Keep shooting while
+   sinking your own balls; a miss passes the turn. Aim the cue, power and
+   spin (controls chosen after testing); no guide line. Fouls (cue ball sunk,
+   wrong ball first): the other player places the cue ball anywhere. Sinking
+   the 8-ball early loses. 2 players (friend or NPC).
+2. Blocks: wood or concrete room. Objects: pool table, cue, 16 balls.
+   Prizes: any prize; also a home kit.
 
 ## D. The 20 minigames
 
