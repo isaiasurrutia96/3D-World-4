@@ -160,14 +160,7 @@ Balls, bowling pins and other moving objects are not made of blocks.
 4. A block's rules are the same whatever its shape.
 5. Tunnels are normal blocks with empty space inside.
 
-## G. Ideas to remember (not built)
+## G. Ideas
 
-1. Objects list (after blocks): turn arrow signs first, then hoops, pins,
-   targets. Signs and hoops are built from small concrete blocks and paint.
-2. Grab a ledge and hang; climb almost any solid block (trees and leaves
-   too). Movement step after jumping.
-3. Pull out any item anywhere (like GTA): skateboard, golf club and ball to
-   hit from any block (even a cloud).
-4. Skateboarding, maybe bikes and scooters. Drop off a cloud onto secret
-   ramps.
-5. Losing loot when you die: decide later.
+All feature ideas (watch door, home island, coins, items, riding, climbing,
+hits, objects) are in `docs/FEATURES.md`.
