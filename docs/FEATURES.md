@@ -65,12 +65,32 @@ timings, limits). The cards below are being redone with it, one at a time.
    12. Numbers later: land prices, size limits, storage size. Which devices
        can run the full game: decided later (older laptops may not).
    Players cannot design their own minigame rules; game kits are for fun.
-3. **Free-roam driving** (approved 19 Nov): a kart from the shop or a
-   prize, pulled out from the item wheel. Drives on any ground it can reach;
-   each block's grip decides speed and sliding. Into water or lava: the kart
-   respawns at the last safe spot (he does not die in a kart). Nobody can
-   punch him while driving; a kart hitting someone sends them ragdolling,
-   then they get back up. Hop out anytime; the kart goes back into his items.
+3. **Free-roam driving** (approved 19 Nov, detailed)
+   1. Why: drive anywhere, not just on tracks.
+   2. How: the kart stays parked in the world where he left it; if it is
+      too far away he zaps it next to him with the watch; hops in, drives on
+      any reachable ground; hops out and it stays parked.
+   3. Get it: a normal, slower starter kart around level 2; faster karts
+      from the shop or prizes; his custom kart later.
+   4. Lose or keep: the kart is never lost; if he dies it goes back into the
+      watch. Lava: the kart sinks and he has a few seconds to climb onto it
+      and jump to safety, or he dies. Water: kart and he respawn at the last
+      safe spot.
+   5. Where: anywhere outdoors in the big world, and on his home island,
+      including his own custom track to race on. Not indoors or during
+      non-racing minigames.
+   6. Screen: speed and a small map.
+   7. Works with: watch (zap it), shop, block grip, hits (karts send people
+      ragdolling), home-island tracks.
+   8. Online: others see him drive and see his parked kart; kart crashes
+      bump both.
+   9. Saved: karts owned, colours and parts, where it is parked.
+   10. Edge cases: no space to zap → message; flipped → rights itself;
+       stuck → respawn button.
+   11. Movements: get in, sit and steer, get out, climb onto a sinking kart
+       and jump off, ragdoll when hit.
+   12. Numbers later: grip and speed per block, kart speeds by type, how
+       long a kart takes to sink in lava.
 4. **Swimming travel** (approved 19 Nov): a lazy river with a current
    carries him along, partly through tunnels. Swims slower than walking;
    dives under and comes back up. Breath meter underwater; running out
