@@ -372,3 +372,46 @@ and framing, real touch orbit, floor inspection, static placements and
 disabled Motion controls, with no page errors. Internal Front review confirms
 the original upper arm, separate ball and approved forearm. Publish only
 this separated study for owner review; no next joint layer or checkpoint.
+
+### Wrist/elbow loading — owner go, 19 Nov 2026
+
+Diagnosed synchronous reconstruction on each visit: the wrist recalculates
+both sockets, and the elbow constructs the full wrist then discards its
+hand. Baseline Chromium local navigation-to-ready: wrist13,330ms and
+elbow11,525ms. A separate Node profile measures13,066ms for assembly/growth
+and socket work, including8,130ms for the hand socket alone.
+
+Keep both approved construction factories unchanged. New shared build-only
+baking writes content-hashed compressed assets from their results. Preserve
+every geometry attribute/index byte, exact transforms and world matrices,
+materials, runtime metadata, bounds and material sharing. Verify
+the decoded real study against the source during each page build. Live
+bundles must exclude hand construction and socket solvers. Two asset-codec
+checks also prove round-trip fidelity, stable output and rejection of corrupt
+or unsupported data before the viewer build.
+
+Use lossless Meshoptimizer0.22 vertex/triangle-index compression (matching
+Three.js's existing decoder), then gzip. No geometry simplification,
+quantization, final reordering or lossy normal filters. Restore triangle
+index rotations exactly using a compact rotation map. Omit only the large
+pre-carving sourcePositions construction reference from runtime metadata;
+the original factory and numerical tests retain it. Load asynchronously so the
+page can paint its loading state. Add desktop/phone decode-time checks to
+the existing static viewer suites. Finish full-build and browser verification
+before the public link; no visual redesign, animation or new checkpoint.
+Also measure cold startup with4x CPU slowdown and10Mbps phone downloads.
+
+Owner workflow clarification: future appearance drafts are screenshots and
+stay out of the Test Lab. This loading fix applies only to the existing
+Wrist and Elbow pages. Wait for the owner before adding any new visual study.
+
+Final verification passes: full production build, existing wrist/ankle
+geometry suites and frozen-checkpoint integrity. Both viewer suites pass
+desktop and3 phone layouts, views/framing, static parts, real touch orbit,
+floor inspection and disabled Motion controls, with no page errors.
+Cold desktop navigation-to-ready is793ms wrist and416ms elbow (versus
+13,330ms/11,525ms before). With4x CPU slowdown and10Mbps cold downloads:
+wrist6,869ms, elbow2,696ms; decoding alone2,340ms/845ms. These are measured
+Chromium checks, not promises for every phone or connection. Lossless asset
+sizes4,339,774bytes wrist and1,190,536bytes elbow. Source factories remain
+unchanged; no appearance redesign or new Test Lab section.

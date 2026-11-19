@@ -1,11 +1,11 @@
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../../src/test-lab-scene.ts';
-import {createElbowStudy} from './study.js';
+import {loadStudyAsset} from '../../src/study-asset.js';
 
 const stage=document.querySelector('#stage');
-try{
- const study=createElbowStudy(),scene=new T.Scene();scene.background=new T.Color('#405363');scene.add(study.group);
+async function openStudy(){try{
+ const study=await loadStudyAsset(__STUDY_ASSET_URL__),scene=new T.Scene();scene.background=new T.Color('#405363');scene.add(study.group);
  const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));stage.prepend(renderer.domElement);
  scene.add(new T.HemisphereLight(0xffffff,0xb6b2aa,2));
  for(const [color,intensity,position] of [[0xffffff,2.4,[-3,5,5]],[0xffffff,1.1,[4,1,-4]],[0xffffff,.65,[-1,-3,4]]]){const light=new T.DirectionalLight(color,intensity);light.position.set(...position);scene.add(light);}
@@ -25,4 +25,5 @@ try{
  window.elbowLab={...study,scene,camera,controls,view};
  installTestLabScene({scene,camera,renderer,floors:[floor],getTarget:()=>controls.target,updateControls:()=>controls.update()});
  document.querySelector('#loading').hidden=true;window.elbowLabReady=true;
-}catch(error){console.error(error);document.querySelector('#loading').textContent='The elbow study could not open. Please reload.';}
+}catch(error){console.error(error);document.querySelector('#loading').textContent='The elbow study could not open. Please reload.';}}
+openStudy();

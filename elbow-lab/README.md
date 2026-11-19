@@ -24,3 +24,10 @@ views, framing, unchanged parts, touch orbit and floor inspection.
 
 Open `/test-lab/?test=elbow`. Review these separated parts before any next
 joint-design layer or checkpoint.
+
+The live page loads a compressed, content-hashed asset instead of running
+`createElbowStudy` on the device. Build-time baking verifies every geometry
+buffer, transform, material and metadata value against that factory. Only
+the upper arm, forearm and ball are included; no hand is built at runtime.
+See `scripts/bake-study.mjs` and `src/study-asset.js`. Original source geometry
+remains editable and is rebuilt automatically when the source changes.

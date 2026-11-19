@@ -52,3 +52,23 @@ unchanged default behavior. Run `npm run build:wrist-lab`, then
 inspection and real touch orbit. Open `/test-lab/?test=wrist`.
 
 Review the fit before further refinements, mirroring or a new checkpoint.
+
+## Fast loading
+
+The live viewer loads a compressed, content-hashed study asset. The original
+factory and socket solver run only during the build and numerical checks.
+`scripts/bake-study.mjs` saves the exact attribute/index bytes, transforms,
+clay materials and runtime metadata; it decodes the result and checks them
+against the source before writing the page. The live bundle is checked to
+exclude procedural hand/socket construction. No geometry is simplified.
+The shared loader is `src/study-asset.js`; its gzip decoder ships with Three.js
+and also works without the browser's newer DecompressionStream API.
+Meshoptimizer 0.22 losslessly compresses vertex bytes and triangle indices
+before gzip, using the matching decoder already shipped with Three.js.
+Triangle compression can rotate each triangle's indices: a compact rotation
+map restores the exact original index order. There is no quantization,
+final vertex/index reordering or lossy normal filtering. The large untouched
+`wristMold.sourcePositions` construction reference stays in the source
+factory and its numerical tests, outside the runtime download.
+`npm run test:study-startup` measures cold desktop loading and a phone layout
+with a 4x CPU slowdown and a 10 Mbps download limit.

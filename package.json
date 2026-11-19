@@ -48,7 +48,9 @@
     "test:racing-lab": "node racing-lab/tests/browser.mjs",
     "test:inspection-zoom": "node --test test-lab/zoom.test.mjs",
     "build:elbow-lab": "node elbow-lab/build.mjs",
-    "test:elbow-lab": "node elbow-lab/tests/browser.mjs"
+    "test:elbow-lab": "node elbow-lab/tests/browser.mjs",
+    "test:study-assets": "node --test tests/study-asset.test.mjs",
+    "test:study-startup": "node tests/study-startup.mjs"
   },
   "dependencies": {
     "three": "0.180.0"
@@ -56,6 +58,7 @@
   "devDependencies": {
     "@types/three": "0.180.0",
     "esbuild": "0.25.12",
+    "meshoptimizer": "0.22.0",
     "playwright": "1.65.1",
     "typescript": "5.9.2",
     "vite": "7.1.5"
