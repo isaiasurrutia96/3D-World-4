@@ -148,6 +148,14 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 2. Blocks: grass or fairway range; wood or concrete target stands. Objects:
    bow, arrows, targets. Prizes: any prize.
 
+### 11. Darts (approved 19 Nov)
+1. Classic 301: count down to exactly 0; 3 darts a turn, taking turns; aim
+   and power (controls chosen after testing). Board 1–20 with double and
+   triple rings, bullseye 50. Below 0 is a bust (turn does not count).
+   Quick mode: highest score in 10 darts.
+2. Blocks: wood or concrete wall, indoor rooms. Objects: dartboard, darts.
+   Prizes: any prize. Also a home-island game kit.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
