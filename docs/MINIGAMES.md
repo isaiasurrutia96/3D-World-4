@@ -121,6 +121,14 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 3. Blocks: fairway with painted lines, concrete for stands and barrels.
    Objects: footballs, nets, barrels, receiver NPCs. Prizes: any prize.
 
+### 8. Soccer penalties (approved 19 Nov)
+1. 5 kicks each, taking turns. Aim at a spot in the goal plus power
+   (controls chosen after testing). An NPC goalie dives to save; in
+   multiplayer players take turns as kicker and goalie. Most goals wins;
+   tied: sudden death. Top-corner goals: extra coins.
+2. Blocks: fairway with painted lines; goal built from small concrete blocks.
+   Objects: soccer ball, net, goalie. Prizes: any prize.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
