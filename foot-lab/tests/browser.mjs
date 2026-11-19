@@ -11,7 +11,7 @@ import {createCharacterRig} from '../../avatar/src/reference/PlayerModel.ts';
 import {ANKLE_RADIUS,ANKLE_REST_HEIGHT} from '../../avatar/src/joints/ankle-contract.js';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
-const study=createFootStudy({ball:true,calfSocket:true}),rawFoot=createFootShape(),reference=createCharacterRig({plain:true});
+const study=createFootStudy({ball:true,calfSocket:true,seatCalf:true}),rawFoot=createFootShape(),reference=createCharacterRig({plain:true});
 const rawCalf=reference.kneeRight.children[0],meshes=[];
 study.group.traverse(part=>{if(part.isMesh)meshes.push(part);});
 assert.equal(meshes.length,3,'The study must contain foot, seated ball and calf');
@@ -82,7 +82,8 @@ study.group.updateMatrixWorld(true);
 const footBox=new T.Box3().setFromObject(study.foot),calfBox=new T.Box3().setFromObject(study.calf);
 const gaps=['x','y','z'].map(axis=>Math.max(0,footBox.min[axis]-calfBox.max[axis],calfBox.min[axis]-footBox.max[axis]));
 const separation=Math.hypot(...gaps);
-assert(separation>.005,'Foot and calf must be visibly separated');
+assert(separation>.005,'The calf shell must clear the foot shell around the ball');
+assert(study.calf.localToWorld(new T.Vector3(...calfMold.center)).distanceTo(study.ankleBall.getWorldPosition(new T.Vector3()))<1e-12,'Calf socket must be centered on the ball');
 assert(Math.abs(footBox.min.y)<1e-7,'The original foot sole must stay on the floor');
 
 const server=createServer(async(req,res)=>{
@@ -125,11 +126,15 @@ try{
  assert.equal(await page.locator('[data-pose],[data-parts],input[type="range"],#play').count(),0,'Old joint or movement controls remain');
  assert.equal(await page.evaluate(()=>{
   const meshes=[];footLab.foot.parent.traverse(part=>{if(part.isMesh)meshes.push(part);});return meshes.length;
- }),3,'Study must contain the foot, separate calf and seated ankle ball');
+ }),3,'Study must contain the foot, seated calf and ankle ball');
  assert.equal(await page.evaluate(()=>{
   const {foot,ankleBall}=footLab,center=foot.position.clone().set(...foot.userData.socketMold.center);foot.localToWorld(center);
   return ankleBall.visible&&ankleBall.position.distanceTo(center)<1e-12&&ankleBall.geometry.parameters.radius===.115&&ankleBall.material===foot.material;
  }),true,'Original ball must sit at the stored socket center');
+ assert.equal(await page.evaluate(()=>{
+  const {calf,ankleBall}=footLab,center=calf.position.clone().set(...calf.userData.socketMold.center);calf.localToWorld(center);
+  return center.distanceTo(ankleBall.getWorldPosition(center.clone()))<1e-12;
+ }),true,'Calf socket must be seated on the ball');
  const initial=await fingerprint(page);
  assert.equal(await page.evaluate(()=>footLab.getState().stage),'foot-socket');
  assert.equal(await page.evaluate(()=>footLab.foot.visible&&footLab.calf.visible),true);
@@ -181,7 +186,7 @@ try{
  assert.deepEqual(await fingerprint(phone),phoneInitial,'Phone inspection changed the original geometry');
  await phone.goto(base+'/dist/test-lab/?test=feet');await phone.waitForFunction(()=>window.testLabReady,undefined,{timeout:60000});
  assert(await phone.getByRole('button',{name:'Motion',exact:true}).isDisabled(),'Ball placement must not add motion controls');
- assert.equal(await phone.evaluate(()=>{const w=testLab.frame.contentWindow,{foot,ankleBall,study}=w.footLab;const center=foot.position.clone().set(...foot.userData.socketMold.center);foot.localToWorld(center);return study.group.children.length===3&&ankleBall.visible&&ankleBall.position.distanceTo(center)<1e-12;}),true,'Shared viewer must show the ball seated in the same socket');
+ assert.equal(await phone.evaluate(()=>{const w=testLab.frame.contentWindow,{foot,calf,ankleBall,study}=w.footLab;const center=foot.position.clone().set(...foot.userData.socketMold.center),calfCenter=calf.position.clone().set(...calf.userData.socketMold.center);foot.localToWorld(center);calf.localToWorld(calfCenter);return study.group.children.length===3&&ankleBall.visible&&ankleBall.position.distanceTo(center)<1e-12&&calfCenter.distanceTo(center)<1e-12;}),true,'Shared viewer must show both sockets centered on the original ball');
  await phoneContext.close();assert.deepEqual(errors,[]);
  console.log(JSON.stringify({studyMeshes:3,ballSeated:true,moldedFootSocket:true,moldBallRadius:mold.ballRadius,ankleCenterHeight:mold.center[1],refinedVertices:footPositions.count,socketVertices,contactVertices:contact.length,cavityBottom,maximumSocketDepth,maximumMoldRadiusError,maximumFilletRadiusError,calfSocketDepthRatio:calfMold.depthRatio,calfSocketDepth:calfMold.pressDepth,upperCalfPreserved:true,separation,calfSocket:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

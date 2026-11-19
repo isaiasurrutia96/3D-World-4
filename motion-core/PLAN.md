@@ -306,4 +306,12 @@ Internal close-up review caught a shading seam from recomputing normals across t
 
 Final focused browser checks pass desktop and3 phone layouts, all camera views, floor toggle, orbit/reset, framing and the nested universal viewer, with no page errors. Internal underside/Angle review confirms the shallow cup and smooth rim. Publish this refinement for owner review; no movement work or checkpoint yet.
 
+### Seat the calf on the original ball — owner request, 19 Nov 2026
+
+Add an explicit seatCalf option to the live study. Rigidly translate the calf so its stored socket center coincides with the seated ankle-ball center; preserve all shape buffers, rotations, scales, materials and foot/ball placement. Separate shape inspection stays available by default. No socket edits, motion or checkpoint.
+
+Code-first checks: all4 calf tests pass, including the new exact-buffer/transform placement regression and all-triangle sphere-fit measurement. Center error2.78e-17m, maximum triangle intrusion0.00888mm versus the original ball's0.20mm faceting tolerance, minimum vertical foot/calf shell clearance62.62mm. Both sockets use the same original ball center. Run the full build and desktop/phone viewer checks before publishing for review.
+
+Verification completed: full production build and frozen integrity pass. Focused browser suite passes desktop and3 phone layouts, real orbit, floor/views/reset/framing, exact seated centers and the universal nested phone viewer, with no page errors. Internal Angle review confirms the assembled calf-ball-foot fit. Publish only this rigid placement; checkpoint still waits for owner approval.
+
 Stop after live visual review. Checkpoint remains pending the owner's final socket/ball-placement refinements.

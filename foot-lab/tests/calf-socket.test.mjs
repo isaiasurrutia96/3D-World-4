@@ -72,3 +72,26 @@ test('Calf cup is closed and outward-wound, with positive thickness and real cir
  }
  probe.material.dispose();
 });
+
+test('Calf seats by rigid translation on the original ball without changing any shape',()=>{
+ const seated=createFootStudy({ball:true,calfSocket:true,seatCalf:true});
+ const socketCenter=seated.calf.localToWorld(new T.Vector3(...m.center)),ballCenter=seated.ankleBall.getWorldPosition(new T.Vector3());
+ assert(socketCenter.distanceTo(ballCenter)<1e-12,'Calf socket and ball centers must coincide');
+ for(const name of ['foot','calf','ankleBall']){
+  for(const key of ['position','normal'])assert.deepEqual(seated[name].geometry.attributes[key].array,study[name].geometry.attributes[key].array);
+  assert.deepEqual(seated[name].geometry.index.array,study[name].geometry.index.array);
+  assert.deepEqual(seated[name].quaternion.toArray(),study[name].quaternion.toArray());
+  assert.deepEqual(seated[name].scale.toArray(),study[name].scale.toArray());
+  if(name!=='calf')assert.deepEqual(seated[name].matrixWorld.toArray(),study[name].matrixWorld.toArray());
+ }
+ const triangle=new T.Triangle(),point=new T.Vector3(),localCenter=new T.Vector3(...m.center),index=g.index.array;
+ let minimumDistance=Infinity;
+ for(let i=0;i<index.length;i+=3){
+  triangle.a.fromBufferAttribute(p,index[i]);triangle.b.fromBufferAttribute(p,index[i+1]);triangle.c.fromBufferAttribute(p,index[i+2]);
+  triangle.closestPointToPoint(localCenter,point);minimumDistance=Math.min(minimumDistance,point.distanceTo(localCenter));
+ }
+ assert(minimumDistance>m.ballRadius-.0002,'Calf triangles may not penetrate beyond the original ball mesh tolerance');
+ const footBox=new T.Box3().setFromObject(seated.foot),calfBox=new T.Box3().setFromObject(seated.calf);
+ assert(calfBox.min.y>footBox.max.y,'The seated calf shell must clear the foot shell');
+ console.log(JSON.stringify({seatedSocketError:socketCenter.distanceTo(ballCenter),maximumTrianglePenetration:m.ballRadius-minimumDistance,calfFootClearance:calfBox.min.y-footBox.max.y}));
+});

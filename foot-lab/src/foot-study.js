@@ -5,10 +5,11 @@ import {pressAnkleBallIntoFoot} from './ball-mold.js';
 import {createAnkleBall} from './ankle-socket.js';
 import {carveCalfSocket} from './calf-socket.js';
 
-// Build one layer at a time. The calf stays separate for socket review;
-// each socket and the seated ball are explicit opt-ins over the baseline.
-export function createFootStudy({socket=true,ball=false,calfSocket=false}={}){
+// Build one layer at a time. Socket carving and rigid assembly are separate
+// opt-ins, so each approved shape remains available for inspection.
+export function createFootStudy({socket=true,ball=false,calfSocket=false,seatCalf=false}={}){
  if(ball&&!socket)throw Error('The ankle ball needs its molded socket');
+ if(seatCalf&&(!ball||!calfSocket))throw Error('Calf seating needs the ball and both sockets');
  const foot=createFootShape(),calf=createCalf(foot,{socket:false}),group=new T.Group();
  const calfBase=-calf.geometry.boundingBox.min.y;
  if(socket)pressAnkleBallIntoFoot(foot);
@@ -19,6 +20,11 @@ export function createFootStudy({socket=true,ball=false,calfSocket=false}={}){
  group.add(foot,calf);foot.updateMatrix();
  const ankleBall=ball?createAnkleBall(foot.material,new T.Vector3(...foot.userData.socketMold.center).applyMatrix4(foot.matrix)):null;
  if(ankleBall)group.add(ankleBall);
+ if(seatCalf){
+  calf.updateMatrix();
+  const socketCenter=new T.Vector3(...calf.userData.socketMold.center).applyMatrix4(calf.matrix);
+  calf.position.add(ankleBall.position).sub(socketCenter);
+ }
  group.updateMatrixWorld(true);
  return {group,foot,calf,...(ankleBall?{ankleBall}:{})};
 }
