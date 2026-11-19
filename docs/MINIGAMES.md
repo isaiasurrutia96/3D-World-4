@@ -139,6 +139,15 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
    Objects: bat, baseballs, pitcher NPC or pitching machine (built from small
    blocks), distance markers. Prizes: any prize.
 
+### 10. Archery (approved 19 Nov)
+1. 10 arrows each. Draw, aim, release (controls chosen after testing);
+   arrows drop over distance. Round targets near, middle and far; moving
+   targets in later rounds. Rings 1–10 (bullseye 10); farther targets count
+   extra. Highest score wins; multiplayer side by side. Bullseyes in a row:
+   extra coins.
+2. Blocks: grass or fairway range; wood or concrete target stands. Objects:
+   bow, arrows, targets. Prizes: any prize.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
