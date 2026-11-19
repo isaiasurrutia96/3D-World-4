@@ -65,7 +65,7 @@ export interface Hazard {
   landOnTop: 'none' | 'die';
 }
 
-/** Extra settings only some blocks have (colour, paint and bouncy are universal). */
+/** Extra settings only some blocks have (colour, paint, bouncy and grindable are universal). */
 export type OwnSetting = 'current' | 'falling-current' | 'solid-choice';
 
 export interface BlockRule {
@@ -86,8 +86,8 @@ export interface BlockRule {
   numbers: Feel;
 }
 
-/** Settings every block has: any colour, a painted design, bouncy. */
-export const UNIVERSAL_SETTINGS = ['colour', 'paint', 'bouncy'] as const;
+/** Settings every block has: any colour, a painted design, bouncy, grindable (skateboards grind along it). */
+export const UNIVERSAL_SETTINGS = ['colour', 'paint', 'bouncy', 'grindable'] as const;
 /** Bouncy never launches karts upward (owner's rule). */
 export const KARTS_BOUNCE_UP = false;
 

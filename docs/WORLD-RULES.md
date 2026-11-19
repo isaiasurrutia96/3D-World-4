@@ -43,6 +43,8 @@ world must pass it), `src/world/world.ts` (a world is a list of parts).
 21. Messing around (remember): punch or kick other players or NPCs and they
     stumble and fall; throw a ball at anyone; whack someone with a pool cue.
     Not a boxing game. Needs balance first.
+22. Skate racing (approved 19 Nov): skateboard races on courses with
+    ramps, rails and other things to ride on.
 
 ## C. Shared systems
 
@@ -63,6 +65,8 @@ world must pass it), `src/world/world.ts` (a world is a list of parts).
 4. Water only: a current (flow direction) for the lazy river, or a falling
    current for waterfalls (pushes him down).
 5. Decor only: solid or walk-through, chosen when placed.
+6. Grindable: skateboards grind along it (rails, edges, e.g. concrete or
+   wood rails).
 
 ## E. Blocks (26 approved, 19 Nov 2026, one card each)
 

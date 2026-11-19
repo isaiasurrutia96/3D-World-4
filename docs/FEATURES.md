@@ -67,7 +67,13 @@ noted, not approved yet. Each one gets its own card, approved one at a time
 
 ## C. Riding
 
-9. **Skateboarding** (idea): ride, jump, drop off edges onto ramps.
+9. **Skateboarding** (approved 19 Nov): shop or prize, pulled out from the
+   item wheel. Push to speed up, lean to steer, jump (ollie). Skate anywhere:
+   smooth ground (road, concrete, wood) is fast; grass, dirt, sand, snow are
+   slow. Skateparks (ramps, rails, bowls) around the free world. Skate
+   racing is a new minigame (courses with ramps, rails and more). Grinds
+   along rails and edges marked grindable. Can be swung as a weapon. A bad
+   landing knocks him off (no death). Tricks later.
 10. **Bikes and scooters** (idea).
 
 ## D. Moving around
@@ -81,14 +87,21 @@ noted, not approved yet. Each one gets its own card, approved one at a time
 
 13. **Hits** (idea, remember): punch or kick other players or NPCs and they
     stumble and fall; throw a ball at anyone; whack someone with a pool cue.
-    Not a boxing game. Needs balance first.
+    Not a boxing game. Needs balance first. Any held item (club, bat, cue,
+    skateboard) can be swung as a weapon, and a swing beats a punch, so
+    holding an item is a way to fight back instead of just losing it.
 
 ## F. People
 
 14. **Online players and NPCs** (idea): other players and running NPCs to
     throw at, race and mess around with.
 
-## G. Objects (after blocks)
+## G. Next
+
+After the features, every minigame gets its own card the same way (how you
+win, controls, blocks and objects, coins and prizes, single or multiplayer).
+
+## H. Objects (after blocks)
 
 15. **Objects list** (idea): turn arrow signs first, then hoops, pins,
     targets. Signs and hoops are built from small concrete blocks and paint;
