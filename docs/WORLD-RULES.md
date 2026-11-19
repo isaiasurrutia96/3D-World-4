@@ -49,49 +49,120 @@ are added after the owner approves them.
 3. One rod grip system: hands grip pole shapes (rails, ski poles, bat, pool
    cue, steering wheel). Built on the existing hand grip code.
 
-## D. Blocks
+## D. Settings any block can have
 
-Ground (shared everywhere):
-1. Grass: he walks normally; karts slow and slip a little; balls roll medium.
-2. Dirt: he walks normally; karts slow and slip more; balls roll slowly.
-3. Sand: he walks slower; karts very slow; balls barely roll (bunkers).
-4. Stone foundation: only under islands. Square with a tiny 1.5 mm edge,
-   one single colour (no shade change per block).
-5. Water: swimmable. A kart that drives in respawns; a ball in it is out.
-   Water can have a current (flow direction) for the lazy river.
-6. Ice: slippery for him, karts and balls (tricky golf, skating).
-7. Snow: ground with low grip, for skiing.
+1. Colour: any colour.
+2. Paint: a painted design (arrow, stripes, checkered, lines, mowed stripes).
+   How a block behaves always comes from the block itself (painted concrete
+   is still concrete).
+3. Bouncy: landing on it launches him higher (more the higher he falls
+   from); balls bounce high. Karts never bounce upward.
+4. Water only: a current (flow direction) for the lazy river, or a falling
+   current for waterfalls (pushes him down).
+5. Decor only: solid or walk-through, chosen when placed.
 
-Racing:
-8. Road: full speed and grip.
-9. Curb: the red and white strip at track edges; fast but bumpy.
-10. Rail: small blocks for barriers; karts bounce off.
-11. Start/finish line: a checkered road block.
+## E. Blocks (25 approved, 19 Nov 2026, one card each)
 
-Golf:
-12. Fairway: short grass; balls roll well.
-13. Green: very smooth; balls roll longest.
-14. Rough: tall grass; balls stop fast.
-15. Cup: the hole.
+Common to all unless noted: smooth (rounded) edges and corners; merged.
+"Shapes" means cube, wedge, smooth surface. Sounds come later.
 
-Other sports:
-16. Bowling lane: polished wood; balls glide.
-17. Court floor: hard wood; balls bounce well.
-18. Field: turf with white line blocks.
+1. Grass: main ground. Bright green. Big only. All shapes. Solid. Normal
+   walk; karts slower than dirt and slippery; balls roll slow and short.
+2. Dirt: under grass, pond floor, rally sections. Tan brown. Big only. All
+   shapes. Solid. Normal walk; karts grip better and go faster than on grass
+   (rally), slower than road; balls roll slowly.
+3. Sand: beaches, bunkers, long-jump pit, also under water. Pale yellow. Big
+   only. All shapes. Solid. Walk and run very slightly slower; karts very
+   slow, slide a lot; balls barely roll.
+4. Bedrock: the stone under every island. One grey colour. Merged, smooth
+   (replaces the earlier tiny-sharp-edge choice). Big only. Cube. Solid.
+5. Concrete: the universal building block: track sides and curbs (painted
+   red/white), sidewalks, parking lot, outdoor court, oval wall, signs,
+   poles, hoops, bridges, arches, rails. Light grey (lighter than bedrock).
+   Any size. All shapes. Solid. Normal walk; karts full grip and speed;
+   balls bounce well, roll far.
+6. Water: pond, lakes, lazy river (also through tunnels), diving pool, golf
+   hazards. See-through blue; underwater view in shades of blue with
+   bubbles. One flat surface, edges as the current pond (small gap at the
+   grass's outside corners, sharp inside corners). Any size. Cube. Not
+   solid: he swims (slower than walking). Kart respawns at the last safe
+   spot; golf ball is out (penalty); other balls float.
+7. Ice: frozen ponds, skating rink and race, tricky spots in mini golf only.
+   Pale shiny blue. Any size. All shapes. Solid. He slides (glides fast on
+   skates); karts slide a lot; balls glide far.
+8. Snow: ski slope, snowy ground. White, slight cool tint. Any size. All
+   shapes (long runs use smooth surfaces). Solid. Walk and run a bit slower;
+   skis glide fast, push with poles; karts slow, slide (less than ice);
+   balls barely roll. Later: ski tracks.
+9. Road: tracks and free-roam roads; start/finish is road painted
+   checkered. Dark grey asphalt. Any size. All shapes (banked turns use
+   smooth surfaces). Solid. Karts: most grip, fastest. Balls roll far.
+   Sounds same as concrete.
+10. Fairway: full golf and frisbee golf (and sports fields with painted
+    lines). Darker green, mowed stripes. Big only. All shapes. Solid. Like
+    grass, but balls roll farther and smoother.
+11. Green: putting surface; the whole mini-golf course. Brighter, smooth
+    green. Big only. All shapes. Solid. Balls roll smoothest and farthest.
+12. Green with cup: a green block with a 10.75 cm cup in its centre (white
+    rim). Big only. Cube. A slow ball drops in; a fast one can skip over.
+    Flag built from small painted concrete.
+13. Bowling lane: lanes and approach; maybe skee-ball. Polished light wood,
+    painted arrows. Any size. Cube. Solid. He can slide a little at the
+    line; balls glide with almost no slowing.
+14. Court floor: indoor basketball. Honey wood, painted lines. Any size.
+    Cube. Solid. Good grip; karts full grip; highest ball bounce.
+15. Rock: boulders, obstacle course. Grey, slight shade per block. Separate
+    blocks, rounded. Any of 43, 21.5, 10.75 cm. Cube. Solid.
+16. Tree trunk: trunks, branches, logs, and roots (roots are small trunk
+    blocks, merged). Brown, any colour. Any size. Cube and wedge (flared
+    base, angled branches; use sparingly). Solid, climbable.
+17. Leaves: tree tops and bushes. Any colour (fall, cherry blossom).
+    Separate blocks. Any size. Cube. Solid: climb and stand on; balls
+    bounce off.
+18. Flower: stem, centre, petals; kept exactly as approved. Walk-through.
+19. Decor: small details (tufts, mushrooms, pebbles, lights, lily pads on
+    water, vines). Any colour and paint. Separate blocks. Half or quarter.
+    Cube and wedge. Solid or walk-through, chosen when placed.
+20. Gravel: rally sections, cart paths, trails. Grey-brown speckled. Big
+    only. All shapes. Solid. Karts slower than dirt, slide more; balls stop
+    fast.
+21. Wood: bridges, docks, huts, fences, wooden curbs. Any size. Cube and
+    wedge. Solid. Normal walk; karts full grip; balls bounce.
+22. Glass: windows, greenhouses, display cases. See-through, any tint. Any
+    size. Cube. Solid.
+23. Lava: volcano islands. Glowing orange. Any size. All shapes. Touching it
+    bumps him away; falling in respawns him (kart too); balls are lost.
+24. Cactus: desert/canyon islands. Green, separate blocks, half or quarter,
+    cube. Solid. Touching bumps him back; landing directly on top kills him.
+25. Cloud: high up, hard to reach. Soft white, separate puffy blocks, big or
+    half. Solid on top: stand on it, grab its edge to hang and pull up.
+    Balls bounce softly.
 
-Nature (already built, rules unchanged):
-19. Rock, tree trunk, leaves (can stand on), roots (low step), bush: solid.
-20. Flowers: walk-through.
+Built from other blocks, not their own: track curb, start/finish line,
+white lines, rails, roots, bush, snowy pine (trunk + leaves + snow),
+canyon/volcanic rock and palm trees (colour), waterfall (water setting),
+bouncy mushroom (decor with bouncy, wedge top for roundness).
+Removed: rough (grass does it), field (fairway), mud, vines, lily pads.
+Balls, bowling pins and other moving objects are not made of blocks.
 
-Not decided yet: boost pads.
+## F. Shapes
 
-## E. Shapes
-
-1. Cubes on the one grid (43 cm, 21.5 cm, 10.75 cm), as now.
+1. Cubes on the one grid (43 cm, 21.5 cm, 10.75 cm).
 2. Wedge (triangle) blocks for everyday ramps and small hills, in a few fixed
    steepnesses.
 3. Smooth surfaces laid over stacked blocks (as the oval track does) for long
    ski runs and banked track turns.
-4. A block's rules are the same whatever its shape (snow is snow on a cube,
-   a wedge or a smooth run).
+4. A block's rules are the same whatever its shape.
 5. Tunnels are normal blocks with empty space inside.
+
+## G. Ideas to remember (not built)
+
+1. Objects list (after blocks): turn arrow signs first, then hoops, pins,
+   targets. Signs and hoops are built from small concrete blocks and paint.
+2. Grab a ledge and hang; climb almost any solid block (trees and leaves
+   too). Movement step after jumping.
+3. Pull out any item anywhere (like GTA): skateboard, golf club and ball to
+   hit from any block (even a cloud).
+4. Skateboarding, maybe bikes and scooters. Drop off a cloud onto secret
+   ramps.
+5. Losing loot when you die: decide later.

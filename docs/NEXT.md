@@ -216,6 +216,7 @@ Recorded 17 November 2026.
 ## World rules (approved 19 Nov 2026)
 
 28. The block list, minigames, shapes and who owns what are in
-    `docs/WORLD-RULES.md`, the one source for the world. Stone underside:
-    tiny 1.5 mm edge and one colour (approved; code not changed yet). Next:
-    the exact numbers for each block, discussed with the owner first.
+    `docs/WORLD-RULES.md`, the one source for the world. 25 blocks approved
+    one card at a time (19 Nov). The stone underside is now "bedrock": merged,
+    smooth, one colour (replaces the tiny-edge choice; code not changed yet).
+    Next: block numbers, one game at a time.
