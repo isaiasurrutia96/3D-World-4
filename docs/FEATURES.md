@@ -91,14 +91,27 @@ timings, limits). The cards below are being redone with it, one at a time.
        and jump off, ragdoll when hit.
    12. Numbers later: grip and speed per block, kart speeds by type, how
        long a kart takes to sink in lava.
-4. **Swimming travel** (approved 19 Nov): a lazy river with a current
-   carries him along, partly through tunnels. Swims slower than walking;
-   dives under and comes back up. Breath meter underwater; running out
-   drowns him (death). Underwater: shades of blue with bubbles; big ponds
-   with underwater caves and secrets (like coins). Swim gear, bought or won
-   and pulled out even while swimming: a snorkel with an air tank (stay under
-   longer) and flippers (swim faster). Other items cannot be pulled out while
-   swimming. Diving boards around the world, just for fun (not a minigame).
+4. **Swimming travel** (approved 19 Nov, detailed)
+   1. Why: explore and travel, with secrets underwater.
+   2. How: walk or jump in; swim on the surface; dive under (breath meter
+      appears); come up to breathe. A lazy-river current carries him, partly
+      through tunnels. He can swim up a waterfall if it is big enough.
+   3. Get it: from the start; swim gear (snorkel with air tank, flippers)
+      from the shop or prizes.
+   4. Lose or keep: drowning is a death (carried items lost, kart back to
+      the watch); swim gear is carried, so lost on death.
+   5. Where: any water; diving boards around the world, just for fun.
+   6. Screen: breath meter underwater; air-tank meter with the snorkel.
+   7. Works with: item wheel (only swim gear while swimming), shop, coins
+      hidden underwater, water current setting. Underwater caves in big ponds.
+   8. Online: others swim alongside; no hits underwater.
+   9. Saved: swim gear owned, secrets found.
+   10. Edge cases: current pushes him into a wall → slides along it; breath
+       runs out in a cave → drowns; underwater view: shades of blue, bubbles.
+   11. Movements: surface swim, dive, underwater swim, climb out, swim up a
+       waterfall, dive off boards.
+   12. Numbers later: swim speed, breath time, air-tank time, flipper boost,
+       current strength.
 
 16. **Big connected world** (approved 19 Nov): every island and game can be
     reached by walking, driving or swimming; the watch door is a shortcut.
