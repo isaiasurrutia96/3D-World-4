@@ -223,6 +223,19 @@ fun in the free world (see docs/FEATURES.md).
    colours for pines, ice patches. Objects: skis, poles, flag gates, ski
    lift. Prizes: any prize.
 
+### 20. Skate racing (approved 19 Nov)
+1. Skate routes through the world and skateparks (ramps, rails, stairs,
+   drops). Push, lean, ollie (controls chosen after testing). Grinding a
+   grindable rail is a faster but harder shortcut. Up to 8 skaters, NPCs
+   fill spots; first to the finish wins. A bad landing knocks him off; he
+   hops back on. Racing rules from the template. Bumping allowed.
+2. Blocks: road, concrete, wood ramps and rails (grindable), wedges.
+   Prizes: any prize.
+
+## E. Idea: open-world races with spectators (idea, 19 Nov)
+Some minigames (e.g. skate racing) run inside the open world, where other
+online players can watch and even intervene. Which games: decided later.
+
 ## D. The 19 minigames (diving is just for fun)
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
