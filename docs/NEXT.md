@@ -212,3 +212,10 @@ Recorded 17 November 2026.
     seating and actual shell collisions. Await owner's visual review before
     updating a frozen checkpoint. Full details: motion-core/PLAN.md and
     foot-lab/README.md.
+
+## World rules (approved 19 Nov 2026)
+
+28. The block list, minigames, shapes and who owns what are in
+    `docs/WORLD-RULES.md`, the one source for the world. Stone underside:
+    tiny 1.5 mm edge and one colour (approved; code not changed yet). Next:
+    the exact numbers for each block, discussed with the owner first.
