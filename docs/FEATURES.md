@@ -47,7 +47,7 @@ noted, not approved yet. Each one gets its own card, approved one at a time
     (golf prizes lean golf, racing prizes lean racing). A duplicate turns into
     coins. A short prize reveal after the win.
 6. **Shop** (approved 19 Nov): opened from the watch, plus a few shop
-   buildings around the world. Sells rides (skateboard, bike, scooter), the
+   buildings around the world. Sells rides (skateboard), the
    watch door, sports gear (clubs, balls, bat, cue), cosmetics, home-island
    land and game kits. Items lost on death show first for easy rebuying.
    Prices set later. Bought items go straight into his item pull-out.
@@ -74,7 +74,7 @@ noted, not approved yet. Each one gets its own card, approved one at a time
    racing is a new minigame (courses with ramps, rails and more). Grinds
    along rails and edges marked grindable. Can be swung as a weapon. A bad
    landing knocks him off (no death). Tricks later.
-10. **Bikes and scooters** (idea).
+10. **Bikes and scooters**: removed for now (owner, 19 Nov).
 
 ## D. Moving around
 
