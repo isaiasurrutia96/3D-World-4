@@ -216,18 +216,27 @@ timings, limits). The cards below are being redone with it, one at a time.
        indoors) → message.
    11. Movements: pull out, hold, put away, swing.
    12. Numbers later: how many items he can carry.
-8. **Losing loot and stealing** (approved 19 Nov): he dies from lava,
-   landing on a cactus, or drowning (swimming needs a breath meter). Falling
-   off an island is not a death: he respawns near where he fell, nothing
-   lost. On death his carried items disappear (rebuy or win them); coins,
-   cosmetics and his home island and its storage are kept; he respawns at
-   the last safe spot. Stealing: a punch while he holds an item (e.g. a
-   club) knocks it out of his hands; it drops and anyone can grab it. No
-   stealing during minigames.
-
-18. **Custom kart building** (idea, 19 Nov): build and customize his own
-    go-kart.
-19. **Outfit customizing** (idea, 19 Nov): customize his outfit.
+8. **Losing loot and stealing** (approved 19 Nov, detailed)
+   1. Why: dying and being robbed matter a little, without frustration.
+   2. How: he dies (lava, landing on a cactus, drowning) → respawns at the
+      last safe spot → carried items are gone; the kart goes back to the
+      watch.
+   3. Get it: always on.
+   4. Lose or keep: lost: carried items. Kept: the watch, coins, kart,
+      outfits and cosmetics, home island and everything in storage (pull it
+      back out through the watch anytime).
+   5. Where: free world only. No stealing in minigames or on home islands.
+      Falling off an island is not a death (respawn near where he fell).
+   6. Screen: a short "You died" message, then what was lost with "take from
+      storage" and "rebuy" buttons.
+   7. Works with: watch (storage), shop (rebuy), hits (a punch knocks a held
+      item loose).
+   8. Online: a knocked-loose item drops; anyone can grab it.
+   9. Saved: what was lost (rebuy list).
+   10. Edge cases: item knocked into water or lava is gone; an ungrabbed
+       dropped item returns to its owner after a while.
+   11. Movements: death fall, respawn, item flying out of his hands.
+   12. Numbers later: respawn time, how long a dropped item stays.
 
 ## C. Riding
 
@@ -263,7 +272,7 @@ timings, limits). The cards below are being redone with it, one at a time.
 
 14. **Online players and NPCs** (approved 19 Nov): meet other players in
     the free world; race, play minigames and hit each other. Home islands:
-    visitors only through the owner's watch-door invite. NPCs walk and run
+    visitors only through the owner's watch invite. NPCs walk and run
     around the world, are targets for football throws, and are opponents
     when no players are around. Minigames: single player against NPCs, or
     multiplayer with friends. Build order: single player first; online

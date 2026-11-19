@@ -166,5 +166,5 @@ Balls, bowling pins and other moving objects are not made of blocks.
 
 ## G. Ideas
 
-All feature ideas (watch door, home island, coins, items, riding, climbing,
+All features (the watch, home island, coins, items, riding, climbing,
 hits, objects) are in `docs/FEATURES.md`.
