@@ -183,6 +183,15 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 2. Blocks: wood or concrete room. Objects: pool table, cue, 16 balls.
    Prizes: any prize; also a home kit.
 
+### 15. Obstacle course (approved 19 Nov)
+1. Jumps, climbs, balance beams, swinging bars, moving platforms, bouncy
+   mushrooms. Everyone runs at once; first to the finish wins. Falling sends
+   him back to the last checkpoint. Uses run, jump, climb, ledge grab and
+   balance. Finishing without falling: extra coins.
+2. Blocks: concrete, wood, ice for slippery spots, water to fall into, the
+   bouncy setting. Objects: swinging bars, moving platforms (small blocks).
+   Prizes: any prize. Where: themed obstacle islands.
+
 ## D. The 20 minigames
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
