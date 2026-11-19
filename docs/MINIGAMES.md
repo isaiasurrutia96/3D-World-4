@@ -213,6 +213,16 @@ fun in the free world (see docs/FEATURES.md).
    to the finish wins. Racing rules from the template. Bumping allowed.
 2. Blocks: ice, snow banks, wood or concrete bridges. Prizes: any prize.
 
+### 19. Skiing (approved 19 Nov)
+1. Downhill runs on the snow island; a ski lift (built from blocks) to the
+   top. Lean to turn, crouch for speed, push with poles on flats (controls
+   chosen after testing). Pass between flag gates; a missed gate adds time.
+   Up to 8 skiers, NPCs fill spots; fastest down wins. Too fast into a sharp
+   turn: tumbles (no death, quick get-up). Ramps for air time.
+2. Blocks: snow (smooth surfaces for runs, wedges for jumps), leaves in snow
+   colours for pines, ice patches. Objects: skis, poles, flag gates, ski
+   lift. Prizes: any prize.
+
 ## D. The 19 minigames (diving is just for fun)
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
