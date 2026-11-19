@@ -19,7 +19,7 @@ let h=g(.6,-.4);check('main grass is 43 cm up',h&&near(h.y,.43)&&h.material==='g
 h=g(1.505,1.075);check('pond floor is the dirt one block lower',h&&near(h.y,0)&&h.material==='dirt',h?`${h.y.toFixed(3)} m, ${h.material}`:'none');
 h=g(-1,-2.6);check('raised tree corner is 86 cm up',h&&near(h.y,.86)&&h.material==='grass',h?`${h.y.toFixed(3)} m`:'none');
 h=g(-1.6125,1.6125);check('top of the rock is 1.075 m up',h&&near(h.y,1.075)&&h.material==='rock',h?`${h.y.toFixed(3)} m, ${h.material}`:'none');
-h=g(-1.5,-1.5);check('the top of the tree is leaves you can stand on',h&&h.material==='tree-leaves'||h&&h.material==='tree-trunk',h?h.material:'none');
+h=g(-1.5,-1.5);check('the top of the tree is leaves you can stand on',h&&(h.material==='leaves'||h.material==='trunk'),h?h.material:'none');
 check('outside the island there is no ground',g(5,5)===null);
 
 let r=walk(0,.43,-1.5,-1,0,2);check('the 43 cm step up to the tree corner blocks walking (needs a jump)',r.wall&&near(r.y,.43)&&r.x>=-.86+HALF-1e-6,`stopped at x=${r.x.toFixed(3)}`);

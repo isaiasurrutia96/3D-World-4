@@ -4,6 +4,9 @@ The one place for the world's blocks, their rules and the minigames they
 serve. Claude and Codex both follow it. Exact numbers (grip, speed, bounce)
 are added after the owner approves them.
 
+In code: `src/world/rulebook.ts` (the blocks), `src/world/checker.ts` (every
+world must pass it), `src/world/world.ts` (a world is a list of parts).
+
 ## A. Who owns what
 
 1. Claude owns the block rulebook (code), the solid ground and the world

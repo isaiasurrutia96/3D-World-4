@@ -1,16 +1,14 @@
 import {installTestLabScene} from './test-lab-scene.ts';
 /**
  * Island Lab: the slate blue test stage, showing a tiny floating island made
- * of 43 cm blocks (grass, dirt, stone underside). No plants yet.
+ * of 43 cm blocks (grass, dirt, bedrock underside), a pond, a tree, a bush, a
+ * rock and flowers.
  */
 
 import {
   AmbientLight, Color, DirectionalLight, PerspectiveCamera, Scene, SRGBColorSpace, WebGLRenderer,
 } from 'three';
 import { buildIsland } from './world/island/index.ts';
-import { BoxGeometry, InstancedMesh } from 'three';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { BLOCK, ROUNDING } from './world/grid.ts';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const stage = document.getElementById('stage') as HTMLElement;
@@ -42,20 +40,6 @@ controls.enableDamping = true;
 controls.enablePan = false;
 controls.minDistance = 2;
 controls.maxDistance = 35;
-
-// Preview only: the stone underside with rounded (approved), tiny (1.5 mm) or sharp edges.
-const stone = island.root.getObjectByName('stone') as InstancedMesh;
-const edges: Record<string, () => BoxGeometry | RoundedBoxGeometry> = {
-  round: () => new RoundedBoxGeometry(BLOCK, BLOCK, BLOCK, 2, ROUNDING),
-  tiny: () => new RoundedBoxGeometry(BLOCK, BLOCK, BLOCK, 2, 0.0015),
-  sharp: () => new BoxGeometry(BLOCK, BLOCK, BLOCK),
-};
-const edgeButtons = [...document.querySelectorAll<HTMLButtonElement>('[data-edge]')];
-for (const b of edgeButtons) b.onclick = () => {
-  stone.geometry.dispose();
-  stone.geometry = edges[b.dataset.edge as string]();
-  for (const e of edgeButtons) e.setAttribute('aria-pressed', String(e === b));
-};
 
 const D = 14;
 const views: Record<string, [number, number, number]> = {

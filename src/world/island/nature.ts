@@ -1,19 +1,17 @@
 /**
  * Island nature: the pond water, a tree (trunk, root stumps, leaves), a bush,
- * a rock and three flowers. Trunk, leaves, bush and rock use small blocks
- * (21.5 cm); roots and flowers use tiny blocks (10.75 cm). All sit on the
- * same grid as the terrain.
+ * a rock and three flowers. Trunk, leaves, bush and rock use half blocks
+ * (21.5 cm); roots and flowers use quarter blocks (10.75 cm). All sit on the
+ * same grid as the terrain. Roots are small trunk blocks; the bush is leaves.
  */
 
-import { type Group, Mesh, MeshStandardMaterial, PlaneGeometry } from 'three';
-import { BLOCK, SMALL, TINY, hash, type Cell } from '../grid.ts';
-import { COLOURS, build } from '../materials.ts';
-import { addMergedBlocks } from '../merged.ts';
-import { BUSH, FLOWERS, RAISED_SMALL, RAISED_TINY, ROCK, TOP_SMALL, TOP_TINY, TRUNK, WATER_LEVEL, isPond } from './layout.ts';
+import { hash, type Cell } from '../grid.ts';
+import { COLOURS } from '../materials.ts';
+import { BUSH, FLOWERS, RAISED_SMALL, RAISED_TINY, ROCK, TOP_SMALL, TOP_TINY, TRUNK, isPond } from './layout.ts';
 
 export interface Nature {
   trunk: Cell[]; roots: Cell[]; leaves: Cell[]; bush: Cell[]; rock: Cell[];
-  stems: Cell[]; centres: Cell[]; petals: Cell[];
+  stems: Cell[]; centres: Cell[]; petals: Cell[]; pond: Cell[];
 }
 
 /** Tree: a 2 × 2 trunk on the raised corner, crowned with leaves. */
@@ -89,34 +87,12 @@ function flowers(): Pick<Nature, 'stems' | 'centres' | 'petals'> {
 
 /** All nature cells, without drawing anything (so they can be checked). */
 export function natureCells(): Nature {
-  return { ...tree(), bush: bush(), rock: rock(), ...flowers() };
+  return { ...tree(), bush: bush(), rock: rock(), ...flowers(), pond: pond() };
 }
 
-/** Pond water: one flat tile per pond cell, a little below the grass top. */
-function addPond(root: Group): void {
-  const water = new MeshStandardMaterial({ color: COLOURS.water, roughness: 0.15, metalness: 0, transparent: true, opacity: 0.82 });
-  for (let x = 2; x <= 5; x++) {
-    for (let z = 1; z <= 3; z++) {
-      if (!isPond(x, z)) continue;
-      const tile = new Mesh(new PlaneGeometry(BLOCK, BLOCK), water);
-      tile.rotation.x = -Math.PI / 2;
-      tile.position.set((x + 0.5) * BLOCK, BLOCK * WATER_LEVEL, (z + 0.5) * BLOCK);
-      tile.name = 'pond-water';
-      root.add(tile);
-    }
-  }
-}
-
-export function addNature(root: Group, n: Nature = natureCells()): void {
-  const onGround = (_x: number, y: number): boolean => y < TOP_SMALL;
-  addPond(root);
-  build(root, n.trunk, 'tree-trunk', SMALL, (_x, y) => y < RAISED_SMALL);
-  build(root, n.roots, 'tree-roots', TINY, (_x, y) => y < RAISED_TINY);
-  build(root, n.leaves, 'tree-leaves', SMALL);
-  build(root, n.bush, 'bush', SMALL, onGround);
-  build(root, n.rock, 'rock', SMALL, onGround);
-  addMergedBlocks(root, n.stems, 'flower-stems', TINY, { restsOn: (_x, y) => y < TOP_TINY, edgeCores: true });
-  addMergedBlocks(root, n.centres, 'flower-centres', TINY, { edgeCores: true });
-  // Each petal group is its own mesh so neighbouring flowers never merge.
-  addMergedBlocks(root, n.petals, 'flower-petals', TINY, { edgeCores: true });
+/** Pond water: one big cell per pond spot, on the dirt floor one block down. */
+function pond(): Cell[] {
+  const cells: Cell[] = [];
+  for (let x = 2; x <= 5; x++) for (let z = 1; z <= 3; z++) if (isPond(x, z)) cells.push([x, 0, z, COLOURS.water]);
+  return cells;
 }

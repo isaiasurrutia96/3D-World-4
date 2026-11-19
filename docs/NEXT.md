@@ -41,7 +41,7 @@ Recorded 17 November 2026.
    - **Separate blocks** (each block its own rounded cube): natural detail
      (stone, rock, leaves, bush).
    - Flowers stay exactly as approved.
-   - New materials get a style once, in `MATERIAL_STYLE` in `src/island.ts`.
+   - New blocks get their style once, in the rulebook (`src/world/rulebook.ts`).
 
 ## Platform decision (approved 18 Nov 2026)
 
@@ -219,4 +219,9 @@ Recorded 17 November 2026.
     `docs/WORLD-RULES.md`, the one source for the world. 25 blocks approved
     one card at a time (19 Nov). The stone underside is now "bedrock": merged,
     smooth, one colour (replaces the tiny-edge choice; code not changed yet).
+    Code (19 Nov): the rulebook `src/world/rulebook.ts` (25 blocks, feel
+    numbers not set yet), the world checker `src/world/checker.ts` (9 rules),
+    and `src/world/world.ts` (one list of parts is drawn, made solid and
+    checked). The island now uses it: bedrock merged and smooth, roots merged
+    into the trunk. Checks: npm run test:world, npm run test:island.
     Next: block numbers, one game at a time.

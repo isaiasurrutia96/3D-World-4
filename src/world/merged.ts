@@ -33,16 +33,8 @@ const SIDES: Side[] = [
   { n: [0, 0, -1], u: [-1, 0, 0], v: [0, 1, 0] },
 ];
 
-/** Rounding as a share of one block, so every block size looks the same. */
-const R = ROUNDING / BLOCK;
-/** Where the 6 × 6 points of a face sit, across the face (-0.5 .. 0.5). */
-const STEPS = [-0.5, -0.5 + R * 0.3, -0.5 + R, 0.5 - R, 0.5 - R * 0.3, 0.5];
 /** Inside faces sit this far in (as a scale), so they never show as seams. */
 const INSIDE = 0.96;
-/** Cores stop this far inside the surface on open sides. */
-const CORE_INSET = 0.5 - 0.4 * R;
-/** Half-width of an edge core. */
-const EDGE_CORE = 0.55 * R;
 
 const material = new MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0 });
 
@@ -89,11 +81,26 @@ export interface MergedOptions {
   restsOn?: Support;
   /** Thin cores where cells touch only along an edge. */
   edgeCores?: boolean;
+  /**
+   * Edge rounding in metres. Default: the standard rounding, scaled to the
+   * block size (so every size looks the same). Set it when one shape mixes
+   * sizes, e.g. a trunk drawn in small cells so roots can join it.
+   */
+  rounding?: number;
 }
 
 export function addMergedBlocks(root: Group, list: Cell[], name: string, size = BLOCK, options: MergedOptions = {}): void {
   if (list.length === 0) return;
-  const { restsOn, edgeCores = false } = options;
+  const { restsOn, edgeCores = false, rounding } = options;
+  // Rounding as a share of one cell (the default is exactly ROUNDING / BLOCK).
+  const R = rounding === undefined ? ROUNDING / BLOCK : rounding / size;
+  if (!(R > 0 && R < 0.5)) throw new Error(`merged blocks "${name}": rounding must be under half a block`);
+  /** Where the 6 × 6 points of a face sit, across the face (-0.5 .. 0.5). */
+  const STEPS = [-0.5, -0.5 + R * 0.3, -0.5 + R, 0.5 - R, 0.5 - R * 0.3, 0.5];
+  /** Cores stop this far inside the surface on open sides. */
+  const CORE_INSET = 0.5 - 0.4 * R;
+  /** Half-width of an edge core. */
+  const EDGE_CORE = 0.55 * R;
   const cells = new Map<string, Color>();
   for (const [x, y, z, colour] of list) cells.set(cellKey(x, y, z), new Color(colour));
   const solid = (x: number, y: number, z: number): boolean => cells.has(cellKey(x, y, z)) || (restsOn?.(x, y, z) ?? false);
