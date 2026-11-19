@@ -177,9 +177,14 @@ export const BLOCKS = Object.freeze({
     feel: 'solid boulders',
   }),
   trunk: block({
-    name: 'Tree trunk', usedFor: 'trunks, branches, logs, roots (small trunk blocks)', colour: '#7a5434',
+    name: 'Tree trunk', usedFor: 'trunks, branches, logs', colour: '#7a5434',
     style: 'merged', sizes: ALL_SIZES, shapes: ['cube', 'wedge'], body: 'solid',
     feel: 'solid, climbable; wedges for flared bases and angled branches, sparingly',
+  }),
+  roots: block({
+    name: 'Roots', usedFor: 'roots spreading from tree trunks, each block on its own (not merged)', colour: '#7a5434',
+    style: 'separate', sizes: ['quarter'], shapes: ['cube'], body: 'solid',
+    feel: 'low steps at the base of a tree he walks up without jumping; balls bounce off',
   }),
   leaves: block({
     name: 'Leaves', usedFor: 'tree tops and bushes, any colour (fall, cherry blossom)', colour: '#47ad35',

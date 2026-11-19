@@ -1,8 +1,8 @@
 // Island checks.
 //  1) The island is identical, piece by piece, to the approved first island
 //     (reference/island-v1/), except the changes the owner approved on 19 Nov
-//     2026: the stone underside is now bedrock (merged, smooth, one colour),
-//     and the roots are small trunk blocks merged into the trunk.
+//     2026: the stone underside is now bedrock (merged, smooth, one colour).
+//     Roots stay their own separate blocks, exactly as approved.
 //  2) It passes the world checker (src/world/checker.ts).
 //  3) Its own layout rules (raised corner, roots, flowers, bedrock diamond).
 // Usage: node tests/island/check.mjs
@@ -30,10 +30,9 @@ const results=[];const check=(name,ok,detail='')=>results.push({check:name,resul
 
 // ---- 1. Identical to the approved island, except the approved changes ----
 const same=(a,b)=>{if(!a&&!b)return true;if(!a||!b||a.length!==b.length)return false;for(let i=0;i<a.length;i++)if(a[i]!==b[i])return false;return true;};
-const CHANGED={stone:'bedrock','tree-roots':null}; // old name -> new name (null: merged into the trunk)
-const oldKept=old.children.filter(c=>!(c.name in CHANGED)&&c.name!=='tree-trunk');
-const newKept=neu.children.filter(c=>c.name!=='bedrock'&&c.name!=='tree-trunk');
-check('same pieces, same order (apart from the approved changes)',oldKept.length===newKept.length&&oldKept.every((c,i)=>c.name===newKept[i].name&&c.type===newKept[i].type),`${newKept.length} unchanged pieces; new: bedrock, tree-trunk (with roots)`);
+const oldKept=old.children.filter(c=>c.name!=='stone');
+const newKept=neu.children.filter(c=>c.name!=='bedrock');
+check('same pieces, same order (apart from the approved changes)',oldKept.length===newKept.length&&oldKept.every((c,i)=>c.name===newKept[i].name&&c.type===newKept[i].type),`${newKept.length} unchanged pieces; new: bedrock`);
 let geoOk=true,diffs=[];
 oldKept.forEach((a,i)=>{const b=newKept[i];if(!b)return;
  for(const k of ['position','normal','color','uv']){if(!same(a.geometry.attributes[k]?.array,b.geometry.attributes[k]?.array)){geoOk=false;diffs.push(a.name+'.'+k);}}
@@ -44,15 +43,13 @@ oldKept.forEach((a,i)=>{const b=newKept[i];if(!b)return;
  if(!ma.color.equals(mb.color)){geoOk=false;diffs.push(a.name+'.material.color');}
 });
 const verts=newKept.reduce((s,c)=>s+(c.geometry.attributes.position.count*(c.count||1)),0);
-check('grass, dirt, pond, leaves, bush, rock and flowers: every point and colour identical to Island Checkpoint 1',geoOk,geoOk?`${verts.toLocaleString()} points compared`:[...new Set(diffs)].slice(0,6).join(', '));
+check('everything but the bedrock (grass, dirt, pond, trunk, roots, leaves, bush, rock, flowers): every point and colour identical to Island Checkpoint 1',geoOk,geoOk?`${verts.toLocaleString()} points compared`:[...new Set(diffs)].slice(0,6).join(', '));
 
 const bed=neu.getObjectByName('bedrock'),oldStone=old.getObjectByName('stone');
 const bedCol=bed.geometry.attributes.color.array;let oneColour=true;for(let i=3;i<bedCol.length;i++)if(bedCol[i]!==bedCol[i%3])oneColour=false;
 const bb=new Box3().setFromObject(bed),sb=new Box3().setFromObject(oldStone);
 check('bedrock: one merged shape, one colour, exactly where the stone was',!bed.isInstancedMesh&&oneColour&&bb.min.distanceTo(sb.min)<1e-6&&bb.max.distanceTo(sb.max)<1e-6,`${bed.geometry.attributes.position.count.toLocaleString()} points, all one colour`);
-const tr=neu.getObjectByName('tree-trunk'),ot=new Box3().setFromObject(old.getObjectByName('tree-trunk')).union(new Box3().setFromObject(old.getObjectByName('tree-roots')));
-const tb=new Box3().setFromObject(tr);
-check('trunk and roots: one merged shape covering exactly the old trunk and roots',!tr.isInstancedMesh&&tb.min.distanceTo(ot.min)<1e-6&&tb.max.distanceTo(ot.max)<1e-6);
+check('roots are separate blocks, not merged (one rounded cube each)',neu.getObjectByName('tree-roots').isInstancedMesh&&neu.getObjectByName('tree-roots').count===48);
 
 // ---- 2. The world checker ----
 const problems=checkWorld(parts);

@@ -1,5 +1,5 @@
 // Rulebook and world-checker checks.
-//  1) The rulebook holds exactly the 25 blocks the owner approved
+//  1) The rulebook holds exactly the 26 blocks the owner approved
 //     (docs/WORLD-RULES.md, section E), in the same order, each with a valid,
 //     complete entry and the approved special rules.
 //  2) The checker catches every kind of broken world, and lets good ones pass.
@@ -21,7 +21,7 @@ const doc=readFileSync(join(root,'docs/WORLD-RULES.md'),'utf8');
 const section=doc.slice(doc.indexOf('## E. Blocks'),doc.indexOf('Built from other blocks'));
 const docNames=[...section.matchAll(/^\d+\. ([^:]+):/gm)].map(m=>m[1].trim());
 const names=BLOCK_IDS.map(id=>BLOCKS[id].name);
-check('exactly the 25 approved blocks, same names and order as the notes',docNames.length===25&&names.length===25&&names.every((n,i)=>n===docNames[i]),names.length===25?'':`rulebook ${names.length}, notes ${docNames.length}`);
+check('exactly the 26 approved blocks, same names and order as the notes',docNames.length===26&&names.length===26&&names.every((n,i)=>n===docNames[i]),names.length===26?'':`rulebook ${names.length}, notes ${docNames.length}`);
 const STYLES=['merged','separate','flower','water'],BODIES=['solid','walk-through','swim','choice'],SIZES=['big','half','quarter'],SHAPES=['cube','wedge','smooth'];
 const bad=BLOCK_IDS.filter(id=>{const b=BLOCKS[id];return !(/^#[0-9a-f]{6}$/i.test(b.colour)&&STYLES.includes(b.style)&&BODIES.includes(b.body)&&b.sizes.length&&b.sizes.every(s=>SIZES.includes(s))&&b.shapes.includes('cube')&&b.shapes.every(s=>SHAPES.includes(s))&&b.usedFor&&b.feel);});
 check('every entry is complete and valid (colour, style, body, sizes, shapes, use, feel)',bad.length===0,bad.join(', '));
@@ -31,7 +31,7 @@ const special=[
  ['grass, dirt, sand, fairway, green, gravel, bedrock: big only',['grass','dirt','sand','fairway','green','green-cup','gravel','bedrock'].every(id=>b[id].sizes.join()==='big')],
  ['concrete, rock, trunk, leaves: any size',['concrete','rock','trunk','leaves'].every(id=>b[id].sizes.length===3)],
  ['bedrock merged, one cube shape',b.bedrock.style==='merged'&&b.bedrock.shapes.join()==='cube'],
- ['trunk: cube and wedge; roots are trunk (no roots block)',b.trunk.shapes.join()==='cube,wedge'&&!('roots' in b)&&!('bush' in b)],
+ ['trunk: cube and wedge; roots their own separate block; no bush block',b.trunk.shapes.join()==='cube,wedge'&&b.roots.style==='separate'&&!('bush' in b)],
  ['rock, leaves, cactus, cloud: separate blocks',['rock','leaves','cactus','cloud'].every(id=>b[id].style==='separate')],
  ['water: swim, current and falling current',b.water.body==='swim'&&b.water.ownSettings.includes('current')&&b.water.ownSettings.includes('falling-current')],
  ['flower: walk-through; decor: solid or walk-through by choice',b.flower.body==='walk-through'&&b.decor.body==='choice'&&b.decor.sizes.join()==='half,quarter'],

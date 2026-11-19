@@ -219,9 +219,9 @@ Recorded 17 November 2026.
     `docs/WORLD-RULES.md`, the one source for the world. 25 blocks approved
     one card at a time (19 Nov). The stone underside is now "bedrock": merged,
     smooth, one colour (replaces the tiny-edge choice; code not changed yet).
-    Code (19 Nov): the rulebook `src/world/rulebook.ts` (25 blocks, feel
+    Code (19 Nov): the rulebook `src/world/rulebook.ts` (26 blocks, feel
     numbers not set yet), the world checker `src/world/checker.ts` (9 rules),
     and `src/world/world.ts` (one list of parts is drawn, made solid and
-    checked). The island now uses it: bedrock merged and smooth, roots merged
-    into the trunk. Checks: npm run test:world, npm run test:island.
+    checked). The island now uses it: bedrock merged and smooth; roots are
+    their own separate block again (owner, 19 Nov), not merged. Checks: npm run test:world, npm run test:island.
     Next: block numbers, one game at a time.

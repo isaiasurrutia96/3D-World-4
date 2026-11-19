@@ -2,7 +2,7 @@
  * Island nature: the pond water, a tree (trunk, root stumps, leaves), a bush,
  * a rock and three flowers. Trunk, leaves, bush and rock use half blocks
  * (21.5 cm); roots and flowers use quarter blocks (10.75 cm). All sit on the
- * same grid as the terrain. Roots are small trunk blocks; the bush is leaves.
+ * same grid as the terrain. Roots are their own separate blocks; the bush is leaves.
  */
 
 import { hash, type Cell } from '../grid.ts';

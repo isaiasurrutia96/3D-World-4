@@ -64,7 +64,7 @@ world must pass it), `src/world/world.ts` (a world is a list of parts).
    current for waterfalls (pushes him down).
 5. Decor only: solid or walk-through, chosen when placed.
 
-## E. Blocks (25 approved, 19 Nov 2026, one card each)
+## E. Blocks (26 approved, 19 Nov 2026, one card each)
 
 Common to all unless noted: smooth (rounded) edges and corners; merged.
 "Shapes" means cube, wedge, smooth surface. Sounds come later.
@@ -116,33 +116,35 @@ Common to all unless noted: smooth (rounded) edges and corners; merged.
     Cube. Solid. Good grip; karts full grip; highest ball bounce.
 15. Rock: boulders, obstacle course. Grey, slight shade per block. Separate
     blocks, rounded. Any of 43, 21.5, 10.75 cm. Cube. Solid.
-16. Tree trunk: trunks, branches, logs, and roots (roots are small trunk
-    blocks, merged). Brown, any colour. Any size. Cube and wedge (flared
-    base, angled branches; use sparingly). Solid, climbable.
-17. Leaves: tree tops and bushes. Any colour (fall, cherry blossom).
+16. Tree trunk: trunks, branches, logs. Brown, any colour. Any size. Cube
+    and wedge (flared base, angled branches; use sparingly). Solid, climbable.
+17. Roots: roots spreading from trunks. Brown like the trunk. Separate
+    blocks: not merged with the trunk or with each other (owner, 19 Nov).
+    Quarter size. Cube. Solid, low steps he walks up.
+18. Leaves: tree tops and bushes. Any colour (fall, cherry blossom).
     Separate blocks. Any size. Cube. Solid: climb and stand on; balls
     bounce off.
-18. Flower: stem, centre, petals; kept exactly as approved. Walk-through.
-19. Decor: small details (tufts, mushrooms, pebbles, lights, lily pads on
+19. Flower: stem, centre, petals; kept exactly as approved. Walk-through.
+20. Decor: small details (tufts, mushrooms, pebbles, lights, lily pads on
     water, vines). Any colour and paint. Separate blocks. Half or quarter.
     Cube and wedge. Solid or walk-through, chosen when placed.
-20. Gravel: rally sections, cart paths, trails. Grey-brown speckled. Big
+21. Gravel: rally sections, cart paths, trails. Grey-brown speckled. Big
     only. All shapes. Solid. Karts slower than dirt, slide more; balls stop
     fast.
-21. Wood: bridges, docks, huts, fences, wooden curbs. Any size. Cube and
+22. Wood: bridges, docks, huts, fences, wooden curbs. Any size. Cube and
     wedge. Solid. Normal walk; karts full grip; balls bounce.
-22. Glass: windows, greenhouses, display cases. See-through, any tint. Any
+23. Glass: windows, greenhouses, display cases. See-through, any tint. Any
     size. Cube. Solid.
-23. Lava: volcano islands. Glowing orange. Any size. All shapes. Touching it
+24. Lava: volcano islands. Glowing orange. Any size. All shapes. Touching it
     bumps him away; falling in respawns him (kart too); balls are lost.
-24. Cactus: desert/canyon islands. Green, separate blocks, half or quarter,
+25. Cactus: desert/canyon islands. Green, separate blocks, half or quarter,
     cube. Solid. Touching bumps him back; landing directly on top kills him.
-25. Cloud: high up, hard to reach. Soft white, separate puffy blocks, big or
+26. Cloud: high up, hard to reach. Soft white, separate puffy blocks, big or
     half. Solid on top: stand on it, grab its edge to hang and pull up.
     Balls bounce softly.
 
 Built from other blocks, not their own: track curb, start/finish line,
-white lines, rails, roots, bush, snowy pine (trunk + leaves + snow),
+white lines, rails, bush, snowy pine (trunk + leaves + snow),
 canyon/volcanic rock and palm trees (colour), waterfall (water setting),
 bouncy mushroom (decor with bouncy, wedge top for roundness).
 Removed: rough (grass does it), field (fairway), mud, vines, lily pads.
