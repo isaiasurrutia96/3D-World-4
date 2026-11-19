@@ -292,3 +292,18 @@ Final checks: full production build and all6 study tests pass. Focused browser s
 Owner requested placing the ball in the socket while leaving everything else. The live viewer opts into createFootStudy({ball:true}); add the original115mm-radius sphere using the existing foot material. Transform the exact stored local mold center through the foot's matrix into the study group; keep socket, foot, raw calf and all transforms fixed. Default geometry tests can still inspect the empty socket. No new motion, calf socket or checkpoint. A regression compares foot/calf position-normal-index buffers and world matrices with/without the ball, verifies exact sphere center/radius/material and unchanged overall framing bounds.
 
 Validation:7 Node study checks and full production build pass. Placement regression confirms foot/rim/calf buffers and world matrices remain bit-identical and camera framing bounds stay identical. Focused desktop/three-phone-layout browser checks and the nested universal phone viewer pass with no errors; exact23cm ball is visible at the mold center, Motion remains disabled. Internal close-up/Angle inspection completed. Publish only this placement update; no checkpoint yet.
+
+
+### Calf socket at three-quarters depth — owner go, 19 Nov 2026
+
+The owner described both one-third less depth and three-quarters size, then gave go after clarification. Use their last explicit three-quarters target, stated before coding:75% depth (25% shallower). Derive from measured foot depth150.986934mm →113.240201mm; retain115mm ball radius and12.5mm circular rounded rim.
+
+Code first: new calf-socket.js cuts the original calf underside using the same verified rolling-fillet solver in an exact half-turned local frame. Weld only the lower seam before shared-edge refinement (six passes for the coarse reference calf), return to original frame and restore unchanged upper calf shading. Preserve original calf pose, foot and seated ball exactly. No attachment or second ball. The live study opts into calfSocket:true; baseline and earlier numerical fixtures remain available.
+
+Three new numerical checks pass before the viewer build: actual ray-measured75% depth, original sphere and fillet radii, bit-identical foot/ball and original upper calf, consistent attribute lengths, closed outward-wound topology with positive volume, positive shell thickness and real ray-measured circular edge sections. Raw and carved reference lathe both have exact-axis ray degeneracy at their duplicated upper pole; use off-axis thickness probes and independently welded topology rather than weaken closure checks.
+
+Internal close-up review caught a shading seam from recomputing normals across the coarse original calf and its refined underside. Preserve interpolated original normals on untouched surfaces and use sphere/arc normals inside the socket; the numerical suite also checks cavity normals against the ball. All10 combined calf/foot Node checks and the full production build pass after this correction. Foot and ball remain bit-identical, and the calf stays separate in its original pose.
+
+Final focused browser checks pass desktop and3 phone layouts, all camera views, floor toggle, orbit/reset, framing and the nested universal viewer, with no page errors. Internal underside/Angle review confirms the shallow cup and smooth rim. Publish this refinement for owner review; no movement work or checkpoint yet.
+
+Stop after live visual review. Checkpoint remains pending the owner's final socket/ball-placement refinements.

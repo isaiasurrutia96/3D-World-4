@@ -2,17 +2,19 @@ import * as T from 'three';
 
 // Conforming local refinement: split shared edges once, then retriangulate
 // their incident faces. Original vertices remain an exact prefix; no T seams.
-export function refineMoldSurface(geometry,cx,cz){
+export function refineMoldSurface(geometry,cx,cz,{passes=3,minY=.10,preserveNormals=false}={}){
  const p=geometry.attributes.position,vertices=Array.from(p.array);let faces=Array.from(geometry.index.array);
+ const normals=preserveNormals?Array.from(geometry.attributes.normal.array):null;
  const key=(a,b)=>a<b?a+','+b:b+','+a;
- for(let pass=0;pass<3;pass++){
+ for(let pass=0;pass<passes;pass++){
   const splits=new Map();
   for(let i=0;i<faces.length;i+=3)for(let j=0;j<3;j++){
    const a=faces[i+j],b=faces[i+(j+1)%3],id=key(a,b);if(splits.has(id))continue;
    const x=(vertices[a*3]+vertices[b*3])/2,y=(vertices[a*3+1]+vertices[b*3+1])/2,z=(vertices[a*3+2]+vertices[b*3+2])/2;
-   if(y<.10||Math.hypot(x-cx,z-cz)>.14)continue;
+   if(y<minY||Math.hypot(x-cx,z-cz)>.14)continue;
    if(Math.hypot(vertices[a*3]-vertices[b*3],vertices[a*3+2]-vertices[b*3+2])<=.002)continue;
    splits.set(id,vertices.length/3);vertices.push(x,y,z);
+   if(normals)for(let k=0;k<3;k++)normals.push((normals[a*3+k]+normals[b*3+k])/2);
   }
   if(!splits.size)break;
   const next=[];
@@ -29,5 +31,7 @@ export function refineMoldSurface(geometry,cx,cz){
   faces=next;
  }
  p.copy(new T.Float32BufferAttribute(vertices,3));geometry.setIndex(faces);
- geometry.deleteAttribute('normal');geometry.computeVertexNormals();
+ geometry.deleteAttribute('normal');
+ if(normals){geometry.setAttribute('normal',new T.Float32BufferAttribute(normals,3));geometry.normalizeNormals();}
+ else geometry.computeVertexNormals();
 }

@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
 import {createServer} from 'node:http';
 import {readFile,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
@@ -12,13 +11,11 @@ import {createCharacterRig} from '../../avatar/src/reference/PlayerModel.ts';
 import {ANKLE_RADIUS,ANKLE_REST_HEIGHT} from '../../avatar/src/joints/ankle-contract.js';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
-const hash=array=>createHash('sha256').update(new Uint8Array(array.buffer,array.byteOffset,array.byteLength)).digest('hex');
-const geometrySignature=mesh=>({position:hash(mesh.geometry.attributes.position.array),normal:hash(mesh.geometry.attributes.normal.array),index:hash(mesh.geometry.index.array)});
-const study=createFootStudy(),rawFoot=createFootShape(),reference=createCharacterRig({plain:true});
+const study=createFootStudy({ball:true,calfSocket:true}),rawFoot=createFootShape(),reference=createCharacterRig({plain:true});
 const rawCalf=reference.kneeRight.children[0],meshes=[];
 study.group.traverse(part=>{if(part.isMesh)meshes.push(part);});
-assert.equal(meshes.length,2,'The study must contain only one foot and one calf');
-assert.deepEqual(new Set(meshes),new Set([study.foot,study.calf]));
+assert.equal(meshes.length,3,'The study must contain foot, seated ball and calf');
+assert.deepEqual(new Set(meshes),new Set([study.foot,study.calf,study.ankleBall]));
 const mold=study.foot.userData.socketMold;
 assert.equal(study.foot.userData.tinySocket,undefined,'Old tiny-dimple metadata remains');
 assert.equal(mold.ballRadius,ANKLE_RADIUS,'Mold must use the exact last ankle ball');
@@ -65,7 +62,15 @@ for(const [i,centerR,centerY] of study.foot.geometry.userData.filletContacts){
 assert(maximumFilletRadiusError<1e-7,'The actual rim must follow its round-over arc');
 const expectedBottom=ANKLE_REST_HEIGHT-ANKLE_RADIUS;
 assert(cavityBottom>=expectedBottom-1e-7&&cavityBottom<expectedBottom+.0001,'Cavity bottom does not match the real ankle center and ball radius');
-assert.deepEqual(geometrySignature(study.calf),geometrySignature(rawCalf),'Calf is not the original uncarved shape');
+const calfMold=study.calf.userData.socketMold,calfPositions=study.calf.geometry.attributes.position,rawCalfPositions=rawCalf.geometry.attributes.position;
+assert.equal(calfMold.depthRatio,.75);assert.equal(calfMold.pressDepth,.75*mold.pressDepth);assert.equal(calfMold.ballRadius,mold.ballRadius);assert.equal(calfMold.filletRadius,.0125);
+assert(Math.abs(calfMold.center[1]+calfMold.ballRadius-calfMold.originalBase-calfMold.pressDepth)<1e-12);
+for(let i=0;i<rawCalfPositions.count;i++){
+ assert.equal(calfPositions.getX(i),rawCalfPositions.getX(i));assert.equal(calfPositions.getZ(i),rawCalfPositions.getZ(i));
+ if(rawCalfPositions.getY(i)>=-.09-1e-7)assert.equal(calfPositions.getY(i),rawCalfPositions.getY(i));
+}
+for(const i of study.calf.geometry.userData.moldContactIndices)assert(Math.abs(point.fromBufferAttribute(calfPositions,i).distanceTo(new T.Vector3(...calfMold.center))-calfMold.ballRadius)<1e-7);
+for(const [i,r,y] of study.calf.geometry.userData.filletContacts)assert(Math.abs(Math.hypot(Math.hypot(calfPositions.getX(i),calfPositions.getZ(i))-r,calfPositions.getY(i)-y)-.0125)<1e-7);
 assert.equal(study.foot.material.color.getHex(),rawFoot.material.color.getHex());
 assert.equal(study.calf.material.color.getHex(),rawCalf.material.color.getHex());
 for(const part of meshes){
@@ -146,7 +151,9 @@ try{
  if(shots){
   await page.screenshot({path:resolve(shots,'angle.png')});
   await page.evaluate(()=>{const {foot,camera,controls}=footLab;controls.target.set(foot.position.x,.12,0);camera.position.set(foot.position.x+.30,.38,.42);controls.update();});
-  await page.screenshot({path:resolve(shots,'rim-close.png')});await page.getByRole('button',{name:'Angle',exact:true}).click();
+  await page.screenshot({path:resolve(shots,'rim-close.png')});
+  await page.evaluate(()=>{const {calf,camera,controls,ground}=footLab;ground.visible=false;controls.target.set(calf.position.x,.09,calf.position.z);camera.position.set(calf.position.x+.24,-.16,calf.position.z+.27);controls.update();});
+  await page.screenshot({path:resolve(shots,'calf-socket-close.png')});await page.getByRole('button',{name:'Angle',exact:true}).click();
  }
 
  const phoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),phone=await phoneContext.newPage();phone.on('pageerror',e=>errors.push(e.message));
@@ -176,5 +183,5 @@ try{
  assert(await phone.getByRole('button',{name:'Motion',exact:true}).isDisabled(),'Ball placement must not add motion controls');
  assert.equal(await phone.evaluate(()=>{const w=testLab.frame.contentWindow,{foot,ankleBall,study}=w.footLab;const center=foot.position.clone().set(...foot.userData.socketMold.center);foot.localToWorld(center);return study.group.children.length===3&&ankleBall.visible&&ankleBall.position.distanceTo(center)<1e-12;}),true,'Shared viewer must show the ball seated in the same socket');
  await phoneContext.close();assert.deepEqual(errors,[]);
- console.log(JSON.stringify({studyMeshes:3,ballSeated:true,moldedFootSocket:true,moldBallRadius:mold.ballRadius,ankleCenterHeight:mold.center[1],refinedVertices:footPositions.count,socketVertices,contactVertices:contact.length,cavityBottom,maximumSocketDepth,maximumMoldRadiusError,maximumFilletRadiusError,rawCalfExact:true,separation,noCalfSocket:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
+ console.log(JSON.stringify({studyMeshes:3,ballSeated:true,moldedFootSocket:true,moldBallRadius:mold.ballRadius,ankleCenterHeight:mold.center[1],refinedVertices:footPositions.count,socketVertices,contactVertices:contact.length,cavityBottom,maximumSocketDepth,maximumMoldRadiusError,maximumFilletRadiusError,calfSocketDepthRatio:calfMold.depthRatio,calfSocketDepth:calfMold.pressDepth,upperCalfPreserved:true,separation,calfSocket:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

@@ -8,7 +8,7 @@ try{
  const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;stage.prepend(renderer.domElement);
  const scene=new T.Scene();scene.background=new T.Color('#405363');
- const study=createFootStudy({ball:true}),{foot,calf,ankleBall}=study;scene.add(study.group);
+ const study=createFootStudy({ball:true,calfSocket:true}),{foot,calf,ankleBall}=study;scene.add(study.group);
  const ground=new T.Mesh(new T.PlaneGeometry(20,20),new T.MeshStandardMaterial({color:'#405363',roughness:1,metalness:0}));
  ground.name='inspection-floor';ground.rotation.x=-Math.PI/2;ground.position.set(0,-.001,.09);ground.receiveShadow=true;scene.add(ground);
  scene.add(new T.HemisphereLight(0xffffff,0xa8a89c,1.9));
