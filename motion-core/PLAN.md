@@ -232,3 +232,10 @@ Owner requested going back to just the foot and calf and rebuilding the foot soc
 This is a study reset, not a rewrite of Claude's avatar/skeleton work or a frozen checkpoint. Existing default avatar factory and its checks stay protected. Next step requires the owner's go: foot socket only, then its own geometry checks and appearance approval. Calf socket, ball and reintegration are deferred. No socket is rebuilt in this reset task.
 
 Reset verification: raw baseline Node check passes; both position/normal/index buffers match the original shapes exactly, with17.4cm separation. Focused browser suite passes all five views, floor, orbit, camera reset and three phone layouts with no errors. Targeted universal viewer checks pass at1440×900,390×844 and844×390, including disabled Motion, six views, Inspection/Isometric and actual Reset. Full production build, existing avatar-joint checks and frozen checkpoint integrity pass. Stop after the verified baseline link.
+
+
+### Tiny foot socket only — owner go, 19 Nov 2026
+
+Owner authorized a tiny socket in the foot only. Independent small-socket.js applies a shallow circular C2 indentation (40mm radius,8mm depth, X/Z[0,0] at the dome peak), with no raised lip. Does not reuse the rejected large joint/socket prototype. The raw calf stays separate; no calf socket, ball or movement rig is added. createFootStudy({socket:false}) preserves the original baseline. Shape checks confirm an actual concave bowl and exact original calf, X/Z/topology, sole and toes. Do not advance beyond this foot socket before owner appearance review.
+
+Verification: both study Node checks pass, including actual concavity measured from the mesh. The browser suite measures7.999mm maximum displacement across261 upper-patch vertices; original calf, sole, toes, X/Z outline and topology stay exact. Desktop and three phone layouts, framing, floor, orbit and camera reset pass with no errors. Full production build and existing joint/frozen checks pass. Internal Top-view review confirms a tiny soft depression with no raised rim. Stop for owner review after publishing; no next layer or checkpoint.

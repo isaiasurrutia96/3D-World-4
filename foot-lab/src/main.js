@@ -28,7 +28,7 @@ try{
  function resize(){const {width,height}=stage.getBoundingClientRect();camera.aspect=width/height;camera.fov=camera.aspect<.7?52:38;camera.updateProjectionMatrix();renderer.setSize(width,height);view(currentView);}
  new ResizeObserver(resize).observe(stage);resize();view('angle');
  renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
- window.footLab={foot,calf,study,scene,camera,controls,ground,view,getState:()=>({stage:'shapes'})};
+ window.footLab={foot,calf,study,scene,camera,controls,ground,view,getState:()=>({stage:'foot-socket'})};
  installTestLabScene({scene,camera,renderer,floors:[ground],getTarget:()=>controls.target,updateControls:()=>controls.update()});
  window.footLabReady=true;loading.hidden=true;
 }catch(error){console.error(error);loading.textContent='The foot could not open. Please reload to try again.';}
