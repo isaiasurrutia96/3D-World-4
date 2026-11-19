@@ -23,7 +23,7 @@ const mold=study.foot.userData.socketMold;
 assert.equal(study.foot.userData.tinySocket,undefined,'Old tiny-dimple metadata remains');
 assert.equal(mold.ballRadius,ANKLE_RADIUS,'Mold must use the exact last ankle ball');
 assert.equal(mold.ballRadius,.115);assert.equal(mold.center[1],ANKLE_REST_HEIGHT);assert.equal(mold.center[1],.163520006775856);
-assert.equal(mold.blendWidth,.010);assert.equal(mold.coreAngle,70*Math.PI/180);
+assert.equal(mold.filletRadius,.0125,'The rim needs a real rounded bevel radius');
 assert.equal(mold.center[0],0);assert.equal(mold.center[2],0);
 assert(Math.abs(mold.center[1]-(mold.originalHeight-mold.pressDepth+mold.ballRadius))<1e-12,'Mold was not pressed down from the measured original surface');
 assert(Math.abs(mold.pressDepth-.150986934463053)<1e-7,'Mold no longer reaches the measured ankle height');
@@ -41,7 +41,7 @@ for(let i=0;i<footPositions.count;i++){
  assert(depth>=-1e-7&&depth<=mold.pressDepth+.0001,'Mold should cut a depression without a raised cuff');
  if(depth>1e-7){
   socketVertices++;maximumSocketDepth=Math.max(maximumSocketDepth,depth);
-  assert(Math.hypot(x-mold.center[0],z-mold.center[2])<.13,'Mold changed a point outside the locally rounded socket');
+  assert(Math.hypot(x-mold.center[0],z-mold.center[2])<.14,'Mold changed a point outside the locally rounded socket');
   assert(y>.025,'Socket changed the sole or lower side');
  }
  if(y<1e-7||z>=.145)assert.equal(footPositions.getY(i),y,'Socket changed the sole or toes');
@@ -56,6 +56,13 @@ for(const i of contact){
  cavityBottom=Math.min(cavityBottom,footPositions.getY(i));
 }
 assert(maximumMoldRadiusError<1e-7,'Actual contact surface does not match the original ankle ball');
+assert(study.foot.geometry.userData.filletContacts.length>100,'The socket rim has no physical rounded geometry');
+let maximumFilletRadiusError=0;
+for(const [i,centerR,centerY] of study.foot.geometry.userData.filletContacts){
+ const r=Math.hypot(footPositions.getX(i),footPositions.getZ(i));
+ maximumFilletRadiusError=Math.max(maximumFilletRadiusError,Math.abs(Math.hypot(r-centerR,footPositions.getY(i)-centerY)-.0125));
+}
+assert(maximumFilletRadiusError<1e-7,'The actual rim must follow its round-over arc');
 const expectedBottom=ANKLE_REST_HEIGHT-ANKLE_RADIUS;
 assert(cavityBottom>=expectedBottom-1e-7&&cavityBottom<expectedBottom+.0001,'Cavity bottom does not match the real ankle center and ball radius');
 assert.deepEqual(geometrySignature(study.calf),geometrySignature(rawCalf),'Calf is not the original uncarved shape');
@@ -118,7 +125,7 @@ try{
  assert.equal(await page.evaluate(()=>footLab.getState().stage),'foot-socket');
  assert.equal(await page.evaluate(()=>footLab.foot.visible&&footLab.calf.visible),true);
  for(const view of ['Angle','Front','Side','Top','Sole']){
-  await page.getByRole('button',{name:view,exact:true}).click();await assertFraming(page,'desktop '+view);
+  await page.getByRole('button',{name:view,exact:true}).click();await assertFraming(page,'desktop '+view);if(shots&&view==='Top')await page.screenshot({path:resolve(shots,'top.png')});
  }
  assert.equal(await page.evaluate(()=>footLab.ground.visible),false,'Sole view should expose the underside');
  await page.getByRole('button',{name:'Angle',exact:true}).click();
@@ -132,7 +139,11 @@ try{
  await page.getByRole('button',{name:'Angle',exact:true}).click();
  assert(await page.evaluate(before=>footLab.camera.position.toArray().every((v,i)=>Math.abs(v-before[i])<1e-7),angleCamera),'Angle button did not restore its camera view');
  assert.deepEqual(await fingerprint(page),initial,'Inspection or camera changes altered the raw parts');
- if(shots)await page.screenshot({path:resolve(shots,'angle.png')});
+ if(shots){
+  await page.screenshot({path:resolve(shots,'angle.png')});
+  await page.evaluate(()=>{const {foot,camera,controls}=footLab;controls.target.set(foot.position.x,.12,0);camera.position.set(foot.position.x+.30,.38,.42);controls.update();});
+  await page.screenshot({path:resolve(shots,'rim-close.png')});await page.getByRole('button',{name:'Angle',exact:true}).click();
+ }
 
  const phoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),phone=await phoneContext.newPage();phone.on('pageerror',e=>errors.push(e.message));
  await phone.goto(base+'/foot-lab/');await phone.waitForFunction(()=>window.footLabReady,undefined,{timeout:60000});
@@ -158,5 +169,5 @@ try{
  await phone.getByRole('button',{name:'Angle',exact:true}).tap();
  assert.deepEqual(await fingerprint(phone),phoneInitial,'Phone inspection changed the original geometry');
  await phoneContext.close();assert.deepEqual(errors,[]);
- console.log(JSON.stringify({studyMeshes:2,moldedFootSocket:true,moldBallRadius:mold.ballRadius,ankleCenterHeight:mold.center[1],refinedVertices:footPositions.count,socketVertices,contactVertices:contact.length,cavityBottom,maximumSocketDepth,maximumMoldRadiusError,rawCalfExact:true,separation,noBallOrCalfSocket:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
+ console.log(JSON.stringify({studyMeshes:2,moldedFootSocket:true,moldBallRadius:mold.ballRadius,ankleCenterHeight:mold.center[1],refinedVertices:footPositions.count,socketVertices,contactVertices:contact.length,cavityBottom,maximumSocketDepth,maximumMoldRadiusError,maximumFilletRadiusError,rawCalfExact:true,separation,noBallOrCalfSocket:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

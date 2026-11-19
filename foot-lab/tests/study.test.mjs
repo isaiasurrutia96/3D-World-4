@@ -4,7 +4,6 @@ import * as T from 'three';
 import {createFootShape} from '../src/foot-shape.js';
 import {createFootStudy} from '../src/foot-study.js';
 import {createCalf} from '../src/calf.js';
-import {moldSurfaceHeight,moldedHeight} from '../src/ball-mold.js';
 import {createAnkleBall} from '../src/ankle-socket.js';
 import {ANKLE_RADIUS,ANKLE_REST_HEIGHT} from '../../avatar/src/joints/ankle-contract.js';
 import {createCharacterRig} from '../../avatar/src/reference/PlayerModel.ts';
@@ -35,7 +34,7 @@ test('The same ankle ball molds only the foot at the existing socket; calf, sole
  for(let i=0;i<b.count;i++){
   assert.equal(p.getX(i),b.getX(i));assert.equal(p.getZ(i),b.getZ(i));
   const d=b.getY(i)-p.getY(i);assert(d>=-1e-8&&d<=study.foot.userData.socketMold.pressDepth+.0001);maxDepth=Math.max(maxDepth,d);
-  if(d>1e-8){changed++;assert(Math.hypot(b.getX(i),b.getZ(i))<.13);assert(b.getY(i)>.04);}
+  if(d>1e-8){changed++;assert(Math.hypot(b.getX(i),b.getZ(i))<.14);assert(b.getY(i)>.04);}
   if(b.getY(i)<1e-7||b.getZ(i)>=.145)assert.equal(p.getY(i),b.getY(i));
  }
  assert(changed>20&&maxDepth>.15,'The mold must reach the real ankle height');
@@ -112,14 +111,35 @@ test('Actual cavity fits the original 230 mm ankle sphere and is no coarser than
 });
 
 
-test('Mold center matches the real ankle seat and its softened transition has continuous curvature',()=>{
- const study=createFootStudy(),m=study.foot.userData.socketMold,referenceFoot=createFootShape();createCalf(referenceFoot);
- assert(Math.abs(m.center[1]-referenceFoot.geometry.userData.ankleCenter[1])<1e-9,'Use the measured ankle height, not another guessed press distance');
- assert.equal(m.center[1],ANKLE_REST_HEIGHT);assert.deepEqual([m.center[0],m.center[2]],[0,0]);
- assert.equal(m.blendWidth,.010);assert(m.blendWidth>.006);
- const rim=m.ballRadius*Math.sin(m.coreAngle),e=1e-6,fn=r=>moldSurfaceHeight(r,m);
- const leftSlope=(fn(rim)-fn(rim-e))/e,rightSlope=(fn(rim+e)-fn(rim))/e;
- const leftCurve=(fn(rim)-2*fn(rim-e)+fn(rim-2*e))/e**2,rightCurve=(fn(rim+2*e)-2*fn(rim+e)+fn(rim))/e**2;
- assert(Math.abs(leftSlope-rightSlope)<.001&&Math.abs(leftCurve-rightCurve)<1,'A sharp rim returned');
- for(const r of [.13,.14,.145])assert.equal(moldedHeight(.2,r,m),.2,'The sphere equator must not leave a cutoff seam');
+test('The rim has a physical circular round-over tangent to the foot and ball',()=>{
+ const study=createFootStudy(),g=study.foot.geometry,m=study.foot.userData.socketMold,p=g.attributes.position,referenceFoot=createFootShape();createCalf(referenceFoot);
+ assert(Math.abs(m.center[1]-referenceFoot.geometry.userData.ankleCenter[1])<1e-9);
+ assert.equal(m.center[1],ANKLE_REST_HEIGHT);assert.deepEqual([m.center[0],m.center[2]],[0,0]);assert.equal(m.filletRadius,.0125);
+ assert(g.userData.filletContacts.length>100,'The rim must contain actual curved geometry');
+ for(const [i,centerR,centerY] of g.userData.filletContacts){
+  const r=Math.hypot(p.getX(i)-m.center[0],p.getZ(i)-m.center[2]);
+  assert(Math.abs(Math.hypot(r-centerR,p.getY(i)-centerY)-.0125)<1e-7,'Actual rim vertex is not on its round-over arc');
+ }
+ for(const section of g.userData.filletSections){
+  assert(Math.abs(Math.hypot(section.centerR,section.centerY-m.center[1])-(m.ballRadius+m.filletRadius))<1e-8,'Rolling fillet must touch the unchanged sphere');
+  const innerSlope=-(section.innerR-section.centerR)/(section.innerY-section.centerY);
+  assert(Math.abs(innerSlope-section.innerR/(m.center[1]-section.innerY))<1e-7,'Inner edge is not tangent to the ball');
+  const outerSlope=-(section.outerR-section.centerR)/(section.outerY-section.centerY);
+  assert(Math.abs(outerSlope-section.slope)<1e-7,'Outer edge is not tangent to the foot');
+ }
+});
+
+test('Ray-measured cross-sections of the mesh show the rounded radius, not just smoothed normals',()=>{
+ const study=createFootStudy(),g=study.foot.geometry,probe=new T.Mesh(g,new T.MeshBasicMaterial({side:T.DoubleSide})),ray=new T.Raycaster();
+ for(const section of g.userData.filletSections){
+  const points=[.2,.5,.8].map(t=>{
+   const r=section.innerR+(section.outerR-section.innerR)*t;
+   ray.set(new T.Vector3(Math.cos(section.theta)*r,1,Math.sin(section.theta)*r),new T.Vector3(0,-1,0));
+   const hit=ray.intersectObject(probe)[0];assert(hit);return new T.Vector2(r,hit.point.y);
+  });
+  const [a,b,c]=points,ab=a.distanceTo(b),bc=b.distanceTo(c),ac=a.distanceTo(c),area2=Math.abs(b.clone().sub(a).cross(c.clone().sub(a)));
+  const measuredRadius=ab*bc*ac/(2*area2);
+  assert(Math.abs(measuredRadius-.0125)<.0007,`Actual rounded section radius was ${measuredRadius}`);
+ }
+ probe.material.dispose();
 });

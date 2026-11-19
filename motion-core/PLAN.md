@@ -274,3 +274,14 @@ Five geometry checks pass before the viewer build. Independently fit actual cavi
 Continue the owner's foot/calf socket and ball-placement refinements one layer at a time. Checkpoint remains pending final approval.
 
 Final browser checks pass desktop and3 phone layouts, preserving original source vertices/outline/sole/toes and raw calf, with no ball or motion added and no page errors. Actual cavity bottom0.048520252m matches the target within0.000245mm;26,963 core samples match the115mm ball within3.27nm. Actual maximum vertex displacement150.9998mm. Internal Top/Angle review and read-only mathematical review completed. Full production build and frozen integrity pass. Publish this intermediate foot refinement; checkpoint stays pending the owner's remaining socket/ball-placement refinements.
+
+
+### Physical rounded socket rim — owner correction, 19 Nov 2026
+
+Owner clarified the edge itself needs rounding like a cube's edges. The former compact height blend did not provide the requested physical bevel. Replace that transition with explicit circular rolling fillets of12.5mm radius. Solve the actual outer-foot tangent and unchanged ball tangent for each radial section. Circular arc positions and slopes join both surfaces; no separate raised trim or normal-only trick. Keep the same115mm ankle sphere, measured ankle height and current X/Z. No calf socket/ball/motion/checkpoint changes.
+
+Fundamental layer: socket-roundover.js samples original geometry/smooth source tangents, solves rolling-circle centers against the offset sphere, and supplies actual arc vertices. Conforming refinement across the full rim uses2mm edge target (72354 vertices) to keep the core's measured triangle chord error0.1755mm below the reference ball's0.200mm. Six Node checks pass before the viewer build, including circle radius measured from actual vertices and independent triangle-mesh ray cross-sections, tangency at both ends, unchanged calf/sole/toes/outline, positive thickness, closed winding/volume and independent sphere fit.
+
+Stop for owner visual review after live verification. Remaining calf-socket/ball-placement refinements still precede the next checkpoint.
+
+Final checks: full production build and all6 study tests pass. Focused browser suite passes desktop and3 phone layouts, actual sphere and fillet radius checks, source outline/sole/toes/raw calf preservation, views/floor/orbit/reset/framing, with no errors. The new rim contains real circular arc vertices (maximum radius error7.44nm); independent ray sections verify the rounded shape in the triangle mesh. Internal close-up/Top/Angle inspection confirms the broad curved lip. Same ball size, ankle height and cavity bottom are preserved. No checkpoint yet.
