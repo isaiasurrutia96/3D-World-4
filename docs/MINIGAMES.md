@@ -22,6 +22,8 @@ for more detail later.
 11. After: play again, or leave back to the gate.
 12. Movements a game needs (getting in and out of karts, picking up gear)
     go in the movement plan.
+13. Feel: how every game controls and plays (putting, throwing, steering)
+    is tested by the owner and refined as he tests it.
 
 Racing games only (karts, skate racing, ice skating, skiing): checkpoints,
 wrong-way warning, lap times, respawn at the last checkpoint.
@@ -59,6 +61,19 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
    Codex for kart racing.
 4. Controls and tracks as kart racing. Prizes for beating target times
    (bronze, silver, gold).
+
+### 3. Mini golf (approved 19 Nov)
+1. Courses on multiple islands, small ones too, each with its own holes
+   (around 9, more or fewer).
+2. Players take turns counting strokes; aim, pull back for power, release.
+   A hole ends with the ball in the cup or at a stroke limit (e.g. 6).
+   Fewest total strokes wins.
+3. Out of bounds or in water: +1 stroke, ball back where it was hit from.
+   Hole in one: bonus coins.
+4. Blocks: green, green with cup, ice for tricky spots, wedges for slopes,
+   concrete or wood walls. Objects: ball, putter, obstacles (windmills,
+   ramps, tunnels), flags. Prizes: ball colours, putters. Putting feel is
+   tuned with the owner.
 
 ## D. The 20 minigames
 
