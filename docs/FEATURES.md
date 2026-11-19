@@ -15,9 +15,17 @@ noted, not approved yet. Each one gets its own card, approved one at a time
    through the open door (a portal; kept light for the old MacBook). Works
    indoors and outdoors; in a tight spot a message says "Door needs space".
    Bought with coins or won as a prize; lost when he dies (buy or win again).
-2. **Home island** (idea): unlocked by playing. Stores his stuff. The one
-   place he can build and break blocks to make a shelter (an exception to
-   "the world is fixed"; the home island must still pass the world checker).
+2. **Home island** (approved 19 Nov): his own place to store stuff and
+   build. Unlocked by playing (how much: open). Starts small and plain
+   (grass, dirt, bedrock). The one place he can add and break blocks
+   (rulebook blocks only; must pass the world checker). Stored items are
+   safe when he dies. More coins = more he can do: buy land to expand it,
+   build his own tracks and skateparks from blocks, and buy ready-made game
+   kits for fun (bowling alley, hoop, pool table; a home track comes with a
+   start/finish kit). Players cannot design their own minigame rules.
+   He reaches it through the watch door or from the menu screen. Friends:
+   invited through an option in the watch; other players can only enter
+   through his door. Size limit: decided later, maybe by device.
 3. **Free-roam driving** (idea): karts drive on any ground they can reach;
    each block's grip decides how much they slide.
 4. **Swimming travel** (idea): a lazy river, partly through tunnels, to get
