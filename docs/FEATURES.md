@@ -18,14 +18,28 @@ timings, limits). The cards below are being redone with it, one at a time.
 
 ## A. Travel and home
 
-1. **Watch door** (approved 19 Nov): a shortcut to islands and minigames
-   with no menus or loading screens. Open the watch, pick a place or
-   Start minigame → pick a game; a plain door (no glow) appears; he walks up,
-   opens it and walks through. Goes to other islands, his home island, or the
-   gate right by the chosen minigame. The destination is already visible
-   through the open door (a portal; kept light for the old MacBook). Works
-   indoors and outdoors; in a tight spot a message says "Door needs space".
-   Bought with coins or won as a prize; lost when he dies (buy or win again).
+1. **Watch door** (approved 19 Nov, detailed)
+   1. Why: a shortcut to islands and minigames, no menus or loading screens.
+   2. How: open the watch, pick a place or Start minigame → pick a game; a
+      plain door (no glow) appears in front of him; he walks up and opens
+      it; the destination is already visible through it (a portal, kept
+      light for the old MacBook); he walks through; it closes and vanishes.
+   3. Get it: bought with coins or won as a prize.
+   4. Lose or keep: lost when he dies; cannot be stolen (on his wrist).
+   5. Where: indoors and outdoors, on land. Not underwater, mid-air, in a
+      kart or during a minigame. Another player's home island only when
+      invited.
+   6. Screen: destination list in the watch (islands, home, minigames);
+      "Door needs space" when blocked.
+   7. Works with: shop, prizes, home-island invites, minigame gates.
+   8. Online: others see his door; only he (and invited friends, for his
+      home) can go through.
+   9. Saved: whether he owns it; places visited.
+   10. Edge cases: no space → message; someone else walks in → not taken;
+       he walks away → the door vanishes after a few seconds.
+   11. Movements: opening a door, walking through.
+   12. Numbers later: price, space needed, how long it stays open.
+   The watch's look is designed by the owner with Codex.
 2. **Home island** (approved 19 Nov): his own place to store stuff and
    build. Unlocked by playing (how much: open). Starts small and plain
    (grass, dirt, bedrock). The one place he can add and break blocks
