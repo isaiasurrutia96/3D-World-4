@@ -1,5 +1,11 @@
 # Assembled avatar
 
+Historical hand/foot authoring viewer. The current official live avatar is
+loaded through `avatar/src/official-avatar.js` in the universal Test Lab's
+Our avatar and Skeleton views; see `avatar/ANIMATION-HANDOFF.md`. This older
+viewer and its source factory are retained for shape generation and regression
+checks, not as the current runtime model.
+
 Saved as **Checkpoint 2** on 17 November 2026: `avatar-checkpoint-2-2026-11-17`. [Frozen preview](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/avatar-2/) · [Manifest](../checkpoints/avatar-2/CHECKPOINT.json).
 
 The saved clay avatar, assembled with the latest rounded feet, separate ankle balls with foot/calf sockets, and hand/foot movement from the two labs. Open `/avatar-lab/` on desktop or phone. Use Hands and Feet to switch controls, Play motion to animate both, or Rest all to restore the saved shapes. Drag to orbit, pinch/scroll to zoom, and use Angle, Front, Side, Back or Top.

@@ -62,12 +62,12 @@ async function setTest(id){
  if(!tests[id])return;subject=id;ready=false;window.testLabReady=false;const token=++generation;clock=null;syncControls=()=>{};controls.replaceChildren();loading.hidden=false;loading.textContent='Preparing '+tests[id].name.toLowerCase()+'…';$('#subject').value=id;$('#subject-status').textContent=tests[id].name;
  $('#test-context').textContent=$('#subject').selectedOptions[0].textContent;
  const url=new URL(location.href);if(id==='avatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
- const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=study-assets-45';frame=node;host.replaceChildren(node);
+ const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=official-joints-2026-11-19';frame=node;host.replaceChildren(node);
  node.onload=async()=>{
   try{
    const w=node.contentWindow,doc=w.document,style=doc.createElement('style');style.textContent='html,body,body>main{height:100%!important;overflow:hidden!important;background:#405363!important}.app{display:block!important;height:100%!important}body>header,.app>header,nav.views,.stage-hint,.hint,.other-test,#status,aside,.floor-toggle,#test-videos{display:none!important}#stage{height:100%!important;width:100%!important;min-height:0!important}.race-hud{display:grid!important;top:64px!important}';doc.head.append(style);
    protectPage(w);
-   const start=performance.now();while(!w.testLabScene||!(tests[id].ready?tests[id].ready(w):doc.querySelector('canvas'))){if(token!==generation)return;if(performance.now()-start>30000)throw Error('Test did not load');await new Promise(r=>setTimeout(r,40));}
+   const start=performance.now();while(!w.testLabScene||!(tests[id].ready?tests[id].ready(w):doc.querySelector('canvas'))){if(token!==generation)return;if(w.avatarLoadError)throw Error(w.avatarLoadError);if(performance.now()-start>60000)throw Error('Test did not load');await new Promise(r=>setTimeout(r,40));}
    if(token!==generation)return;clock=frameClock(w);mirrorControls(doc);buildMotionControls(doc);
    $('#visual-mode').disabled=Boolean(tests[id].tracks);setInspection(inspection);
    $('#live-help').textContent=tests[id].tracks?'Choose a track, then drag to orbit and pinch to zoom. This section shows the track only.':tests[id].move?'Left side: move · Right side: look around. Use a light joystick push to slow the motion.':'Drag the model to look around. Use the view buttons for a fixed angle.';

@@ -1,6 +1,12 @@
 # 3D-World-4
 
-Current avatar: **Checkpoint 2**, saved on 17 November 2026.
+**Official avatar, 19 November 2026:** the approved original body shapes and
+ball-and-socket assembly are pinned in [avatar/official.json](avatar/official.json).
+Our avatar and Skeleton in the universal Test Lab use this same model.
+Claude's movement work should use the [animation handoff](avatar/ANIMATION-HANDOFF.md)
+and `avatar/src/official-avatar.js`; earlier checkpoints remain historical.
+
+Historical avatar baseline: **Checkpoint 2**, saved on 17 November 2026.
 
 [Drive the Racing Lab](https://isaiasurrutia96.github.io/3D-World-4/racing-lab/): section 1 tests solo driving on any of the four tracks, using Left/Right and Gas buttons on phones, keyboard or a controller. No NPC racers are spawned.
 
@@ -18,8 +24,8 @@ The current run uses the reviewed motion, adapted to floor contact. [Compare Mar
 
 [Open the frozen checkpoint](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/avatar-2/).
 
-Permanent Git tag: `avatar-checkpoint-2-2026-11-17`. Its manifest is [CHECKPOINT.json](checkpoints/avatar-2/CHECKPOINT.json). Start future avatar work from this assembled model, with the saved hands, fitted feet, rigid calves and hand/foot motion.
+Permanent Git tag: `avatar-checkpoint-2-2026-11-17`. Its manifest is [CHECKPOINT.json](checkpoints/avatar-2/CHECKPOINT.json). It preserves the earlier assembly with saved hand/foot motion.
 
-Editable assembly: [avatar-lab/src/avatar.js](avatar-lab/src/avatar.js). The current working viewer is `/avatar-lab/`; the checkpoint preview above is a frozen copy. Keep saved checkpoint files and tags intact.
+Historical editable assembly: [avatar-lab/src/avatar.js](avatar-lab/src/avatar.js), viewed at `/avatar-lab/`. Current avatar work uses the official entry point above. Keep saved checkpoint files and tags intact.
 
 The previous `avatar-approved-2026-11-17` checkpoint remains available. See [checkpoint history](checkpoints/README.md).

@@ -1,0 +1,12 @@
+import {mkdir,writeFile,readFile,readdir,unlink} from 'node:fs/promises';import {serialize,deserialize} from 'node:v8';import {createHash} from 'node:crypto';
+import {collectApprovedJointParts} from '../avatar/src/joint-assembly/collect.js';
+import {buildJointAssembly} from '../avatar/src/joint-assembly/build.js';
+import {encodeStudyAsset,verifyStudyAsset} from './bake-study.mjs';
+const cached=process.argv.indexOf('--sources');
+const input=cached<0?collectApprovedJointParts():deserialize(await readFile(process.argv[cached+1]));
+await mkdir('/tmp/avatar-assembly',{recursive:true});await writeFile('/tmp/avatar-assembly/verified-sources.bin',serialize(input));
+const avatar=buildJointAssembly(input.sources,input.baseline),bytes=encodeStudyAsset(avatar);verifyStudyAsset(avatar,bytes);
+const hash=createHash('sha256').update(bytes).digest('hex').slice(0,16),dir='avatar/assembled-joints',file='parts-'+hash+'.json.gz';await mkdir(dir,{recursive:true});await writeFile(dir+'/'+file,bytes);
+const digest=r=>{const h=createHash('sha256');for(const a of Object.values(r.geometry.attributes))h.update(new Uint8Array(a.array.buffer,a.array.byteOffset,a.array.byteLength));h.update(new Uint8Array(r.geometry.index.buffer,r.geometry.index.byteOffset,r.geometry.index.byteLength));return h.digest('hex');};
+const report={asset:file,bytes:bytes.length,balls:12,sockets:24,sourceGeometryHashes:Object.fromEntries(Object.entries(input.sources).filter(([k])=>!k.startsWith('original.')).map(([k,r])=>[k,digest(r)])),sha256:createHash('sha256').update(bytes).digest('hex'),limbFit:Object.fromEntries(Object.entries(avatar.reports.limbs).map(([k,r])=>[k,{sourceLength:r.sourceLength,targetLength:r.targetLength,minimumStretch:r.minimumStretch}])),torsoMinimumJacobian:avatar.reports.torso.minimumDeterminant};
+await writeFile(dir+'/manifest.json',JSON.stringify(report,null,2)+'\n');for(const old of await readdir(dir))if(/^parts-[a-f0-9]{16}\.json\.gz$/.test(old)&&old!==file)await unlink(dir+'/'+old);console.log(JSON.stringify(report));

@@ -1,6 +1,15 @@
 # Our approved avatar
 
-Approved on 17 November 2026. This is the current avatar to reuse for future work.
+**Current official avatar (19 November 2026):** `official.json` pins the
+approved original-shape joint assembly. Both `/test-lab/` → Our avatar and
+Skeleton load it through `src/official-avatar.js`. See
+[animation handoff](ANIMATION-HANDOFF.md) and
+[assembly checks](src/joint-assembly/README.md).
+
+The text below describes the preserved 17 November baseline. Its viewer,
+source shapes and approval record remain available for authoring/history.
+
+Approved on 17 November 2026. This is the earlier baseline.
 
 Permanent checkpoint: `avatar-approved-2026-11-17`.
 

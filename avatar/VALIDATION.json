@@ -1,0 +1,54 @@
+{
+  "version": "approved-joints-2026-11-19",
+  "checkedAt": "2026-11-19T17:03:55.054240+00:00",
+  "assetSHA256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+  "assemblyChecks": {
+    "passed": 12,
+    "failed": 0,
+    "sourceInput": "verified authoring-source snapshot; saved asset matched byte-for-byte",
+    "command": "npm run test:joint-assembly"
+  },
+  "runtimeChecks": {
+    "passed": 4,
+    "failed": 0,
+    "command": "npm run test:official-avatar"
+  },
+  "projectBuild": "PASS",
+  "browserChecks": {
+    "officialAvatar": "PASS: both routes, repository URL prefix, joint centers, poses/reset, bones, view/layout sweep, asset failure/recovery, no page errors",
+    "universalTestLab": "PASS: six device layouts, views, inspection, controls, tracks, all remaining subjects, off-screen pause, empty videos",
+    "motionPanel": "PASS: pose toggles, reset on close/Escape, alongside-model layout, six device sizes, isolated hand controls, unavailable subjects"
+  },
+  "regressionChecks": {
+    "skeleton": "PASS",
+    "inspectionZoom": "PASS",
+    "whitespace": "PASS"
+  },
+  "measurements": {
+    "parts": 28,
+    "balls": 12,
+    "sockets": 24,
+    "maximumActualBallIntrusionMM": 0.17548928991131807,
+    "maximumStaticPoseJointCenterErrorMeters": 1.0877919644084146e-15,
+    "maximumRepeatedUpdateJointDriftMeters": 4.62985963945236e-16,
+    "updateRatesChecked": [
+      30,
+      60,
+      120,
+      144
+    ],
+    "maximumExistingSoftChestContactVariationMM": 0.6854365818236008
+  },
+  "limits": [
+    "Inspection-quality master, not a mobile gameplay performance certification.",
+    "New topology finger/toe skinning remains Claude movement work.",
+    "All combined movement limits and gripping require their own checks."
+  ],
+  "unchanged": [
+    "motion-core/",
+    "checkpoints/",
+    "avatar/index.html",
+    "avatar/APPROVED.json"
+  ],
+  "delivery": "Owner authorized public Test Lab publication on 19 November 2026; release hash and verification results retained."
+}

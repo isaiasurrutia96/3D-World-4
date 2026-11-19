@@ -1,3 +1,5 @@
+// LEGACY authoring/reference adapter. Live pages use avatar/src/official-avatar.js.
+// Kept intact for source generation and historical regression checks.
 // Skeleton · section 2: hanging the clay body parts on the bones.
 //
 // Each live clay body part rides rigidly on one bone. The approved upper

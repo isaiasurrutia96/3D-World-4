@@ -2,6 +2,15 @@
 
 The published workspace is `/test-lab/`. Its static UI lives in `public/test-lab/` and is copied to `dist/` by Vite.
 
+Our avatar and Skeleton now share the official approved original-shape joint
+assembly, pinned in `avatar/official.json`. Both viewers load its prebuilt data
+through `avatar/src/official-avatar.js`; no procedural body/socket construction
+runs on the device. They expose the existing skeleton pose/reach controls in
+the alongside-model Motion panel. Isolated Hands and Feet studies remain
+separate. New topology's finger/toe skinning is intentionally left to Claude;
+see `avatar/ANIMATION-HANDOFF.md`. The historical avatar-lab motion viewer and
+frozen checkpoints remain available without being the official model.
+
 `main.js` registers the existing live tests and their ready signals. One iframe is mounted at a time. The workspace forwards view buttons and mirrors each test's existing controls, keeping its model and motion code in its own app. When most of the viewer has scrolled away, its animation clock pauses and input is released; it resumes when the viewer returns.
 
 Add future subjects to the test registry and selector. Prefer exposing the same ready flag, camera/view API and native controls used by the existing labs. Saved checkpoints remain separate and untouched.

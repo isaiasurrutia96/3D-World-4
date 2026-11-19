@@ -51,9 +51,15 @@
     "build:elbow-lab": "node elbow-lab/build.mjs",
     "test:elbow-lab": "node elbow-lab/tests/browser.mjs",
     "test:study-assets": "node --test tests/study-asset.test.mjs",
-    "test:study-startup": "node tests/study-startup.mjs"
+    "test:study-startup": "node tests/study-startup.mjs",
+    "build:joint-assembly": "node scripts/build-joint-assembly.mjs",
+    "test:joint-assembly": "node --test tests/avatar/joint-assembly.mjs",
+    "preview:joint-assembly": "node scripts/preview-joint-avatar.mjs",
+    "test:official-avatar": "node --test tests/avatar/official-avatar.mjs",
+    "test:official-avatar-browser": "node tests/avatar/official-browser.mjs"
   },
   "dependencies": {
+    "cdt2d": "1.0.0",
     "three": "0.180.0"
   },
   "devDependencies": {

@@ -5,7 +5,7 @@
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
-import {createSkeletonAvatar} from './attach.js';
+import {loadOfficialAvatar,OFFICIAL_AVATAR} from '../avatar/src/official-avatar.js';
 
 import {POSES,CLIPS} from '../motion-core/skeleton/poses.js';
 import {createPosePlayer} from '../motion-core/skeleton/pose.js';
@@ -14,11 +14,15 @@ import {createDemos,seatTop,thighRests,footReach,createDemoRunner} from './demos
 
 
 const stage=document.querySelector('#stage');
-const A=createSkeletonAvatar();
+async function start(){
+const A=await loadOfficialAvatar();
+let needsRender=true;
 const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;stage.prepend(renderer.domElement);
+renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
 const scene=new T.Scene();scene.background=new T.Color('#405363');scene.add(A.root);
 A.root.traverse(o=>{if(o.isMesh)o.castShadow=true;});
-const slab=new T.Mesh(new T.BoxGeometry(4,.6,4),new T.MeshStandardMaterial({color:'#8f9295',roughness:1}));slab.position.y=-.3;slab.receiveShadow=true;scene.add(slab);
+const floorSize=document.documentElement.dataset.avatarView==='avatar-test'?12:4;
+const slab=new T.Mesh(new T.BoxGeometry(floorSize,.6,floorSize),new T.MeshStandardMaterial({color:'#8f9295',roughness:1}));slab.position.y=-.3;slab.receiveShadow=true;scene.add(slab);
 scene.add(new T.HemisphereLight(0xffffff,0xb6b2aa,2));
 const key=new T.DirectionalLight(0xffffff,2.4);key.position.set(-3,5,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-1.8,right:1.8,top:2,bottom:-1,near:.2,far:12});key.shadow.bias=-.0002;key.target.position.set(0,.9,0);scene.add(key,key.target);
 const fill=new T.DirectionalLight(0xffffff,.9);fill.position.set(4,2,-3);scene.add(fill);
@@ -70,19 +74,34 @@ function setPose(name){
 }
 for(const b of document.querySelectorAll('[data-pose]'))b.onclick=()=>{if(runner.active)setDemo(null);setPose(b.dataset.pose);};
 const bonesButton=document.querySelector('#bones');
-function showBones(on){bonesView.visible=on;bonesButton.setAttribute('aria-pressed',String(on));bonesButton.textContent=on?'Hide bones':'Show bones';}
+function showBones(on){bonesView.visible=on;needsRender=true;bonesButton.setAttribute('aria-pressed',String(on));bonesButton.textContent=on?'Hide bones':'Show bones';}
 bonesButton.onclick=()=>showBones(!bonesView.visible);
 
 const target=new T.Vector3(0,.95,0),camera=new T.PerspectiveCamera(36,1,.01,40),controls=new OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true;controls.enablePan=false;controls.minDistance=1;controls.maxDistance=9;controls.target.copy(target);
 const views={front:[0,.1,4.4],side:[4.4,.1,0],back:[0,.1,-4.4],top:[0,4.4,.001],angled:[2.4,.9,3.9]};
-function view(name){camera.position.copy(target).add(new T.Vector3(...views[name]));controls.target.copy(target);controls.update();for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed',String(b.dataset.view===name));}
+function view(name){camera.position.copy(target).add(new T.Vector3(...views[name]));controls.target.copy(target);controls.update();needsRender=true;for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed',String(b.dataset.view===name));}
 for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>view(b.dataset.view);
 controls.addEventListener('start',()=>{for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed','false');});
-function resize(){const {width,height}=stage.getBoundingClientRect();camera.aspect=width/height;camera.fov=camera.aspect<.7?46:36;camera.updateProjectionMatrix();renderer.setSize(width,height);}
+controls.addEventListener('change',()=>{needsRender=true;});
+function resize(){const {width,height}=stage.getBoundingClientRect();if(!width||!height)return;camera.aspect=width/height;camera.fov=camera.aspect<.7?46:36;camera.updateProjectionMatrix();renderer.setSize(width,height);needsRender=true;}
 new ResizeObserver(resize).observe(stage);resize();view('angled');setPose('rest');
-let last=0;
-renderer.setAnimationLoop(ms=>{const dt=Math.min(.1,last?(ms-last)/1000:0);last=ms;drawBones(A.apply(framePose(dt)));controls.update();renderer.render(scene,camera);});
-window.skeletonLab={camera,controls,scene,setPose,setDemo,showBones,view,avatar:A,player,poses:Object.keys(POSES),demos:['squat','sit','step','ball']};
+let last=0,lastPose='',lastPresentation='';
+// The animation clock is unchanged. A still inspection does not redraw the
+// 3.6M-triangle master and its shadow sixty times a second on a phone.
+renderer.setAnimationLoop(ms=>{
+ const dt=Math.min(.1,last?(ms-last)/1000:0);last=ms;
+ const pose=framePose(dt),poseKey=JSON.stringify(pose);
+ if(poseKey!==lastPose){lastPose=poseKey;drawBones(A.apply(pose));renderer.shadowMap.needsUpdate=true;needsRender=true;}
+ controls.update();
+ const presentation=JSON.stringify(window.testLabScene?.getState());
+ if(presentation!==lastPresentation){lastPresentation=presentation;needsRender=true;}
+ if(needsRender){renderer.render(scene,camera);needsRender=false;}
+});
+window.skeletonLab={camera,controls,scene,renderer,setPose,setDemo,showBones,view,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES),demos:['squat','sit','step','ball']};
+window.avatarLab=window.skeletonLab;
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
-document.querySelector('#loading').hidden=true;window.skeletonTestReady=true;
+drawBones(A.solved);renderer.render(scene,camera);
+document.querySelector('#loading').hidden=true;window.skeletonTestReady=true;window.avatarLabReady=true;
+}
+start().catch(error=>{console.error(error);window.avatarLoadError=error.message;document.querySelector('#loading').textContent='The avatar could not open. Choose Reset to try again.';});

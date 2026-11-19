@@ -25,14 +25,18 @@ function surfaceHeight(g,x,z){
 }
 
 /** Same real rolling-circle rim as the accepted ankle. No flat cap trims. */
-export function moldWristSocket(part,{radius,depthFraction,underside=false,filletRadius=radius*FOOT_SOCKET_MOLD.filletRadius/FOOT_SOCKET_MOLD.ballRadius}){
+export function moldWristSocket(part,{radius,depthFraction,underside=false,filletRadius=radius*FOOT_SOCKET_MOLD.filletRadius/FOOT_SOCKET_MOLD.ballRadius,centerXZ}){
  const g=part.geometry,localPositions=g.attributes.position.array.slice(),localNormals=g.attributes.normal.array.slice();
  const orientation=new T.Matrix4().compose(new T.Vector3(),part.quaternion,part.scale);
  const half=new T.Matrix4().makeScale(1,-1,-1),toMold=underside?half.multiply(orientation):orientation,back=toMold.clone().invert();
  g.applyMatrix4(toMold);g.computeBoundingBox();const p=g.attributes.position;
  let cx=0,cz=0;
- if(!underside){let top=-Infinity;for(let i=0;i<p.count;i++)top=Math.max(top,p.getY(i));let count=0;for(let i=0;i<p.count;i++)if(p.getY(i)>top-.001){cx+=p.getX(i);cz+=p.getZ(i);count++;}cx/=count;cz/=count;}
- const originalHeight=surfaceHeight(g,cx,cz),socketDepth=2*radius*depthFraction,sample=originalSurface(g);
+ if(centerXZ){[cx,cz]=centerXZ;}
+ else if(!underside){let top=-Infinity;for(let i=0;i<p.count;i++)top=Math.max(top,p.getY(i));let count=0;for(let i=0;i<p.count;i++)if(p.getY(i)>top-.001){cx+=p.getX(i);cz+=p.getZ(i);count++;}cx/=count;cz/=count;}
+ const sample=originalSurface(g),rayHeight=surfaceHeight(g,cx,cz);
+ // An exact pole/triangle-edge ray can miss the upper cap. The same
+ // barycentric surface sampler used by the fillet supplies that missing hit.
+ const originalHeight=Math.max(rayHeight,sample(cx,cz)?.height??-Infinity),socketDepth=2*radius*depthFraction;
  // Depth is the ball cap captured from the actual spherical contact rim to
  // the pole. A rounded source tip sits proud of that rim: merely pressing
  // by D/3 from that tip leaves much less than one-third of the ball seated.

@@ -1,0 +1,45 @@
+{
+  "asset": "parts-4d3988607a0d4159.json.gz",
+  "bytes": 35810859,
+  "balls": 12,
+  "sockets": 24,
+  "sourceGeometryHashes": {
+    "shoulder.torso": "609d22a1cb9a5a8c5d09397db543a7456012f7fd0eded7234d6ecf6c281068e3",
+    "shoulder.upperArm": "07ea0bbedb80c8598463bddedbafaa4eae4df70ce1bf4ea0b888d104afaed568",
+    "shoulder.ball": "c2df6a9b579f4199065fc2e77c5547474acad09eda3a8c9a5066186b4e6af8c1",
+    "hip.thighL": "cd19f5e18f7acb5eda3a7c52a1b5ef455e91480670f9c15b02a52ef1a2832ab9",
+    "hip.ballL": "b0f50b2ce42852ef108898bfdbafa31b016675309d340f02b9f9ff295b750b96",
+    "knee.calf": "88b3375a2ac4dd5fe5841374c35e54a2ef3f05eb2faa3c4dfff65d2ccf39193e",
+    "knee.ball": "aa82b08b4edb704c599cc04f9e3822828d2c7bec3fa0180a2b9e46cf7a91707e",
+    "elbow.forearm": "7ef40eaac954c8e3d81732ea56132eb365068e5f091d1abf58a7006ca065fa45",
+    "elbow.ball": "da34e995f3b9a11cdcb10739953d7a516b47ed7f434647244fb1d608f6e23afd",
+    "wrist.hand": "c7ce3310b129180f6f876ae8a9677df82a332c0fe73e9424a995b77997a338c2",
+    "wrist.ball": "da34e995f3b9a11cdcb10739953d7a516b47ed7f434647244fb1d608f6e23afd",
+    "ankle.foot": "30c1b74df8e74d7bbfe9b310fb0ba8e8556d48e24cea3166dbc8f459ad7bb621",
+    "ankle.ankleBall": "0197769cbbdd068a2d0217dfa3300f8192b6e9a2148c6a9b3e698de45f1cb71a"
+  },
+  "sha256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+  "limbFit": {
+    "upper-arm.L": {
+      "sourceLength": 0.333292270722397,
+      "targetLength": 0.309948931277396,
+      "minimumStretch": 0.821448951496639
+    },
+    "forearm.L": {
+      "sourceLength": 0.2952069831902373,
+      "targetLength": 0.2870860846505801,
+      "minimumStretch": 0.915917918177918
+    },
+    "thigh.L": {
+      "sourceLength": 0.4584788692996009,
+      "targetLength": 0.36710000000000004,
+      "minimumStretch": 0.5424905720346958
+    },
+    "calf.L": {
+      "sourceLength": 0.43300908950845496,
+      "targetLength": 0.30887999322414394,
+      "minimumStretch": 0.3006563555425259
+    }
+  },
+  "torsoMinimumJacobian": 0.5356630750734801
+}
