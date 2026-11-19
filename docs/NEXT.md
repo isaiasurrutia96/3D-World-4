@@ -233,3 +233,5 @@ Recorded 17 November 2026.
 30. Movement plan addition (owner, 19 Nov): a juke (quick dodge) to avoid
     a punch or hit, plus the hit movements (punch, kick, throw, swing,
     stumble, knock-down, get up). After balance.
+31. Movement plan addition (owner, 19 Nov): ragdoll (a loose, floppy fall
+    when a kart hits someone), then getting back up.

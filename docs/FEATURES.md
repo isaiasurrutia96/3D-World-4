@@ -26,8 +26,12 @@ noted, not approved yet. Each one gets its own card, approved one at a time
    He reaches it through the watch door or from the menu screen. Friends:
    invited through an option in the watch; other players can only enter
    through his door. Size limit: decided later, maybe by device.
-3. **Free-roam driving** (idea): karts drive on any ground they can reach;
-   each block's grip decides how much they slide.
+3. **Free-roam driving** (approved 19 Nov): a kart from the shop or a
+   prize, pulled out from the item wheel. Drives on any ground it can reach;
+   each block's grip decides speed and sliding. Into water or lava: the kart
+   respawns at the last safe spot (he does not die in a kart). Nobody can
+   punch him while driving; a kart hitting someone sends them ragdolling,
+   then they get back up. Hop out anytime; the kart goes back into his items.
 4. **Swimming travel** (idea): a lazy river, partly through tunnels, to get
    around the islands.
 
@@ -112,6 +116,7 @@ win, controls, blocks and objects, coins and prizes, single or multiplayer).
 
 ## H. Objects (after blocks)
 
-15. **Objects list** (idea): turn arrow signs first, then hoops, pins,
+15. **Objects list** (idea; folded into the minigame cards, each game names
+    its own objects): turn arrow signs first, then hoops, pins,
     targets. Signs and hoops are built from small concrete blocks and paint;
     balls, pins and other moving objects are not made of blocks.
