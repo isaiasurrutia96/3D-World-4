@@ -136,11 +136,26 @@ timings, limits). The cards below are being redone with it, one at a time.
 
 ## B. Money and items
 
-5. **Coins** (approved 19 Nov): the reward for playing. Earned by winning
-   minigames (more for 1st place, some just for playing), maybe small amounts
-   hidden around the world. Spent on shop items, the watch door, home-island
-   land, game kits and upgrades. Always kept when he dies (only carried items
-   are at risk). No real money for now. Shown in a screen corner and the watch.
+5. **Coins** (approved 19 Nov, detailed)
+   1. Why: the reward for playing; spent on items, land and upgrades.
+   2. How: coins are added on a game's results screen, or on the spot in the
+      free world; spent in the shop or watch.
+   3. Get it: minigames (more for 1st, some just for playing), duplicate
+      prizes, arcade tickets, small amounts hidden around the world, and a
+      few coins for cool moments in the free world (a skateboard trick,
+      hitting a target, shooting a hoop).
+   4. Lose or keep: always kept; never lost on death or stolen.
+   5. Where: earned anywhere; spent in the shop, watch, home build mode.
+   6. Screen: coin count in a corner and in the watch; a +coins pop-up.
+   7. Works with: shop, prizes, home-island land, game kits, levels.
+   8. Online: coins cannot be traded between players (anti-cheat), for now.
+   9. Saved: coin total; history of earning and spending.
+   10. Edge cases: not enough coins → the shop shows how many more; leaving
+       a game early → no coins.
+   11. Movements: none.
+   12. Numbers later: coins per game and place, prices, hidden amounts,
+       free-world rewards.
+   No real money for now.
 17. **Prizes** (approved 19 Nov): sometimes after winning a minigame, more
     often for 1st place. Items (skateboard, watch door, cosmetics like colours
     and outfits), game kits, rarely home-island land. Matched to the game
