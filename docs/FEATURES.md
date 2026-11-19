@@ -194,11 +194,25 @@ timings, limits). The cards below are being redone with it, one at a time.
        level-locked → shows the level needed.
    11. Movements: none.
    12. Numbers later: every price, level locks.
-7. **Item pull-out** (approved 19 Nov, like GTA): hold a button, an item
-   wheel appears, pick an item and it is in his hands. Holds everything he
-   owns and carries (rides, sports gear, the watch door). Works anywhere,
-   e.g. a golf club and ball to hit from any block, even a cloud. One item
-   in hand at a time. Not during minigames (they give him the gear).
+7. **Item pull-out** (approved 19 Nov, detailed; like GTA)
+   1. Why: use any item he owns, anywhere, instantly.
+   2. How: hold a button → item wheel → pick → it is in his hands → use it
+      → put it away or pick another. One item in hand at a time.
+   3. Get it: from the start.
+   4. Lose or keep: carried items lost on death; a punch knocks the held
+      item out of his hands (not in minigames or on home islands).
+   5. Where: anywhere in the free world; only swim gear while swimming; not
+      during minigames (they give the gear). E.g. a golf club and ball to hit
+      from any block, even a cloud.
+   6. Screen: the item wheel with icons; the held item in a corner.
+   7. Works with: shop, prizes, hits (held items can be swung and beat
+      punches), watch (the kart and door live in the watch, not the wheel).
+   8. Online: others see what he is holding.
+   9. Saved: what he is carrying.
+   10. Edge cases: too many items → pages; no room to use one (skateboard
+       indoors) → message.
+   11. Movements: pull out, hold, put away, swing.
+   12. Numbers later: how many items he can carry.
 8. **Losing loot and stealing** (approved 19 Nov): he dies from lava,
    landing on a cactus, or drowning (swimming needs a breath meter). Falling
    off an island is not a death: he respawns near where he fell, nothing
