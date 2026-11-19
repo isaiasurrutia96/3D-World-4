@@ -85,11 +85,15 @@ noted, not approved yet. Each one gets its own card, approved one at a time
 
 ## E. Messing around
 
-13. **Hits** (idea, remember): punch or kick other players or NPCs and they
-    stumble and fall; throw a ball at anyone; whack someone with a pool cue.
-    Not a boxing game. Needs balance first. Any held item (club, bat, cue,
-    skateboard) can be swung as a weapon, and a swing beats a punch, so
-    holding an item is a way to fight back instead of just losing it.
+13. **Hits** (approved 19 Nov): punch, kick, throw a ball at someone, or
+    swing a held item (club, bat, cue, skateboard). The person stumbles; a
+    hard hit knocks them down; they get back up (no death, no damage). A
+    swing beats a punch; a punch knocks an item out of someone's hands and
+    anyone can grab it. Not during minigames, and not on someone's home
+    island unless its owner allows it. Spam guard: about a second between
+    hits from the same player, plus a moment after getting up when he cannot
+    be knocked down again (no stun-locking). He can juke (dodge) a hit; the
+    juke itself is in the movement plan. Movements need balance first.
 
 ## F. People
 

@@ -230,3 +230,6 @@ Recorded 17 November 2026.
     balance and jumping. Grab edges and hang, pull up, shimmy sideways, let
     go; climb almost any solid block (trees, leaves, rock, walls; not lava or
     cactus); hands use the rod grip for poles and branches.
+30. Movement plan addition (owner, 19 Nov): a juke (quick dodge) to avoid
+    a punch or hit, plus the hit movements (punch, kick, throw, swing,
+    stumble, knock-down, get up). After balance.
