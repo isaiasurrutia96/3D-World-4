@@ -156,11 +156,25 @@ timings, limits). The cards below are being redone with it, one at a time.
    12. Numbers later: coins per game and place, prices, hidden amounts,
        free-world rewards.
    No real money for now.
-17. **Prizes** (approved 19 Nov): sometimes after winning a minigame, more
-    often for 1st place. Items (skateboard, watch door, cosmetics like colours
-    and outfits), game kits, rarely home-island land. Matched to the game
-    (golf prizes lean golf, racing prizes lean racing). A duplicate turns into
-    coins. A short prize reveal after the win.
+17. **Prizes** (approved 19 Nov, detailed)
+    1. Why: winning feels special, beyond coins.
+    2. How: win a minigame → a short prize reveal on the results screen →
+       into his items or storage.
+    3. Get it: sometimes after a win, more often for 1st; bigger prizes for
+       records and target times.
+    4. Lose or keep: carried prizes follow the death rule (stored ones safe).
+    5. What: any prize (items, rides, gear, watch door, cosmetics, outfit
+       pieces, kart parts, game kits, rarely land). This replaces "matched
+       to the game".
+    6. Screen: the prize reveal; a "new" badge in the item wheel.
+    7. Works with: coins (duplicates become coins), shop, home storage,
+       outfits, custom karts.
+    8. Online: everyone sees each player's prize on the results screen.
+    9. Saved: prizes owned.
+    10. Edge cases: storage full → waits in a mailbox on his home island;
+        duplicate → coins.
+    11. Movements: none.
+    12. Numbers later: drop chance, rarity.
 6. **Shop** (approved 19 Nov): opened from the watch, plus a few shop
    buildings around the world. Sells rides (skateboard), the
    watch door, swim gear, sports gear (clubs, balls, bat, cue), cosmetics, home-island
