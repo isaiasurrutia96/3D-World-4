@@ -15,21 +15,17 @@
 </head>
 <body>
  <main class="app">
-  <header><div><h1>Foot Lab</h1><p class="subtitle">Inspect the ankle ball and its two smooth sockets.</p></div><span class="badge">Ankle ball joint</span></header>
+  <header><div><h1>Foot Lab</h1><p class="subtitle">Original foot and calf, shown separately.</p></div><span class="badge">Shape baseline</span></header>
   <section id="stage" aria-label="Interactive 3D foot and calf">
    <div class="hint">Drag to rotate · Pinch or scroll to zoom</div>
    <button id="floor" class="floor-toggle" aria-pressed="true">Floor</button>
    <nav class="views" aria-label="Foot views"><button data-view="angle" aria-pressed="true">Angle</button><button data-view="front" aria-pressed="false">Front</button><button data-view="side" aria-pressed="false">Side</button><button data-view="top" aria-pressed="false">Top</button><button data-view="sole" aria-pressed="false">Sole</button></nav>
    <div id="loading" class="loading" role="status">Preparing your foot…</div>
   </section>
-  <aside aria-label="Foot movement controls">
-   <p class="panel-label">Inspect the joint</p>
-   <div class="presets joint-parts" role="group" aria-label="Joint parts"><button data-parts="joint" aria-pressed="true">Joint</button><button data-parts="foot" aria-pressed="false">Foot socket</button><button data-parts="calf" aria-pressed="false">Calf socket</button><button data-parts="ball" aria-pressed="false">Ball</button></div>
-   <p class="panel-label">Try a pose</p><p class="status" id="pose-name" aria-live="polite">Fitted rest pose</p>
-   <div class="presets" role="group" aria-label="Foot poses"><button data-pose="rest" aria-pressed="true">Rest</button><button data-pose="point" aria-pressed="false">Point</button><button data-pose="flex" aria-pressed="false">Flex</button><button data-pose="toes" aria-pressed="false">Toes</button><button data-pose="tiptoe" aria-pressed="false">Tiptoe</button></div>
-   <button id="play" aria-pressed="false">Play motion</button><div class="divider"></div>
-   <div id="motion-controls"></div>
-   <p class="note">Inspect either socket on its own, or return to Joint. Pointing and heel raise share a safe bend limit. Tiptoe keeps the front planted.</p>
+  <aside aria-label="Foot study information">
+   <p class="panel-label">Foot and calf</p>
+   <p class="status">Original shapes</p>
+   <p class="note">Inspect the two separate shapes. The foot socket will be the next step.</p>
   </aside>
  </main>
  <script>/*FOOT_LAB_BUNDLE*/</script>

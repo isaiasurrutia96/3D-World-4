@@ -1,21 +1,11 @@
-# Foot and ankle lab
+# Foot and calf shape study
 
-The live foot keeps the approved asymmetric toe outline, flat sole, ground-contact points and toe hinge. The upper ankle area now holds a separate spherical joint between two smooth sockets. Frozen avatar checkpoints remain unchanged.
+The live Foot Lab is reset to two original shapes, shown separately: the asymmetric foot and the reference avatar calf. No ankle ball, socket carving or motion controller is created by this page. Orbit, zoom, fixed views and floor inspection still work on phone and desktop.
 
-## Mechanical contract
+`src/foot-study.js` builds this baseline using `createFootShape()` and `createCalf(foot, {socket:false})`. Both original geometry buffers stay unchanged. `createCalf` keeps its existing default behavior for other consumers; resetting this study does not rewrite Claude's avatar animation or frozen checkpoints.
 
-`avatar/src/joints/ankle-contract.js` is the rendering-independent source of truth. The ball radius is115mm (230mm diameter, about90% of the calf's256mm depth). Both cavities use a115.6mm radius: the deliberate0.6mm radial clearance prevents coincident surfaces while keeping the joint visually seated. The calf cup keeps its45° cap and5mm rolled lip. The foot uses a simple52° spherical bowl, without a rolled rim. Its pure profile in `src/socket-profile.js` continues with matching height, slope and curvature, then a6mm compact C2 smooth-min blends it into the original foot. The heel continuation levels off gently instead of rising into a shoe collar. The profile only removes material; it never adds a cuff or an outer dip. All three meshes are closed solids. The bowl and its outer blend are locally refined together for a continuous edge; original sole and toe vertices remain in place.
+Next authorized workflow: build the foot socket as one independent layer, prove its geometry, then ask the owner to review it. Do not add a calf socket or ankle ball in that step. Do not automatically restore the previous joint prototype.
 
-The original ankle center is measured before carving: foot-local `[0.0006089437,0.1635200068,0.0147097013]`. Calf placement, its upper profile/knee contact, and the standing sole stay fixed. `createFootRig` exposes `ankleBall` and `pivot`; foot/calf geometry exposes local `ankleCenter`, `socketRadius` and true spherical `cavityIndices`. `avatar.lowerLegs` exposes each ball for skeleton attachment.
+`node --test foot-lab/tests/study.test.mjs` proves that exactly two original meshes are present, uncarved, on the floor and visibly apart. `npm run test:foot-lab` checks the static study, five views, floor controls, mobile framing and real touch orbit. The build also retains the separate joint checks for existing avatar consumers.
 
-Isolated ankle bend is−36°/+48° and side tilt±20°—twice the former range. Toe bend25° and heel raise30° remain available. Pointing and heel raise share one physical ankle: `normalizeAnklePose` caps their sum at60°. Actual outer-shell probes found intersections beginning at66°, so adding48°+30° is not safe. The skeleton uses the same60° combined cap. Motion/IK algorithms consume those limits; they are not rewritten here.
-
-During articulation the calf and ball remain rigid. The foot rotates about their common center. Heel raise moves the common center and calf together while the front stays planted; only the toe region deforms. Rest restores buffers and transforms exactly. These lab poses do not replace Claude's movement animation.
-
-## Inspect and check
-
-Open `/test-lab/?test=feet` for the shared viewer, or `/foot-lab/` for the focused lab. Joint, Foot socket, Calf socket and Ball buttons expose the individual pieces; Top shows the foot bowl, Sole shows the calf bowl. Use the existing poses/sliders, orbit, zoom and inspection-floor controls on phone or desktop.
-
-`npm run test:ankle` runs independent Node geometry checks: ridge-free radial profiles and continuous slope/curvature, fitted centers/radii, manifold/winding, true-cap gap, all-face sphere clearance, full foot/calf shell probes, composed motion limits, unchanged sole/toes/upper calf and exact rest. Results are saved to `ANKLE-CHECKS.json`. These checks also run before every Foot Lab build. `npm run test:foot-lab` exercises browser controls and mobile framing.
-
-Review the live joint before approving a new frozen checkpoint.
+Open `/test-lab/?test=feet` for the universal viewer or `/foot-lab/` for the focused study.

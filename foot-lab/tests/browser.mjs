@@ -1,190 +1,123 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {createServer} from 'node:http';
 import {readFile,mkdir} from 'node:fs/promises';
-import {fileURLToPath} from 'node:url';
 import {resolve,extname,sep} from 'node:path';
-import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
 import * as T from 'three';
-import {createFootShape,FOOT_SIZE} from '../src/foot-shape.js';
-import {createCalf} from '../src/calf.js';
-import {SOCKET_CLEARANCE} from '../src/ankle-socket.js';
-import {createFootRig,REST_POSE,POSES,BEND_START,BEND_END} from '../src/foot-rig.js';
-import {ANKLE_RADIUS,ANKLE_LIMITS,ANKLE_MAX_COMBINED} from '../../avatar/src/joints/ankle-contract.js';
+import {createFootStudy} from '../src/foot-study.js';
+import {createFootShape} from '../src/foot-shape.js';
 import {createCharacterRig} from '../../avatar/src/reference/PlayerModel.ts';
 
-const root=resolve(fileURLToPath(new URL('../../',import.meta.url))),foot=createFootShape();
-const g=foot.geometry,p=g.attributes.position,size=g.boundingBox.getSize(foot.position.clone());
-assert.ok([size.x-FOOT_SIZE.width,size.y-FOOT_SIZE.height].every(d=>Math.abs(d)<1e-6),'Foot width or height changed');
-assert.ok(size.z>FOOT_SIZE.length&&size.z<FOOT_SIZE.length+.0221,'Toe extension is not slight');
-const baseline=createFootShape(undefined,{toeExtension:0,toeLeftShift:0}),bp=baseline.geometry.attributes.position;
-assert.equal(bp.count,p.count);let medial=-Infinity,lateral=-Infinity,tipZ=-Infinity,tipX=0;
-for(let i=0;i<p.count;i++){
- assert.equal(p.getY(i),bp.getY(i));
- assert.ok(p.getX(i)<=bp.getX(i)+1e-7&&p.getX(i)>=bp.getX(i)-.030001,'Toe sweep changed direction or is excessive');
- if(bp.getZ(i)<=.20)assert.equal(p.getX(i),bp.getX(i),'Heel or midfoot moved sideways');
- if(bp.getZ(i)<=.18)assert.equal(p.getZ(i),bp.getZ(i),'Heel or midfoot changed');
- if(p.getX(i)<-.025)medial=Math.max(medial,p.getZ(i));if(p.getX(i)>.025)lateral=Math.max(lateral,p.getZ(i));
- if(p.getZ(i)>tipZ){tipZ=p.getZ(i);tipX=p.getX(i);}
+const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
+const hash=array=>createHash('sha256').update(new Uint8Array(array.buffer,array.byteOffset,array.byteLength)).digest('hex');
+const geometrySignature=mesh=>({position:hash(mesh.geometry.attributes.position.array),normal:hash(mesh.geometry.attributes.normal.array),index:hash(mesh.geometry.index.array)});
+const study=createFootStudy(),rawFoot=createFootShape(),reference=createCharacterRig({plain:true});
+const rawCalf=reference.kneeRight.children[0],meshes=[];
+study.group.traverse(part=>{if(part.isMesh)meshes.push(part);});
+assert.equal(meshes.length,2,'The study must contain only one foot and one calf');
+assert.deepEqual(new Set(meshes),new Set([study.foot,study.calf]));
+assert.deepEqual(geometrySignature(study.foot),geometrySignature(rawFoot),'Foot is not the original uncarved shape');
+assert.deepEqual(geometrySignature(study.calf),geometrySignature(rawCalf),'Calf is not the original uncarved shape');
+assert.equal(study.foot.material.color.getHex(),rawFoot.material.color.getHex());
+assert.equal(study.calf.material.color.getHex(),rawCalf.material.color.getHex());
+for(const part of meshes){
+ assert.equal(part.visible,true);
+ assert.equal(part.geometry.userData.cavityIndices,undefined,'Raw parts must have no carved socket');
+ assert([...part.geometry.attributes.position.array,...part.geometry.attributes.normal.array].every(Number.isFinite));
 }
-assert.ok(medial-lateral>.004&&medial-lateral<.040,'Front has no subtle big-toe asymmetry');
-assert.ok(tipX<-.055&&tipX>-.090,'Big-toe tip is not farther left in Top view');
-const uncarvedFoot=p.array.slice(),uncarvedIndices=g.index.array.slice(),calf=createCalf(foot),calfReference=createCharacterRig({plain:true}).kneeRight.children[0];
-for(let i=0;i<uncarvedFoot.length/3;i++){
- assert.equal(p.getX(i),uncarvedFoot[i*3],'Socket changed the foot outline');
- assert.equal(p.getZ(i),uncarvedFoot[i*3+2],'Socket changed the foot outline');
- if(uncarvedFoot[i*3+1]<1e-7||uncarvedFoot[i*3+2]>=BEND_START)assert.equal(p.getY(i),uncarvedFoot[i*3+1],'Socket changed the sole or toe hinge region');
-}
-const savedFoot=p.array.slice();
-const cg=calf.geometry,cp=cg.attributes.position,reference=calfReference.geometry.attributes.position;
-for(let i=0;i<reference.count;i++)if(reference.getY(i)>cg.userData.joinY+1e-6){
- let nearest=Infinity;
- for(let j=0;j<cp.count;j++)nearest=Math.min(nearest,(reference.getX(i)-cp.getX(j))**2+(reference.getY(i)-cp.getY(j))**2+(reference.getZ(i)-cp.getZ(j))**2);
- assert.ok(nearest<1e-12,'Upper calf silhouette changed');
-}
-assert.equal(calf.material.color.getHex(),foot.material.color.getHex());
-assert.equal(calf.userData.socket,true);
-const footCenter=new T.Vector3(...g.userData.ankleCenter),calfCenter=new T.Vector3(...cg.userData.ankleCenter);
-assert.ok(calfCenter.clone().add(calf.position).distanceTo(footCenter)<1e-9,'Ball sockets do not share a center');
-const sample=new T.Vector3();let minFit=Infinity,maxFit=-Infinity,minLipGap=Infinity;
-for(const geometry of [g,cg]){
- const positions=geometry.attributes.position,center=new T.Vector3(...geometry.userData.ankleCenter),cavity=new Set(geometry.userData.cavityIndices);
- for(let i=0;i<positions.count;i++){
-  const gap=sample.fromBufferAttribute(positions,i).distanceTo(center)-ANKLE_RADIUS;
-  if(cavity.has(i)){minFit=Math.min(minFit,gap);maxFit=Math.max(maxFit,gap);}else minLipGap=Math.min(minLipGap,gap);
- }
-}
-assert.ok(minFit>.0004&&maxFit<.0008,'Both sockets must closely cradle the ankle ball');
-assert.ok(minLipGap>.00035,'A socket lip or body penetrates the ankle ball');
-const calfEdges=new Map();let calfVolume=0;
-for(let i=0;i<cg.index.count;i+=3){
- const ids=cg.index.array.slice(i,i+3),v=Array.from(ids,j=>new T.Vector3().fromBufferAttribute(cp,j));
- calfVolume+=v[0].dot(v[1].clone().cross(v[2]))/6;
- for(let j=0;j<3;j++){const a=ids[j],b=ids[(j+1)%3],key=Math.min(a,b)*cp.count+Math.max(a,b);calfEdges.set(key,(calfEdges.get(key)||0)+1);}
-}
-assert.equal([...calfEdges.values()].filter(n=>n!==2).length,0,'Socket calf has an open seam');
-assert.equal(cp.count-calfEdges.size+cg.index.count/3,2,'Socket calf topology changed');
-assert.ok(calfVolume>0&&[...cp.array,...cg.attributes.normal.array].every(Number.isFinite),'Invalid socket calf surface');
-assert.ok(Math.abs(g.boundingBox.min.y)<1e-7,'Sole is not on the floor');
-const soleArea=(positions,index)=>{let area=0;for(let i=0;i<index.length;i+=3){const a=index[i]*3,b=index[i+1]*3,c=index[i+2]*3;if(positions[a+1]>1e-7||positions[b+1]>1e-7||positions[c+1]>1e-7)continue;area+=Math.abs((positions[b]-positions[a])*(positions[c+2]-positions[a+2])-(positions[c]-positions[a])*(positions[b+2]-positions[a+2]))/2;}return area;};
-const originalSoleArea=soleArea(uncarvedFoot,uncarvedIndices),fittedSoleArea=soleArea(p.array,g.index.array);
-assert.ok(originalSoleArea>0&&Math.abs(fittedSoleArea-originalSoleArea)<1e-10,'Socket refinement changed the flat contact area');
-assert.ok([...p.array,...g.attributes.normal.array].every(Number.isFinite),'Invalid foot geometry');
-const edges=new Map();let volume=0;
-for(let i=0;i<g.index.count;i+=3){
- const ids=g.index.array.slice(i,i+3);
- for(let j=0;j<3;j++){const a=ids[j],b=ids[(j+1)%3],key=Math.min(a,b)*p.count+Math.max(a,b);edges.set(key,(edges.get(key)||0)+1);}
- const [a,b,c]=ids;volume+=(p.getX(a)*(p.getY(b)*p.getZ(c)-p.getZ(b)*p.getY(c))+p.getY(a)*(p.getZ(b)*p.getX(c)-p.getX(b)*p.getZ(c))+p.getZ(a)*(p.getX(b)*p.getY(c)-p.getY(b)*p.getX(c)))/6;
-}
-assert.equal([...edges.values()].filter(n=>n!==2).length,0,'Foot has an open seam');
-assert.equal(p.count-edges.size+g.index.count/3,2,'Foot topology changed');assert.ok(volume>0,'Foot faces point inward');
-for(const point of Object.values(foot.userData.contacts)){assert.equal(point[1],0);assert.ok(point[2]>g.boundingBox.min.z&&point[2]<g.boundingBox.max.z);}
-const approval=JSON.parse(await readFile(resolve(root,'avatar/APPROVED.json'),'utf8'));
-for(const [name,hash] of Object.entries(approval.sha256))assert.equal(createHash('sha256').update(await readFile(resolve(root,'avatar',name))).digest('hex'),hash,'Approved avatar changed: '+name);
-const savedFootNormals=g.attributes.normal.array.slice(),savedCalf=cp.array.slice(),savedCalfNormals=cg.attributes.normal.array.slice(),savedCalfPosition=calf.position.clone();
-const rig=createFootRig(foot,calf),world=new T.Vector3(),ballCenter=new T.Vector3();let plantedError=0,heelHeight=0,minMovingGap=Infinity,maxCalfBodyDisplacement=0;
-const trials={...POSES,left:{roll:ANKLE_LIMITS.roll[0]},right:{roll:ANKLE_LIMITS.roll[1]},combined:{heel:ANKLE_LIMITS.heel[1],toes:ANKLE_LIMITS.toes[1],ankle:ANKLE_LIMITS.ankle[1],roll:ANKLE_LIMITS.roll[1]}};
-for(const [name,pose] of Object.entries(trials)){
- rig.setPose(pose);assert.ok(calf.visible,'Calf disappeared during movement');
- assert.ok([...p.array,...cp.array,...g.attributes.normal.array,...cg.attributes.normal.array].every(Number.isFinite),'Invalid moving surface: '+name);
- assert.ok(Math.abs(g.boundingBox.min.y+rig.group.position.y)<1e-7,'Foot penetrates or floats above the floor: '+name);
- for(let i=0;i<cp.count;i++)if(savedCalf[i*3+1]>=cg.userData.joinY-1e-7){
-  const displacement=Math.hypot(cp.getX(i)-savedCalf[i*3],cp.getY(i)-savedCalf[i*3+1],cp.getZ(i)-savedCalf[i*3+2]);
-  maxCalfBodyDisplacement=Math.max(maxCalfBodyDisplacement,displacement);
-  assert.equal(displacement,0,'Calf body bends during '+name);
-  for(let axis=0;axis<3;axis++)assert.equal(cg.attributes.normal.array[i*3+axis],savedCalfNormals[i*3+axis],'Rigid calf shading changes during '+name);
- }
- if(name==='toes')assert.deepEqual(cp.array,savedCalf,'Toe bending moves the calf');
- rig.ankleBall.getWorldPosition(ballCenter);
- for(const part of [foot,calf]){
-  const positions=part.geometry.attributes.position;
-  for(const i of part.geometry.userData.cavityIndices){
-   world.fromBufferAttribute(positions,i);part.localToWorld(world);
-   const gap=world.distanceTo(ballCenter)-ANKLE_RADIUS;minMovingGap=Math.min(minMovingGap,gap);
-   assert.ok(gap>.00035&&gap<.0009,'Socket fit opened during motion: '+name);
+study.group.updateMatrixWorld(true);
+const footBox=new T.Box3().setFromObject(study.foot),calfBox=new T.Box3().setFromObject(study.calf);
+const gaps=['x','y','z'].map(axis=>Math.max(0,footBox.min[axis]-calfBox.max[axis],calfBox.min[axis]-footBox.max[axis]));
+const separation=Math.hypot(...gaps);
+assert(separation>.005,'Foot and calf must be visibly separated');
+assert(Math.abs(footBox.min.y)<1e-7,'The original foot sole must stay on the floor');
+
+const server=createServer(async(req,res)=>{
+ try{
+  let path=new URL(req.url,'http://localhost').pathname;if(path.endsWith('/'))path+='index.html';
+  const file=resolve(root,'.'+path);if(!file.startsWith(root+sep))throw Error('Invalid path');
+  res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css'})[extname(file)]??'application/octet-stream');
+  res.end(await readFile(file));
+ }catch{res.statusCode=404;res.end('Not found');}
+});
+await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+const base=`http://127.0.0.1:${server.address().port}`;
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const errors=[],shots=process.env.FOOT_LAB_SHOTS;if(shots)await mkdir(shots,{recursive:true});
+async function fingerprint(page){return page.evaluate(()=>{
+ const parts=[footLab.foot,footLab.calf];
+ return parts.map(part=>({positions:Array.from(part.geometry.attributes.position.array),normals:Array.from(part.geometry.attributes.normal.array),position:part.position.toArray(),rotation:part.rotation.toArray(),scale:part.scale.toArray()}));
+});}
+async function framing(page){return page.evaluate(()=>{
+ const {foot,calf,camera}=footLab;camera.updateMatrixWorld(true);let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity,minZ=Infinity,maxZ=-Infinity;
+ const point=foot.position.clone();for(const part of [foot,calf]){
+  part.updateWorldMatrix(true,false);const positions=part.geometry.attributes.position;
+  for(let i=0;i<positions.count;i++){
+   point.fromBufferAttribute(positions,i);part.localToWorld(point);point.project(camera);
+   minX=Math.min(minX,point.x);maxX=Math.max(maxX,point.x);minY=Math.min(minY,point.y);maxY=Math.max(maxY,point.y);minZ=Math.min(minZ,point.z);maxZ=Math.max(maxZ,point.z);
   }
  }
- if(name==='tiptoe')for(let i=0;i<p.count;i++)if(savedFoot[i*3+1]<1e-7){
-  if(savedFoot[i*3+2]>BEND_END)plantedError=Math.max(plantedError,Math.hypot(p.getX(i)-savedFoot[i*3],p.getY(i)+rig.group.position.y,p.getZ(i)-savedFoot[i*3+2]));
-  if(savedFoot[i*3+2]<0)heelHeight=Math.max(heelHeight,p.getY(i)+rig.group.position.y);
- }
+ return {minX,maxX,minY,maxY,minZ,maxZ};
+});}
+async function assertFraming(page,name){
+ const f=await framing(page);
+ assert(f.minX>-.98&&f.maxX<.98&&f.minY>-.9&&f.maxY<.9&&f.minZ>-1&&f.maxZ<1,`Raw study clipped in ${name}: ${JSON.stringify(f)}`);
 }
-assert.ok(plantedError<1e-6&&heelHeight>.10,'Tiptoe does not raise the heel over a planted forefoot');
-for(let repeat=0;repeat<3;repeat++)for(const pose of Object.values(POSES))rig.setPose(pose);
-rig.setPose(REST_POSE);
-assert.deepEqual(p.array,savedFoot,'Rest foot drifted');assert.deepEqual(g.attributes.normal.array,savedFootNormals,'Rest foot shading changed');
-assert.deepEqual(cp.array,savedCalf,'Rest socket drifted');assert.deepEqual(cg.attributes.normal.array,savedCalfNormals,'Rest calf shading changed');
-assert.deepEqual(calf.position,savedCalfPosition);assert.equal(rig.group.position.y,0);
-const server=createServer(async(req,res)=>{
- try{let path=new URL(req.url,'http://localhost').pathname;if(path.endsWith('/'))path+='index.html';const file=resolve(root,'.'+path);if(!file.startsWith(root+sep))throw Error('Invalid path');res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript'})[extname(file)]??'application/octet-stream');res.end(await readFile(file));}catch{res.statusCode=404;res.end('Not found');}
-});
-await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base=`http://127.0.0.1:${server.address().port}`;
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const shots=process.env.FOOT_LAB_SHOTS;if(shots)await mkdir(shots,{recursive:true});
-const errors=[];
-async function settle(page){await page.waitForFunction(()=>{const s=footLab.getState(),applied=footLab.rig.getState().pose;return Object.keys(s.target).every(k=>s.target[k]===s.current[k]&&Math.abs(applied[k]-s.target[k])<1e-8);});}
+
 try{
  const page=await browser.newPage({viewport:{width:1200,height:900}});page.on('pageerror',e=>errors.push(e.message));
- assert.equal((await page.goto(base+'/foot-lab/')).status(),200);await page.waitForFunction(()=>window.footLabReady);
- for(const [id,[min,max]] of Object.entries(ANKLE_LIMITS)){
-  assert.equal(Number(await page.locator('#'+id).getAttribute('min')),min,'Slider minimum '+id);
-  assert.equal(Number(await page.locator('#'+id).getAttribute('max')),max,'Slider maximum '+id);
+ assert.equal((await page.goto(base+'/foot-lab/')).status(),200);
+ await page.waitForFunction(()=>window.footLabReady,undefined,{timeout:60000});
+ assert.equal(await page.evaluate(()=>['rig','ankleBall','applyPose','inspectParts'].some(key=>key in footLab)),false,'Movement or ankle ball API is still present');
+ assert.equal(await page.locator('[data-pose],[data-parts],input[type="range"],#play').count(),0,'Old joint or movement controls remain');
+ assert.equal(await page.evaluate(()=>{
+  const meshes=[];footLab.foot.parent.traverse(part=>{if(part.isMesh)meshes.push(part);});return meshes.length;
+ }),2,'Study scene gained an extra joint or other part');
+ const initial=await fingerprint(page);
+ assert.equal(await page.evaluate(()=>footLab.getState().stage),'shapes');
+ assert.equal(await page.evaluate(()=>footLab.foot.visible&&footLab.calf.visible),true);
+ for(const view of ['Angle','Front','Side','Top','Sole']){
+  await page.getByRole('button',{name:view,exact:true}).click();await assertFraming(page,'desktop '+view);
  }
- for(const mode of ['foot','calf','ball','joint']){
-  await page.locator('[data-parts="'+mode+'"]').click();await settle(page);
-  const visible=await page.evaluate(()=>({foot:footLab.foot.visible,calf:footLab.calf.visible,ball:footLab.ankleBall.visible,mode:footLab.getState().inspectedParts}));
-  assert.equal(visible.mode,mode);for(const part of ['foot','calf','ball'])assert.equal(visible[part],mode==='joint'||part===mode,'Inspection visibility '+mode+'/'+part);
- }
+ assert.equal(await page.evaluate(()=>footLab.ground.visible),false,'Sole view should expose the underside');
+ await page.getByRole('button',{name:'Angle',exact:true}).click();
+ await page.getByRole('button',{name:'Floor',exact:true}).click();assert.equal(await page.evaluate(()=>footLab.ground.visible),false);
+ await page.getByRole('button',{name:'Floor',exact:true}).click();assert.equal(await page.evaluate(()=>footLab.ground.visible),true);
+ const angleCamera=await page.evaluate(()=>footLab.camera.position.toArray());
+ const canvas=await page.locator('canvas').boundingBox();
+ await page.mouse.move(canvas.x+canvas.width*.4,canvas.y+canvas.height*.4);await page.mouse.down();await page.mouse.move(canvas.x+canvas.width*.6,canvas.y+canvas.height*.5,{steps:8});await page.mouse.up();
+ await page.waitForFunction(before=>footLab.camera.position.toArray().some((v,i)=>Math.abs(v-before[i])>.01),angleCamera);
+ await page.evaluate(()=>{for(let i=0;i<300;i++)footLab.controls.update();});
+ await page.getByRole('button',{name:'Angle',exact:true}).click();
+ assert(await page.evaluate(before=>footLab.camera.position.toArray().every((v,i)=>Math.abs(v-before[i])<1e-7),angleCamera),'Angle button did not restore its camera view');
+ assert.deepEqual(await fingerprint(page),initial,'Inspection or camera changes altered the raw parts');
+ if(shots)await page.screenshot({path:resolve(shots,'angle.png')});
 
- for(const [name,label] of Object.entries({point:'Point',flex:'Flex',toes:'Toes',tiptoe:'Tiptoe',rest:'Rest'})){
-  await page.getByRole('button',{name:label,exact:true}).click();await settle(page);
-  assert.equal(await page.evaluate(()=>footLab.getState().activePose),name);
-  assert.equal(await page.evaluate(()=>footLab.calf.visible&&footLab.rig.ankleBall.visible),true);
-  if(shots){await page.getByRole('button',{name:'Side',exact:true}).click();await page.waitForTimeout(150);await page.screenshot({path:resolve(shots,'pose-'+name+'.png')});}
- }
- await page.getByRole('button',{name:'Play motion',exact:false}).click();const updates=await page.evaluate(()=>footLab.getState().poseUpdates);
- await page.waitForFunction(updates=>footLab.getState().poseUpdates>updates+2,updates);
- await page.getByRole('button',{name:'Pause motion',exact:false}).click();assert.equal(await page.evaluate(()=>footLab.getState().playing),false);
- await page.getByRole('button',{name:'Rest',exact:true}).click();await settle(page);
- await page.locator('#ankle').fill(String(ANKLE_LIMITS.ankle[1]));await settle(page);
- await page.locator('#heel').fill(String(ANKLE_LIMITS.heel[1]));await settle(page);
- const coupled=await page.evaluate(()=>({target:footLab.getState().target,applied:footLab.rig.getState().pose}));
- assert.equal(coupled.target.ankle+coupled.target.heel,ANKLE_MAX_COMBINED,'UI must normalize the compound joint limit');
- assert.equal(coupled.applied.ankle,coupled.target.ankle);assert.equal(Number(await page.locator('#ankle').inputValue()),coupled.target.ankle,'Slider must show its normalized angle');
- await page.getByRole('button',{name:'Rest',exact:true}).click();await settle(page);
- for(const [id,value] of Object.entries({ankle:'-12',roll:'8',toes:'20',heel:'25'})){
-  await page.locator('#'+id).fill(value);await settle(page);assert.equal(await page.evaluate(id=>footLab.rig.getState().pose[id],id),Number(value));
- }
- await page.getByRole('button',{name:'Rest',exact:true}).click();await settle(page);
- for(const name of ['Angle','Front','Side','Top','Sole']){await page.getByRole('button',{name,exact:true}).click();await page.waitForTimeout(150);if(shots)await page.screenshot({path:resolve(shots,name.toLowerCase()+'.png')});}
- assert.equal(await page.evaluate(()=>footLab.ground.visible),false,'Floor hides the sole');
- if(shots){
-  await page.evaluate(()=>{const {foot,calf,camera,controls}=footLab;foot.visible=false;footLab.ankleBall.visible=false;controls.target.set(calf.position.x,.21,calf.position.z);camera.position.set(.38,.04,.55);controls.update();});
-  await page.waitForTimeout(150);await page.screenshot({path:resolve(shots,'empty-socket.png')});await page.evaluate(()=>footLab.inspectParts('joint'));
- }
- await page.getByRole('button',{name:'Angle',exact:true}).click();await page.getByRole('button',{name:'Floor',exact:true}).click();assert.equal(await page.evaluate(()=>footLab.ground.visible),false);await page.getByRole('button',{name:'Floor',exact:true}).click();assert.equal(await page.evaluate(()=>footLab.ground.visible),true);
  const phoneContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),phone=await phoneContext.newPage();phone.on('pageerror',e=>errors.push(e.message));
- await phone.goto(base+'/foot-lab/');await phone.waitForFunction(()=>window.footLabReady);
- assert.equal(await phone.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Phone overflow');
- for(const name of ['Angle','Side','Top','Sole']){
-  await phone.getByRole('button',{name,exact:true}).click();await phone.waitForTimeout(150);
-  const projected=await phone.evaluate(()=>{const {foot,calf,camera}=footLab,v=foot.position.clone();let minX=1,maxX=-1,minY=1,maxY=-1;for(const part of [foot,calf,footLab.rig.ankleBall]){const p=part.geometry.attributes.position;for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);part.localToWorld(v);v.project(camera);minX=Math.min(minX,v.x);maxX=Math.max(maxX,v.x);minY=Math.min(minY,v.y);maxY=Math.max(maxY,v.y);}}return {minX,maxX,minY,maxY};});
-  assert.ok(projected.minX>-.98&&projected.maxX<.98&&projected.minY>-.9&&projected.maxY<.9,'Phone view clips the foot: '+name+' '+JSON.stringify(projected));
-  if(shots)await phone.screenshot({path:resolve(shots,'mobile-'+name.toLowerCase()+'.png')});
+ await phone.goto(base+'/foot-lab/');await phone.waitForFunction(()=>window.footLabReady,undefined,{timeout:60000});
+ const phoneInitial=await fingerprint(phone);
+ for(const viewport of [{width:390,height:844},{width:320,height:568},{width:844,height:390}]){
+  await phone.setViewportSize(viewport);
+  await phone.waitForFunction(()=>{const c=document.querySelector('canvas'),r=c.getBoundingClientRect();return Math.abs(footLab.camera.aspect-r.width/r.height)<1e-5;});
+  assert.equal(await phone.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Phone page overflows');
+  for(const name of ['Angle','Front','Side','Top','Sole']){
+   await phone.getByRole('button',{name,exact:true}).click();await assertFraming(phone,`phone ${viewport.width}×${viewport.height} ${name}`);
+  }
  }
- await phone.getByRole('button',{name:'Angle',exact:true}).click();const stage=await phone.locator('#stage').boundingBox(),cdp=await phoneContext.newCDPSession(phone),before=await phone.evaluate(()=>footLab.camera.position.toArray());
- await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:stage.width*.35,y:stage.y+stage.height*.45}]});for(let i=1;i<=8;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:stage.width*.35+i*12,y:stage.y+stage.height*.45}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await phone.waitForTimeout(150);
- assert.ok(await phone.evaluate(before=>footLab.camera.position.toArray().some((v,i)=>Math.abs(v-before[i])>.01),before),'Phone orbit failed');
- await phone.getByRole('button',{name:'Tiptoe',exact:true}).click();await settle(phone);await phone.getByRole('button',{name:'Side',exact:true}).click();
- if(shots)await phone.screenshot({path:resolve(shots,'mobile-tiptoe.png')});
- await phone.locator('#heel').scrollIntoViewIfNeeded();const slider=await phone.locator('#heel').boundingBox(),sy=slider.y+slider.height/2;
- await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:slider.x+slider.width-8,y:sy}]});
- for(let i=1;i<=6;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:slider.x+slider.width-8-i*slider.width*.055,y:sy}]});
- await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await settle(phone);
- const phoneHeel=await phone.evaluate(()=>footLab.getState().target.heel);assert.ok(phoneHeel>10&&phoneHeel<28,'Native phone heel slider failed');
- await phoneContext.close();
- await page.goto(base+'/hand-lab/');await page.waitForFunction(()=>window.handLabReady);
- await page.goto(base+'/dist/');await page.waitForFunction(()=>window.__game);
- assert.deepEqual(errors,[]);
- console.log(JSON.stringify({size:foot.userData.size,bigToeLead:medial-lateral,ankleBallDiameter:ANKLE_RADIUS*2,socketDepth:cg.userData.socketDepth,socketClearance:SOCKET_CLEARANCE,measuredFit:[minFit,maxFit],minLipGap,minMovingGap,maxCalfBodyDisplacement,plantedError,heelHeight,exactRest:true,posesAndSliders:true,playPause:true,phoneHeel,centered:true,upperCalfPreserved:true,footOutlineSoleAndToesPreserved:true,ankleBallVisible:true,partInspection:true,sharedSliderLimits:true,coupledSliderClamping:true,closedSocketCalf:true,closedSurface:true,soleFlat:true,soleArea:fittedSoleArea,soleVertices:foot.userData.soleVertices,vertices:p.count,approvedAvatarUnchanged:true,presetViews:true,mobileFraming:true,touchOrbit:true,handLabLoads:true,existingWorldLoads:true,errors}));
-}finally{await browser.close();await new Promise(resolve=>server.close(resolve));g.dispose();foot.material.dispose();}
+ await phone.setViewportSize({width:390,height:844});
+ await phone.getByRole('button',{name:'Angle',exact:true}).tap();
+ assert.equal(await phone.evaluate(()=>footLab.foot.visible&&footLab.calf.visible),true);
+ if(shots)await phone.screenshot({path:resolve(shots,'mobile-angle.png')});
+ const stage=await phone.locator('#stage').boundingBox(),cdp=await phoneContext.newCDPSession(phone),before=await phone.evaluate(()=>footLab.camera.position.toArray());
+ const x=stage.x+stage.width*.35,y=stage.y+stage.height*.45;
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+ for(let i=1;i<=8;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+i*10,y}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ await phone.waitForFunction(before=>footLab.camera.position.toArray().some((v,i)=>Math.abs(v-before[i])>.01),before);
+ await phone.getByRole('button',{name:'Angle',exact:true}).tap();
+ assert.deepEqual(await fingerprint(phone),phoneInitial,'Phone inspection changed the original geometry');
+ await phoneContext.close();assert.deepEqual(errors,[]);
+ console.log(JSON.stringify({studyMeshes:2,rawFootExact:true,rawCalfExact:true,separation,noSocketsOrBall:true,noMovementControls:true,viewReset:true,floorToggle:true,desktopOrbit:true,mobileOrbit:true,mobileLayouts:3,mobileFraming:true,geometryUnchanged:true,errors}));
+}finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
