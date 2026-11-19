@@ -4,7 +4,7 @@ import {SIDE} from '../../motion-core/skeleton/bones.js';
 import {roundForearmEnd} from './round-forearm.js';
 import {makeHandFuller,moldWristSocket} from './mold-socket.js';
 
-export const WRIST_STUDY=Object.freeze({diameterRatio:.9,gap:.045,forearmDepth:1/3,handDepth:1/6,handGrowth:.002,filletRadius:.005});
+export const WRIST_STUDY=Object.freeze({diameterRatio:.9,gap:.045,forearmDepth:1/3,handDepth:1/7,handGrowth:.002,filletRadius:.005});
 
 // Presentation only: the original saved shapes stay byte-identical. The ball
 // remains at the existing wrist point; the other parts are spaced around it.

@@ -27,8 +27,8 @@ The requested captured cap depth is measured from the spherical contact rim
 to the pole, averaged over eight radial directions. The rounded source tip
 extends past that rim, so the mold's travel from that tip is recorded
 separately. Measuring only that travel would leave too much ball exposed.
-Initial targets are one-third of the diameter in the forearm (60.485 mm) and,
-after the owner's shallower-hand choice, one-sixth in the hand (30.242 mm).
+Current targets are one-third of the diameter in the forearm (60.485 mm) and,
+after the owner's further refinement, one-seventh in the hand (25.922 mm).
 Rims follow each part's curved shape rather than a flat common plane.
 
 The owner chose a slightly larger hand instead of reducing the ball. A

@@ -336,4 +336,12 @@ All8 numerical checks pass before the visual build. Coincident centers have zero
 
 Final full build, existing ankle checks and frozen integrity pass. Browser checks pass desktop and3 phone layouts, all views/framing, static placement, touch orbit and floor inspection with Motion disabled and no page errors. Internal Angle review confirms the corrected capture depth and smooth molded rims. Publish this standalone wrist fit for owner review; no further joints, full-avatar mounting or checkpoint yet.
 
+### Slightly shallower hand socket — owner refinement, 19 Nov 2026
+
+Owner liked the static wrist fit, then paused the proposed elbow work to request a slightly shallower/smaller hand opening. Change only hand captured depth from one-sixth to one-seventh of the same ball diameter:30.2423→25.9219mm, a14.3% depth reduction. Mean spherical contact opening radius66.5762→62.6262mm (about5.9% smaller). Keep the5mm rounded rim,2mm hand surface growth, fixed wrist point, ball size and forearm settings.
+
+One-off before/after SHA-256 comparison confirms forearm and ball position/normal/index buffers and world matrices are byte-identical. Every hand contact-section opening radius decreases. All8 numerical checks and the full production build/frozen integrity pass. Verify the static desktop/phone viewer before publishing; remain on the wrist refinement and wait for owner review before elbows or a checkpoint.
+
+Final viewer verification passes desktop and3 phone layouts, all views/framing, static parts, touch orbit and floor inspection, with Motion disabled and no page errors. Publish only this smaller hand socket for owner review.
+
 Stop after live visual review. Checkpoint remains pending the owner's final socket/ball-placement refinements.

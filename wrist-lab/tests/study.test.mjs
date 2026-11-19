@@ -50,7 +50,7 @@ test('Hand growth is a small surface expansion; its scale, orientation and skele
 });
 test('Static sockets capture one-third of the actual ball in the forearm and a shallower cap in the hand',()=>{
  assert.deepEqual(fitted.ball.position.toArray(),SIDE.find(b=>b.name==='hand').head);let fitError=0,rimError=0,centerError=0;
- for(const [name,fraction] of [['forearm',1/3],['hand',1/6]]){
+ for(const [name,fraction] of [['forearm',1/3],['hand',1/7]]){
   const part=fitted[name],g=part.geometry,m=g.userData.wristMold,p=g.attributes.position,M=new T.Matrix4().fromArray(m.toMold),center=new T.Vector3(...m.moldCenter),v=new T.Vector3();
   assert.equal(m.depthFraction,fraction);assert.equal(m.socketDepth,fitted.diameter*fraction);assert.equal(m.ballRadius,fitted.radius);assert(m.core.length>100&&m.rim.length>100);
   centerError=Math.max(centerError,part.localToWorld(new T.Vector3(...m.center)).distanceTo(fitted.ball.position));
@@ -65,7 +65,7 @@ test('Static sockets capture one-third of the actual ball in the forearm and a s
   const mean=depths.reduce((a,b)=>a+b,0)/depths.length;console.log(JSON.stringify({part:name,rayDepth:mean,target:m.socketDepth,measured:m.measuredDepth,depths}));assert(Math.abs(mean-m.socketDepth)<.00025,`${name}: ray-measured cap ${mean} must match ${m.socketDepth}`);clone.dispose();probe.material.dispose();
  }
  assert(centerError<1e-12);assert(fitError<1e-7);assert(rimError<1e-7);assert.equal(fitted.hand.userData.surfaceGrowth,.002);
- console.log(JSON.stringify({capturedForearm:fitted.diameter/3,capturedHand:fitted.diameter/6,centerError,fitError,rimError,handGrowth:.002}));
+ console.log(JSON.stringify({capturedForearm:fitted.diameter/3,capturedHand:fitted.diameter/7,centerError,fitError,rimError,handGrowth:.002}));
 });
 
 test('Both fitted body parts remain closed outward-wound solids with positive volume',()=>{
