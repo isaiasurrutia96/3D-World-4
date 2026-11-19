@@ -41,7 +41,11 @@ noted, not approved yet. Each one gets its own card, approved one at a time
    hidden around the world. Spent on shop items, the watch door, home-island
    land, game kits and upgrades. Always kept when he dies (only carried items
    are at risk). No real money for now. Shown in a screen corner and the watch.
-17. **Prizes** (idea): winning a game gives coins and sometimes a prize item.
+17. **Prizes** (approved 19 Nov): sometimes after winning a minigame, more
+    often for 1st place. Items (skateboard, watch door, cosmetics like colours
+    and outfits), game kits, rarely home-island land. Matched to the game
+    (golf prizes lean golf, racing prizes lean racing). A duplicate turns into
+    coins. A short prize reveal after the win.
 6. **Shop** (idea): spend coins to rebuy lost items (like a skateboard) and
    buy upgrades.
 7. **Pull out any item anywhere** (idea, like GTA): a skateboard, or a golf
