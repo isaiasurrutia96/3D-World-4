@@ -2,6 +2,12 @@
 
 The owner restored this exact approved jointed model after removing the outer skin on 19 November 2026. The frozen reference remains in `checkpoints/avatar-joints-1/`.
 
+The owner reconfirmed this as the official avatar. Keep the original approved
+shapes and joints; neither the skin nor cylinder experiments are the baseline.
+The live pages use a smaller, lossless binary delivery of the same model.
+Measured loading results and repeatable check commands are in
+[LOADING-RESULTS.json](LOADING-RESULTS.json).
+
 **Current official avatar (19 November 2026):** `official.json` pins the
 approved original-shape joint assembly. Both `/test-lab/` → Our avatar and
 Skeleton load it through `src/official-avatar.js`. See

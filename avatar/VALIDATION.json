@@ -9,7 +9,7 @@
     "command": "npm run test:joint-assembly"
   },
   "runtimeChecks": {
-    "passed": 4,
+    "passed": 8,
     "failed": 0,
     "command": "npm run test:official-avatar"
   },
@@ -65,5 +65,15 @@
       "avatar/assembled-joints/",
       "avatar/src/joint-assembly/bind.js"
     ]
+  },
+  "ownerReconfirmedOfficialAt": "2026-11-19T21:08:13.606877+00:00",
+  "loadingChecks": {
+    "results": "LOADING-RESULTS.json",
+    "sourceUnchanged": true,
+    "losslessDelivery": true,
+    "projectBuild": "PASS",
+    "bothViewerBrowserAndCacheRecovery": "PASS",
+    "startupBudgetsDesktopAndSimulatedPhone": "PASS",
+    "legacyStudyAssetRegression": "PASS"
   }
 }

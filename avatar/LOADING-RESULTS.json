@@ -1,0 +1,76 @@
+{
+  "checkedAt": "2026-11-19T21:08:13.606877+00:00",
+  "officialAvatar": "approved-joints-2026-11-19",
+  "sourceSHA256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+  "delivery": {
+    "version": 2,
+    "asset": "delivery-46ecd0edf2e3c07b.bin.gz",
+    "bytes": 19962239,
+    "sha256": "46ecd0edf2e3c07be6044106c0501cf9d2926a2faf2edd29428125b229152ecc",
+    "sourceAsset": "parts-4d3988607a0d4159.json.gz",
+    "sourceSHA256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+    "exactSource": true,
+    "mirroredArrays": 18,
+    "metadataBytes": 4347451,
+    "encodedPayloadBytes": 25897600
+  },
+  "geometry": "Every source array, triangle order, material, transform, socket and ball record preserved exactly. No quantization or simplification.",
+  "environment": "Cloud Chromium with SwiftShader; phone simulation is 4x CPU slowdown and 10 Mbps, 60 ms latency. Not a physical-device benchmark.",
+  "previousPhone": {
+    "label": "baseline",
+    "device": "4x CPU, 10 Mbps cold",
+    "shellMS": 408,
+    "readyMS": 58842,
+    "decodeMS": 23817,
+    "longestMainTaskMS": 27897,
+    "parts": 28,
+    "version": "approved-joints-2026-11-19",
+    "assetRequests": [
+      {
+        "url": "http://127.0.0.1:35275/avatar/assembled-joints/parts-4d3988607a0d4159.json.gz",
+        "transferSize": 35811159,
+        "duration": 29043
+      }
+    ],
+    "errors": []
+  },
+  "current": [
+    {
+      "device": "desktop cold",
+      "shellMS": 80,
+      "readyMS": 2758,
+      "parts": 28,
+      "version": "approved-joints-2026-11-19",
+      "decodeMS": 934,
+      "modelDownloads": 1,
+      "warmMS": 7691,
+      "warmModelDownloads": 0
+    },
+    {
+      "device": "4x CPU, 10 Mbps cold",
+      "shellMS": 405,
+      "readyMS": 22299,
+      "parts": 28,
+      "version": "approved-joints-2026-11-19",
+      "decodeMS": 1170,
+      "modelDownloads": 1,
+      "warmMS": 10344,
+      "warmModelDownloads": 0
+    }
+  ],
+  "coldPhoneReductionPercent": 62.1,
+  "browserRecoveryChecks": [
+    "One compact model download shared by both viewers",
+    "Dedicated worker used",
+    "Cached bytes open when endpoint is unavailable",
+    "Corrupt cache replaced from network",
+    "Failed asset can reset and retry"
+  ],
+  "commands": [
+    "npm run test:official-avatar",
+    "npm run test:official-avatar-browser",
+    "npm run test:avatar-startup",
+    "npm run test:study-assets",
+    "npm run build"
+  ]
+}

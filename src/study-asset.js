@@ -9,6 +9,10 @@ const arrays={Float32Array,Float64Array,Uint32Array,Uint16Array,Uint8Array,Int32
 // Typed arrays are saved as their original bytes: no rounding, simplification,
 // new normals, socket solving or procedural hand construction on the device.
 export function decodeStudyAsset(bytes){
+ return createStudyFromData(decodeStudyAssetData(bytes));
+}
+
+export function decodeStudyAssetData(bytes){
  const data=JSON.parse(new TextDecoder().decode(gunzipSync(bytes)),(_key,value)=>{
   if(!value||value.$studyArray!==true)return value;
   const Type=arrays[value.type];if(!Type)throw Error('Unsupported study array');
@@ -33,6 +37,12 @@ export function decodeStudyAsset(bytes){
   if(raw.byteLength%Type.BYTES_PER_ELEMENT)throw Error('Invalid study array length');
   return new Type(raw.buffer);
  });
+ if(data.version!==1)throw Error('Unsupported study asset version');
+ return data;
+}
+
+// Both delivery formats create the same meshes from the same original bytes.
+export function createStudyFromData(data){
  if(data.version!==1)throw Error('Unsupported study asset version');
  const materials=data.materials.map(record=>{
   const material=new T.MeshStandardMaterial(record.properties);

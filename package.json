@@ -55,7 +55,9 @@
     "build:joint-assembly": "node scripts/build-joint-assembly.mjs",
     "test:joint-assembly": "node --test tests/avatar/joint-assembly.mjs",
     "preview:joint-assembly": "node scripts/preview-joint-avatar.mjs",
-    "test:official-avatar": "node --test tests/avatar/official-avatar.mjs",
+    "test:official-avatar": "node --test tests/avatar/official-avatar.mjs tests/avatar/delivery.mjs",
+    "build:avatar-delivery": "node scripts/build-avatar-delivery.mjs",
+    "test:avatar-startup": "node tests/avatar/startup.mjs",
     "test:official-avatar-browser": "node tests/avatar/official-browser.mjs"
   },
   "dependencies": {

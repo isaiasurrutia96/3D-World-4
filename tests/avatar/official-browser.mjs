@@ -13,7 +13,7 @@ const server=createServer(async(req,res)=>{
   if(path.endsWith('/'))path+='index.html';
   const file=resolve(root,'.'+path);assert(file.startsWith(root+sep));
   if(path==='/favicon.ico'){res.writeHead(204).end();return;}
-  if(failAsset&&/\/avatar\/assembled-joints\/parts-/.test(path)){res.writeHead(503).end();return;}
+  if(failAsset&&/\/avatar\/assembled-joints\/delivery-/.test(path)){res.writeHead(503).end();return;}
   const data=await readFile(file);
   res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json'})[extname(file)]||'application/octet-stream');
   res.setHeader('Content-Length',data.length);res.end(data);
@@ -63,8 +63,18 @@ try{
   console.log('Official model layout passed: '+viewport.width+'x'+viewport.height);
  }
  await page.locator('#visual-mode').click();assert(await page.evaluate(()=>testLab.frame.contentWindow.testLabScene.floors.every(f=>!f.visible)));
- assert(requests.filter(p=>/\/avatar\/assembled-joints\/parts-/.test(p)).length===2,'One model request per mounted viewer');
+ assert.equal(requests.filter(p=>/\/avatar\/assembled-joints\/delivery-/.test(p)).length,1,'The second viewer must reuse the checked cached model');
+ assert.equal(requests.some(p=>/\/avatar\/assembled-joints\/parts-/.test(p)),false,'The browser must not fetch the large master');
+ assert(requests.some(p=>/\/avatar\/assembled-joints\/decode-/.test(p)),'Unpack the avatar in a worker');
+ // Cached approved bytes still open when the asset endpoint is unavailable.
+ failAsset=true;await page.evaluate(()=>testLab.setTest('avatar'));await ready();failAsset=false;
+ assert.equal(await page.evaluate(()=>testLab.frame.contentWindow.avatarLab.avatar.version),'approved-joints-2026-11-19');
+ // A damaged cache entry must be rejected and replaced from the network.
+ await page.evaluate(async()=>{const cache=await caches.open('approved-study-bytes-v1'),keys=await cache.keys();const key=keys.find(k=>k.url.includes('/delivery-'));if(!key)throw Error('Missing avatar cache');await cache.put(key,new Response('corrupt'));});
+ await page.evaluate(()=>testLab.setTest('skeleton'));await ready();
+ assert.equal(await page.evaluate(()=>testLab.frame.contentWindow.avatarLab.avatar.version),'approved-joints-2026-11-19');
  // A failed asset must produce a useful error, and Reset must recover.
+ await page.evaluate(async()=>{for(const key of await caches.keys())await caches.delete(key);});
  failAsset=true;await page.evaluate(()=>testLab.setTest('avatar'));
  await page.waitForFunction(()=>testLab.frame.contentWindow.avatarLoadError,undefined,{timeout:60000});
  assert.equal(await page.evaluate(()=>testLabReady),false);
@@ -74,5 +84,5 @@ try{
  await mkdir('/tmp/avatar-assembly',{recursive:true});
  await page.setViewportSize({width:1440,height:900});await page.getByRole('button',{name:'Angle',exact:true}).click();
  await page.screenshot({path:'/tmp/avatar-assembly/official-desktop.png'});
- console.log(JSON.stringify({pass:true,checks:'Both official routes, joint centres, pose toggles/reset, bones, phone/landscape/desktop layouts, views, inspection, repository URL prefix, failed-load recovery, no page errors',timings}));
+ console.log(JSON.stringify({pass:true,checks:'Both official routes, joint centres, pose/reset, bones, phone/desktop layouts, views, inspection, worker, one compact download, cached load with endpoint unavailable, corrupt-cache recovery, failed-load recovery, no page errors',timings}));
 }finally{await browser.close();await new Promise(r=>server.close(r));}

@@ -62,7 +62,7 @@ async function setTest(id){
  if(!tests[id])return;subject=id;ready=false;window.testLabReady=false;const token=++generation;clock=null;syncControls=()=>{};controls.replaceChildren();loading.hidden=false;loading.textContent='Preparing '+tests[id].name.toLowerCase()+'…';$('#subject').value=id;$('#subject-status').textContent=tests[id].name;
  $('#test-context').textContent=$('#subject').selectedOptions[0].textContent;
  const url=new URL(location.href);if(id==='avatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
- const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=restored-joints-2026-11-19';frame=node;host.replaceChildren(node);
+ const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=fast-approved-joints-2026-11-19';frame=node;host.replaceChildren(node);
  node.onload=async()=>{
   try{
    const w=node.contentWindow,doc=w.document,style=doc.createElement('style');style.textContent='html,body,body>main{height:100%!important;overflow:hidden!important;background:#405363!important}.app{display:block!important;height:100%!important}body>header,.app>header,nav.views,.stage-hint,.hint,.other-test,#status,aside,.floor-toggle,#test-videos{display:none!important}#stage{height:100%!important;width:100%!important;min-height:0!important}.race-hud{display:grid!important;top:64px!important}';doc.head.append(style);

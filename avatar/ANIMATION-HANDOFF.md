@@ -71,6 +71,31 @@ Procedural molding is excluded from viewer builds, but download/decode and GPU
 cost still matter on phones. A future optimized game LOD needs separate shape
 and joint-fit checks. Do not silently simplify the approved master.
 
+### Loading the approved model
+
+The owner reconfirmed this jointed avatar as official. The master and its hash
+stay unchanged. `assembled-joints/delivery.json` pins a 19.96 MB lossless
+delivery file derived from that master. Existing exact left/right reflections
+are transmitted once; the decoder reconstructs every original array bit,
+including normals, triangle ordering, socket records and signed zero. This
+does not simplify or quantize geometry and does not change the animation API.
+
+`loadOfficialAvatar()` now uses the binary delivery, verifies its SHA-256,
+and unpacks it in a dedicated worker. Content-addressed bytes are cached when
+browser storage is available; private-browsing storage failures fall back to
+the network. Each mount receives independent mutable arrays. Claude should
+keep importing this same canonical loader rather than fetch the master directly.
+All drawing, chest bending and motion-core code remain unchanged.
+
+Rebuild delivery with `npm run build:avatar-delivery` after an approved master
+change, then run `npm run test:official-avatar`. The build validates both pins,
+copies the worker and payload for both live viewers. Avoid unconditional HTML
+preloads: they can download a second copy even when Cache Storage has the model.
+The frozen checkpoint retains its original loader and original bytes.
+`npm run test:avatar-startup` measures cold desktop and slowed-phone loading,
+then checks that a second viewer uses the verified cache without downloading
+the model again. The measured comparison is in `LOADING-RESULTS.json`.
+
 ## Verification
 
 `npm run test:official-avatar` checks the release hash, runtime binding,
