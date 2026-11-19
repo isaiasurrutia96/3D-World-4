@@ -204,6 +204,15 @@ Owner of the racing code: Codex (racing-core). Controls as in the other repo.
 ### 17. Diving: not a minigame (owner, 19 Nov). Diving boards are just for
 fun in the free world (see docs/FEATURES.md).
 
+### 18. Ice skating race (approved 19 Nov)
+1. Ice paths winding through the islands (frozen rivers, over bridges,
+   through tunnels, past scenery), not just an oval: start to finish across
+   the world, or a big loop. Push in rhythm for speed, lean to turn
+   (controls chosen after testing). Too fast into a turn: slides wide or
+   falls (no death, quick get-up). Up to 8 skaters, NPCs fill spots; first
+   to the finish wins. Racing rules from the template. Bumping allowed.
+2. Blocks: ice, snow banks, wood or concrete bridges. Prizes: any prize.
+
 ## D. The 19 minigames (diving is just for fun)
 
 1. Kart racing. 2. Time trial. 3. Mini golf. 4. Full golf. 5. Bowling.
