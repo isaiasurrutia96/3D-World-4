@@ -1,7 +1,7 @@
 # 3D-World-4
 
-**Official avatar, 19 November 2026:** the approved continuous arcade skin and
-natural limb contours are pinned in [avatar/official.json](avatar/official.json).
+**Official avatar, 19 November 2026:** the approved original body shapes and
+ball-and-socket assembly are pinned in [avatar/official.json](avatar/official.json).
 Our avatar and Skeleton in the universal Test Lab use this same model.
 Claude's movement work should use the [animation handoff](avatar/ANIMATION-HANDOFF.md)
 and `avatar/src/official-avatar.js`; earlier checkpoints remain historical.

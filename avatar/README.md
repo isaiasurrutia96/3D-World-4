@@ -1,10 +1,12 @@
 # Our approved avatar
 
+The owner restored this exact approved jointed model after removing the outer skin on 19 November 2026. The frozen reference remains in `checkpoints/avatar-joints-1/`.
+
 **Current official avatar (19 November 2026):** `official.json` pins the
-owner-approved smooth arcade skin with natural limb contours. Both Our avatar
-and Skeleton in the Test Lab load `src/official-avatar.js`. See the
-[animation handoff](ANIMATION-HANDOFF.md). The preceding jointed avatar remains
-frozen at `/checkpoints/avatar-joints-1/`; its source/master asset is retained.
+approved original-shape joint assembly. Both `/test-lab/` → Our avatar and
+Skeleton load it through `src/official-avatar.js`. See
+[animation handoff](ANIMATION-HANDOFF.md) and
+[assembly checks](src/joint-assembly/README.md).
 
 The text below describes the preserved 17 November baseline. Its viewer,
 source shapes and approval record remain available for authoring/history.

@@ -13,7 +13,7 @@ const server=createServer(async(req,res)=>{
   if(path.endsWith('/'))path+='index.html';
   const file=resolve(root,'.'+path);assert(file.startsWith(root+sep));
   if(path==='/favicon.ico'){res.writeHead(204).end();return;}
-  if(failAsset&&/\/avatar\/continuous-skin\/skin-/.test(path)){res.writeHead(503).end();return;}
+  if(failAsset&&/\/avatar\/assembled-joints\/parts-/.test(path)){res.writeHead(503).end();return;}
   const data=await readFile(file);
   res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json'})[extname(file)]||'application/octet-stream');
   res.setHeader('Content-Length',data.length);res.end(data);
@@ -32,11 +32,9 @@ try{
   const result=await page.evaluate(()=>{
    const w=testLab.frame.contentWindow,A=w.avatarLab.avatar,point=w.avatarLab.camera.position.clone();let error=0;
    for(const a of A.attached){if(a.ball)error=Math.max(error,point.setFromMatrixPosition(a.mesh.matrixWorld).distanceTo(A.solved.get(a.bone).head));for(const c of a.sockets)error=Math.max(error,point.fromArray(c.center).applyMatrix4(a.mesh.matrixWorld).distanceTo(A.solved.get(c.bone).head));}
-   const meshes=[];A.root.traverse(o=>{if(o.isMesh)meshes.push(o);});
-   for(const name of A.jointNames){const b=A.graphicsSkeleton.bones[A.skeleton.index.get(name)];error=Math.max(error,point.setFromMatrixPosition(b.matrixWorld).distanceTo(A.solved.get(name).head));}
-   return {version:A.version,parts:meshes.length,error,capabilities:A.capabilities,decode:w.performance.getEntriesByName('study-asset-decode').at(-1)?.duration};
+   return {version:A.version,parts:A.attached.length,error,capabilities:A.capabilities,decode:w.performance.getEntriesByName('study-asset-decode').at(-1)?.duration};
   });
-  assert.equal(result.version,'arcade-skin-2026-11-19');assert.equal(result.parts,1);assert(result.error<1e-6);timings.push({id,decodeMS:Math.round(result.decode)});
+  assert.equal(result.version,'approved-joints-2026-11-19');assert.equal(result.parts,28);assert(result.error<1e-6);timings.push({id,decodeMS:Math.round(result.decode)});
   console.log(id+': verified release, parts and joint centres.');
   await page.getByRole('button',{name:'Motion',exact:true}).tap();
   const panel=page.locator('#motion-panel');
@@ -65,13 +63,13 @@ try{
   console.log('Official model layout passed: '+viewport.width+'x'+viewport.height);
  }
  await page.locator('#visual-mode').click();assert(await page.evaluate(()=>testLab.frame.contentWindow.testLabScene.floors.every(f=>!f.visible)));
- assert(requests.filter(p=>/\/avatar\/continuous-skin\/skin-/.test(p)).length===2,'One model request per mounted viewer');
+ assert(requests.filter(p=>/\/avatar\/assembled-joints\/parts-/.test(p)).length===2,'One model request per mounted viewer');
  // A failed asset must produce a useful error, and Reset must recover.
  failAsset=true;await page.evaluate(()=>testLab.setTest('avatar'));
  await page.waitForFunction(()=>testLab.frame.contentWindow.avatarLoadError,undefined,{timeout:60000});
  assert.equal(await page.evaluate(()=>testLabReady),false);
  failAsset=false;await page.evaluate(()=>testLab.setTest('avatar'));await ready();
- assert.equal(await page.evaluate(()=>testLab.frame.contentWindow.avatarLab.avatar.version),'arcade-skin-2026-11-19');
+ assert.equal(await page.evaluate(()=>testLab.frame.contentWindow.avatarLab.avatar.version),'approved-joints-2026-11-19');
  assert.deepEqual(errors,[]);
  await mkdir('/tmp/avatar-assembly',{recursive:true});
  await page.setViewportSize({width:1440,height:900});await page.getByRole('button',{name:'Angle',exact:true}).click();

@@ -1,43 +1,69 @@
 {
-  "version": "arcade-skin-2026-11-19",
-  "checkedAt": "2026-11-19T18:41:13.478983+00:00",
-  "assetSHA256": "f21ffb5c8395068c5ca4e1614d74352304aceb3ae032043c5d93ab6c7ea1f0e5",
-  "tests": {
-    "mathAndArtifact": {
-      "pass": 12,
-      "fail": 0
-    },
-    "fullProjectBuild": "PASS",
-    "privateRenderViewsAndPoses": "PASS",
-    "universalLabBothRoutes": "PASS",
-    "motionPanelSixDeviceSizes": "PASS"
+  "version": "approved-joints-2026-11-19",
+  "checkedAt": "2026-11-19T17:03:55.054240+00:00",
+  "assetSHA256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+  "assemblyChecks": {
+    "passed": 12,
+    "failed": 0,
+    "sourceInput": "verified authoring-source snapshot; saved asset matched byte-for-byte",
+    "command": "npm run test:joint-assembly"
+  },
+  "runtimeChecks": {
+    "passed": 4,
+    "failed": 0,
+    "command": "npm run test:official-avatar"
+  },
+  "projectBuild": "PASS",
+  "browserChecks": {
+    "officialAvatar": "PASS: both routes, repository URL prefix, joint centers, poses/reset, bones, view/layout sweep, asset failure/recovery, no page errors",
+    "universalTestLab": "PASS: six device layouts, views, inspection, controls, tracks, all remaining subjects, off-screen pause, empty videos",
+    "motionPanel": "PASS: pose toggles, reset on close/Escape, alongside-model layout, six device sizes, isolated hand controls, unavailable subjects"
+  },
+  "regressionChecks": {
+    "skeleton": "PASS",
+    "inspectionZoom": "PASS",
+    "whitespace": "PASS"
   },
   "measurements": {
-    "topology": {
-      "vertices": 323803,
-      "triangles": 647602,
-      "finite": true,
-      "components": 1,
-      "boundary": 0,
-      "nonManifold": 0,
-      "windingErrors": 0,
-      "euler": 2,
-      "volume": 0.28446516737968824,
-      "minArea": 4.7136028355596557e-14
-    },
-    "bodySimplificationErrorMeters": 0.00018279472715221345,
-    "originalHandPositionRoundingMeters": 4.179250466103515e-08,
-    "jointCentreErrorMeters": 0,
-    "updateRates": [
+    "parts": 28,
+    "balls": 12,
+    "sockets": 24,
+    "maximumActualBallIntrusionMM": 0.17548928991131807,
+    "maximumStaticPoseJointCenterErrorMeters": 1.0877919644084146e-15,
+    "maximumRepeatedUpdateJointDriftMeters": 4.62985963945236e-16,
+    "updateRatesChecked": [
       30,
       60,
       120,
       144
     ],
-    "compressedBytes": 6803169
+    "maximumExistingSoftChestContactVariationMM": 0.6854365818236008
   },
-  "originalCheckpoint": "checkpoints/avatar-joints-1",
-  "animationOwner": "Claude",
-  "scope": "Continuous outer skin and drawing binding only; no motion-core changes. Finger/toe animation remains a separate Claude layer.",
-  "delivery": "Owner authorized publication to Test Lab."
+  "limits": [
+    "Inspection-quality master, not a mobile gameplay performance certification.",
+    "New topology finger/toe skinning remains Claude movement work.",
+    "All combined movement limits and gripping require their own checks."
+  ],
+  "unchanged": [
+    "motion-core/",
+    "checkpoints/",
+    "avatar/index.html",
+    "avatar/APPROVED.json"
+  ],
+  "delivery": "Owner authorized restoring the jointed avatar in the Test Lab; skin removed.",
+  "restoration": {
+    "checkedAt": "2026-11-19T20:43:38.461609+00:00",
+    "ownerDecision": "Remove the outer skin and restore the exact original approved assembled joints and body shapes.",
+    "checkpointMatch": "PASS: release metadata and asset SHA-256 exactly match checkpoints/avatar-joints-1.",
+    "runtimeChecks": "PASS: 4 checks, zero failures.",
+    "projectBuild": "PASS",
+    "officialAvatarBrowser": "PASS: both routes, joint centers, pose/reset, phone/desktop layouts, views, inspection and failed-load recovery; no page errors.",
+    "skin": "Retired from active code and live bundles. Archived source remains in git history at bff65e4.",
+    "unchanged": [
+      "motion-core/",
+      "checkpoints/",
+      "avatar/assembled-joints/",
+      "avatar/src/joint-assembly/bind.js"
+    ]
+  }
 }

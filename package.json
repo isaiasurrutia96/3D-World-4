@@ -55,10 +55,8 @@
     "build:joint-assembly": "node scripts/build-joint-assembly.mjs",
     "test:joint-assembly": "node --test tests/avatar/joint-assembly.mjs",
     "preview:joint-assembly": "node scripts/preview-joint-avatar.mjs",
-    "test:official-avatar": "node --test tests/avatar/skin-math.mjs tests/avatar/official-avatar.mjs",
-    "test:official-avatar-browser": "node tests/avatar/official-browser.mjs",
-    "build:avatar-skin": "node scripts/build-avatar-skin.mjs",
-    "preview:avatar-skin": "node scripts/preview-skin.mjs"
+    "test:official-avatar": "node --test tests/avatar/official-avatar.mjs",
+    "test:official-avatar-browser": "node tests/avatar/official-browser.mjs"
   },
   "dependencies": {
     "cdt2d": "1.0.0",
