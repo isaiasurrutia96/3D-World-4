@@ -88,7 +88,7 @@ function resize(){const {width,height}=stage.getBoundingClientRect();if(!width||
 new ResizeObserver(resize).observe(stage);resize();view('angled');setPose('rest');
 let last=0,lastPose='',lastPresentation='';
 // The animation clock is unchanged. A still inspection does not redraw the
-// 3.6M-triangle master and its shadow sixty times a second on a phone.
+// authoring model and its shadow sixty times a second on a phone.
 renderer.setAnimationLoop(ms=>{
  const dt=Math.min(.1,last?(ms-last)/1000:0);last=ms;
  const pose=framePose(dt),poseKey=JSON.stringify(pose);

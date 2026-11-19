@@ -125,6 +125,14 @@ export function footReach(avatar){
 
 export function seatTop(avatar, pose){
  avatar.apply(pose);
+ if(avatar.skin){
+  const g=avatar.skin.geometry,P=g.attributes.position,part=g.attributes.part;
+  const knee=avatar.solved.get('shin.L').head,hip=avatar.solved.get('thigh.L').head,front=hip.z+.6*(knee.z-hip.z),v=new Vector3();let top=Infinity,back=Infinity;
+  for(let i=0;i<P.count;i++)if(part.getX(i)===6||(part.getX(i)===0&&P.getY(i)<1.0572)){
+   avatar.skin.getVertexPosition(i,v);back=Math.min(back,v.z);if(v.z<=front)top=Math.min(top,v.y);
+  }
+  return {top,front,back};
+ }
  const parts = avatar.attached.filter(a => /^(pelvis|thigh\.)/.test(a.label));
  const knee = avatar.solved.get('shin.L').head, hip = avatar.solved.get('thigh.L').head;
  const front = hip.z + .6 * (knee.z - hip.z);           // the block reaches 60% of the way to the knees

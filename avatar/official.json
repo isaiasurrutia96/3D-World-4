@@ -1,14 +1,14 @@
 {
-  "version": "approved-joints-2026-11-19",
+  "version": "arcade-skin-2026-11-19",
   "status": "official",
-  "description": "Original approved body shapes with the approved ball-and-socket joints. Cylinder experiment rejected.",
-  "assetManifest": "assembled-joints/manifest.json",
-  "sha256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
-  "parts": 28,
-  "balls": 12,
-  "sockets": 24,
+  "description": "Owner-approved continuous arcade skin with natural limb contours and original hand surfaces. Original jointed avatar preserved in checkpoints/avatar-joints-1.",
+  "assetManifest": "continuous-skin/manifest.json",
+  "sha256": "f21ffb5c8395068c5ca4e1614d74352304aceb3ae032043c5d93ab6c7ea1f0e5",
+  "parts": 1,
+  "joints": 12,
   "units": "meters",
   "poseAngles": "degrees",
   "animationOwner": "Claude",
-  "skeleton": "motion-core/skeleton/bones.js"
+  "skeleton": "motion-core/skeleton/bones.js",
+  "checkpoint": "checkpoints/avatar-joints-1"
 }

@@ -2,10 +2,10 @@
 
 The published workspace is `/test-lab/`. Its static UI lives in `public/test-lab/` and is copied to `dist/` by Vite.
 
-Our avatar and Skeleton now share the official approved original-shape joint
-assembly, pinned in `avatar/official.json`. Both viewers load its prebuilt data
+Our avatar and Skeleton now share the official owner-approved continuous arcade skin, pinned in `avatar/official.json`. Both viewers load its prebuilt data
 through `avatar/src/official-avatar.js`; no procedural body/socket construction
-runs on the device. They expose the existing skeleton pose/reach controls in
+runs on the device. The preceding jointed model is preserved at `/checkpoints/avatar-joints-1/`.
+They expose the existing skeleton pose/reach controls in
 the alongside-model Motion panel. Isolated Hands and Feet studies remain
 separate. New topology's finger/toe skinning is intentionally left to Claude;
 see `avatar/ANIMATION-HANDOFF.md`. The historical avatar-lab motion viewer and

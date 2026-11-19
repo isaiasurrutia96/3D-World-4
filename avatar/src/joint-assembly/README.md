@@ -6,10 +6,10 @@ reshape them into cylinders or use the retired experiment without a new request.
 
 The owner asked to put every approved joint on the actual avatar, centered on
 `motion-core/skeleton/bones.js`, with no bone, head, neck or chest-seam redesign.
-The owner approved the restored assembly for official Test Lab integration on
-19 November 2026. `avatar/official.json` pins this exact asset. Both Our avatar
-and Skeleton use `avatar/src/official-avatar.js`. Movement code and frozen
-checkpoints are unchanged. Earlier source factories remain authoring references.
+This is now the preserved reference underneath the owner-approved continuous
+arcade skin. Its frozen viewer and asset are in `checkpoints/avatar-joints-1/`.
+The original master here remains unchanged. `avatar/official.json` now pins the
+smooth skin; see `avatar/ANIMATION-HANDOFF.md`. Movement code is unchanged.
 
 ## Layers
 

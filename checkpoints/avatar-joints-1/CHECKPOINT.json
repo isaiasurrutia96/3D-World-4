@@ -1,0 +1,11 @@
+{
+  "name": "Approved jointed avatar \u2014 checkpoint 1",
+  "saved_at": "2026-11-19",
+  "source_commit": "70566755dc6a3b0cb049b45274e94dc164070712",
+  "viewer_sha256": "e9e4df4be95428c22a2368dedb40563f405d337e901bd5b9d995e9fc36727da3",
+  "files_sha256": {
+    "parts-4d3988607a0d4159.json.gz": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+    "OFFICIAL.json": "2045750cd91225d476c5341bad56e27bac73d21206939097443e4bbb17f98f8a"
+  },
+  "note": "Immutable original approved shapes and ball/socket joints before the owner-approved continuous outer skin."
+}
