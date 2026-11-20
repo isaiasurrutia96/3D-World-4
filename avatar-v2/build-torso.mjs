@@ -1,8 +1,8 @@
-// New avatar (version 2), step 1: the blank sheet. Copies only the torso
+// New avatar (version 2): the measuring reference. Copies only the torso
 // (chest and pelvis) from the phone-ready Game copy of the approved avatar
-// into this folder's own file, torso.json. The approved avatar and its Light
-// and Game copies are only read, never changed. Later steps reshape these
-// parts here and add the rest of the body one part at a time.
+// into torso-source.json. fit-torso.mjs measures it to make the one-piece
+// torso. The approved avatar and its Light and Game copies are only read,
+// never changed.
 // Usage: node avatar-v2/build-torso.mjs
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
@@ -22,6 +22,6 @@ const parts=['chest','pelvis'].map(name=>{
   positions:round(part.attributes.position.array,5),normals:round(part.attributes.normal.array,4),index:Array.from(part.index)};
 });
 const torso={version:1,source:{avatar:game.sourceSHA256,gameCopy:game.sha256},triangles:parts.reduce((n,p)=>n+p.index.length/3,0),parts};
-await writeFile('avatar-v2/torso.json',JSON.stringify(torso)+'\n');
+await writeFile('avatar-v2/torso-source.json',JSON.stringify(torso)+'\n');
 console.log(parts.map(p=>p.name+' '+p.index.length/3+' triangles, sockets: '+p.sockets.map(s=>s.bone).join(' ')).join('\n'),'\ntotal',torso.triangles);
 console.log(JSON.stringify(parts.map(p=>({n:p.name,pos:p.position,q:p.quaternion,s:p.scale,c:p.color}))));
