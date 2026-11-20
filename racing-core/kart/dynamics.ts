@@ -1,6 +1,6 @@
 /** Force-limited handling within the existing fixed-step/contact pipeline. No renderer. */
 import type { KartState, KartInput, KartMotion, SurfaceWorld } from './index.ts';
-import { sampleCurve, steeringLimit, STANDARD_GRAVITY } from './profiles.ts';
+import { sampleCurve, steeringLimit, steeringResponse, STANDARD_GRAVITY } from './profiles.ts';
 import type { HandlingProfile } from './profiles.ts';
 export type SurfaceSample = Readonly<{ grip?: number; speed?: number; resistance?: number }>;
 export type HandlingState = Readonly<{
@@ -51,16 +51,20 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     h.brake = approach(h.brake, brake, dt / (brake > h.brake ? profile.brakeRiseSeconds : profile.brakeReleaseSeconds));
     const liftTarget = requested === 0 && brake === 0 ? 1 : 0;
     h.lift = approach(h.lift, liftTarget, dt / (liftTarget > h.lift ? profile.liftRiseSeconds : profile.liftReleaseSeconds));
-    const steer = input.steer ?? 0;
-    const steeringTime = steer * h.steerInput >= 0 && Math.abs(steer) > Math.abs(h.steerInput) ? profile.steeringRiseSeconds : profile.steeringReleaseSeconds;
-    // Countersteering first returns through centre, then builds the other way.
-    if (steer * h.steerInput < 0) h.steerInput = approach(h.steerInput, 0, dt / profile.steeringReleaseSeconds);
-    else h.steerInput = approach(h.steerInput, steer, dt / steeringTime);
     const sin = Math.sin(source.yaw), cos = Math.cos(source.yaw);
     const vx0 = sin * source.speed + cos * source.lateralSpeed, vz0 = cos * source.speed - sin * source.lateralSpeed;
     const v = Math.hypot(vx0, vz0), direction = source.speed < -.001 ? -1 : source.speed > .001 ? 1 : Math.sign(h.throttle) || 1;
+    const response = steeringResponse(profile, v);
+    const steer = input.steer ?? 0;
+    const steeringTime = steer * h.steerInput >= 0 && Math.abs(steer) > Math.abs(h.steerInput) ? response.riseSeconds : profile.steeringReleaseSeconds;
+    // Countersteering first returns through centre, then builds the other way.
+    if (steer * h.steerInput < 0) h.steerInput = approach(h.steerInput, 0, dt / profile.steeringReleaseSeconds);
+    else h.steerInput = approach(h.steerInput, steer, dt / steeringTime);
     h.steeringLimit = steeringLimit(profile, v, geometry.wheelbase, h.gripMultiplier);
-    s.steering = h.steerInput * h.steeringLimit;
+    // Shape small corrections gently at low speed. A sustained full input
+    // still reaches the existing limit, including the approved high-speed grip.
+    const demand = response.exponent===1 ? h.steerInput : Math.sign(h.steerInput)*Math.pow(Math.abs(h.steerInput),response.exponent);
+    s.steering = demand * h.steeringLimit;
     const turnSpeed = s.railContactTime > 0 && requested > 0 ? Math.max(source.speed, 2) : source.speed;
     const yawTarget = source.grounded ? -turnSpeed / geometry.wheelbase * Math.tan(s.steering) : 0;
     const requestedYaw = h.yawRate + (yawTarget - h.yawRate) * (1 - Math.exp(-dt / profile.yawResponseSeconds));

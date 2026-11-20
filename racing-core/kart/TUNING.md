@@ -131,7 +131,7 @@ together. This is an explicit arcade choice; the F1 reference curve is kept.
 `PREVIOUS_FAST_PROFILE` retains every setting and the exact fingerprint of the
 first approved Fast setup for numerical comparisons; it is not a new UI mode.
 
-Input build/release is 0.18/0.14 s; yaw response remains finite at 0.10 s with
+High-speed input build/release is 0.18/0.14 s; yaw response remains finite at 0.10 s with
 a 10 rad/s² bound, and slip settles over 0.14 s. Low-speed wheel lock stays
 30 degrees. Actual velocity-derived turn radii at unchanged speed measure
 132.15→66.07 m at 180 mph and 197.41→98.70 m at 220 mph. Straight acceleration,
@@ -151,3 +151,72 @@ grip curve permits a tighter path. A dedicated before-turn test compares Gas
 held/released and previous/current profiles using actual velocity curvature.
 This verifies the requested effect directly, rather than substituting a
 brake-release test or adding an unexplained temporary grip multiplier.
+
+## Progressive steering and intermittent input investigation
+
+The owner likes a hard turn causing a slide/spin. He requested gentler
+low-speed corrections, turning that builds with a longer hold, and an
+investigation into a mobile Right command or rightward slide that persisted.
+
+The tire/slide force model is unchanged. A 432-case hard-turn/release matrix
+at 30/60/120/144 FPS settles with neutral steering: worst sideways speed after
+two seconds is 0.000134 m/s and worst yaw rate 2.1e-8 rad/s. Initial sideways
+headings up to 179 degrees also recover. This did not conclusively identify
+the owner's exact phone incident; it is evidence against removing ordinary
+sliding or replacing the driving model to fix an unconfirmed physics fault.
+
+Two input ownership failures are reproduced independently and through native
+browser touch events using the captured `f40e962` bundle:
+
+1. Interrupted pointer capture/target release can leave the private Right hold
+   active after the contact ends.
+2. A shared input reset/stage pause clears public actions while the old private
+   contact remains. A new press/release can then reactivate that old hold.
+
+`racing-lab/src/driving-holds.js` now owns contacts independently of rendering.
+Each pointer has one button owner; keys and multiple fingers are independent.
+`driving-controls.js` handles window capture-phase releases, native touch-end/
+cancel fallback, lost capture, blur/pagehide/freeze/visibility, disabled/focus
+state and shared-action resets. Touch fallback uses the contacts' stable DOM
+start targets; it does not assume a relationship between touch and pointer
+identifiers. Stage pause explicitly clears the ledger. There is no timeout
+which would cancel a valid long hold. `dispose()` removes owned listeners.
+
+`steeringResponse` is an optional immutable profile group. Live Fast/Balanced
+and custom defaults use 0.50 s to reach full normalized input at speeds up to
+12 m/s, with a near-center exponent of 1.35. Both blend smoothly to the existing
+0.18 s / linear response by 45 m/s. Release still takes at most 0.14 s from full
+input. Sustained full input reaches the existing 30-degree low-speed lock and
+the same speed-dependent high-speed lock/grip. Steering changes through the
+same bounded body response and tire forces; heading and velocity do not snap.
+
+The optional group is validated, copied, frozen and included in profile
+identity. Setting it to `undefined` disables shaping for references/custom
+vehicles. Original LetsGo, F1 reference and earlier approved parameter sets
+retain their original response/identities. High-speed traces above 45 m/s
+match the previous Fast version exactly apart from the profile fingerprint.
+Straight speed, lift-off, braking, boost and mass/geometry settings are kept.
+
+For scale: an 8 m/s kart with a 100 ms steering press changes its eventual
+heading about 0.75 degrees versus 6.12 before; a 200 ms press gives 4.15 degrees
+versus 24.59. The wheel reaches 30 degrees after a sustained 0.5 s hold. A hard
+three-second turn at 13 m/s still produces 11.72 m/s peak sideways motion,
+about one radian of slip, and almost a full body rotation; after steering
+release it settles under the existing force model.
+
+Numerical evidence is in `STEERING-CHECKS.json/.md`, plus
+`racing-lab/CONTROL-RELEASE-CHECKS.json`. Milestone tests explicitly reject
+unobserved/null timestamps. Known-radius/course fixtures invert the published
+input response when requesting a physical wheel angle; their independent
+velocity/path acceptance checks remain unchanged. The isolated traction-assist
+unit comparison disables input shaping to keep tire demand controlled; the
+new integration tests separately cover real progressive controls and slides.
+
+The native-browser regression is
+`node racing-lab/tests/steering-release-browser.mjs`. With a captured prior
+bundle supplied as `BASELINE_HTML`, it proves the old failures and the updated
+behavior side by side. For reproducibility, the prior bundle can be recovered
+with `git show f40e962:racing-lab/index.html`; reports record both HTML SHA256s.
+The script also checks 150 native Right taps with Gas still held, real stage
+pause/resume and the input-to-controller release path. Standard full driving,
+FPV, seven touch layouts and gamepad/browser checks remain separate regressions.
