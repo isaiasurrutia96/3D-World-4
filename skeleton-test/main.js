@@ -25,6 +25,26 @@ scene.add(new T.HemisphereLight(0xffffff,0xb6b2aa,2));
 const key=new T.DirectionalLight(0xffffff,2.4);key.position.set(-3,5,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-1.8,right:1.8,top:2,bottom:-1,near:.2,far:12});key.shadow.bias=-.0002;key.target.position.set(0,.9,0);scene.add(key,key.target);
 const fill=new T.DirectionalLight(0xffffff,.9);fill.position.set(4,2,-3);scene.add(fill);
 
+// Quality levels (Low, Medium, High) for testing smoothness on a slow device.
+// The shadow draws the whole 3.6M-triangle avatar a second time, so it is the
+// biggest saving. ratio = most drawn pixels per screen pixel; shadow = shadow
+// map size (0 = no shadow); every = refresh the shadow on every Nth changed
+// frame (a still pose always gets a fresh shadow). Edit the numbers to tune.
+const QUALITY={low:{ratio:1,shadow:0,every:1},medium:{ratio:1,shadow:512,every:3},high:{ratio:1.5,shadow:1024,every:1}};
+let quality='high',poseFrames=0,shadowStale=false;
+function applyQuality(name){
+ const q=QUALITY[name];if(!q)return;
+ quality=name;
+ renderer.setPixelRatio(Math.min(devicePixelRatio,q.ratio));
+ key.castShadow=q.shadow>0;
+ if(q.shadow>0&&key.shadow.mapSize.x!==q.shadow){key.shadow.mapSize.set(q.shadow,q.shadow);key.shadow.dispose();key.shadow.map=null;key.shadow.mapPass=null;}
+ renderer.shadowMap.needsUpdate=true;shadowStale=false;
+ resize();needsRender=true;
+ for(const b of document.querySelectorAll('[data-quality]'))b.setAttribute('aria-pressed',String(b.dataset.quality===name));
+ try{localStorage.setItem('skeletonQuality',name);}catch{}
+}
+for(const b of document.querySelectorAll('[data-quality]'))b.onclick=()=>applyQuality(b.dataset.quality);
+
 // Bones view: a line for each bone and a dot at each joint, drawn on top.
 const S=A.skeleton,lineGeo=new T.BufferGeometry(),linePos=new Float32Array(S.bones.length*6);lineGeo.setAttribute('position',new T.BufferAttribute(linePos,3));
 const lines=new T.LineSegments(lineGeo,new T.LineBasicMaterial({color:'#ffb347',depthTest:false,transparent:true}));lines.renderOrder=10;lines.frustumCulled=false;
@@ -65,6 +85,7 @@ controls.addEventListener('start',()=>{for(const b of document.querySelectorAll(
 controls.addEventListener('change',()=>{needsRender=true;});
 function resize(){const {width,height}=stage.getBoundingClientRect();if(!width||!height)return;camera.aspect=width/height;camera.fov=camera.aspect<.7?46:36;camera.updateProjectionMatrix();renderer.setSize(width,height);needsRender=true;}
 new ResizeObserver(resize).observe(stage);resize();view('angled');setPose('rest');
+{let saved='high';try{saved=localStorage.getItem('skeletonQuality')||'high';}catch{}applyQuality(QUALITY[saved]?saved:'high');}
 let last=0,lastPose='',lastPresentation='';
 // The animation clock is unchanged. A still inspection does not redraw the
 // 3.6M-triangle master and its shadow sixty times a second on a phone.
@@ -78,13 +99,18 @@ renderer.setAnimationLoop(ms=>{
  if(ms-fpsSince>=1000){fpsBox.textContent=Math.round(fpsFrames*1000/(ms-fpsSince))+' fps · slowest frame '+Math.round(fpsWorst)+' ms';fpsFrames=0;fpsWorst=0;fpsSince=ms;}
  const dt=Math.min(.1,last?(ms-last)/1000:0);last=ms;
  const pose=framePose(dt),poseKey=JSON.stringify(pose);
- if(poseKey!==lastPose){lastPose=poseKey;drawBones(A.apply(pose));renderer.shadowMap.needsUpdate=true;needsRender=true;}
+ if(poseKey!==lastPose){
+  lastPose=poseKey;drawBones(A.apply(pose));
+  poseFrames++;
+  if(poseFrames%QUALITY[quality].every===0){renderer.shadowMap.needsUpdate=true;shadowStale=false;}else shadowStale=true;
+  needsRender=true;
+ }else if(shadowStale){renderer.shadowMap.needsUpdate=true;shadowStale=false;needsRender=true;}
  controls.update();
  const presentation=JSON.stringify(window.testLabScene?.getState());
  if(presentation!==lastPresentation){lastPresentation=presentation;needsRender=true;}
  if(needsRender){renderer.render(scene,camera);needsRender=false;}
 });
-window.skeletonLab={camera,controls,scene,renderer,setPose,showBones,view,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES)};
+window.skeletonLab={camera,controls,scene,renderer,setPose,showBones,view,setQuality:applyQuality,getQuality:()=>quality,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES)};
 window.avatarLab=window.skeletonLab;
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
 drawBones(A.solved);renderer.render(scene,camera);

@@ -499,3 +499,7 @@ Recorded 17 November 2026.
     middle of the palm (measured: the palm point sits about 12 cm too far toward the wrist, the palm's visual centre is about 12 cm
     further toward the fingers), the sit hands grabbing the knees, and whether the squat should spread the legs first.
 
+48. Quality levels (owner's request): Low, Medium, High buttons in the Skeleton section (remembered in the browser). Low: pixel ratio 1,
+    no shadow (the shadow draws the 3.6M-triangle avatar twice). Medium: pixel ratio 1, 512 shadow, refreshed every third moving frame and
+    again when the pose settles. High: as before (pixel ratio up to 1.5, 1024 shadow). Numbers live in `QUALITY` in `skeleton-test/main.js`.
+    Reason: the owner measured 45 fps when pressing Wave on the detailed official avatar. Not yet known: the "slowest frame" number.
