@@ -5,6 +5,7 @@ const tests={
  avatar:{name:'Avatar',path:'avatar-test',ready:w=>w.avatarLabReady},
  tracks:{name:'Tracks',path:'racing-lab',ready:w=>w.trackLabReady&&w.motionLabReady,tracks:true},
  skeleton:{name:'Skeleton',path:'skeleton-test',ready:w=>w.skeletonTestReady},
+ newAvatar:{name:'New avatar',path:'new-avatar',ready:w=>w.newAvatarReady},
  rules:{name:'Movement rules',path:'motion-core-test',ready:w=>w.rulesTestReady,move:true},
  hands:{name:'Hands',path:'hand-lab',ready:w=>w.handLabReady},
  wrist:{name:'Wrist',path:'wrist-lab',ready:w=>w.wristLabReady},

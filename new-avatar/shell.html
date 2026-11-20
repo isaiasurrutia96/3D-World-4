@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#405363"><title>New avatar</title>
+ <style>
+  *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden}body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f1f1ee;color:#343b40}
+  button{font:inherit;cursor:pointer;touch-action:manipulation}.app{height:100dvh;display:grid;grid-template-columns:minmax(0,1fr) 280px;grid-template-rows:72px minmax(0,1fr)}
+  header{grid-column:1/-1;display:flex;align-items:center;padding:14px 26px;border-bottom:1px solid #dddcd5}h1{margin:0;font-size:21px;font-weight:650;letter-spacing:-.5px}.sub{margin:4px 0 0;font-size:12px;color:#747870}
+  #stage{position:relative;min-height:0;overflow:hidden;background:#405363}canvas{display:block;touch-action:none}
+  nav.views{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:13px;background:#ffffffdc}nav.views button{border:0;border-radius:9px;background:transparent;padding:0 12px;min-height:40px;font-size:12px}nav.views button[aria-pressed=true]{background:#dfdfd7}
+  aside{padding:20px;overflow:auto;background:#fafaf6;border-left:1px solid #dddcd5}aside h2{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:#81867b;margin:0 0 10px}
+  aside section{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:18px}aside button{min-height:42px;border:1px solid #dddfd5;border-radius:10px;background:#f0f1e9;font-size:12px}aside button[aria-pressed=true]{background:#525f4a;color:#fff;border-color:#525f4a}
+  aside p{font-size:11px;color:#7a7f75;line-height:1.5;margin:0}
+  #loading{position:fixed;inset:0;display:grid;place-items:center;background:#405363;color:#e8eef2;font-size:13px;z-index:5}[hidden]{display:none!important}
+  @media(max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:64px minmax(0,1fr) auto}aside{border-left:0;border-top:1px solid #dddcd5;max-height:38vh}}
+ </style>
+</head>
+<body>
+ <main class="app">
+  <header><div><h1>New avatar</h1><p class="sub">Version 2 · Step 1: the torso</p></div></header>
+  <section id="stage" aria-label="New avatar">
+   <nav class="views" aria-label="Views"><button data-view="front">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="top">Top</button><button data-view="angled">Angled</button></nav>
+  </section>
+  <aside>
+   <h2>Sockets</h2>
+   <section><button id="sockets" aria-pressed="false">Show sockets</button></section>
+   <h2>About</h2>
+   <p id="info"></p>
+   <p>The blank sheet for the new avatar: the torso only, copied from the phone-ready Game avatar. The rest of the body is added one part at a time.</p>
+  </aside>
+ </main>
+ <div id="loading" role="status">Preparing the new avatar…</div>
+ <script>/*NEW_AVATAR_BUNDLE*/</script>
+</body>
+</html>
