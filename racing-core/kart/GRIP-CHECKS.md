@@ -1,6 +1,6 @@
 # More arcade handling: measured checks
 
-10 PASS, 0 FAIL.
+11 PASS, 0 FAIL.
 
 ## Only cornering and steering response change from the exact approved Fast setup
 
@@ -99,5 +99,15 @@ Rule: At.7s the released pedal is centered, forward motion remains, and velocity
 Script: `{"fps":[30,60,120,144],"script":"Use the actual driving input adapter: start60m/s, hold phone Right+Brake/Reverse for.6s, then release only Brake/Reverse; compare keeping it held."}`
 
 Measured: `[{"release":false,"lateral":48.82733061420931,"normalizedPedal":-1,"forwardSpeed":46.471551181162184},{"release":true,"lateral":56.2081840533114,"normalizedPedal":0,"forwardSpeed":47.118884924894196}]`
+
+**PASS**
+
+## Releasing Gas before a turn progressively tightens the real travel path
+
+Rule: Lift reaches full by.25s without yaw/speed snaps; at1.5s into the turn the released-Gas radius is at least15% tighter than holding Gas; new lifted radius≤55% of the previous lifted radius; no boost and exact FPS states.
+
+Script: `{"fps":[30,60,120,144],"script":"Start180mph, Gas straight1s; then hold Right2s. Compare keeping Gas held with releasing it before entering the turn, for previous and stronger grip."}`
+
+Measured: `[{"profile":"fast-before-grip","release":false,"radius":132.14225052408014,"mph":179.99999999554734,"throttle":1,"lift":0,"maximumYawStep":0.005074514457923174,"maximumRiseAfterLift":0},{"profile":"fast-before-grip","release":true,"radius":94.84104970335174,"mph":129.8270448461906,"throttle":0,"lift":1,"maximumYawStep":0.005433279704340821,"maximumRiseAfterLift":0},{"profile":"fast","release":false,"radius":66.07112526224054,"mph":179.99999999609616,"throttle":1,"lift":0,"maximumYawStep":0.01014893364530911,"maximumRiseAfterLift":0},{"profile":"fast","release":true,"radius":47.9518165803167,"mph":130.38639565425174,"throttle":0,"lift":1,"maximumYawStep":0.010968466223525541,"maximumRiseAfterLift":0}]`
 
 **PASS**

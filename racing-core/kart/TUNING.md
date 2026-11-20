@@ -143,3 +143,11 @@ adding a grip/speed bonus. A scripted brake→release transition measures the
 real velocity change and the same acceleration ellipse. See `GRIP-CHECKS.json`
 and `.md` for the comparison, release/reversal and transition evidence at all
 four display rates. Subjective handling still needs the owner's next drive.
+
+
+The owner specifically clarified **lifting off Gas before the turn**. The
+approved gradual lift-off slowing remains active; as speed falls, the same
+grip curve permits a tighter path. A dedicated before-turn test compares Gas
+held/released and previous/current profiles using actual velocity curvature.
+This verifies the requested effect directly, rather than substituting a
+brake-release test or adding an unexplained temporary grip multiplier.

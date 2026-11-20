@@ -405,19 +405,20 @@ controls and layout, the accepted kart/track scale, and the existing camera.
   Record plain rules, inputs, measured results and PASS/FAIL before release.
 
 
-The owner additionally asks for releasing the brake to help turning. Pending
-clarification between brake and Gas, follow the literal brake-release request:
-the existing grip ellipse naturally reallocates force from braking to turning.
-The stronger lateral budget gives that transition more authority without a
-second grip bonus. Independent velocity-derived checks cover both Space/LT's
-independent brake and the phone Brake/Reverse adapter: after release, sideways
-force rises by more than 10% versus continuing to hold the brake, fades
-smoothly, and creates no powered acceleration or boost.
+The owner clarified that he means **releasing Gas before the turn**, rather
+than releasing the brake. Keep the approved gradual lift-off slowing and prove
+its interaction with the stronger grip. A new velocity-derived trajectory
+check compares Gas held/released before the same turn on both profiles: lift
+should build smoothly, speed should fall, and the real path should tighten
+without snapping the heading or granting a speed/grip bonus. The existing
+shared tire budget still applies. Earlier independent and phone brake-release
+checks remain useful regressions, but are not the owner's requested effect.
 
 ### More-handling verification and delivery
 
-- 216/216 complete headless racing checks PASS, including 10 new grip/response
-  comparisons and all prior track, handling, contact and prototype regressions.
+- 217 distinct headless racing checks PASS: the 216-check full suite plus the
+  added Gas-lift comparison, with all 11 grip/response checks rerun. Deployment
+  reruns the complete updated entry point, including the prior regressions.
   Exact 30/60/120/144 FPS states remain equal in the timed cases.
 - At actual 180 mph, measured full-steer radius is 132.150→66.073 m; at 220 mph
   it is 197.414→98.702 m. Speed is equal within 0.1 mph (measured differences
@@ -445,3 +446,13 @@ smoothly, and creates no powered acceleration or boost.
   avatar shapes and frozen checkpoints retain the approved version.
 - The owner approved the previous overall feel. This stronger handling is the
   requested next tuning pass and awaits his next drive, not a later race layer.
+
+
+Gas clarification verification: the before-turn Gas-lift test passes at every
+required FPS with exact states. At 1.5 s into the same 180 mph turn, holding Gas
+measures a 66.071 m radius; releasing Gas before entry progressively lowers
+speed to 130.386 mph and measures a 47.952 m radius. The prior-grip lifted path
+is 94.841 m. No positive speed jump, automatic boost or yaw discontinuity is
+introduced. The approved lift-off response already provides this behavior;
+the stronger lateral curve makes it substantially more capable. This follow-up
+adds the explicit proof and corrected request record, not another physics model.

@@ -162,4 +162,26 @@ check('Releasing the phone Brake/Reverse button also restores turning grip',
         }
         assert(results[1].lateral>results[0].lateral*1.1);near(results[1].normalizedPedal,0);return results;
     });
+check('Releasing Gas before a turn progressively tightens the real travel path',
+    {fps:rates,script:'Start180mph, Gas straight1s; then hold Right2s. Compare keeping Gas held with releasing it before entering the turn, for previous and stronger grip.'},
+    'Lift reaches full by.25s without yaw/speed snaps; at1.5s into the turn the released-Gas radius is at least15% tighter than holding Gas; new lifted radius≤55% of the previous lifted radius; no boost and exact FPS states.',()=>{
+        const results=[];
+        for(const profile of[PREVIOUS_FAST_PROFILE,DRIVING_PROFILES.fast])for(const release of[false,true]){
+            const group=rates.map(fps=>{
+                const c=make(profile,{speed:180*MPH});let previousHeading=0,previousSpeed=180*MPH,previousYaw=0,lastTick=-1,point=null,liftAtQuarter=null,maximumYawStep=0,maximumRiseAfterLift=0;
+                run(c,3,fps,(tick,t)=>({throttle:t<1||!release?1:0,steer:t<1?0:1}),(s,tick)=>{
+                    if(tick===lastTick)return;lastTick=tick;const velocity=kartVelocity(s),heading=Math.atan2(velocity.x,velocity.z),v=speed(s);
+                    maximumYawStep=Math.max(maximumYawStep,Math.abs(s.yaw-previousYaw));if(tick>120&&release)maximumRiseAfterLift=Math.max(maximumRiseAfterLift,v-previousSpeed);
+                    if(tick===150)liftAtQuarter=s.handling.lift;
+                    if(tick===300){const delta=Math.abs(Math.atan2(Math.sin(heading-previousHeading),Math.cos(heading-previousHeading)));point={radius:(v+previousSpeed)/2/(delta*120),mph:v/MPH,throttle:s.handling.throttle,lift:s.handling.lift};}
+                    previousHeading=heading;previousSpeed=v;previousYaw=s.yaw;assert.equal(s.boostTime,0);
+                });
+                assert(maximumYawStep<.03);if(release){near(liftAtQuarter,1);assert(maximumRiseAfterLift<1e-7);near(point.throttle,0);}assert(point);
+                return {fps,point,maximumYawStep,maximumRiseAfterLift,state:c.state};
+            });equalStates(group);for(const row of group.slice(1))assert.deepEqual(row.point,group[0].point);
+            results.push({profile:profile.id,release,...group[0].point,maximumYawStep:group[0].maximumYawStep,maximumRiseAfterLift:group[0].maximumRiseAfterLift});
+        }
+        const [oldHeld,oldLift,newHeld,newLift]=results;
+        assert(oldLift.radius<oldHeld.radius*.85);assert(newLift.radius<newHeld.radius*.85);assert(newLift.radius<=oldLift.radius*.55);return results;
+    });
 test.after(()=>{const result={layer:'Stronger arcade handling',rates,fixedStep:KART.step,summary:{passed:rows.filter(r=>r.status==='PASS').length,failed:rows.filter(r=>r.status==='FAIL').length},checks:rows};writeFileSync(new URL('./GRIP-CHECKS.json',import.meta.url),JSON.stringify(result,null,2)+'\n');writeFileSync(new URL('./GRIP-CHECKS.md',import.meta.url),'# More arcade handling: measured checks\n\n'+result.summary.passed+' PASS, '+result.summary.failed+' FAIL.\n\n'+rows.map(r=>'## '+r.rule+'\n\nRule: '+r.expected+'\n\nScript: `'+JSON.stringify(r.input)+'`\n\nMeasured: `'+JSON.stringify(r.measured)+'`\n\n**'+r.status+'**'+(r.error?' '+r.error:'')+'\n').join('\n'));});
