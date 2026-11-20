@@ -30,7 +30,7 @@ const palmErr=Math.max(sitHands.error['hand.L'],sitHands.error['hand.R']),palmFa
 check('sit: the block touches him exactly (nothing sinks into it, nothing floats above it)',Math.abs(gapToBlock)<1e-9,`block top ${mm(fit.top)} above the floor; lowest body point over it ${mm(gapToBlock)} from it`);
 check('sit: thighs level, feet planted flat, every joint inside its limits',thighLevel<.5&&sitFeet.err<5e-4&&sitFeet.tilt<.5&&inLimits(sitHands.pose),`thighs ${thighLevel.toFixed(2)}° from level; feet off by ${mm(sitFeet.err)}, tilted ${sitFeet.tilt.toFixed(2)}°`);
 A.apply(sitHands.pose);const palmsOnTop=['L','R'].every(sd=>{const g=sittingHands(A.solved,RESTS)['hand.'+sd];return g.face[1]<-.99;});
-check('sit: each palm centre rests exactly on top of its thigh, palm down, fingers along the thigh to the knee',palmErr<5e-4&&palmsOnTop&&palmFace<16&&fingerAim<15,`palms off the thigh surface by ${mm(palmErr)}; palms lie within ${palmFace.toFixed(1)}° of flat (the forearm can roll only 80°); fingers point along the thigh within ${fingerAim.toFixed(1)}°`);
+check('sit: each palm centre rests exactly on top of its thigh, palm down, fingers turned in toward each other',palmErr<5e-4&&palmsOnTop&&palmFace<16&&fingerAim<15,`palms off the thigh surface by ${mm(palmErr)}; palms lie within ${palmFace.toFixed(1)}° of flat (the forearm can roll only 80°); fingers point along the thigh within ${fingerAim.toFixed(1)}°`);
 // Sitting down, frame by frame at 60 a second, exactly as the page does it (the pose
 // player and the demo runner): smooth, then perfectly still once seated.
 const sitRun=(()=>{const P=createPosePlayer(S,{},{follow:true}),run=createDemoRunner(P,D,thighRests(A)),fr=[];run.start('sit');for(let i=0;i<150;i++)fr.push(P.update(1/60));return fr;})();

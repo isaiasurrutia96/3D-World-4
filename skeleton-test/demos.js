@@ -12,7 +12,7 @@
 //                28° because level thighs plus the lean must stay inside the
 //                hip's 120° bend: 90° + 28° = 118°.
 //   sit          upright; lowers once onto a simple block and stays; palms
-//                rest on top of the thighs, near the knees (78% of the way), palms down, fingers pointing along the thigh to the knee
+//                rest on top of the thighs, near the knees (73% of the way for the palm centre), palms down, fingers turned in toward each other (55°), elbows flared out
 //                (thighRests(): a point measured on the thigh that rides with it). The block's top is measured to touch the
 //                body exactly (seatTop()).
 //   step         a simple block 15 cm tall, starting 3 cm in front of the toes
@@ -173,21 +173,24 @@ export function thighRests(avatar){
  * the hands are placed) to the thigh rest point, the palm turning from facing
  * in to facing down, the fingers from pointing down to pointing along the
  * thigh. At k = 1: palm centre on the thigh rest point, palm against the
- * thigh, fingers along the thigh toward the knee.
+ * thigh, fingers turned in toward each other.
  */
 /** How far along the thigh (hip 0, knee 1) the seated palm centres rest: near the knee, so the fingers hold it (the palm centre is halfway along the palm). */
 export const PALM_ALONG = .73;
 
-/** How far the seated hands turn in toward the middle of the body (degrees). */
-export const HANDS_IN = 20;
+/** How far the seated hands turn in toward the middle of the body (degrees; the owner's wish: fingers almost pointing at each other, thumbs toward the belly button). */
+/** How far the seated elbows swing out (0 keeps them hanging; 1 adds a sideways push as long as the hanging offset). */
+export const ELBOW_OUT = 1.25;
+
+export const HANDS_IN = 55;
 
 export function sittingHands(solved, rests, k = 1, base = solved, skeleton = null){
  const goals = {};
  for(const s of ['L', 'R']){
   const t = solved.get('thigh.' + s), r = rests[s];
   const point = r.point.clone().sub(r.head).applyQuaternion(t.rotation).add(t.head), into = r.normal.clone().applyQuaternion(t.rotation).negate();
-  // Fingers along the thigh, turned 20° toward the middle of the body (about the way
-  // the palm faces), so each thumb sits closer to the body.
+  // Fingers along the thigh, turned HANDS_IN° toward the middle of the body (about the way
+  // the palm faces): the middle fingers aim at each other and the thumbs angle back toward the belly.
   const along = t.tail.clone().sub(t.head).normalize().applyAxisAngle(into, (s === 'L' ? 1 : -1) * HANDS_IN * Math.PI / 180);
   if(!skeleton){ goals['hand.' + s] = {palm: point.toArray(), face: into.toArray(), fingers: along.toArray()}; continue; }
   // Where the palm is now, which way it faces and points (hands hanging).
@@ -199,6 +202,9 @@ export function sittingHands(solved, rests, k = 1, base = solved, skeleton = nul
   // The elbow keeps pointing the way it hangs (out and back), so the arm never flips.
   const sh = base.get('upperArm.' + s).head, el = base.get('lowerArm.' + s).head, line = h.head.clone().sub(sh).normalize();
   const pole = el.clone().sub(sh); pole.sub(line.multiplyScalar(pole.dot(line)));
+  // Sitting: the elbows swing out as the hands arrive, so the forearms can angle in toward the lap.
+  const ln = h.head.clone().sub(sh).normalize(), flare = new Vector3(s === 'L' ? 1 : -1, 0, 0); flare.sub(ln.clone().multiplyScalar(flare.dot(ln)));
+  pole.addScaledVector(flare.normalize(), ELBOW_OUT * k * pole.length());
   // Once the palm is on the thigh the fingers wrap around the thigh and over the knee
   // (each stops where it touches), easing in as the hands arrive.
   const knee = t.tail, holds = {shapes: [{capsule: [t.head.toArray(), knee.toArray()], radius: r.radius}, {sphere: knee.toArray(), radius: r.radius}], opposition: .3, outer: true, from: 0, weight: band(.8, 1, k)};

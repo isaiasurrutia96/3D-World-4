@@ -151,9 +151,13 @@ Recorded 17 November 2026.
     hanging to the thighs while he sits. Checked: under 2.2° change per frame
     while sitting, still once seated, palms flat within 0.6°, fingers along
     the thigh. Next: item 2 (squat smoothness), then item 3 (step).
-22. Seated hands turned 20° toward the middle of the body (thumbs closer to
-    the body), owner's request (skeleton-test/demos.js HANDS_IN = 20; easy to
-    change). Also: palm solver no longer searches spins inside its own steps
+22. Seated hands turned 55° toward the middle of the body: middle fingers aim
+    at each other, thumbs angle back toward the belly button (owner's request,
+    20 Nov 2026; skeleton-test/demos.js HANDS_IN = 55, ELBOW_OUT = 1.25: the
+    elbows flare out while sitting so the wrist stays inside its 20° limit and
+    the sit stays smooth; stable from ELBOW_OUT 0.75 to 1.5). Earlier it was 20°.
+    Palm centre now halfway along the palm (ball sits mid-palm); seated palm
+    rest point 73% along the thigh (was 78% with the old, lower palm centre). Also: palm solver no longer searches spins inside its own steps
     (was 85 ms a frame while sitting, now about 3 ms). Known, to fix next with
     the smoothness items: at the very end of sitting the elbows swing out a
     little quickly (3.8° a frame; the check's limit is 3°); standing up from
