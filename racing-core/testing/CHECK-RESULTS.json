@@ -7,7 +7,7 @@
     144
   ],
   "summary": {
-    "passed": 13,
+    "passed": 15,
     "failed": 0
   },
   "checks": [
@@ -606,6 +606,37 @@
       "expected": "Strict typecheck succeeds; malformed controls throw.",
       "measured": {
         "typecheck": "PASS"
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Parked Karts stays still until contact and produces the same hit at all render rates",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "profile": "fast",
+        "script": "Wait, then hold Gas for three seconds on Original."
+      },
+      "expected": "Two targets start on the road. The first receives a real contact impulse and both kart states match at every frame rate.",
+      "measured": {
+        "firstTravel": 8.126295264462534,
+        "ticks": 390
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "The offset kart can be struck at boost speed and a failed frame rolls back every kart",
+      "input": {
+        "target": 2,
+        "script": "Start just behind the offset kart. Fail the input script after the first impact tick, then retry."
+      },
+      "expected": "A real hit transfers motion to the offset kart. Player, both targets and clock roll back together. Reset and track selection clear the scenario.",
+      "measured": {
+        "offsetSpeed": 40.9763940282695
       },
       "status": "PASS"
     }

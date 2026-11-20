@@ -1,8 +1,8 @@
 import * as T from 'three';
 import { createKartFrame } from './reference-kart.js';
 /** Exact original model; presentation reads the checked/interpolated state only. */
-export function createOriginalKartView() {
-    const root = createKartFrame(), wheels = [];
+export function createOriginalKartView(bodyColor) {
+    const root = createKartFrame({ bodyColor }), wheels = [];
     root.name = 'Driving test kart';
     for (const axle of ['front_axle', 'rear_axle'])
         for (const side of ['left', 'right'])

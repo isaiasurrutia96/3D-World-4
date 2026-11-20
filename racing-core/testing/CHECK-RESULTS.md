@@ -1,6 +1,6 @@
 # Driving test code checks
 
-13 PASS; 0 FAIL. These checks verify wiring and controls; the owner still needs to judge driving feel.
+15 PASS; 0 FAIL. These checks verify wiring and controls; the owner still needs to judge driving feel.
 
 ## Independent keyboard throttle and steering do not depend on the camera
 
@@ -91,5 +91,19 @@
 - Rule: Strict typecheck succeeds; malformed controls throw.
 - Input: `{"script":"Run testing/tsconfig.json; submit a nonfinite input snapshot."}`
 - Measured: `{"typecheck":"PASS"}`
+- **PASS**
+
+## Parked Karts stays still until contact and produces the same hit at all render rates
+
+- Rule: Two targets start on the road. The first receives a real contact impulse and both kart states match at every frame rate.
+- Input: `{"fps":[30,60,120,144],"profile":"fast","script":"Wait, then hold Gas for three seconds on Original."}`
+- Measured: `{"firstTravel":8.126295264462534,"ticks":390}`
+- **PASS**
+
+## The offset kart can be struck at boost speed and a failed frame rolls back every kart
+
+- Rule: A real hit transfers motion to the offset kart. Player, both targets and clock roll back together. Reset and track selection clear the scenario.
+- Input: `{"target":2,"script":"Start just behind the offset kart. Fail the input script after the first impact tick, then retry."}`
+- Measured: `{"offsetSpeed":40.9763940282695}`
 - **PASS**
 

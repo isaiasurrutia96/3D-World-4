@@ -246,6 +246,16 @@ function step(state: KartState, input: Controls, world: SurfaceWorld, activateBo
     const movement = resolveMotion ? resolveMotion(motion) : { x: state.x + motion.vx * KART.step, z: state.z + motion.vz * KART.step, vx: motion.vx, vz: motion.vz };
     return finishKartStep(motion, movement, world);
 }
+export function interpolateKartState(previous: KartState, current: KartState, alpha: number): KartState {
+    finite(alpha, 'alpha');
+    if (alpha < 0 || alpha > 1)
+        throw new RangeError('alpha must be between 0 and 1');
+    const pose = { ...current };
+    for (const key of ['x', 'y', 'z', 'yaw', 'speed', 'lateralSpeed', 'steering', 'wheelRotation', 'verticalVelocity', 'pitch', 'bank'] as const)
+        pose[key] = previous[key] + (current[key] - previous[key]) * alpha;
+    return Object.freeze(pose);
+}
+
 export function createKartController(options: Readonly<{
     world: SurfaceWorld;
     initial?: KartInitial;
@@ -299,13 +309,7 @@ export function createKartController(options: Readonly<{
         return current;
     }
     function sample(alpha = remainder / KART.step): KartState {
-        finite(alpha, 'alpha');
-        if (alpha < 0 || alpha > 1)
-            throw new RangeError('alpha must be between 0 and 1');
-        const pose = { ...current };
-        for (const key of ['x', 'y', 'z', 'yaw', 'speed', 'lateralSpeed', 'steering', 'wheelRotation', 'verticalVelocity', 'pitch', 'bank'] as const)
-            pose[key] = previous[key] + (current[key] - previous[key]) * alpha;
-        return Object.freeze(pose);
+        return interpolateKartState(previous, current, alpha);
     }
     return Object.freeze({
         profile,

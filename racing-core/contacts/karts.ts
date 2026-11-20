@@ -25,10 +25,22 @@ export type KartTickEntry = Readonly<{
     activateBoost?: boolean;
     profile?: ProfileId | KartProfile;
 }>;
+type PreparedKart = Readonly<{ id: string; motion: KartMotion }>;
+
+/** Resolve a group on one contact timeline, using the same handling motions as solo driving. */
+export function resolvePreparedKartContacts(entries: readonly PreparedKart[], barriers?: BarrierWorld) {
+    const solved = solveKartContacts(entries.map(e => body(e.id, e.motion)), KART.step, barriers);
+    return {
+        movements: entries.map(e => movement(solved, e.id)),
+        events: solved.events,
+        iterations: solved.iterations,
+    };
+}
+
 /** One simultaneous 120 Hz tick for future race coordination. Does not create NPCs or race rules. */
 export function stepContactKarts(entries: readonly KartTickEntry[], world: SurfaceWorld, barriers?: BarrierWorld) {
     const prepared = entries.map(e => ({ id: e.id, motion: prepareKartStep(e.state, e.input ?? {}, e.activateBoost ?? false, resolveKartProfile(e.profile), world) }));
-    const solved = solveKartContacts(prepared.map(e => body(e.id, e.motion)), KART.step, barriers);
-    const states = prepared.map(e => Object.freeze({ id: e.id, state: finishKartStep(e.motion, movement(solved, e.id), world) }));
+    const solved = resolvePreparedKartContacts(prepared, barriers);
+    const states = prepared.map((e, i) => Object.freeze({ id: e.id, state: finishKartStep(e.motion, solved.movements[i], world) }));
     return Object.freeze({ states: Object.freeze(states), events: solved.events, iterations: solved.iterations });
 }

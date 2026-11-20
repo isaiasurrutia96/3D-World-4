@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { createDrivingTest, readDrivingInput, TRACK_IDS } from './drive.ts';
+import { createDrivingTest, PARKED_KARTS, readDrivingInput, TRACK_IDS } from './drive.ts';
 import { KART, createKartController } from '../kart/index.ts';
 import { PerspectiveCamera, Vector3 } from 'three';
 import source from '../kart/reference.json' with { type: 'json' };
@@ -88,5 +88,77 @@ check('The kart model is the exact pinned original and its wheels read the check
     near(w.node.rotation.y, 0);
 } return { hash, wheels: view.wheels.length }; }, m => assert.equal(m.wheels, 4));
 check('Driving test rules compile as strict ES2022 without a browser', { script: 'Run testing/tsconfig.json; submit a nonfinite input snapshot.' }, 'Strict typecheck succeeds; malformed controls throw.', () => { execFileSync(process.execPath, [fileURLToPath(new URL('../../node_modules/typescript/bin/tsc', import.meta.url)), '-p', fileURLToPath(new URL('./tsconfig.json', import.meta.url))], { stdio: 'pipe' }); assert.throws(() => readDrivingInput({ moveX: NaN }, 0)); return { typecheck: 'PASS' }; }, m => assert.equal(m.typecheck, 'PASS'));
+check('Parked Karts stays still until contact and produces the same hit at all render rates',
+    { fps: rates, profile: 'fast', script: 'Wait, then hold Gas for three seconds on Original.' },
+    'Two targets start on the road. The first receives a real contact impulse and both kart states match at every frame rate.',
+    () => {
+        let expected, metrics;
+        for (const fps of rates) {
+            const d = createDrivingTest(PARKED_KARTS, { profile: 'fast' });
+            const initial = d.getState();
+            assert.equal(initial.selection, PARKED_KARTS);
+            assert.equal(initial.trackId, 'original');
+            assert.equal(initial.karts, 3);
+            assert.equal(initial.opponents, 0);
+            assert.equal(initial.parkedKarts.length, 2);
+            for (const kart of initial.parkedKarts)
+                assert.equal(d.track.heightAt(kart.x, kart.z, kart.y + .01), kart.y);
+            d.advance(.25);
+            const positions = states => states.map(({ x, y, z, yaw, speed, lateralSpeed }) => ({ x, y, z, yaw, speed, lateralSpeed }));
+            assert.deepEqual(positions(d.getState().parkedKarts), positions(initial.parkedKarts));
+            let hit = false;
+            for (let frame = 0; frame < fps * 3; frame++) {
+                d.advance(1 / fps, { throttle: 1 });
+                const state = d.getState();
+                hit ||= state.parkedKarts[0].speed > 1;
+            }
+            assert.ok(hit);
+            const { physics, parkedKarts } = d.getState();
+            const firstTravel = Math.hypot(parkedKarts[0].x - initial.parkedKarts[0].x, parkedKarts[0].z - initial.parkedKarts[0].z);
+            assert.ok(firstTravel > 3);
+            const snapshot = { physics, parkedKarts };
+            if (expected) assert.deepEqual(snapshot, expected);
+            else expected = snapshot;
+            metrics = { firstTravel, ticks: d.controller.clock.ticks };
+        }
+        return metrics;
+    }, m => assert.equal(m.ticks, 390));
+
+check('The offset kart can be struck at boost speed and a failed frame rolls back every kart',
+    { target: 2, script: 'Start just behind the offset kart. Fail the input script after the first impact tick, then retry.' },
+    'A real hit transfers motion to the offset kart. Player, both targets and clock roll back together. Reset and track selection clear the scenario.',
+    () => {
+        const d = createDrivingTest(PARKED_KARTS, { profile: 'fast' });
+        const initial = d.getState();
+        const target = initial.parkedKarts[1], yaw = target.yaw;
+        d.controller.reset({
+            x: target.x - 3.25 * Math.sin(yaw), y: target.y, z: target.z - 3.25 * Math.cos(yaw),
+            yaw, speed: KART.boostSpeed, boostTime: 1,
+        });
+        const before = d.getState();
+        assert.throws(() => d.advance(2 * KART.step, tick => {
+            if (tick === 1) throw new Error('script interrupted');
+            return { throttle: 1 };
+        }), /script interrupted/);
+        assert.deepEqual(d.getState(), before);
+        d.advance(KART.step, { throttle: 1 });
+        const after = d.getState(), offsetSpeed = after.parkedKarts[1].speed;
+        assert.ok(offsetSpeed > 1);
+        assert.ok(after.physics.contacts > 0 && after.parkedKarts[1].contacts > 0);
+        const targetPose = d.sampleParked()[1];
+        assert.equal(targetPose.x, target.x);
+        d.advance(KART.step / 2);
+        near(d.sampleParked()[1].x, (after.parkedKarts[1].x + target.x) / 2);
+        d.reset();
+        assert.deepEqual(d.getState(), initial);
+        assert.deepEqual(d.sampleParked(), initial.parkedKarts);
+        d.selectTrack('skyline');
+        assert.equal(d.getState().karts, 1);
+        assert.deepEqual(d.sampleParked(), []);
+        d.selectTrack(PARKED_KARTS);
+        assert.deepEqual(d.getState(), initial);
+        return { offsetSpeed };
+    }, m => assert.ok(m.offsetSpeed > 1));
+
 test.after(() => { const r = { section: 'Driving-feel test wiring', fps: rates, summary: { passed: checks.filter(c => c.status === 'PASS').length, failed: checks.filter(c => c.status === 'FAIL').length }, checks }; writeFileSync(new URL('./CHECK-RESULTS.json', import.meta.url), JSON.stringify(r, null, 2) + '\n'); let md = '# Driving test code checks\n\n' + r.summary.passed + ' PASS; ' + r.summary.failed + ' FAIL. These checks verify wiring and controls; the owner still needs to judge driving feel.\n\n'; for (const c of checks)
     md += '## ' + c.rule + '\n\n- Rule: ' + c.expected + '\n- Input: `' + JSON.stringify(c.input) + '`\n- Measured: `' + JSON.stringify(c.measured) + '`\n- **' + c.status + '**\n\n'; writeFileSync(new URL('./CHECK-RESULTS.md', import.meta.url), md); });

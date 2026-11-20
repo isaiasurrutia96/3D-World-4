@@ -1,6 +1,6 @@
 import { sampleDrivingPedals } from './driving-pedals.js';
 import { DRIVING_PROFILES } from '../../racing-core/kart/profiles.ts';
-import { createDrivingTest, TRACK_IDS, readDrivingInput } from '../../racing-core/testing/drive.ts';
+import { createDrivingTest, TRACK_IDS, PARKED_KARTS, readDrivingInput } from '../../racing-core/testing/drive.ts';
 import { createCheckedTrackView, createStartLine } from './checked-track-view.js';
 import { createOriginalKartView } from './kart-view.js';
 import { bindDrivingButtons } from './driving-controls.js';
@@ -11,7 +11,9 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     floor.visible = false;
     const params = new URLSearchParams(location.search), requested = params.get('track'), requestedProfile = params.get('handling');
     const profile = ['original','balanced','fast'].includes(requestedProfile) ? requestedProfile : 'fast';
-    const test = createDrivingTest(TRACK_IDS.includes(requested) ? requested : 'original', { profile }), kart = createOriginalKartView();
+    const selection = TRACK_IDS.includes(requested) || requested === PARKED_KARTS ? requested : 'original';
+    const test = createDrivingTest(selection, { profile }), kart = createOriginalKartView();
+    const parkedKarts = [];
     scene.add(kart.root);
     const picker = document.createElement('label');
     picker.className = 'track-picker';
@@ -23,6 +25,7 @@ export function createDrivingSimulation({ scene, stage, floor }) {
         o.textContent = id === 'original' ? 'Original Circuit' : id === 'skyline' ? 'Skyline Circuit' : id === 'suzuka' ? 'Suzuka Circuit' : 'Winding Circuit';
         picker.querySelector('select').append(o);
     }
+    picker.querySelector('select').append(new Option('Parked Karts', PARKED_KARTS));
     const fpvButton=document.createElement('button');fpvButton.dataset.view='fpv';fpvButton.textContent='FPV';fpvButton.title='First-person view';fpvButton.setAttribute('aria-pressed','false');document.querySelector('nav[aria-label="Camera views"]').append(fpvButton);
     const hud = document.createElement('output');
     hud.className = 'race-hud';
@@ -57,8 +60,23 @@ export function createDrivingSimulation({ scene, stage, floor }) {
             o.material.dispose();
         } });
     } drawn = test.track; view = createCheckedTrackView(drawn); line = createStartLine(drawn); scene.add(view.root, line); api.cameraObstacles = view.root.children.slice(0, 3); }
-    function reset() { holds?.clear(); test.reset(); pose = test.sample(); draw(); picker.querySelector('select').value = test.track.id; sync(); }
-    function sync() { const h = test.controller.state.handling; if (debug) debug.textContent = h ? `${test.controller.profile.label} · ${Math.hypot(pose.speed,pose.lateralSpeed).toFixed(1)} m/s\nAcceleration ${h.acceleration.toFixed(2)} m/s² · braking ${h.brakingG.toFixed(2)} G\nSideways ${h.lateralG.toFixed(2)} G · wheels ${(pose.steering*180/Math.PI).toFixed(2)}°\nSlip indicator ${h.tireSlip.toFixed(3)} · slip angle ${(h.slipAngle*180/Math.PI).toFixed(1)}°` : 'Original handling'; kart.update(pose); holds?.sync(); $('#drive-speed').textContent = `${Math.round(Math.hypot(test.controller.state.speed,test.controller.state.lateralSpeed) / .44704)} mph`; $('#drive-state').textContent = pose.y < -10 ? 'Use Reset to return to the track' : test.controller.state.boostTime > 0 ? 'Boosting' : Math.abs(pose.speed) < .05 ? 'Ready' : pose.speed < 0 ? 'Reversing' : 'Driving'; }
+    function reset() { holds?.clear(); test.reset(); pose = test.sample(); draw(); picker.querySelector('select').value = test.selection; sync(); }
+    function sync() { const h = test.controller.state.handling; if (debug) debug.textContent = h ? `${test.controller.profile.label} · ${Math.hypot(pose.speed,pose.lateralSpeed).toFixed(1)} m/s\nAcceleration ${h.acceleration.toFixed(2)} m/s² · braking ${h.brakingG.toFixed(2)} G\nSideways ${h.lateralG.toFixed(2)} G · wheels ${(pose.steering*180/Math.PI).toFixed(2)}°\nSlip indicator ${h.tireSlip.toFixed(3)} · slip angle ${(h.slipAngle*180/Math.PI).toFixed(1)}°` : 'Original handling'; kart.update(pose); syncParked(); holds?.sync(); $('#drive-speed').textContent = `${Math.round(Math.hypot(test.controller.state.speed,test.controller.state.lateralSpeed) / .44704)} mph`; $('#drive-state').textContent = pose.y < -10 ? 'Use Reset to return to the track' : test.controller.state.boostTime > 0 ? 'Boosting' : Math.abs(pose.speed) < .05 ? 'Ready' : pose.speed < 0 ? 'Reversing' : 'Driving'; }
+    function syncParked() {
+        const states = test.sampleParked();
+        if (states.length && !parkedKarts.length) {
+            for (const color of ['#f4b43b', '#42b8de']) {
+                const view = createOriginalKartView(color);
+                view.root.name = 'Parked kart ' + (parkedKarts.length + 1);
+                parkedKarts.push(view);
+                scene.add(view.root);
+            }
+        }
+        for (const [i, parked] of parkedKarts.entries()) {
+            parked.root.visible = Boolean(states[i]);
+            if (states[i]) parked.update(states[i]);
+        }
+    }
     const cameraRig=createDrivingCameraRig(()=>pose);
     const api = { zoomEnabled: false, cameraRig,marker: kart.root, recenterOnView: true, onPause: () => { holds?.clear(); test.cancelInput(); }, chase: true, chaseRate: 5, chasePitch: Math.atan2(3.5, 10), fov: 45, distance: Math.hypot(10, 3.5), minDistance: 4, maxDistance: 100, maxFrameSeconds: .25, targetHeight: 1, cameraObstacles: [], controller: { get state() { return { ...pose, facing: pose.yaw, mode: 'Driving test' }; }, place: reset }, advance(seconds, sample, cameraYaw) { if (!bindings.input.focused)
             return; test.advance(seconds, readDrivingInput(sampleDrivingPedals(sample, bindings.input), cameraYaw)); pose = test.sample(); }, afterFrame() { sync(); }, bind(value) { bindings = value; value.canvas.tabIndex = 0; value.input.setTouchStick(false); holds = bindDrivingButtons(value.input, value.canvas, buttons);for(const button of document.querySelectorAll('#topbar button'))button.addEventListener('click',()=>value.canvas.focus({preventScroll:true})); } };

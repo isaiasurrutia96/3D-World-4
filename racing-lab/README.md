@@ -26,6 +26,14 @@ Controls: arrows or E/S/D/F drive; Space brakes; Shift activates a test Boost; J
 
 Run `npm run test:racing-drive` for the 13 headless adapter/model checks, then build and run `npm run test:racing-drive-browser`. Browser checks cover all four tracks, camera visibility/return, real keyboard input, touch combinations/cancellation, reverse, blur/pause, pinch, three standard controller identities and five device layouts. `DRIVING-BROWSER-CHECKS.json` records the successful checks. The existing track-preview/shared-input browser suites remain regression checks. This authorization covers the driving test only; further game features wait for the owner's feel feedback.
 
+## Parked-kart collision test
+
+In the standalone Driving Test, choose **Parked Karts** from the track dropdown.
+Original Circuit starts with two stationary karts ahead, one in the lane and one offset
+to the side. They roll and turn when hit through the same 120 Hz contact solver used for
+guardrails. Reset restores all three spawn positions. Choose a circuit to return to solo
+driving. A direct link can include `track=parked-karts` alongside `drive=1`.
+
 ## First-person comparison
 
 The driving page adds **FPV** beside the existing camera buttons. **Behind** returns to the unchanged chase view. FPV reads the same interpolated kart pose, using the original seated eye position (0, 1.32, -0.78 m), 76° vertical FOV, 0.04 m near plane and slight downward look. The original steering wheel/bodywork remain visible. Drag/JLIK/right-stick look stays in FPV, clamped to the original head-look range. Retapping FPV centers the look. Reset and track changes retain FPV. Camera/reset buttons return focus to the canvas so keyboard braking remains available after switching views. Inspection zoom is suspended in this mode so wheel/pinch gestures cannot shift the camera away from the seat; selecting an external view restores inspection zoom and the normal chase framing.

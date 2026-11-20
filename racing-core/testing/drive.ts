@@ -1,4 +1,4 @@
-/** Driving-feel test only: checked handling/contact code, one kart, explicit reset. */
+/** Driving-feel tests using checked handling and contacts. */
 import { createTrack, TRACK_IDS } from '../track/index.ts';
 import type { TrackId } from '../track/index.ts';
 import { createKartController, normalizeKartInput } from '../kart/index.ts';
@@ -7,7 +7,9 @@ import type { KartProfile, ProfileId } from '../kart/profiles.ts';
 import type { KartInput, InputScript } from '../kart/index.ts';
 import { trackBarriers } from '../contacts/index.ts';
 import { createKartContactResolver } from '../contacts/karts.ts';
-export { TRACK_IDS };
+import { createParkedKartController, PARKED_KARTS } from './parked-karts.ts';
+export { TRACK_IDS, PARKED_KARTS };
+export type DrivingSelection = TrackId | typeof PARKED_KARTS;
 export type DrivingSample = Readonly<{
     moveX?: number;
     moveZ?: number;
@@ -48,17 +50,40 @@ export function readDrivingInput(sample: DrivingSample, cameraYaw: number): Kart
         steer = Number(Boolean(a.right)) - Number(Boolean(a.left));
     return normalizeKartInput({ throttle, steer, brake: sample.pedals ? false : Boolean(a.brake || a.gas && a.reverse), ...(sample.pedals ? { brakeAmount: sample.pedals.brake } : sample.analogBrake !== undefined ? { brakeAmount: sample.analogBrake } : {}), boost: Boolean(a.boost) });
 }
-export function createDrivingTest(initialId: TrackId = 'original', options: Readonly<{ profile?: ProfileId | KartProfile }> = {}) {
+export function createDrivingTest(initialSelection: DrivingSelection = 'original', options: Readonly<{ profile?: ProfileId | KartProfile }> = {}) {
     const profile = resolveKartProfile(options.profile);
-    let track = createTrack(initialId), controller = makeController(track);
-    function makeController(t: ReturnType<typeof createTrack>) { return createKartController({ profile, world: t, initial: { ...t.start.point, yaw: t.start.yaw }, resolveMotion: createKartContactResolver(trackBarriers(t)) }); }
+    const empty = Object.freeze([]);
+    function createScenario(selection: DrivingSelection) {
+        const track = createTrack(selection === PARKED_KARTS ? 'original' : selection);
+        const parked = selection === PARKED_KARTS ? createParkedKartController(track, profile) : null;
+        const controller = parked ?? createKartController({
+            profile, world: track, initial: { ...track.start.point, yaw: track.start.yaw },
+            resolveMotion: createKartContactResolver(trackBarriers(track)),
+        });
+        return { selection, track, controller, parked };
+    }
+    let scenario = createScenario(initialSelection);
     return Object.freeze({
-        get track() { return track; }, get controller() { return controller; },
-        advance(seconds: number, input: KartInput | InputScript = {}) { return controller.advance(seconds, input); },
-        sample() { return controller.sample(); },
-        cancelInput() { controller.cancelInput(); },
-        reset() { return controller.reset({ ...track.start.point, yaw: track.start.yaw }); },
-        selectTrack(id: TrackId) { const next = createTrack(id), nextController = makeController(next); track = next; controller = nextController; return controller.state; },
-        getState() { return Object.freeze({ trackId: track.id, profile: profile.id, fingerprint: profile.fingerprint, karts: 1, avatars: 0, opponents: 0, physics: controller.state, clock: controller.clock, pose: controller.sample() }); },
+        get selection() { return scenario.selection; },
+        get track() { return scenario.track; },
+        get controller() { return scenario.controller; },
+        advance(seconds: number, input: KartInput | InputScript = {}) { return scenario.controller.advance(seconds, input); },
+        sample() { return scenario.controller.sample(); },
+        sampleParked() { return scenario.parked?.sampleParked() ?? empty; },
+        cancelInput() { scenario.controller.cancelInput(); },
+        reset() { return scenario.controller.reset(); },
+        selectTrack(selection: DrivingSelection) {
+            scenario = createScenario(selection);
+            return scenario.controller.state;
+        },
+        getState() {
+            const { selection, track, controller, parked } = scenario;
+            const parkedKarts = parked?.parkedStates ?? empty;
+            return Object.freeze({
+                selection, trackId: track.id, profile: profile.id, fingerprint: profile.fingerprint,
+                karts: 1 + parkedKarts.length, avatars: 0, opponents: 0, parkedKarts,
+                physics: controller.state, clock: controller.clock, pose: controller.sample(),
+            });
+        },
     });
 }

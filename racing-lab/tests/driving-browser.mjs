@@ -27,7 +27,7 @@ try {
     await p.waitForFunction(() => window.drivingLabReady && window.motionLabReady);
     const read = () => p.evaluate(() => drivingLab.getState()), reset = async () => { await p.locator('#reset').click(); await p.waitForFunction(() => drivingLab.test.controller.state.speed === 0); };
     assert.equal(await p.title(), 'Driving test');
-    assert.equal(await p.locator('#race-track option').count(), 4);
+    assert.equal(await p.locator('#race-track option').count(), 5);
     assert.equal(await p.evaluate(() => drivingLab.getState().opponents), 0);
     assert.equal(await p.evaluate(() => drivingLab.kart.wheels.length), 4);
     assert(await p.locator('.input-stick').isHidden());
@@ -43,6 +43,21 @@ try {
         await reset();
     }
     results.push('All four tracks: keyboard Gas, braking, Reset, one original kart.');
+    await p.locator('#race-track').selectOption({ label: 'Parked Karts' });
+    await p.waitForFunction(() => drivingLab.getState().karts === 3);
+    const parkedStarts = await p.evaluate(() => drivingLab.getState().parkedKarts.map(k => [k.x, k.y, k.z]));
+    await p.waitForFunction(() => motionLab.scene.getObjectByName('Parked kart 1')?.visible
+        && motionLab.scene.getObjectByName('Parked kart 2')?.visible);
+    await p.keyboard.down('ArrowUp');
+    await p.waitForFunction(() => drivingLab.getState().parkedKarts[0].speed > 1);
+    await p.keyboard.up('ArrowUp');
+    await p.waitForFunction(x => motionLab.scene.getObjectByName('Parked kart 1').position.x > x + .1, parkedStarts[0][0]);
+    await reset();
+    assert.equal(await p.locator('#race-track').inputValue(), 'parked-karts');
+    assert.deepEqual(await p.evaluate(() => drivingLab.getState().parkedKarts.map(k => [k.x, k.y, k.z])), parkedStarts);
+    await p.locator('#race-track').selectOption('winding');
+    await p.waitForFunction(() => drivingLab.getState().karts === 1 && !motionLab.scene.getObjectByName('Parked kart 1').visible);
+    results.push('Parked Karts dropdown: real keyboard-driven impact moves a target on screen, Reset restores both, switching tracks hides them.');
     // Measure actual driving against the initial chase-camera image, not the steering variable.
     for(const [key,direction] of [['s',-1],['f',1],['ArrowLeft',-1],['ArrowRight',1]]){
         await reset();await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
@@ -115,10 +130,19 @@ try {
     results.push('Standard Gamepad API: three identities, analog steering, RT Gas, LT brake and disconnect.');
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     mobile.on('pageerror', e => errors.push(e.message));
-    await mobile.goto(base);
+    await mobile.goto(base + '&track=parked-karts');
     await mobile.waitForFunction(() => window.drivingLabReady && window.motionLabReady);
     const cdp = await mobile.context().newCDPSession(mobile);
     async function touch(name, id) { const b = await mobile.locator('#race-' + name).boundingBox(); return { id, x: b.x + b.width / 2, y: b.y + b.height / 2 }; }
+    assert.equal(await mobile.locator('#race-track').inputValue(), 'parked-karts');
+    assert.equal(await mobile.evaluate(() => drivingLab.getState().karts), 3);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [await touch('gas', 7)] });
+    await mobile.waitForFunction(() => drivingLab.getState().parkedKarts[0].speed > 1);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await mobile.waitForFunction(() => !motionLab.input.actions.gas);
+    await mobile.locator('#race-track').selectOption('original');
+    await mobile.waitForFunction(() => drivingLab.getState().karts === 1);
+    results.push('Phone: Parked Karts option drives into a target using the on-screen Gas button.');
     const gas = await touch('gas', 1), left = await touch('left', 2);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [gas, left] });
     await mobile.waitForFunction(() => drivingLab.test.controller.state.speed > 3 && drivingLab.test.controller.state.steering < -.01);
