@@ -1,0 +1,151 @@
+{
+  "layer": "Modest tire and handling upgrade",
+  "rates": [
+    30,
+    60,
+    120,
+    144
+  ],
+  "fixedStep": 0.008333333333333333,
+  "summary": {
+    "passed": 5,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "The small upgrade changes only Fast cornering grip and lateral settling",
+      "input": "Compare every field with the immutable approved checkpoint and all other built-in profiles.",
+      "expected": "Exactly cornering and slipResponseSeconds change; reference profiles match the checkpoint; baseline fingerprint stays pinned.",
+      "measured": {
+        "changed": [
+          "cornering",
+          "slipResponseSeconds"
+        ],
+        "approvedFingerprint": "kart-v1-025c0e69a91e540a",
+        "upgradedFingerprint": "kart-v1-c0934f4555677c0e"
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Grip improves by six percent without changing steering-button sensitivity",
+      "input": "Sample grip at 0–140 m/s in 0.01 m/s steps; compare every input-response setting with the approved kart.",
+      "expected": "6% more lateral capacity at every speed; settling time .140 to .135 seconds; input rise/release, wheel lock and yaw response unchanged.",
+      "measured": {
+        "gripGainPercent": 6,
+        "probes": 14001,
+        "maxError": 2.842170943040401e-14,
+        "settlingBefore": 0.14,
+        "settlingAfter": 0.135
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Measured turn paths improve modestly rather than changing character",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Start 90/130/180/220 mph on flat ground; Gas+full Right for 1.5 s, boost granted at 220; measure actual velocity-direction radius in the final .5 s."
+      },
+      "expected": "New radius is 90–98% of approved radius, speeds differ by less than 1 mph; all four frame rates produce identical authoritative states and metrics.",
+      "measured": [
+        {
+          "mph": 90,
+          "before": {
+            "radius": 38.918387472067565,
+            "speedMPH": 106.79324250541576
+          },
+          "after": {
+            "radius": 36.70706454366691,
+            "speedMPH": 106.76960022838067
+          },
+          "radiusRatio": 0.9431805099841878
+        },
+        {
+          "mph": 130,
+          "before": {
+            "radius": 49.55020063218896,
+            "speedMPH": 138.83677938141776
+          },
+          "after": {
+            "radius": 46.74790427097496,
+            "speedMPH": 138.84177942366583
+          },
+          "radiusRatio": 0.9434453074768469
+        },
+        {
+          "mph": 180,
+          "before": {
+            "radius": 66.07323161877429,
+            "speedMPH": 180.00000000000003
+          },
+          "after": {
+            "radius": 62.333979128634006,
+            "speedMPH": 180.00000000000006
+          },
+          "radiusRatio": 0.9434074526320309
+        },
+        {
+          "mph": 220,
+          "before": {
+            "radius": 98.7021975707509,
+            "speedMPH": 219.99999999999997
+          },
+          "after": {
+            "radius": 93.11488520643546,
+            "speedMPH": 219.99999999513622
+          },
+          "radiusRatio": 0.9433922192025118
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "A sideways disturbance settles slightly sooner without snapping velocity",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Start forward 20 m/s with sideways 4 m/s, neutral controls for 2 s; observe first physics tick below .05 m/s sideways."
+      },
+      "expected": "New settling occurs sooner but within 20% of approved time; no speed gain, no steering/yaw rotation, same state and time at each display rate.",
+      "measured": [
+        {
+          "seconds": 0.5833333333333334,
+          "maximumSpeedRise": 0
+        },
+        {
+          "seconds": 0.5666666666666667,
+          "maximumSpeedRise": 0
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Straight acceleration, boost, braking, lift-off and reverse remain exact",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "For each speed 0/20/60/98.3488 m/s: Gas, boost, brake, lift, reverse phases over 6 seconds; compare every physics tick."
+      },
+      "expected": "Every physical trajectory and speed matches the approved kart exactly; no changes to straight-line driving or caps.",
+      "measured": {
+        "comparedStates": 11536,
+        "maximumPhysicalDifference": 0,
+        "topMPH": 180.00000000000003,
+        "boostMPH": 220
+      },
+      "status": "PASS"
+    }
+  ]
+}

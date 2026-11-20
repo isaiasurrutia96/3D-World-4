@@ -1,0 +1,154 @@
+{
+  "summary": {
+    "passed": 5,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "FPV eye follows the original seated position on every kart orientation",
+      "input": {
+        "script": "Four yaw/pitch/bank poses, including translated elevated poses; compare camera with the actual model transform."
+      },
+      "expected": "Eye position agrees with the model-transformed original (0,1.32,-0.78) offset to within 1e-9 m; FOV=76 and near=0.04.",
+      "measured": {
+        "poses": 4,
+        "maximumError": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "FPV faces down the road and is clear of the kart at neutral look",
+      "input": {
+        "script": "Use the original kart on flat ground at four headings; raycast the FPV center line and project the steering wheel."
+      },
+      "expected": "Camera faces the kart nose with the original slight downward angle; the kart does not obstruct the center view and the steering-wheel center is inside the frame.",
+      "measured": {
+        "obstructions": 0,
+        "minimumForwardDot": 0.9950041652780257
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "FPV look is frame-independent and stays inside comfortable limits",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Integrate the same one-second head-look input at each rate, then apply a large drag."
+      },
+      "expected": "Final view direction matches across rates; yaw stays within 1.2 rad and pitch within 0.45 rad.",
+      "measured": {
+        "rows": [
+          {
+            "fps": 30,
+            "direction": [
+              -2.775557561562892e-16,
+              -0.2955202066613394,
+              0.9553364891256062
+            ],
+            "clamped": {
+              "active": true,
+              "headYaw": -1.2,
+              "headPitch": 0.45
+            }
+          },
+          {
+            "fps": 60,
+            "direction": [
+              -4.440892098500626e-16,
+              -0.2955202066613394,
+              0.9553364891256062
+            ],
+            "clamped": {
+              "active": true,
+              "headYaw": -1.2,
+              "headPitch": 0.45
+            }
+          },
+          {
+            "fps": 120,
+            "direction": [
+              -4.440892098500626e-16,
+              -0.2955202066613399,
+              0.955336489125606
+            ],
+            "clamped": {
+              "active": true,
+              "headYaw": -1.2,
+              "headPitch": 0.45
+            }
+          },
+          {
+            "fps": 144,
+            "direction": [
+              7.771561172376095e-16,
+              -0.29552020666133916,
+              0.9553364891256062
+            ],
+            "clamped": {
+              "active": true,
+              "headYaw": -1.2,
+              "headPitch": 0.45
+            }
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "View changes and repeated FPV selection reset head look without altering the kart",
+      "input": {
+        "script": "Toggle FPV/back ten times with head look; compare authoritative physics, pose and clock before/after."
+      },
+      "expected": "No kart state/clock changes; FPV reselect centers head look; original camera near plane is restored on exit.",
+      "measured": {
+        "toggles": 10,
+        "stateUnchanged": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "FPV observes the same interpolated drive without changing any driving settings",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Run one second of the existing driving test with FPV update after every display frame; compare to identical run with no camera."
+      },
+      "expected": "Every authoritative state value is identical; normal top speed remains 120 mph and boost 180 mph.",
+      "measured": {
+        "rows": [
+          {
+            "fps": 30,
+            "ticks": 120,
+            "speed": 23.99999999999992
+          },
+          {
+            "fps": 60,
+            "ticks": 120,
+            "speed": 23.99999999999992
+          },
+          {
+            "fps": 120,
+            "ticks": 120,
+            "speed": 23.99999999999992
+          },
+          {
+            "fps": 144,
+            "ticks": 120,
+            "speed": 23.99999999999992
+          }
+        ],
+        "normalMph": 120,
+        "boostMph": 180.00000000000003
+      },
+      "status": "PASS"
+    }
+  ]
+}

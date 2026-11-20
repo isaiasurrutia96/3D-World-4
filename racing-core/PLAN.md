@@ -1,6 +1,6 @@
 # Racing rebuild: one approved layer at a time
 
-Updated 18 November 2026. This is the single plan and approval record for the fresh rebuild.
+Updated 20 November 2026. This is the single plan and approval record for the fresh rebuild.
 
 ## Owner direction and approvals
 
@@ -606,8 +606,8 @@ Driving Checkpoint 1 and all other frozen archives and tags.
 ## 20 November — modest tire and handling upgrade
 
 Owner request: “upgrade” the tire and handling, “but not so much.” Implement
-one small Fast-profile tune on the approved driving system. Subjective feel
-approval remains pending the owner's test; Driving Checkpoint 1 stays frozen.
+one small Fast-profile tune on the approved driving system. The owner approved
+the feel and requested Driving Checkpoint 2 on 20 November; Checkpoint 1 stays frozen.
 
 Configuration layer:
 - Only Fast changes: multiply every existing cornering-curve value by 1.06,
@@ -652,3 +652,35 @@ Playable integration layer:
   also PASS. The Home Screen resume repair remains present.
 - Keep this as a small tunable profile change. Any further handling increase
   waits for owner feedback; no new frozen checkpoint is created in this pass.
+
+
+## 20 November — approved driving checkpoint 2
+
+The owner says the small tire/handling upgrade feels better and explicitly asks
+to double-check the code and save it. This approves the current tune as the new
+reference. Save the exact approved 97d2ba8 viewer; do not retune anything.
+
+- Frozen link: https://isaiasurrutia96.github.io/3D-World-4/checkpoints/driving-2/?drive=1&handling=fast
+- Source tag: `driving-source-2-2026-11-20`, pointing to
+  `97d2ba878f4a4ba4f0cbcb02b3613f97fc1e8b73`.
+- Archive tag: `driving-checkpoint-2-2026-11-20`.
+- Exact approved viewer SHA256:
+  `9b0f7f6046eeb7b3ce54daad6a711914d9161a74fd88100205c68b958b5d6d23`.
+- Physics `kart-v1-c0934f4555677c0e`, Fast's 6% additional cornering grip and
+  .135 s settling response. Speeds remain 180/220 mph. Home Screen recovery
+  and the existing controls/cameras are included in the frozen page.
+- Reviewed the runtime change and its regression checks: only the intended
+  two profile settings change. Re-ran all 231 racing checks, all 47 control/
+  build checks and strict TypeScript: PASS. Fresh reports and every profile
+  are archived with source/file hashes. No runtime correction was needed.
+- Exact frozen-page checks PASS in Chromium and WebKit at desktop, phone
+  portrait and phone landscape sizes: four tracks, input/actual driving,
+  first-touch/foreground recovery, Reset, FPV, local manifest and zero errors.
+  Chromium additionally checks simultaneous held Gas/Right and separate
+  release. WebKit checks native individual taps and keyboard-held driving.
+  Automated lifecycle scenarios do not certify actual iOS OS task switching.
+- Checkpoint integrity PASS, including rejection of a modified settings copy.
+  All older checkpoints/tags and current live handling remain unchanged.
+  Preserve Claude's newer movement changes through 747d0ba and later commits.
+- Further performance-tier design remains discussion only; no upgrade economy
+  or additional tuning is implemented by this checkpoint task.
