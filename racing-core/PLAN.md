@@ -562,3 +562,42 @@ tracks or avatar/motion code. Further upgrades remain unstarted.
   Zero page errors; no application asset requests outside the checkpoint.
 - Integrity checks PASS, including rejection of a modified settings file in a
   temporary copy. All pre-existing checkpoints remain unchanged.
+
+
+## 20 November — Home Screen input resume repair
+
+The owner reports that the frozen checkpoint works from the phone app, while
+the previously installed Home Screen driving test ignores Gas. This is a
+launch/resume/input investigation, not another handling upgrade. Preserve
+Driving Checkpoint 1 and all other frozen archives and tags.
+
+- Reproduced against the exact approved frozen HTML: after pausing, pageshow,
+  focus or resume without an additional visibilitychange leaves the stage
+  disabled; an otherwise valid native Gas touch is then ignored. A foreground
+  visibility event with temporarily empty bounds also leaves it disabled.
+  These are controlled browser lifecycle reproductions, not a captured trace
+  of the owner's actual iOS task switch.
+- The shared lab page now has one activity adapter. It checks current viewport
+  bounds on foreground/resize, rechecks on the next frame, and recovers before
+  the first stage pointer handler. Hidden/offscreen pages remain paused.
+  Pagehide/freeze immediately disable input and release the existing holds.
+  It does not integrate motion or change any movement/vehicle physics.
+- Also corrected the input ledger's signed integer ID boundary: PointerEvent
+  IDs are not necessarily positive array indices. A valid negative ID no
+  longer throws before an action can activate. This separate conformance gap
+  is proven by a Node event-sequence test; it is not confirmed as the cause
+  on the owner's phone. Native Linux WebKit uses positive IDs in these checks.
+- 47/47 build-time Node checks PASS, including seven activity lifecycle checks
+  and 15 ownership/release checks. These run automatically in racing builds.
+- Chrome and WebKit each pass 13 lifecycle scenarios, including five captured
+  pre-fix failures and their corrected counterparts, plus hide/freeze and
+  offscreen guards. Native touches reach Gas after resume. Chrome additionally
+  holds Gas until actual speed exceeds 3 m/s. Reports pin both HTML hashes.
+- The existing 12-group driving browser suite and the complete universal
+  Motion Lab input/layout/video browser suite PASS with zero page errors.
+  The latter initially needed its existing video fixtures copied into dist;
+  it passes once the normal public assets are served.
+- Source in motion-core, avatar geometry, racing-core physics/profile settings,
+  tracks, kart dimensions, controls/layout, and checkpoint contents unchanged.
+  Actual installed iOS Home Screen launch/task switching still needs the owner
+  to check after completely closing and reopening the updated live app.

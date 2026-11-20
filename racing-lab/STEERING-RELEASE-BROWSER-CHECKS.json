@@ -1,28 +1,10 @@
 {
   "passed": true,
-  "baselineCompared": true,
-  "baselineSHA256": "9fa60f130f0c9ffdf05d1f829e05d89695785945e0a994830131678aa1fc1478",
-  "currentSHA256": "b3bc9b9a3d23e511dcf8d2414a5bcf0f46c54f627a2ca6101a056d71d7c22a29",
+  "baselineCompared": false,
+  "baselineSHA256": null,
+  "currentSHA256": "4b17fef01681456f642ecb7bc31b954dc574e19524bfb970f3630b69983ff881",
   "checks": [
     {
-      "rule": "The captured old version reproduces stuck Right after an interrupted release.",
-      "input": {
-        "version": "before",
-        "track": "winding",
-        "mode": "early-pointer",
-        "script": "Interrupt pointer release/capture-loss before app handlers; let native touchend through."
-      },
-      "expected": {
-        "right": true,
-        "gas": true
-      },
-      "measured": {
-        "right": true,
-        "gas": true
-      },
-      "status": "PASS"
-    },
-    {
       "rule": "The updated version clears Right while preserving the separate Gas finger.",
       "input": {
         "version": "after",
@@ -36,24 +18,6 @@
       },
       "measured": {
         "right": false,
-        "gas": true
-      },
-      "status": "PASS"
-    },
-    {
-      "rule": "The captured old version reproduces stuck Right after an interrupted release.",
-      "input": {
-        "version": "before",
-        "track": "winding",
-        "mode": "late-all",
-        "script": "Interrupt target delivery after window capture handlers."
-      },
-      "expected": {
-        "right": true,
-        "gas": true
-      },
-      "measured": {
-        "right": true,
         "gas": true
       },
       "status": "PASS"
@@ -73,22 +37,6 @@
       "measured": {
         "right": false,
         "gas": true
-      },
-      "status": "PASS"
-    },
-    {
-      "rule": "The captured old private hold survives pause/reset and returns after another tap.",
-      "input": {
-        "version": "before",
-        "script": "Hold Right, scroll stage out of view, interrupt its end events, return, tap/release Right again."
-      },
-      "expected": {
-        "right": true,
-        "active": true
-      },
-      "measured": {
-        "right": true,
-        "active": true
       },
       "status": "PASS"
     },

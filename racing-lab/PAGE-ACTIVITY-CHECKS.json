@@ -1,0 +1,73 @@
+{
+  "layer": "Installed lab lifecycle",
+  "summary": {
+    "passed": 7,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "Each foreground signal restores a visible paused stage",
+      "input": "For pageshow, focus and resume: hide stage, then restore document visibility without visibilitychange and emit the signal.",
+      "expected": "Input becomes enabled and focused for every signal.",
+      "measured": {
+        "signals": 3
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Foreground layout is rechecked after its first empty bounds",
+      "input": "Hide, return while stage bounds are zero, restore real bounds before the queued animation frame.",
+      "expected": "Initial input is disabled; the next frame enables the visible stage.",
+      "measured": {
+        "visibleAfterLayout": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "A fresh stage touch can recover missed operating-system resume signals",
+      "input": "Pause through pagehide; deliver a pointerdown on the visible stage without pageshow/focus.",
+      "expected": "Input is enabled before the event reaches the controls.",
+      "measured": {
+        "touchCanResume": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Hidden, offscreen and empty stages cannot be enabled by foreground signals",
+      "input": "Try pageshow/focus/touch with document hidden, stage behind header, below viewport or zero-size.",
+      "expected": "Input remains disabled in all cases.",
+      "measured": {
+        "cases": 12
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Leaving or freezing cancels pending foreground work immediately",
+      "input": "Queue a resume frame, then pagehide/freeze, and attempt to flush old callbacks or resize.",
+      "expected": "Stage stays paused until a new valid foreground/touch signal.",
+      "measured": {
+        "pauseSignals": 2
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Viewport changes and scrolling re-evaluate current bounds rather than stale observer snapshots",
+      "input": "Move stage offscreen and notify observer; return it, then resize the visual viewport.",
+      "expected": "Offscreen pauses and visible layout resumes without a document visibility event.",
+      "measured": {
+        "offscreenPaused": true,
+        "visibleResumed": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Disposed activity handlers cannot reactivate a removed page",
+      "input": "Dispose with a queued layout check, then emit every resume/resize/touch event.",
+      "expected": "Observer is disconnected, pending callbacks cancelled, input remains disabled.",
+      "measured": {
+        "disposed": true
+      },
+      "status": "PASS"
+    }
+  ]
+}

@@ -18,7 +18,8 @@ export function createDrivingHolds(names, change) {
     return Object.freeze({
         pressPointer(name,id) {
             button(name);
-            if (!Number.isInteger(id) || id<0) throw new TypeError('Pointer id must be a nonnegative integer');
+            // PointerEvent.pointerId is a signed Web IDL long, not an array index.
+            if (!Number.isInteger(id)) throw new TypeError('Pointer id must be an integer');
             if (owners.get(id)===name) return;
             releasePointer(id); owners.set(id,name); button(name).pointers.add(id); publish(name);
         },
