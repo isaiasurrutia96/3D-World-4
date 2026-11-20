@@ -46,6 +46,11 @@ these same documents so both assistants use one working guide.
     `date` at the start and at the end of the task and report the real
     difference, never a guess), and the link.
 12. End every reply with a short summary of the whole reply (one to three sentences).
+13. (Owner, 20 November 2026) Lead with one plain line saying what the owner
+    needs to do next, e.g. "The torso is ready. Go check it out." Keep the rest
+    short; the owner often reads while driving. Detail only when asked. This is
+    a guide, not a rigid rule: use judgment, and never follow it so strictly
+    that it gets in the way.
 
 ## C. Confirmed game decisions and technical instructions (kept as written)
 
