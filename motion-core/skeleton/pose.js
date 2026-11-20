@@ -248,7 +248,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
    if(feetNow&&!noDrop){
     const safe=balance?.opts;
     if(safe&&(typeof safe.hardSoftness==='function'||safe.hardSoftness>0)){ // a shortened leg with a rounded corner: never fully straight, and no sudden change of speed
-     const hardOf=v=>typeof v==='function'?v(at):v,need=reachNeed(skeleton,skeleton.solve(moved),feetNow,{extension:hardOf(safe.hardExtension)});
+     const hardOf=v=>typeof v==='function'?v(at):v,need=reachNeed(skeleton,skeleton.solve(moved),feetNow,{extension:hardOf(safe.hardExtension),blend:hardOf(safe.hardBlend)??0});
      drop=need===-Infinity?0:softPlus(need,hardOf(safe.hardSoftness));
     } else drop=reachDrop(skeleton,skeleton.solve(moved),feetNow);
     drop=Math.min(.15,drop)*dropScale;
@@ -286,9 +286,11 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
  // shift ease in when balance starts and ease out when it ends (clearBalance), so keep the feet goals until
  // balanceShift is null again. heading (radians, or a function of time returning it): the way the body faces; the
  // sideways shift is sideways to it (default 0: the world axes). extension (default 1) and softness (default 1 cm):
- // exclude (a list of sides, or a function of time returning one): feet to treat as unloaded.
+ // exclude (a list of sides, or a function of time returning one): feet to treat as unloaded. shift: false = no weight
+ // shift at all (only the height and the reach safety).
  // height (a function of time returning how far below standing the body should be, in metres, 0 or less): the body
  // height is planned by the caller; balance only smooths it (lowerDuration) and looks ahead (lookahead) to it.
+ // hardBlend (metres, default 0): above 0 the safety net rounds off the corner where one leg takes over from the other.
  // hardExtension / hardSoftness (numbers, or functions of time): the safety net that lowers the body when a planted leg cannot reach (default: only
  // when it cannot at all). With hardSoftness above 0 it keeps the leg at most hardExtension straight, with a
  // rounded corner (this is what keeps a walking knee from ever locking straight).
@@ -298,7 +300,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
  // over the feet that carry weight (balance.js). The shift is a smooth follower, so it never jolts.
  let balance=null;
  function setBalance(options={}){
-  const o={axes:'x',policy:'inside',margin:.04,stance:.012,duration:.5,extension:1,softness:.01,maxLower:.15,lowerDuration:null,lookahead:0,hardExtension:1,hardSoftness:0,...options};
+  const o={axes:'x',policy:'inside',margin:.04,stance:.012,duration:.5,extension:1,softness:.01,maxLower:.15,lowerDuration:null,lookahead:0,hardExtension:1,hardSoftness:0,hardBlend:0,...options};
   o.lowerDuration??=o.duration;
   balance={opts:o,follower:balance?.follower??createShiftFollower({duration:o.duration,size:2}),lower:balance?.lower??createShiftFollower({duration:o.lowerDuration,size:1}),releasing:false};
  }
@@ -310,6 +312,11 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   if(b.clearAt!==undefined&&time>=b.clearAt)b.releasing=true;
   let wantedXZ=b.follower.goal,wantedY=b.lower.goal[0];
   if(b.releasing){wantedXZ=[0,0];wantedY=0;}
+  else if(o.shift===false){
+   // No weight shift (a gait that keeps the body over its own feet): only the planned height, and the reach safety below.
+   wantedXZ=[0,0];
+   wantedY=typeof o.height==='function'?Math.min(0,Math.max(-o.maxLower,o.height(time+o.lookahead))):-o.stance;
+  }
   else{
    // Where the body must be for the weight to sit over the support: start from where it was heading,
    // see how far off the weight still is, correct (the legs bend as the body moves, so a move can take

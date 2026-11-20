@@ -179,8 +179,9 @@ export function balanceShift(skeleton, solved, {axes = 'x', fore = .5, policy = 
  * goals ({'foot.L': {sole: [x, y, z]}, ...}).
  */
 /** How far over its reach the planted feet are (metres, can be negative: slack); see reachDrop. */
-export function reachNeed(skeleton, solved, goals, {extension = 1, exclude = []} = {}){
- let need = -Infinity;
+export function reachNeed(skeleton, solved, goals, {extension = 1, exclude = [], blend = 0} = {}){
+ // (blend above 0 takes a rounded maximum of the two legs, so the answer has no corner when the leg that needs most changes.)
+ const needs = [];
  for(const side of ['L', 'R']){
   const g = goals['foot.' + side];
   if(!g?.sole || exclude.includes(side)) continue;
@@ -188,9 +189,12 @@ export function reachNeed(skeleton, solved, goals, {extension = 1, exclude = []}
   const reachLen = (at('thigh').length + at('shin').length) * extension, hip = solved.get('thigh.' + side).head;
   const ankleY = g.sole[1] + at('foot').head[1], across = Math.hypot(hip.x - g.sole[0], hip.z - g.sole[2]);
   const highest = Math.sqrt(Math.max(0, reachLen * reachLen - across * across));
-  need = Math.max(need, hip.y - ankleY - highest);
+  needs.push(hip.y - ankleY - highest);
  }
- return need;
+ if(!needs.length) return -Infinity;
+ if(blend <= 0) return Math.max(...needs);
+ // (a rounded maximum that is exact where the legs need the same, and at most `blend` under the true maximum elsewhere)
+ return needs.reduce((a, b) => (a + b) / 2 + Math.sqrt(((a - b) / 2) ** 2 + blend * blend) - blend);
 }
 
 export function reachDrop(skeleton, solved, goals, {extension = 1, exclude = []} = {}){

@@ -19,7 +19,7 @@ export const MOVE_TUNING = Object.freeze({
  brakeMomentumBuild:2.83,// seconds of running to earn the full slide
  brakeMomentumFade:1.2,  // seconds to lose it again
  brakeMomentumCurve:1.45,// shapes how the slide grows with running time
- turnFirstAngle:0,      // 0 = off (the 3D-WORLD-3 feel). Above 0 (radians): from nearly still, a turn bigger than this is made on the spot first, then he sets off
+   turnFirstAngle:0,       // 0 = off (the 3D-WORLD-3 feel, which the Motion Lab uses). Above 0 (radians; the owner approved 1.22, about 70 degrees, for the avatar): from nearly still, a turn bigger than this is made on the spot first, then he sets off.      // 0 = off (the 3D-WORLD-3 feel). Above 0 (radians): from nearly still, a turn bigger than this is made on the spot first, then he sets off
  turnFirstSpeed:.6,      // ... "nearly still" means slower than this (metres a second)
  fixedStep:1/120,        // the controller always thinks in steps this small
 });

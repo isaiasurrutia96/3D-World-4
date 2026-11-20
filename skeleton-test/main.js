@@ -99,7 +99,14 @@ new ResizeObserver(resize).observe(stage);resize();view('angled');setPose('rest'
 let last=0,lastPose='',lastPresentation='';
 // The animation clock is unchanged. A still inspection does not redraw the
 // 3.6M-triangle master and its shadow sixty times a second on a phone.
+// A small frame-rate readout (bottom left): how many frames a second, and the slowest frame in the last second. It says whether a
+// lag is the page or the device, and it costs nothing.
+const fpsBox=document.createElement('div');fpsBox.style.cssText='position:fixed;left:8px;bottom:6px;font:11px/1.2 system-ui,sans-serif;color:#fff;opacity:.55;pointer-events:none;z-index:5';document.body.appendChild(fpsBox);
+let fpsFrames=0,fpsWorst=0,fpsSince=0;
 renderer.setAnimationLoop(ms=>{
+ if(last){const gap=ms-last;fpsFrames++;fpsWorst=Math.max(fpsWorst,gap);}
+ if(!fpsSince)fpsSince=ms;
+ if(ms-fpsSince>=1000){fpsBox.textContent=Math.round(fpsFrames*1000/(ms-fpsSince))+' fps · slowest frame '+Math.round(fpsWorst)+' ms';fpsFrames=0;fpsWorst=0;fpsSince=ms;}
  const dt=Math.min(.1,last?(ms-last)/1000:0);last=ms;
  const pose=framePose(dt),poseKey=JSON.stringify(pose);
  if(poseKey!==lastPose){lastPose=poseKey;drawBones(A.apply(pose));renderer.shadowMap.needsUpdate=true;needsRender=true;}

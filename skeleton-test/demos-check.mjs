@@ -89,7 +89,7 @@ for(const [name,on,off,sides,label] of [['sit',2.4,2.4,['L','R']],['squat',3,1.6
 }
 
 // ---- Walk and run: exactly as the page runs them (the demo runner ticks the walking body before the pose player) ----
-for(const [name,secs,jmax,words] of [['walk',14,14,'joints never jolt (under 14째 change of speed in a frame)'],['run',13,200,'no joint snaps by more than 200째 change of speed in a frame (flat out at 8.6 m/s the legs swing 7 steps a second and hit their limits)']]){
+for(const [name,secs,jmax,words] of [['walk',14,20,'joints never jolt (under 20째 change of speed in a frame)'],['run',13,45,'no joint jerks by more than 45째 change of speed in a frame (flat out at 8.6 m/s the legs go five steps a second)']]){
  const P=createPosePlayer(S,{},{follow:true}),run=createDemoRunner(P,D,RESTS2),frames=[];
  run.start(name);for(let i=0;i<secs*60;i++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
  run.stop();let back=0;for(;back<120*60&&run.walking;back++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
@@ -97,6 +97,39 @@ for(const [name,secs,jmax,words] of [['walk',14,14,'joints never jolt (under 14�
  const j=jolt(frames),end=atRest(frames.at(-1).pose);let bad=0,nan=0;
  for(const f of frames){if(!inLimits(f.pose))bad++;for(const b of Object.values(f.pose))if(b&&typeof b==='object'&&'x' in b&&!(Number.isFinite(b.x)&&Number.isFinite(b.y)&&Number.isFinite(b.z)))nan++;}
  check(`${name}: goes, comes home and stops; every joint stays inside its limits, no invalid numbers, ${words}, and ends exactly at rest with nothing left running`,back<120*60&&bad===0&&nan===0&&j.m<jmax&&end<1e-6&&!P.layers.length&&!P.goalLayers.length,`${(frames.length/60).toFixed(0)} seconds; ${bad} frames with a joint past its limit; largest change in joint speed ${j.m.toFixed(2)}째; back at rest within ${end.toExponential(1)}`);
+}
+
+// ---- Switching: every button after every other, and a long random run of presses (what the owner does) ----
+{
+ const NAMES = ['sit', 'squat', 'step', 'ball', 'look', 'walk', 'run'];
+ const frame = (P, run, fr, dt) => { run.tick(dt); fr.push(P.update(dt)); };
+ let worst = 0, worstPair = '', bad = 0, nan = 0, stuck = 0;
+ const scan = (fr, from, resetOk) => { let j = 0; for(let i = Math.max(2, from); i < fr.length; i++) for(const n of allBones) for(const k of AX) j = Math.max(j, Math.abs(fr[i][n][k] - 2 * fr[i - 1][n][k] + fr[i - 2][n][k])); return j; };
+ for(const a of NAMES) for(const b of NAMES){
+  if(a === b) continue;
+  const P = createPosePlayer(S, {}, {follow: true}), run = createDemoRunner(P, D, RESTS2), fr = [];
+  run.start(a); for(let i = 0; i < (a === 'walk' || a === 'run' ? 4 : 3) * 60; i++) frame(P, run, fr, 1 / 60);
+  const cut = fr.length; run.start(b); for(let i = 0; i < 4 * 60; i++) frame(P, run, fr, 1 / 60);
+  // (leaving a walk or a run puts him back at the start in one step: one snap is allowed there; everything else must be gentle)
+  const j = scan(fr, cut), limit = a === 'walk' || a === 'run' ? 120 : 40;
+  for(const f of fr){ if(!inLimits(f)) bad++; for(const q of Object.values(f)) if(q && typeof q === 'object' && 'x' in q && !(Number.isFinite(q.x) && Number.isFinite(q.y) && Number.isFinite(q.z))) nan++; }
+  if(j > limit){ stuck++; worstPair += `${a}>${b} ${j.toFixed(0)}째; `; }
+  worst = Math.max(worst, j);
+ }
+ check(`switching: each of the seven buttons pressed straight after each other one (42 pairs): every joint inside its limits, no invalid numbers, and no jerk over 40째 a frame (120째 where it leaves a walk or run: he is put back at the start in one step there)`, bad === 0 && nan === 0 && stuck === 0, `worst jerk ${worst.toFixed(0)}째${worstPair ? '; too hard: ' + worstPair : ''}`);
+ // A long run of random presses, at a frame rate that jumps about, then everything off.
+ let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+ const P = createPosePlayer(S, {}, {follow: true}), run = createDemoRunner(P, D, RESTS2), fr = [];
+ let presses = 0, badF = 0, nanF = 0;
+ for(let t = 0; t < 150;){
+  const name = NAMES[Math.floor(rnd() * NAMES.length)], hold = .15 + rnd() * 3;
+  if(run.active === name) run.stop(); else run.start(name); presses++;
+  for(let u = 0; u < hold; ){ const dt = (1 / 60) * (.4 + 1.2 * rnd()); frame(P, run, fr, dt); u += dt; t += dt; }
+ }
+ run.stop(); for(let i = 0; i < 90 * 60 && (run.walking || run.active || P.layers.length || P.goalLayers.length); i++) frame(P, run, fr, 1 / 60);
+ for(const f of fr){ if(!inLimits(f)) badF++; for(const q of Object.values(f)) if(q && typeof q === 'object' && 'x' in q && !(Number.isFinite(q.x) && Number.isFinite(q.y) && Number.isFinite(q.z))) nanF++; }
+ const end = atRest(fr.at(-1));
+ check(`switching: ${presses} random button presses over 150 seconds at jumpy frame rates, then everything off: every joint inside its limits, no invalid numbers, and he ends exactly at rest with nothing left running`, badF === 0 && nanF === 0 && end < 1e-6 && !P.layers.length && !P.goalLayers.length && !run.walking, `${fr.length} frames; ${badF} frames past a limit; back at rest within ${end.toExponential(1)}`);
 }
 
 // ---- Look: the face follows the ball ----

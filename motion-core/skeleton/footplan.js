@@ -240,6 +240,9 @@ export function createFootPlanner(skeleton, {ground = () => 0, soles = null} = {
    return seg;
   },
 
+  /** Where the ankle's sole point goes for a foot whose flat spot is `spot` {x, y, z, heading} when it is rocked to `pitch` degrees about its heel or toe tip (see rollTo). */
+  rolled: (side, spot, pitch) => rolledSole(side, spot, pitch),
+
   /** Where a foot is at time t: {mode: 'planted' | 'swing', phase (0..1 of its step), sole, velocity, heading, pitch, roll}. */
   state(side, t){
    const {ch, seg, tau} = stateAt(side, t);

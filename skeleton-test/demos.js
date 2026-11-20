@@ -25,7 +25,7 @@
 //                him and faces its centre.
 //   run          the avatar jogs, runs flat out and slows down, at the game's own speeds (3.1 and 8.6 m/s); then comes home
 //   walk         the avatar walks a scripted route (straight, a wide turn, straight) and walks back to where it
-//                started before stopping; the walker (motion-core/skeleton/walk.js) plans every step.
+//                started before stopping; the gait (motion-core/skeleton/gait.js) is a plain function of speed and phase, like the wave.
 //   look         a ball swings from side to side and up and down in front of
 //                him (2.4 m away, up to 95° either side); the head leads, the
 //                neck, chest and waist follow (motion-core/skeleton/look.js).
@@ -33,7 +33,7 @@ import {Vector3, Quaternion, Euler, Mesh, Raycaster} from 'three';
 import {EASE} from '../motion-core/skeleton/pose.js';
 import {createFootPlanner} from '../motion-core/skeleton/footplan.js';
 import {createLook} from '../motion-core/skeleton/look.js';
-import {createWalker, attachWalker} from '../motion-core/skeleton/walk.js';
+import {createGait, attachGait} from '../motion-core/skeleton/gait.js';
 import {createMoveController} from '../motion-core/controller.js';
 import {MOVE_TUNING} from '../motion-core/tuning.js';
 
@@ -151,7 +151,7 @@ export function createDemos(skeleton, foot = null){
   },
   /** The stick for the walk demo at a time: [x, z] in the world (length 0..1): standing, straight, a wide turn, straight. */
   walkStick(t){
-   const ramp = Math.min(1, Math.max(0, (t - .6) / 1.2)), strength = .36 * ramp;
+   const ramp = Math.min(1, Math.max(0, (t - .6) / 1.2)), strength = .2 * ramp; // (a walk: about 1.1 m/s at the game's own speeds)
    if(t < .6) return [0, 0];
    const turn = t < 4.5 ? 0 : t < 9 ? (t - 4.5) / 4.5 * Math.PI * .75 : Math.PI * .75; // heading, radians
    return [Math.sin(turn) * strength, Math.cos(turn) * strength];
@@ -289,10 +289,23 @@ export function sittingHands(solved, rests, k = 1, base = solved, skeleton = nul
 const SETTLE = .6;
 
 export function createDemoRunner(player, D, rests){
- let active = null, began = 0, stepper = null, walk = null;
+ let active = null, pending = null, began = 0, stepper = null, walk = null;
  const now = () => player.time;
  /** Hands layer for sitting: k(t) = how far the hands are along their path to the thighs. */
  const sitHands = k => player.setGoals('hands', (t, pose, sk) => { const q = sk.solve(pose); return sittingHands(q, rests, k(t), q, sk); }, {fade: 0, glide: .2});
+ /** Walk and Run share one body: the game's own movement rules drive a gait (a plain function of speed and phase). */
+ function startLocomotion(kind){
+  const ctl = createMoveController({...MOVE_TUNING, turnFirstAngle: 1.22});
+  const gait = createGait(D.skeleton, {});
+  attachGait(player, gait);
+  walk = {ctl, gait, t: 0, homing: false, kind};
+ }
+ /** Let go of a walk or run at once (another button was pressed): clean, never left running in the background. */
+ function abortLocomotion(){
+  if(!walk) return;
+  player.clearBalance(); player.clearLayer('walk', .12); player.clearGoals('feet', 0); // (the feet go at once: their goals stay where he was, far from the start he is put back to)
+  walk = null;
+ }
  const run = {
   sit(){ player.transitionTo({root: D.body(1, 0)}, {duration: 1.4}); player.setGoals('feet', D.feet, {fade: 0});
    // The hands travel from hanging to the thighs along a path, arriving as he sits.
@@ -300,19 +313,8 @@ export function createDemoRunner(player, D, rests){
   squat(){ player.setLayer('squat', {fn: t => D.squat(t).pose, fade: .5}); player.setGoals('feet', D.feet, {fade: 0}); },
   step(){ stepper = D.stepper(); const st = stepper; player.setLayer('step', {fn: t => st.at(t).pose, fade: .3}); player.setGoals('feet', t => st.at(t).goals, {fade: 0}); player.setBalance({ground: D.ground}); },
   ball(){ player.setGoals('ball', t => ({'hand.L': D.ball(t).goals['hand.L']}), {fade: .6}); },
-  walk(){
-   const ctl = createMoveController({...MOVE_TUNING, walkSpeed: 1.1, runSpeed: 1.3, acceleration: 6, deceleration: 8});
-   const walker = createWalker(D.skeleton, {start: {x: 0, z: 0, facing: 0}});
-   attachWalker(player, walker);
-   walk = {ctl, walker, t: 0, homing: false};
-  },
-  run(){
-   // The game's own movement numbers (a gentle push walks up to 3.1 m/s, a full push runs at 8.6).
-   const ctl = createMoveController(MOVE_TUNING);
-   const walker = createWalker(D.skeleton, {start: {x: 0, z: 0, facing: 0}});
-   attachWalker(player, walker);
-   walk = {ctl, walker, t: 0, homing: false, kind: 'run'};
-  },
+  walk(){ startLocomotion('walk'); },
+  run(){ startLocomotion('run'); },
   look(){ const look = createLook(D.skeleton); player.setLayer('look', {fn: t => look.sample(t, D.look(t).target).pose, fade: .5}); },
  };
  const end = {
@@ -343,6 +345,8 @@ export function createDemoRunner(player, D, rests){
    * A stopped walk keeps going until the body is back where it started and standing, then lets go.
    */
   tick(dt){
+   // A demo waiting its turn starts as soon as the avatar is free (nothing left playing).
+   if(pending && !active && !walk && !player.layers.length && !player.goalLayers.length && !player.balanceShift){ const n = pending; pending = null; active = n; began = now(); run[n](); }
    if(!walk) return;
    walk.t += dt;
    let wish;
@@ -353,32 +357,42 @@ export function createDemoRunner(player, D, rests){
     const s = walk.ctl.state;
     if((walk.leg ?? 1) === 1 && walk.halted && Math.hypot(s.x, s.z + 1.2) < .3){ walk.leg = 2; walk.halted = false; walk.facingHome = false; } // (stop, turn on the spot, go on)
     const aim = walk.leg === 2 ? [0, 0] : [0, -1.2], dx = aim[0] - s.x, dz = aim[1] - s.z, d = Math.hypot(dx, dz);
-    if(!walk.halted && s.speed < .03 && walk.walker.mode === 'idle') walk.halted = true;
+    if(!walk.halted && s.speed < .03 && walk.gait.settled) walk.halted = true;
     // Turn on the spot first (a tiny push on the stick turns the body but hardly moves it, and the feet step round by
     // themselves), and walk only once the feet face the way to go.
-    const way = Math.atan2(dx, dz) * 180 / Math.PI, goals = walk.walker.goals(walk.walker.time);
+    const way = Math.atan2(dx, dz) * 180 / Math.PI, goals = walk.gait.goals(walk.gait.time);
     const off = ['L', 'R'].map(f => Math.abs(((goals['foot.' + f].heading - way) % 360 + 540) % 360 - 180));
     if(d > .15 && Math.max(...off) < 25) walk.facingHome = true;
     const push = walk.kind === 'run' ? Math.min(.5, .12 + d * .1) : Math.min(.34, .12 + d * .3);
     wish = !walk.halted ? [0, 0] : d <= .05 ? [0, 0] : !walk.facingHome ? [dx / d * .03, dz / d * .03] : [dx / d * push, dz / d * push];
     walk.square = walk.leg === 2 && d <= .05 && Math.max(...['L', 'R'].map(f => Math.abs(((goals['foot.' + f].heading) % 360 + 540) % 360 - 180))) < 21;
    }
-   walk.ctl.state.hold = walk.walker.holdMove;
+   walk.ctl.state.hold = walk.gait.holdMove;
    walk.ctl.advance(dt, wish[0], wish[1]);
    const s = walk.ctl.state;
-   walk.walker.update(dt, {x: s.x, z: s.z, facing: s.facing, vx: s.vx, vz: s.vz, speed: s.speed, aim: s.aim});
+   walk.gait.update(dt, {x: s.x, z: s.z, facing: s.facing, vx: s.vx, vz: s.vz, speed: s.speed, aim: s.aim});
    // (Let go only after standing still and square for a moment, so no closing step is left to start.)
-   walk.still = walk.homing && walk.square && s.speed < .02 && walk.walker.mode === 'idle' ? (walk.still ?? 0) + dt : 0;
+   walk.still = walk.homing && walk.square && s.speed < .02 && walk.gait.settled && walk.gait.activity < .01 ? (walk.still ?? 0) + dt : 0;
    // (Never stuck for ever: if it has not got home and squared up within 60 seconds, it lets go anyway.)
    if(walk && walk.homing) walk.homeT = (walk.homeT ?? 0) + dt;
-   if(walk.still > .7 || (walk.homeT ?? 0) > 60){
-    player.clearBalance(); player.clearLayer('walk', .6, {after: .8}); player.clearGoals('feet', .6, {after: .8});
+   if(walk.still > .3 || (walk.homeT ?? 0) > 60){
+    player.clearBalance(); player.clearLayer('walk', .5, {after: .4}); player.clearGoals('feet', .1, {after: .4});
     walk = null;
    }
   },
-  start(name){ if(active) this.stop(); if(!run[name]) return; active = name; began = now(); run[name](); },
-  stop(){ if(!active) return; end[active](); active = null; },
-  get active(){ return active; },
+  /**
+   * Start a demo. If another one is running, it is stopped the way it stops by itself (sit stands up, and so on) and the new
+   * one starts when the avatar is standing free again: only one thing ever drives the avatar, so two can never fight.
+   * A walk or run lets go at once (it would take half a minute to walk home).
+   */
+  start(name){
+   if(!run[name]) return;
+   if(walk){ abortLocomotion(); active = null; pending = name; return; } // (it starts the moment the avatar is free: see tick)
+   if(active){ pending = name; this.stop(); return; }
+   pending = null; active = name; began = now(); run[name]();
+  },
+  stop(){ pending = null; if(!active) return; end[active](); active = null; },
+  get active(){ return pending ?? active; },
   /** Is a walk still going on (the walking body has not yet come home and stopped)? */
   get walking(){ return !!walk; },
   /** Time since the current demo began (for props such as the ball). */

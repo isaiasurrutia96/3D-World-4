@@ -445,4 +445,40 @@ Recorded 17 November 2026.
     0.4 m for 2-4% of frames) and in the stop-and-go scene (0.3 m for 2% of frames). In the air a swinging foot
     can trail up to about 0.6 m behind where the planner wants it during a hard start (the leg stretches straight;
     it lands exactly). Random sticks at game speed: 11.7% of frames over 1 mm (was 20.6%).
+45. Owner decision, 20 Nov 2026 (confirmed, in the owner's words): the walk and run were "absolutely terrible" on the
+    owner's own devices (glitches; pressing another button after Walk or Run made the avatar spaz). Plan agreed: keep
+    the layers (balance, foot planting, legs, look) and rebuild only the walk and run gait the way the wave works (a
+    plain function of time/phase, no step-by-step decisions), fix the button switching, and test every pair of buttons
+    and uneven frame rates. FALLBACK RULE: "if there is still problems, we are deleting everything permanently that we
+    did so far and restart from the wave". The old reactive gait is kept under the git tag `gait-v1-reactive-2026-11-20`.
+    Also asked: the squat may need the legs spread first (open question: is the narrow stance intentional? it is a
+    plain hip-width stance today); the avatar head needs a small triangle nose to read where he looks (Look demo);
+    the ball in "Follow the ball" sits at the heel of the palm; the sit hands should grab the knees as before.
+46. Layer 6 rebuilt, 20 Nov 2026 (supersedes items 41, 42 and 44, which describe the first, step-by-step walker; that code is
+    kept under the git tag `gait-v1-reactive-2026-11-20` and was removed from the tree). Done after the owner's test of the first
+    version ("absolutely terrible", glitches, spazzing after pressing another button), as agreed in item 45.
+    (a) What it is now: `motion-core/skeleton/gait.js`, `npm run test:gait` (23 checks). Walking and running are made the way the
+    wave is made: a plain function of speed, phase and facing (a repeating cycle, one foot half a turn behind the other), with no
+    step-by-step decisions and no memory except the phase, so it cannot get into a state. Foot paths come from the cycle (stance:
+    back past the body, rolling heel to toe; swing: forward over an arc), the legs are solved to them by the existing leg solver,
+    the body bounces with the steps, the arms swing, the chest leans, the body banks into turns. Walk turns into run by speed
+    (1.0 to 2.0 m/s) with no switch. Standing, the feet rest at the skeleton's own rest stance (letting go changes nothing);
+    turning on the spot, the feet step in place. Arcade by design (owner: "like Super Mario", athletic ragdoll feel): cadence
+    2.4 steps a second walking up to 5 flat out, forefoot running, a long moment in the air at speed. All numbers are in `GAIT`.
+    (b) Results at the game's own speeds (0.8 to 8.6 m/s): every foot exactly where the legs are asked to put it, every joint inside
+    its limits, nothing more than 5 mm into the floor, joint jerk 11k to 38k degrees per second squared (the first version: 90k to
+    190k), at 30, 60, 120 and jumpy frame rates alike, in all eight directions, through U-turns and random sticks. The feet
+    skate on the ground when running (the ground speed of a planted point is 40% to 60% of the body speed, 17% walking): that is
+    the cartoon cost of the game's speeds on 0.68 m legs; `maxStance` and `stanceEase` trade it against jerk.
+    (c) Buttons: starting a demo while another runs now stops the first the way it stops by itself and starts the second when the
+    avatar is free (only one thing ever drives him); leaving a walk or run puts him back at the start in one step. The test presses
+    every button after every other (42 pairs) and 95 random presses at jumpy frame rates.
+    (d) Other changes made on the way: the weight shift in balance can be switched off (`shift: false`), the leg safety has a
+    rounded corner where one leg takes over from the other (`hardBlend`), the movement rules state the way the stick asks (`aim`)
+    and can hold him while he turns first (`turnFirstAngle`, default 0 = the old feel; the demos use 1.22), the balance release
+    eases the safety lowering, a leg's weight-shift fix for sideways-only balance keeps it sideways after turns.
+    (e) Known limits, honest: (1) the feet skate at running speeds (see b). (2) The first step after a hard start from standing
+    is not special: the gait simply starts. (3) The hip can still flip between two ways of landing a foot in a few frames of
+    a turn at full speed (random sticks: worst joint 84k at one instant in 100 seconds); a relaxed mid-swing foot keeps it rare.
+    (4) Still to do from the owner's list: the nose on the head, the ball in the palm, the sit hands, the squat leg spread.
 
