@@ -97,6 +97,7 @@ function resize(){const {width,height}=stage.getBoundingClientRect();if(!width||
 new ResizeObserver(resize).observe(stage);resize();view('angled');setPose('rest');
 {let saved='high';try{saved=localStorage.getItem('skeletonQuality')||'high';}catch{}applyQuality(QUALITY[saved]?saved:'high');}
 let last=0,lastPose='',lastPresentation='';
+const MAX_STEP=1/30,KEEP_WARM=avatarMode!=='detailed';
 // The animation clock is unchanged. A still inspection does not redraw the
 // 3.6M-triangle master and its shadow sixty times a second on a phone.
 // A small frame-rate readout (top left, in a dark box so it reads on any screen): how many frames a second, and the slowest frame in the last second. It says whether a
@@ -107,7 +108,10 @@ renderer.setAnimationLoop(ms=>{
  if(last){const gap=ms-last;fpsFrames++;fpsWorst=Math.max(fpsWorst,gap);}
  if(!fpsSince)fpsSince=ms;
  if(ms-fpsSince>=1000){fpsBox.textContent=Math.round(fpsFrames*1000/(ms-fpsSince))+' fps · slowest frame '+Math.round(fpsWorst)+' ms';fpsFrames=0;fpsWorst=0;fpsSince=ms;}
- const dt=Math.min(.1,last?(ms-last)/1000:0);last=ms;
+ // A late frame moves the pose at most 1/30 s, so a slow frame (for example
+ // the graphics chip waking up on the first tap) slows the motion a moment
+ // instead of making it jump.
+ const dt=Math.min(MAX_STEP,last?(ms-last)/1000:0);last=ms;
  const pose=framePose(dt),poseKey=JSON.stringify(pose);
  if(poseKey!==lastPose){
   lastPose=poseKey;drawBones(A.apply(pose));
@@ -118,12 +122,21 @@ renderer.setAnimationLoop(ms=>{
  controls.update();
  const presentation=JSON.stringify(window.testLabScene?.getState());
  if(presentation!==lastPresentation){lastPresentation=presentation;needsRender=true;}
- if(needsRender){renderer.render(scene,camera);needsRender=false;}
+ // Light and Game avatars draw every frame even when still, so the phone keeps
+ // its graphics chip awake and the first tap does not start on a cold chip.
+ // The shadow is still only redrawn when the pose changes. The Detailed
+ // avatar keeps the saving (it is too heavy to redraw while still).
+ if(needsRender||KEEP_WARM){renderer.render(scene,camera);needsRender=false;}
 });
 window.skeletonLab={camera,controls,scene,renderer,setPose,showBones,view,setQuality:applyQuality,getQuality:()=>quality,avatar:A,player,release:avatarMode==='light'?LIGHT_AVATAR:avatarMode==='game'?GAME_AVATAR:OFFICIAL_AVATAR,avatarMode,poses:Object.keys(POSES)};
 window.avatarLab=window.skeletonLab;
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
-drawBones(A.solved);renderer.render(scene,camera);
+// Warm-up while the loading screen is still up: move the body to another pose
+// and draw it once (with its shadow), then put it back. Any first-time work
+// for a moving body (graphics programs, uploads, shadow pass) happens now
+// instead of on the first tap.
+A.apply(POSES['arms-up']??POSES.kick);renderer.shadowMap.needsUpdate=true;renderer.render(scene,camera);
+drawBones(A.apply(player.update(0)));renderer.shadowMap.needsUpdate=true;renderer.render(scene,camera);
 document.querySelector('#loading').hidden=true;window.skeletonTestReady=true;window.avatarLabReady=true;
 }
 start().catch(error=>{console.error(error);window.avatarLoadError=error.message;document.querySelector('#loading').textContent='The avatar could not open. Choose Reset to try again.';});
