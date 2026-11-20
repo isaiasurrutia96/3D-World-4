@@ -59,7 +59,7 @@ pivots, with the clay parts hung on the bones later. Order:
 4. Reaching: work out joint angles from where a hand or foot must go.
 5. Hands and feet detail (finger curl, spread, thumb, toes, ball of the
    foot, tiptoe), rebuilt to match the approved Codex hand and foot.
-6. Then the movement layers: balance, foot planning, legs, upper body.
+6. Then the movement layers: balance (built, 20 Nov 2026: `skeleton/balance.js`, centre of mass + support + smooth shift, wired into the pose player), foot planning (next), legs, upper body.
 Grips for mini games come later, built on the hand layer.
 
 ### Section 1 · The skeleton

@@ -256,5 +256,24 @@ Recorded 17 November 2026.
 34. Focus hard on the code: build the foundational movements first, the ones
     that open up the others (balance and weight shift, standing, stepping),
     each layer solid and checked before the next.
-35. Known issue to fix: in "follow the ball", the ball is no longer centred,
-    probably since the joints were added. Check it on the new body.
+35. Fixed 20 Nov 2026: in "follow the ball", the ball is now in the middle of the
+    palm (the palm centre is measured halfway along the palm, not a quarter of
+    the way). Seated palm rest point and the grip test's rod moved back 2 cm to
+    match.
+36. Layer 2, balance, built 20 Nov 2026 (`motion-core/skeleton/balance.js`,
+    `npm run test:balance`, 28 checks). Foundation, not a fixed number: it works
+    out the body's centre of mass (standard human mass shares per segment) and
+    which foot contact points carry weight (those within 2 cm of the ground
+    under them; `ground(x, z)` can be raised for steps or terrain), then shifts
+    the whole body so the weight sits over them while the planted feet stay
+    exactly put (the legs bend; the body also lowers just enough that a straight
+    leg can still reach). The shift is a smooth follower (quintic curves that
+    carry speed and acceleration when the target changes, arrive exactly, never
+    overshoot). In the pose player: `setBalance({axes, duration, ground})`,
+    `clearBalance({after})`, `balanceShift`. Sideways only by default
+    (`axes: 'xz'` with `fore` 0 heels to 1 toes also does fore/aft). Costs about
+    0.8 ms a frame. The step demo uses it (the hand-made sideways shift in the
+    step is gone) and the feet are now let go 0.6 s after the foot is down so the
+    weight can settle first. One known item left in the step: the lifted foot's
+    ankle swings quickly at high knee (3.7° a frame): that is foot planning,
+    layer 3, next.

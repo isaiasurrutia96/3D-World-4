@@ -76,8 +76,11 @@ export function createDemos(skeleton, foot = null){
  // The ball.
  const BALL = {radius: .035};
 
+ /** The ground height under a point (the floor, or the top of the step block): balance uses it to know which foot carries weight. */
+ const ground = (x, z) => Math.abs(x - STEP.centre[0]) <= STEP.width / 2 && Math.abs(z - STEP.centre[2]) <= STEP.depth / 2 ? STEP.height : 0;
+
  return {
-  SOLE, STEP, BALL, LEVEL, hips, feet, body,
+  SOLE, STEP, BALL, LEVEL, hips, feet, body, ground,
   squat(t){
    const k = (1 - Math.cos(t * 1.8)) / 2, lean = 28 * k, chest = 5 * k, tip = lean + chest;
    const neck = Math.min(20, tip * .5), head = Math.min(25, tip - neck);
@@ -99,8 +102,8 @@ export function createDemos(skeleton, foot = null){
    // Straight up first, over, then down onto the block (each overlapping smoothly).
    const clear = .10, y = (STEP.height + clear) * band(0, .32, up) - clear * band(.78, 1, up);
    const z = SOLE.L[2] + (stepSoleZ - SOLE.L[2]) * band(.3, .85, up);
-   const shift = band(0, .25, up) - band(.75, 1, up), forward = band(.45, 1, up);
-   return {pose: {root: {position: [-.025 * shift, -.01 * shift - .03 * forward, .12 * forward], rotation: {x: 0, y: 0, z: 0}}},
+   const forward = band(.45, 1, up);
+   return {pose: {root: {position: [0, -.03 * forward, .12 * forward], rotation: {x: 0, y: 0, z: 0}}},
     goals: {'foot.L': {sole: [SOLE.L[0], y, z], heading: 0}, 'foot.R': {sole: SOLE.R, heading: 0}}};
   },
   ball(t){
@@ -225,6 +228,9 @@ export function sittingHands(solved, rests, k = 1, base = solved, skeleton = nul
  *          down the same path it came, then both are released.
  *   ball   a hand reaching layer. Stop: it fades out.
  */
+/** Seconds the step's weight shift needs to settle back to the middle after the foot is down. */
+const SETTLE = .6;
+
 export function createDemoRunner(player, D, rests){
  let active = null, began = 0;
  const now = () => player.time;
@@ -235,7 +241,7 @@ export function createDemoRunner(player, D, rests){
    // The hands travel from hanging to the thighs along a path, arriving as he sits.
    sitHands(t => band(0, 1.4, t)); },
   squat(){ player.setLayer('squat', {fn: t => D.squat(t).pose, fade: .5}); player.setGoals('feet', D.feet, {fade: 0}); },
-  step(){ player.setLayer('step', {fn: t => D.step(t).pose, fade: .3}); player.setGoals('feet', t => D.step(t).goals, {fade: 0}); },
+  step(){ player.setLayer('step', {fn: t => D.step(t).pose, fade: .3}); player.setGoals('feet', t => D.step(t).goals, {fade: 0}); player.setBalance({ground: D.ground}); },
   ball(){ player.setGoals('ball', t => ({'hand.L': D.ball(t).goals['hand.L']}), {fade: .6}); },
  };
  const end = {
@@ -255,7 +261,8 @@ export function createDemoRunner(player, D, rests){
    const t0 = now() - began, h = 1 / 240, u0 = D.stepUp(t0), v0 = (D.stepUp(t0 + h) - D.stepUp(t0 - h)) / (2 * h), a0 = (D.stepUp(t0 + h) - 2 * u0 + D.stepUp(t0 - h)) / (h * h);
    const back = t => quintic(u0, v0, a0, 0, 1.6, t);
    player.setLayer('step', {fn: t => D.stepAt(back(t)).pose, fade: 0}); player.setGoals('feet', t => D.stepAt(back(t)).goals, {fade: 0});
-   player.clearLayer('step', 0, {after: 1.6}); player.clearGoals('feet', 0, {after: 1.6});
+   // The weight shift settles back to the middle (balance's own time) before the feet are let go.
+   player.clearLayer('step', 0, {after: 1.6}); player.clearGoals('feet', 0, {after: 1.6 + SETTLE}); player.clearBalance({after: 1.6 + SETTLE});
   },
   ball(){ player.clearGoals('ball', .6); },
  };

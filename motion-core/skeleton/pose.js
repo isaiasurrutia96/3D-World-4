@@ -13,7 +13,9 @@
 //                        never snap, even when interrupted, plus layers (a
 //                        clip on one arm while the rest of the body does
 //                        something else) and reaching layers (feet planted,
-//                        hands on a target), each fading in and out smoothly.
+//                        hands on a target), each fading in and out smoothly,
+//                        and balance (setBalance): the body shifts over the
+//                        feet that carry its weight while they stay planted.
 //
 // Every switch goes through the same smooth machinery, so nothing ever jumps:
 // the body's joints AND its position move with continuous position, speed and
@@ -25,6 +27,7 @@
 // (no step-by-step drift), so results are the same at any frame rate.
 import {reach} from './reach.js';
 import {shoulderFollow} from './shoulder.js';
+import {balanceShift, reachDrop, createShiftFollower} from './balance.js';
 
 const AXES = ['x','y','z'];
 /** Standing where he is. */
@@ -217,8 +220,14 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
  }
  const layerWeight=(l,at)=>Math.min(1,Math.max(0,fadeAt(l,at).w));
 
- /** Pose at a time: the base, then the layers, then the reaching layers. */
- function poseAt(at){
+ // The planted-feet goals of the last pose computed, and of the one before it (for balance).
+ let frameFeet=null,feetNow=null;
+ /**
+  * Pose at a time: the base, then the layers, then the reaching layers.
+  * shift: [x, z] metres to move the whole body before the reaching layers (balance), lowering it
+  * just enough that planted feet can still reach. commit=false: a trial, nothing is remembered.
+  */
+ function poseAt(at,{shift=null,commit=true}={}){
   let pose=fromChannels(base(at).pose);
   for(const [name,l] of layers){
    due(l,at);
@@ -231,6 +240,13 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   // Shoulders follow the arms (from the pose's own collarbones).
   const authored={'clavicle.L':pose['clavicle.L'],'clavicle.R':pose['clavicle.R']};
   if(follow)pose=shoulderFollow(skeleton,pose);
+  if(shift){
+   // Balance: move the whole body, lowered just enough that the planted feet (as last asked) can still reach.
+   const r=pose.root??ROOT0(),moved={...pose,root:{...r,position:[r.position[0]+shift[0],r.position[1],r.position[2]+shift[1]]}};
+   const drop=feetNow?reachDrop(skeleton,skeleton.solve(moved),feetNow):0;
+   pose.root={...moved.root,position:[moved.root.position[0],moved.root.position[1]-drop,moved.root.position[2]]};
+  }
+  frameFeet=null;
   for(const [name,g] of goalLayers){
    due(g,at);
    const w=layerWeight(g,at);
@@ -238,22 +254,63 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
    if(w<=0)continue;
    const goals=typeof g.goals==='function'?g.goals(at-g.start,pose,skeleton):g.goals;
    if(!goals||!Object.keys(goals).length)continue;
+   for(const k of ['foot.L','foot.R'])if(goals[k]?.sole)(frameFeet??={})[k]=goals[k];
    const r=reach(skeleton,g.warm?{...pose,...g.warm}:pose,goals,{follow,clavicles:authored,continuing:!!g.warm}).pose;
-   // Remember this layer's limbs for next frame (start from there: smooth and quick).
-   g.warm=Object.fromEntries(Object.keys(r).filter(k=>k!=='root'&&limbOf(k,goals)).map(k=>[k,r[k]]));
-   // glide: fingers glide to where the grip puts them (a critically damped spring with
-   // this time constant, seconds) instead of jumping when a touch point changes.
-   if(g.glide>0)glideFingers(g,r,at);
+   if(commit){
+    // Remember this layer's limbs for next frame (start from there: smooth and quick).
+    g.warm=Object.fromEntries(Object.keys(r).filter(k=>k!=='root'&&limbOf(k,goals)).map(k=>[k,r[k]]));
+    // glide: fingers glide to where the grip puts them (a critically damped spring with
+    // this time constant, seconds) instead of jumping when a touch point changes.
+    if(g.glide>0)glideFingers(g,r,at);
+   }
    pose=blend(pose,{...r,root:pose.root},w);
   }
+  feetNow=frameFeet;
   pose.root=pose.root??ROOT0();
   return {...skeleton.clampPose(pose),root:pose.root};
  }
 
+ // Balance: while planted feet are in the goals, the whole body shifts so its centre of mass sits
+ // over the feet that carry weight (balance.js). The shift is a smooth follower, so it never jolts.
+ let balance=null;
+ function setBalance(options={}){
+  const o={axes:'x',duration:.5,...options};
+  balance={opts:o,follower:balance?.follower??createShiftFollower({duration:o.duration,size:2}),releasing:false};
+ }
+ /** Stop balancing: the shift eases back to nothing (after a wait, if asked), then balance is gone. */
+ function clearBalance({after=0}={}){ if(!balance)return; if(after>0)balance.clearAt=time+after; else balance.releasing=true; }
+ function balanced(dt){
+  const b=balance;
+  if(b.clearAt!==undefined&&time>=b.clearAt)b.releasing=true;
+  let wanted=b.follower.goal;
+  if(b.releasing)wanted=[0,0];
+  else{
+   // Where the body must be for the weight to sit over the support: start from where it was heading,
+   // see how far off the weight still is, correct (the legs bend as the body moves, so a move can take
+   // a couple of tries; a steady one takes one).
+   let total=[...b.follower.goal],found=false;
+   for(let i=0;i<4;i++){
+    const trial=poseAt(time,{shift:total,commit:false});
+    if(!frameFeet)break;
+    const bs=balanceShift(skeleton,skeleton.solve(trial),b.opts);
+    if(!bs)break;
+    found=true;total=[total[0]+bs.shift[0],total[1]+bs.shift[1]];
+    if(Math.hypot(bs.shift[0],bs.shift[1])<2e-4)break;
+   }
+   if(found)wanted=total;else if(!frameFeet)wanted=[0,0];
+  }
+  b.follower.retarget(wanted,b.opts.duration);
+  const off=b.follower.update(dt);
+  if(b.releasing&&Math.abs(off[0])<1e-9&&Math.abs(off[1])<1e-9&&Math.abs(b.follower.speed[0])<1e-9&&Math.abs(b.follower.speed[1])<1e-9){balance=null;return poseAt(time);}
+  return poseAt(time,{shift:off});
+ }
+
  return {
-  transitionTo,setLayer,clearLayer,setGoals,clearGoals,
+  transitionTo,setLayer,clearLayer,setGoals,clearGoals,setBalance,clearBalance,
   /** Move time forward and return the pose for that moment. */
-  update(dt){time+=dt;return poseAt(time);},
+  update(dt){time+=dt;return balance?balanced(dt):poseAt(time);},
+  /** How far balance has moved the body now: [sideways, fore/aft] metres (or null when off). */
+  get balanceShift(){return balance?balance.follower.value:null;},
   poseAt,
   get time(){return time;},
   get layers(){return [...layers.keys()];},
