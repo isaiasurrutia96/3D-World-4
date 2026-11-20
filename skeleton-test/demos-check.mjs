@@ -88,14 +88,15 @@ for(const [name,on,off,sides,label] of [['sit',2.4,2.4,['L','R']],['squat',3,1.6
   '');
 }
 
-// ---- Walk: exactly as the page runs it (the demo runner ticks the walking body before the pose player) ----
-{const P=createPosePlayer(S,{},{follow:true}),run=createDemoRunner(P,D,RESTS2),frames=[];
- run.start('walk');for(let i=0;i<14*60;i++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
- run.stop();let back=0;for(;back<60*60&&run.walking;back++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
+// ---- Walk and run: exactly as the page runs them (the demo runner ticks the walking body before the pose player) ----
+for(const [name,secs,jmax,words] of [['walk',14,14,'joints never jolt (under 14° change of speed in a frame)'],['run',13,200,'no joint snaps by more than 200° change of speed in a frame (flat out at 8.6 m/s the legs swing 7 steps a second and hit their limits)']]){
+ const P=createPosePlayer(S,{},{follow:true}),run=createDemoRunner(P,D,RESTS2),frames=[];
+ run.start(name);for(let i=0;i<secs*60;i++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
+ run.stop();let back=0;for(;back<120*60&&run.walking;back++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
  for(let i=0;i<150;i++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
- const j=jolt(frames),end=atRest(frames.at(-1).pose);let bad=0;
- for(const f of frames)if(!inLimits(f.pose))bad++;
- check('walk: walks, comes home and stops; every joint stays inside its limits, joints never jolt (under 14° change of speed in a frame), and ends exactly at rest with nothing left running',back<3600&&bad===0&&j.m<14&&end<1e-6&&!P.layers.length&&!P.goalLayers.length,`${(frames.length/60).toFixed(0)} seconds; ${bad} frames with a joint past its limit; largest change in joint speed ${j.m.toFixed(2)}°; back at rest within ${end.toExponential(1)}`);
+ const j=jolt(frames),end=atRest(frames.at(-1).pose);let bad=0,nan=0;
+ for(const f of frames){if(!inLimits(f.pose))bad++;for(const b of Object.values(f.pose))if(b&&typeof b==='object'&&'x' in b&&!(Number.isFinite(b.x)&&Number.isFinite(b.y)&&Number.isFinite(b.z)))nan++;}
+ check(`${name}: goes, comes home and stops; every joint stays inside its limits, no invalid numbers, ${words}, and ends exactly at rest with nothing left running`,back<120*60&&bad===0&&nan===0&&j.m<jmax&&end<1e-6&&!P.layers.length&&!P.goalLayers.length,`${(frames.length/60).toFixed(0)} seconds; ${bad} frames with a joint past its limit; largest change in joint speed ${j.m.toFixed(2)}°; back at rest within ${end.toExponential(1)}`);
 }
 
 // ---- Look: the face follows the ball ----

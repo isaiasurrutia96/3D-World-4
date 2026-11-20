@@ -206,6 +206,9 @@ export function createFootPlanner(skeleton, {ground = () => 0, soles = null} = {
    const ty = tb !== undefined ? ta : restHeight(side, tx, tz, heading);
    const T = Math.max(.05, o.duration);
    const atRest = ['x', 'z'].every(c => Math.abs(from[c].v) < 1e-9 && Math.abs(from[c].a) < 1e-9);
+   // A kick (a sprinter's foot leaving the ground is already speeding up): extra starting acceleration [x, z] in m/s², so the foot is not left far behind the body.
+   if(o.launch){ from.x = {...from.x, v: from.x.v + o.launch[0]}; from.z = {...from.z, v: from.z.v + o.launch[1]}; } // (and a speed to leave with)
+   if(o.kick){ from.x = {...from.x, a: from.x.a + o.kick[0]}; from.z = {...from.z, a: from.z.a + o.kick[1]}; }
    const seg = {
     t0: now, T, sa: o.apexAt, ts: atRest ? o.delay * T : 0, te: (1 - o.arriveEarly) * T,
     from, to: {x: tx, z: tz, heading, pitch: o.landPitch, roll: 0, y: ty, flat: 1}, peak: {y: 0, pitch: o.toesDown, flat: 1 - o.relax},

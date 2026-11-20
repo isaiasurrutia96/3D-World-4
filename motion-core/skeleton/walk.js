@@ -30,6 +30,27 @@ export const WALK = Object.freeze({
  maxBehind: .34,          // the standing foot is never let fall further behind the body than this (the leg could not reach)
  minSwing: .2,            // a step takes at least this long (seconds)
  duty: .64,               // the share of a stride (one foot's step cycle) that a foot spends on the ground
+ runOn: 1.3,              // above this speed (metres a second) he runs: a stance short enough to leave a moment in the air
+ runAhead: .25,           // seconds ahead he is judged by when speeding up (so a hard start begins with a running step)
+ runOff: 1.05,            // ... and below this he walks again
+ runReach: .203,            // running, a foot lands at most this far ahead of the hip (and leaves as far behind)
+ minStance: .06,          // running, the shortest time a foot stays down
+ minFlight: .012,          // running, the shortest time both feet are in the air in each step
+ runCadence0: 2.89,        // running, steps a second at the start of the run...
+ runCadencePer: .58,      // ...plus this for each metre a second
+ runKick: 7.5,             // running, a foot leaving the ground speeds up at this many metres a second squared for each metre a second of body speed
+ runLaunch: .58,           // running, a foot leaves the ground already moving forward at this share of the body's speed
+ runLift0: .06,           // running, the foot clears the ground by this in mid-swing...
+ runLiftPer: .03,         // ...plus this for each metre a second
+ runLandPitch: 0,         // running, the foot lands at this angle (degrees, toes down)
+ runBob0: .015,           // running, the body sinks this far (metres) over the standing foot...
+ runBobPer: .008,         // ...plus this for each metre a second (at most runBobMax)
+ runBobMax: .075,
+ runBase: .02,            // running, the body rides this much lower than standing
+ runArmSwing: 62,         // running, arm swing (degrees for a stride)
+ runElbow: 85,            // running, the elbow bend (degrees)
+ runLean: 2.2,            // running, the chest leans forward this many degrees for each metre a second (at most 15)
+ runEase: .35,            // seconds to change between the walk's body and the run's
 maxSpeed: 1.0,           // the fastest this walk goes (more would be a jog; running is separate)
  maxHalfStep: .36,        // never place a foot more than this far ahead of the hip
  heelLead: 0,             // the foot lands on its heel, which is behind the ankle: the ankle goes this much further ahead
@@ -73,15 +94,18 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
  const W = {...WALK, ...tuning};
  const planner = createFootPlanner(skeleton, {ground, soles: start ? {L: [start.x + Math.cos(start.facing) * W.footHalfWidth, undefined, start.z - Math.sin(start.facing) * W.footHalfWidth], R: [start.x - Math.cos(start.facing) * W.footHalfWidth, undefined, start.z + Math.sin(start.facing) * W.footHalfWidth]} : null});
  let time = 0, body = {x: 0, z: 0, facing: 0, vx: 0, vz: 0, speed: 0}, lastFacing = null, omega = 0, lastV = null, ax = 0, az = 0;
- let mode = 'idle', lastLifted = 'R', holding = false, standK = 1, face = null, faceSpeed = 0, asked = 0;
+ let mode = 'idle', lastLifted = 'R', liftedAt = -1, soonV = 0, running = false, runK = 0, holding = false, standK = 1, face = null, faceSpeed = 0, asked = 0;
  const wrapDeg = a => ((a + 180) % 360 + 360) % 360 - 180, smooth = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
  const queue = [], unloaded = new Set(), state = {L: 'planted', R: 'planted'}, lastLand = {L: -1, R: -1};
  const other = f => f === 'L' ? 'R' : 'L';
  const legLength = (skeleton.bones[skeleton.index.get('thigh.L')].length + skeleton.bones[skeleton.index.get('shin.L')].length) - W.legSlack;
+ const vcap = () => running ? 20 : W.maxSpeed;
  const cadence = v => W.cadenceBase + W.cadencePerSpeed * Math.min(v, W.maxSpeed);
  const forward = psi => [Math.sin(psi), Math.cos(psi)], leftOf = psi => [Math.cos(psi), -Math.sin(psi)];
  const schedule = ev => { queue.push(ev); queue.sort((a, b) => a.t - b.t); };
- const gait = v => { const tau = 1 / cadence(Math.min(v, W.maxSpeed)); return {tau, swing: 2 * tau * (1 - W.duty), stance: 2 * tau * W.duty}; };
+ // Running: a short stance (the foot lands and leaves no further from the hip than runReach), then both feet in the air a moment.
+ const runGait = v => { const tau = 1 / (W.runCadence0 + W.runCadencePer * v), stance = Math.max(W.minStance, Math.min(2 * W.runReach / Math.max(v, .1), tau - W.minFlight)); return {tau, swing: 2 * tau - stance, stance}; };
+ const gait = v => { if(running) return runGait(v); const tau = 1 / cadence(Math.min(v, W.maxSpeed)); return {tau, swing: 2 * tau * (1 - W.duty), stance: 2 * tau * W.duty}; };
 
  /** Where a foot should be when the body stands still, for this body (the sole point under the ankle). */
  const stanceSpot = (foot, b = body) => {
@@ -106,11 +130,16 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
  function placement(foot, swing){
   // The way the body will face by the middle of the stance of this foot (the foot stays this way while it stands).
   // (A turn is not carried on past what it can do: a little way, and never beyond where the body is asked to face.)
-  const lead = Math.max(-W.maxLead, Math.min(W.maxLead, omega * (swing * .5 + gait(Math.min(body.speed, W.maxSpeed)).stance * .5) * DEG)) / DEG;
+  const maxLead = running ? 2 * W.maxLead : W.maxLead, lead = Math.max(-maxLead, Math.min(maxLead, omega * (swing * .5 + gait(Math.min(body.speed, vcap())).stance * .5) * DEG)) / DEG;
   const toward = ((asked - body.facing + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
   const psi = body.facing + lead;
-  const px = body.x + body.vx * swing + .5 * ax * swing * swing, pz = body.z + body.vz * swing + .5 * az * swing * swing;
-  const vl = Math.min(W.maxSpeed, Math.hypot(body.vx + ax * swing, body.vz + az * swing)), g = gait((Math.min(body.speed, W.maxSpeed) + vl) / 2);
+  let px = body.x + body.vx * swing + .5 * ax * swing * swing, pz = body.z + body.vz * swing + .5 * az * swing * swing;
+  if(running && Math.abs(omega) > .3 && body.speed > .5){
+   // Running round a bend: the body travels along an arc (at its speed, turning as it turns), not along a line.
+   const th = Math.atan2(body.vx, body.vz), tr = th + omega * swing;
+   px = body.x + body.speed / omega * (Math.cos(th) - Math.cos(tr)); pz = body.z + body.speed / omega * (Math.sin(tr) - Math.sin(th));
+  }
+  const vl = Math.min(vcap(), Math.hypot(body.vx + ax * swing, body.vz + az * swing)), g = gait((Math.min(body.speed, vcap()) + vl) / 2);
   const half = Math.min(W.maxHalfStep, vl * g.stance / 2);
   const f = forward(psi), l = leftOf(psi), side = foot === 'L' ? 1 : -1;
   const reach = half + (vl > W.startSpeed ? W.heelLead : 0);
@@ -118,14 +147,23 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
  }
 
  function lift(foot, t){
-  const v = Math.min(body.speed, W.maxSpeed), g = gait(v);
-  // The foot that stays down must not be left too far behind while this one swings: a quick start (or a speed-up)
-  // means a quicker step, never a leg stretched past its reach.
-  const stayBehind = -aheadOf(other(foot), t), room = Math.max(0, W.maxBehind - Math.max(0, stayBehind));
-  const along = (ax * body.vx + az * body.vz) / Math.max(body.speed, 1e-6), vSwing = Math.min(W.maxSpeed, v + Math.max(0, along) * g.swing * .6);
-  g.swing = Math.max(W.minSwing, Math.min(g.swing, vSwing > .05 ? room / vSwing : g.swing));
-  planner.stepTo(foot, t, placement(foot, g.swing), {duration: g.swing, lift: W.liftBase + W.liftPerSpeed * v, toesDown: W.midSwingToes, landPitch: W.heelStrikePitch, delay: .1, arriveEarly: .15});
-  state[foot] = 'swinging'; lastLifted = foot;
+  const v = Math.min(body.speed, vcap()), g = gait(v);
+  if(running){
+   // Running: a foot leaves when its short stance is over; the swing is the rest of the stride. (From a standing start the
+   // body is still slow but will not be: the foot leaves for the speed he is about to have, along the way he is going.)
+   const vr = Math.max(v, Math.min(soonV, vcap())), dir = body.speed > .3 ? [body.vx / body.speed, body.vz / body.speed] : forward(body.facing);
+   const gr = gait(vr);
+   planner.stepTo(foot, t, placement(foot, gr.swing), {duration: gr.swing, lift: W.runLift0 + W.runLiftPer * vr, toesDown: W.midSwingToes, landPitch: W.runLandPitch, delay: .02, arriveEarly: .12, kick: [dir[0] * vr * W.runKick, dir[1] * vr * W.runKick], launch: [dir[0] * vr * W.runLaunch, dir[1] * vr * W.runLaunch]});
+   g.swing = gr.swing;
+  } else {
+   // The foot that stays down must not be left too far behind while this one swings: a quick start (or a speed-up)
+   // means a quicker step, never a leg stretched past its reach.
+   const stayBehind = -aheadOf(other(foot), t), room = Math.max(0, W.maxBehind - Math.max(0, stayBehind));
+   const along = (ax * body.vx + az * body.vz) / Math.max(body.speed, 1e-6), vSwing = Math.min(W.maxSpeed, v + Math.max(0, along) * g.swing * .6);
+   g.swing = Math.max(W.minSwing, Math.min(g.swing, vSwing > .05 ? room / vSwing : g.swing));
+   planner.stepTo(foot, t, placement(foot, g.swing), {duration: g.swing, lift: W.liftBase + W.liftPerSpeed * v, toesDown: W.midSwingToes, landPitch: W.heelStrikePitch, delay: .1, arriveEarly: .15});
+  }
+  state[foot] = 'swinging'; lastLifted = foot; liftedAt = t;
   schedule({t: t + g.swing, kind: 'land', foot});
  }
 
@@ -208,6 +246,11 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
    if(lastV !== null && dt > 0){ const k = Math.min(1, dt * 8); ax += ((b.vx - lastV[0]) / dt - ax) * k; az += ((b.vz - lastV[1]) / dt - az) * k; }
    lastV = [b.vx, b.vz]; lastFacing = b.facing; body = b;
    // Standing or walking, eased over about half a second (so the knees settle straight, or bend for the walk, without a jolt).
+   // He runs once fast enough, or as soon as he is speeding up so hard that he will be within a moment (the first step must not be a slow one).
+   const along = (ax * b.vx + az * b.vz) / Math.max(b.speed, 1e-6), soon = b.speed + (b.speed > .05 ? Math.max(0, along) * W.runAhead : 0);
+   soonV = soon;
+   if(!running && soon > W.runOn) running = true; else if(running && soon < W.runOff) running = false;
+   runK = Math.max(0, Math.min(1, runK + (running ? dt : -dt) / W.runEase));
    standK = Math.max(0, Math.min(1, standK + (b.speed < W.stopSpeed ? dt : -dt) / W.standEase));
    while(queue.length && queue[0].t <= time) run(queue.shift());
    // A walk does not start while the body is asked to face well away from its feet: it turns on the spot first (closing steps
@@ -222,10 +265,18 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
      // Off the mark: the foot that is further behind steps at once (the other one is the standing foot).
      if(state.L === 'planted' && state.R === 'planted'){
       const foot = aheadOf('L') < aheadOf('R') - .02 ? 'L' : aheadOf('R') < aheadOf('L') - .02 ? 'R' : other(lastLifted);
-      beginStep(foot);
+      if(running){ lift(foot, time); } else beginStep(foot);
      }
     }
     mode = 'walking';
+    if(running){
+     // Running is on a clock: the foot whose turn it is leaves when its short stance is over (the other one may still be in the air).
+     const foot = other(lastLifted), g = gait(b.speed), gg = other(foot);
+     // (A foot left far behind goes at once, whatever the clock says: a quick start leaves it no time.)
+     const behind = -aheadOf(foot) >= W.runReach * 1.5;
+     if(state[foot] === 'planted' && !queue.some(e => e.kind === 'close' || e.kind === 'lift') && (behind || (time - lastLand[foot] >= g.stance - 1e-9 && time - liftedAt >= g.tau - 1e-9))
+        && (state[gg] !== 'planted' || time - lastLand[gg] >= g.stance * .5 || behind)) lift(foot, time);
+    } else {
     // The foot that has been down longest lifts when it has fallen back far enough (and the other foot has landed).
     // The foot whose turn it is, unless the other one is turned too far from the body (the hip can only twist so far).
     const turned = f => Math.abs(((planner.state(f, time).heading - b.facing * DEG) % 360 + 540) % 360 - 180);
@@ -239,6 +290,7 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
     if(state[foot] === 'planted' && otherReady && !queue.some(e => e.kind === 'close')){
      const behind = -aheadOf(foot);
      if(behind >= trigger(b.speed) - b.speed * W.rollOut || turned(foot) > W.maxFootTurn) beginStep(foot, Math.max(time + W.rollOut, Math.max(landAt, lastLand[g]) + W.minDouble));
+    }
     }
    } else if(mode === 'walking'){ mode = 'settling'; }
    if(!walking && mode !== 'walking' && bothDown() && (b.speed < W.stopSpeed || pivoting)){
@@ -273,7 +325,17 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
    // so just before and while a foot is up the body sits a little lower, with both knees soft.
    const up = Math.max(...[0, .1, .2].flatMap(a => ['L', 'R'].map(f => planner.state(f, t + a).sole[1])));
    const crouch = W.stepCrouch * this.standing() * smooth(0, .03, up);
-   return -(this.slack() + d * d / (8 * legLength) + crouch);
+   const walkH = -(this.slack() + d * d / (8 * legLength) + crouch);
+   if(runK <= 0) return walkH;
+   // Running: the body sinks over each standing foot and rises in the air between (about a half sine for each stance).
+   const g = runGait(body.speed), amp = Math.min(W.runBobMax, W.runBobPer * Math.min(body.speed, 12) + W.runBob0);
+   let sink = 0;
+   for(const f of ['L', 'R']){
+    const land = state[f] === 'planted' ? lastLand[f] : (queue.find(e => e.kind === 'land' && e.foot === f)?.t ?? -Infinity);
+    if(!Number.isFinite(land)) continue;
+    for(const k of [-1, 0, 1]){ const u = (t - (land + 2 * g.tau * k)) / g.stance; if(u > 0 && u < 1) sink += Math.sin(Math.PI * u); }
+   }
+   return walkH * (1 - runK) - (W.runBase + amp * sink) * runK;
   },
 
   /** How much the body is standing rather than walking (1 standing, 0 walking): the knees may straighten when it stands. */
@@ -286,13 +348,14 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
   pose(t){
    // Asked about a moment still to come: the body is carried on at its present velocity.
    const {bx, bz, face, d} = this.gaitState(t);
-   const dc = Math.max(-.9, Math.min(.9, d)), pelvis = W.pelvisTurn * dc, chest = -W.chestTurn * dc, arm = W.armSwing * dc;
+   const dc = Math.max(-.9, Math.min(.9, d)), pelvis = W.pelvisTurn * dc, chest = -W.chestTurn * dc, arm = (W.armSwing + runK * (W.runArmSwing - W.armSwing)) * dc, elbow = W.elbowBend + runK * (W.runElbow - W.elbowBend), lean = runK * Math.min(15, W.runLean * body.speed);
    const turn = pelvis + chest; // the neck and head take back what the pelvis and chest turned, so he looks ahead
    return {
     root: {position: [bx, 0, bz], rotation: {x: 0, y: face * DEG + pelvis, z: 0}},
     spine: {x: 0, y: chest, z: 0},
     'upperArm.L': {x: -arm, y: 0, z: 11}, 'upperArm.R': {x: arm, y: 0, z: -11},
-    'lowerArm.L': {x: -W.elbowBend - Math.max(0, -arm) * .5, y: 0, z: 0}, 'lowerArm.R': {x: -W.elbowBend - Math.max(0, arm) * .5, y: 0, z: 0},
+    chest: {x: lean, y: 0, z: 0},
+    'lowerArm.L': {x: -elbow - Math.max(0, -arm) * .5, y: 0, z: 0}, 'lowerArm.R': {x: -elbow - Math.max(0, arm) * .5, y: 0, z: 0},
     neck: {x: 0, y: -turn * .55, z: 0}, head: {x: 0, y: -turn * .45, z: 0},
    };
   },

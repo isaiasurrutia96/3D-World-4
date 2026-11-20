@@ -394,3 +394,29 @@ Recorded 17 November 2026.
     drop (`hardExtension`, `hardSoftness`, numbers or functions of time), the ankle eases into its limit over its
     last 8° (was 3°; the footplan check now allows for that), the walk demo stops, turns on the spot and walks
     home by way of a spot behind the start so it ends facing the way it began.
+42. Layer 6b, running, built 20 Nov 2026 (in `motion-core/skeleton/walk.js`, `npm run test:run`, 14 checks; the
+    Skeleton page has a "Run" button that uses the game's own movement numbers):
+    (a) The scale problem, in plain words: the game's speeds (walk push up to 3.1 m/s, full run 8.6 m/s) are far
+    beyond what these short legs (0.68 m) can do the real way, so feet that never slide force a very fast, cartoon
+    gait: about 4.7 steps a second at 3.1 m/s, 6.7 at 6.8 m/s and 7.6 flat out, with a long moment in the air in
+    every step (30-45% of the time). Nothing about the game or the avatar was changed for it. The numbers are all
+    in `WALK` (runCadence0, runCadencePer, runReach, runKick, runLaunch, runBob*, runArmSwing, runElbow, runLean,
+    runOn 1.3 / runOff 1.05 m/s for walk <-> run, runAhead) and were found by a search that kept every foot exact.
+    (b) How it works: above runOn (or as soon as he is speeding up so hard that he will be there within a quarter
+    of a second) the feet run on a clock: a foot leaves when its short stance (at most 0.2 m behind the hip) is
+    over, half a stride after the other one, leaves the ground already moving forward (`launch`, `kick`, new in
+    the foot planner), and lands ahead of the hip by the same 0.2 m, placed where the body will be (along its
+    arc on a bend). The body sinks over each standing foot and rises in the air; arms swing wider with the elbow
+    bent about 85°; the chest leans forward (2.2° for each m/s, at most 15°). Balance holds its weight shift in
+    the air and keeps following the planned body height.
+    (c) Results: steady runs at 1.7, 3.1, 4.9 and 6.8 m/s keep every foot within 1 mm in every frame, never
+    slide, never go below the ground; flat out (8.6 m/s) 12.7% of frames are over 1 mm (worst 1.4 mm).
+    (d) Known limits, honest: (1) a hard start from standing (0 to 8.6 m/s in 0.3 s) leaves a foot behind for
+    a moment (worst 0.5 m); tight turns at full speed and a skid and re-start also leave feet off by up to about
+    0.7 m for moments (random sticks at game speed: 20% of frames over 1 mm). (2) Flat out, the thigh swings to
+    about -104° (limit -120°) and the knee snaps straight at landing: joint speed jolts up to about 190° a frame,
+    so the top-speed run looks violent. Steady 3.1 m/s jolts are 12-15°. (3) Between the walk and the run (about
+    1.0-1.7 m/s) the change is eased over 0.35 s but not tuned. (4) Nobody has looked at it yet; it needs the
+    owner's eyes, and the owner may well want the cadence slower and the leaps longer, which means the
+    feet-never-slide rule would have to bend at the top speeds: that is the owner's call.
+

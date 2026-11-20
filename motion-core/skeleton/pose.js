@@ -336,6 +336,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
      if(aheadFeet)wantedY=-Math.min(o.maxLower,o.stance+softPlus(reachNeed(skeleton,skeleton.solve(ahead),aheadFeet,{extension:o.extension}),o.softness));
     }
    }else if(!frameFeet){wantedXZ=[0,0];wantedY=0;}
+   else if(typeof o.height==='function') wantedY=Math.min(0,Math.max(-o.maxLower,o.height(time+o.lookahead))); // (in the air: the weight shift is held, the planned height goes on)
   }
   if(b.releasing){ if(b.releaseStart===undefined)b.releaseStart=time; const u=Math.min(1,(time-b.releaseStart)/Math.max(.05,o.duration)); dropScale=1-u*u*(3-2*u); } else dropScale=1;
   b.follower.retarget(wantedXZ,o.duration,b.releasing);

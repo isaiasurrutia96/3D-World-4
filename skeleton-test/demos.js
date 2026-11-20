@@ -23,6 +23,7 @@
 //                shifts the weight over the planted foot.
 //   ball         the palm centre touches a 3.5 cm ball circling in front of
 //                him and faces its centre.
+//   run          the avatar jogs, runs flat out and slows down, at the game's own speeds (3.1 and 8.6 m/s); then comes home
 //   walk         the avatar walks a scripted route (straight, a wide turn, straight) and walks back to where it
 //                started before stopping; the walker (motion-core/skeleton/walk.js) plans every step.
 //   look         a ball swings from side to side and up and down in front of
@@ -153,6 +154,13 @@ export function createDemos(skeleton, foot = null){
    const ramp = Math.min(1, Math.max(0, (t - .6) / 1.2)), strength = .36 * ramp;
    if(t < .6) return [0, 0];
    const turn = t < 4.5 ? 0 : t < 9 ? (t - 4.5) / 4.5 * Math.PI * .75 : Math.PI * .75; // heading, radians
+   return [Math.sin(turn) * strength, Math.cos(turn) * strength];
+  },
+  /** The stick for the run demo: stand, a jog, a run, the fastest run with a wide turn, then slowing right down (the game's own speeds). */
+  runStick(t){
+   if(t < .6) return [0, 0];
+   const strength = t < 3.5 ? .3 + .25 * Math.min(1, (t - .6) / 1) : t < 7 ? .55 + .45 * Math.min(1, (t - 3.5) / 1.5) : t < 10 ? 1 : t < 12 ? .55 : .3;
+   const turn = t < 5 ? 0 : t < 9 ? (t - 5) / 4 * Math.PI * .6 : Math.PI * .6;
    return [Math.sin(turn) * strength, Math.cos(turn) * strength];
   },
   ball(t){
@@ -298,6 +306,13 @@ export function createDemoRunner(player, D, rests){
    attachWalker(player, walker);
    walk = {ctl, walker, t: 0, homing: false};
   },
+  run(){
+   // The game's own movement numbers (a gentle push walks up to 3.1 m/s, a full push runs at 8.6).
+   const ctl = createMoveController(MOVE_TUNING);
+   const walker = createWalker(D.skeleton, {start: {x: 0, z: 0, facing: 0}});
+   attachWalker(player, walker);
+   walk = {ctl, walker, t: 0, homing: false, kind: 'run'};
+  },
   look(){ const look = createLook(D.skeleton); player.setLayer('look', {fn: t => look.sample(t, D.look(t).target).pose, fade: .5}); },
  };
  const end = {
@@ -320,6 +335,7 @@ export function createDemoRunner(player, D, rests){
     ball(){ player.clearGoals('ball', .6); },
   look(){ player.clearLayer('look', .8); },
   walk(){ if(walk) walk.homing = true; },
+  run(){ if(walk) walk.homing = true; },
  };
  return {
   /**
@@ -330,7 +346,7 @@ export function createDemoRunner(player, D, rests){
    if(!walk) return;
    walk.t += dt;
    let wish;
-   if(!walk.homing) wish = D.walkStick(walk.t);
+   if(!walk.homing) wish = walk.kind === 'run' ? D.runStick(walk.t) : D.walkStick(walk.t);
    else {
     // Stopped by the owner: come to a halt first, then walk back to the start by way of a spot a little behind it, so it
     // arrives facing the way it began; feet square again, it lets go.
@@ -343,7 +359,7 @@ export function createDemoRunner(player, D, rests){
     const way = Math.atan2(dx, dz) * 180 / Math.PI, goals = walk.walker.goals(walk.walker.time);
     const off = ['L', 'R'].map(f => Math.abs(((goals['foot.' + f].heading - way) % 360 + 540) % 360 - 180));
     if(d > .15 && Math.max(...off) < 25) walk.facingHome = true;
-    const push = Math.min(.34, .12 + d * .3);
+    const push = walk.kind === 'run' ? Math.min(.5, .12 + d * .1) : Math.min(.34, .12 + d * .3);
     wish = !walk.halted ? [0, 0] : d <= .05 ? [0, 0] : !walk.facingHome ? [dx / d * .03, dz / d * .03] : [dx / d * push, dz / d * push];
     walk.square = walk.leg === 2 && d <= .05 && Math.max(...['L', 'R'].map(f => Math.abs(((goals['foot.' + f].heading) % 360 + 540) % 360 - 180))) < 21;
    }
