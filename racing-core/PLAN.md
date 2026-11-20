@@ -535,3 +535,30 @@ sources. Rebuild the racing bundle against the updated shared imports and
 repeat the captured-before/current input regressions plus the full 12-group
 driving browser suite: all PASS, zero page errors. The follow-up checkpoint
 contains the rebuilt racing HTML and its updated browser-evidence SHA256.
+
+
+## 20 November — approved driving checkpoint 1
+
+The owner approved the current driving feel and said “okay save checkpoint.”
+Save this exact baseline before considering further tire or handling upgrades.
+This checkpoint does not retune physics, controls, cameras, kart dimensions,
+tracks or avatar/motion code. Further upgrades remain unstarted.
+
+- Frozen page: https://isaiasurrutia96.github.io/3D-World-4/checkpoints/driving-1/?drive=1&handling=fast
+- Approved source: `0e488a2888268c702339e0ca1c054f092507933e`;
+  source tag `driving-source-1-2026-11-20`.
+- Archive tag: `driving-checkpoint-1-2026-11-20`. The existing checkpoint
+  build preserves and verifies all archived files before publishing.
+- The viewer is the exact verified published bundle, SHA256
+  `3c55cffd851756971534c67068baaba134f9be2f4259da577dca0dc37655dc6f`.
+- Profile `fast`, physics fingerprint `kart-v1-025c0e69a91e540a`: 180 mph,
+  boost 220 mph, approved progressive steering and input-release fixes.
+- Preserved the release's numerical/browser evidence and a JSON snapshot of
+  every driving profile. Source hashes plus the source tag allow selective
+  racing restoration while preserving Claude's newer movement work.
+- Exact frozen viewer smoke checks PASS on desktop and both phone orientations:
+  all four tracks, keyboard/native simultaneous touch, separate Right release
+  while Gas stays held, Reset, FPV, disabled driving zoom and no overflow.
+  Zero page errors; no application asset requests outside the checkpoint.
+- Integrity checks PASS, including rejection of a modified settings file in a
+  temporary copy. All pre-existing checkpoints remain unchanged.
