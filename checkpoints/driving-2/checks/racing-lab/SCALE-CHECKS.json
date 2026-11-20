@@ -1,0 +1,36 @@
+{
+  "layer": "Kart scale and render authority",
+  "summary": {
+    "passed": 2,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "The accepted kart fits its collision envelope at the unchanged meter scale",
+      "input": "Measure the actual accepted kart geometry and wheel transforms in Node.",
+      "expected": "2.39m width,2.87m length,2.03m wheelbase,.38m wheel radius; conservative capsule differs by<4cm width/<20cm length.",
+      "measured": {
+        "width": 2.390000002384186,
+        "length": 2.8700000047683716,
+        "height": 1.117823040210773,
+        "wheelbase": 2.0300000000000002,
+        "wheelRadius": 0.38,
+        "collisionWidth": 2.36,
+        "collisionLength": 3.0599999999999996
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "The driving renderer reads checked state and does not integrate a second movement system",
+      "input": "Inspect the production driving adapter after browser behavior checks.",
+      "expected": "Only test.advance owns simulation; interpolated sample drives presentation; Fast default and zoom lock preserved.",
+      "measured": {
+        "simulationAuthority": "checked controller",
+        "renderSource": "interpolated sample",
+        "defaultProfile": "fast",
+        "drivingZoom": false
+      },
+      "status": "PASS"
+    }
+  ]
+}

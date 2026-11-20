@@ -1,0 +1,57 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "rule": "Profile link selects checked tuning with unchanged controls/zoom.",
+      "input": {
+        "profile": "fast"
+      },
+      "measured": {
+        "profile": "fast",
+        "cap": 180.00000000000003,
+        "debug": false,
+        "zoom": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Profile link selects checked tuning with unchanged controls/zoom.",
+      "input": {
+        "profile": "balanced"
+      },
+      "measured": {
+        "profile": "balanced",
+        "cap": 150,
+        "debug": false,
+        "zoom": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Profile link selects checked tuning with unchanged controls/zoom.",
+      "input": {
+        "profile": "original"
+      },
+      "measured": {
+        "profile": "original",
+        "cap": 120,
+        "debug": false,
+        "zoom": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Actual page preserves continuous trigger values, including LT-only and disconnect.",
+      "input": "RT25%→100%,LT50%,disconnect;30manual60Hz frames at each stage.",
+      "measured": {
+        "quarter": 0.2105263157894737,
+        "full": 1,
+        "brake": 0.4736842105263158,
+        "disconnectedThrottle": 0,
+        "disconnectedBrake": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "pageErrors": []
+}

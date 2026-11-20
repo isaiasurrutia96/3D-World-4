@@ -1,0 +1,65 @@
+{
+  "section": "1V",
+  "summary": {
+    "passed": 5,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "original: preview reproduces original track appearance",
+      "input": "Construct reference-mode track meshes in Node; compare every mesh signature with the independently captured original.",
+      "expected": "Position/normal/color buffers, instance matrices/colors, transforms and materials all match exactly.",
+      "measured": {
+        "meshCount": 16,
+        "expectedMeshCount": 16,
+        "allSignatureFieldsMatch": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "skyline: preview reproduces original track appearance",
+      "input": "Construct reference-mode track meshes in Node; compare every mesh signature with the independently captured original.",
+      "expected": "Position/normal/color buffers, instance matrices/colors, transforms and materials all match exactly.",
+      "measured": {
+        "meshCount": 9,
+        "expectedMeshCount": 9,
+        "allSignatureFieldsMatch": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "suzuka: preview reproduces original track appearance",
+      "input": "Construct reference-mode track meshes in Node; compare every mesh signature with the independently captured original.",
+      "expected": "Position/normal/color buffers, instance matrices/colors, transforms and materials all match exactly.",
+      "measured": {
+        "meshCount": 9,
+        "expectedMeshCount": 9,
+        "allSignatureFieldsMatch": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "winding: preview reproduces original track appearance",
+      "input": "Construct reference-mode track meshes in Node; compare every mesh signature with the independently captured original.",
+      "expected": "Position/normal/color buffers, instance matrices/colors, transforms and materials all match exactly.",
+      "measured": {
+        "meshCount": 9,
+        "expectedMeshCount": 9,
+        "allSignatureFieldsMatch": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Approved default is a closed static track",
+      "input": "Construct Original Circuit with default options and create its view.",
+      "expected": "Zero seam gap; weld enabled; 7 static track mesh objects; no connector or actors.",
+      "measured": {
+        "seamGap": 0,
+        "seamMode": "weld",
+        "accessBridge": false,
+        "meshCount": 7
+      },
+      "status": "PASS"
+    }
+  ]
+}

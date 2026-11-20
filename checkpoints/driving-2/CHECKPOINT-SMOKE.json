@@ -1,0 +1,168 @@
+{
+  "passed": true,
+  "viewer_sha256": "9b0f7f6046eeb7b3ce54daad6a711914d9161a74fd88100205c68b958b5d6d23",
+  "browsers": {
+    "chromium": {
+      "passed": true,
+      "engine": "chromium",
+      "viewer_sha256": "9b0f7f6046eeb7b3ce54daad6a711914d9161a74fd88100205c68b958b5d6d23",
+      "source": "97d2ba878f4a4ba4f0cbcb02b3613f97fc1e8b73",
+      "rule": "The exact frozen approved viewer loads independently, preserves the upgrade and input recovery, and supports desktop and phone layouts.",
+      "rows": [
+        {
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "input": "Keyboard driving and foreground recovery",
+          "measured": {
+            "fingerprint": "kart-v1-c0934f4555677c0e",
+            "topMPH": 180.00000000000003,
+            "boostMPH": 220,
+            "gripLow": 29.68,
+            "gripHigh": 103.88000000000001,
+            "settling": 0.135,
+            "zoom": false,
+            "webglLost": false,
+            "fpv": 76,
+            "overflow": false,
+            "manifestStart": "./?drive=1",
+            "gas": false,
+            "right": false
+          },
+          "status": "PASS"
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "input": "Native simultaneous Gas/Right, separate release, first-touch resume and actual driving",
+          "measured": {
+            "fingerprint": "kart-v1-c0934f4555677c0e",
+            "topMPH": 180.00000000000003,
+            "boostMPH": 220,
+            "gripLow": 29.68,
+            "gripHigh": 103.88000000000001,
+            "settling": 0.135,
+            "zoom": false,
+            "webglLost": false,
+            "fpv": 76,
+            "overflow": false,
+            "manifestStart": "./?drive=1",
+            "gas": false,
+            "right": false
+          },
+          "status": "PASS"
+        },
+        {
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "input": "Native simultaneous Gas/Right, separate release, first-touch resume and actual driving",
+          "measured": {
+            "fingerprint": "kart-v1-c0934f4555677c0e",
+            "topMPH": 180.00000000000003,
+            "boostMPH": 220,
+            "gripLow": 29.68,
+            "gripHigh": 103.88000000000001,
+            "settling": 0.135,
+            "zoom": false,
+            "webglLost": false,
+            "fpv": 76,
+            "overflow": false,
+            "manifestStart": "./?drive=1",
+            "gas": false,
+            "right": false
+          },
+          "status": "PASS"
+        }
+      ],
+      "pageErrors": [],
+      "applicationRequestsOutsideCheckpoint": [],
+      "limitation": "WebKit exercises native individual taps plus keyboard-held driving; Chromium additionally exercises simultaneous held touch. Actual installed iOS OS task switching remains a device-level check."
+    },
+    "webkit": {
+      "passed": true,
+      "engine": "webkit",
+      "viewer_sha256": "9b0f7f6046eeb7b3ce54daad6a711914d9161a74fd88100205c68b958b5d6d23",
+      "source": "97d2ba878f4a4ba4f0cbcb02b3613f97fc1e8b73",
+      "rule": "The exact frozen approved viewer loads independently, preserves the upgrade and input recovery, and supports desktop and phone layouts.",
+      "rows": [
+        {
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "input": "Keyboard driving and foreground recovery",
+          "measured": {
+            "fingerprint": "kart-v1-c0934f4555677c0e",
+            "topMPH": 180.00000000000003,
+            "boostMPH": 220,
+            "gripLow": 29.68,
+            "gripHigh": 103.88000000000001,
+            "settling": 0.135,
+            "zoom": false,
+            "webglLost": false,
+            "fpv": 76,
+            "overflow": false,
+            "manifestStart": "./?drive=1",
+            "gas": false,
+            "right": false
+          },
+          "status": "PASS"
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "input": "Native Gas/Right activation and first-touch resume; keyboard-held driving",
+          "measured": {
+            "fingerprint": "kart-v1-c0934f4555677c0e",
+            "topMPH": 180.00000000000003,
+            "boostMPH": 220,
+            "gripLow": 29.68,
+            "gripHigh": 103.88000000000001,
+            "settling": 0.135,
+            "zoom": false,
+            "webglLost": false,
+            "fpv": 76,
+            "overflow": false,
+            "manifestStart": "./?drive=1",
+            "gas": false,
+            "right": false
+          },
+          "status": "PASS"
+        },
+        {
+          "viewport": {
+            "width": 844,
+            "height": 390
+          },
+          "input": "Native Gas/Right activation and first-touch resume; keyboard-held driving",
+          "measured": {
+            "fingerprint": "kart-v1-c0934f4555677c0e",
+            "topMPH": 180.00000000000003,
+            "boostMPH": 220,
+            "gripLow": 29.68,
+            "gripHigh": 103.88000000000001,
+            "settling": 0.135,
+            "zoom": false,
+            "webglLost": false,
+            "fpv": 76,
+            "overflow": false,
+            "manifestStart": "./?drive=1",
+            "gas": false,
+            "right": false
+          },
+          "status": "PASS"
+        }
+      ],
+      "pageErrors": [],
+      "applicationRequestsOutsideCheckpoint": [],
+      "limitation": "WebKit exercises native individual taps plus keyboard-held driving; Chromium additionally exercises simultaneous held touch. Actual installed iOS OS task switching remains a device-level check."
+    }
+  }
+}
