@@ -528,3 +528,10 @@ The standard 12-group driving browser suite, profile/analog browser checks and
 layout, avatar assets, motion-core and frozen source files have no changes.
 The final mouse guard also clears a missed primary-button release and prevents
 secondary clicks from driving; its explicit Node event-sequence check passes.
+
+Incoming collaboration: preserve and rebase onto Claude's movement changes
+through 0685fc5. This racing pass does not modify those motion/hand/skeleton
+sources. Rebuild the racing bundle against the updated shared imports and
+repeat the captured-before/current input regressions plus the full 12-group
+driving browser suite: all PASS, zero page errors. The follow-up checkpoint
+contains the rebuilt racing HTML and its updated browser-evidence SHA256.

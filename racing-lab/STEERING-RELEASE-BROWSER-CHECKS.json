@@ -2,7 +2,7 @@
   "passed": true,
   "baselineCompared": true,
   "baselineSHA256": "9fa60f130f0c9ffdf05d1f829e05d89695785945e0a994830131678aa1fc1478",
-  "currentSHA256": "fbd0e1856741e6d1b3222461931a9aa49c0103e11970d348231e0b114da085ef",
+  "currentSHA256": "b3bc9b9a3d23e511dcf8d2414a5bcf0f46c54f627a2ca6101a056d71d7c22a29",
   "checks": [
     {
       "rule": "The captured old version reproduces stuck Right after an interrupted release.",
