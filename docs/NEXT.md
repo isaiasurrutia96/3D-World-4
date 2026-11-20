@@ -316,8 +316,22 @@ Recorded 17 November 2026.
     available. The step demo check now has three runs (stopped while rising,
     after landing on the block, while stepping back down); the old check only
     watched the first second and could not see the landing. All stay under 0.9°.
-    Still open for layer 4: heel-to-toe foot roll (heel strike, flat, heel lift,
-    toe-off, with the toes bending) needed for walking; the swinging foot's
+    (e) `npm run test:robust` (10 checks, about 10 s): many random but
+    repeatable cases. 28,900 random leg frames (no invalid numbers; any bent leg
+    lands within 0.1 mm; no snap anywhere away from the edge of the leg's reach,
+    and it catches 5 snaps in the solver from before item (a)), 75 random
+    sequences of foot steps over random ground (finite, never more than 3 mm
+    into the ground, no jumps in position or speed, exact landing), and 60
+    random balanced stances. The one thing a plain IK cannot do is stay smooth
+    at the very edge of the leg's reach (fully straight, a singular pose): that
+    is avoided by keeping the legs slightly bent (the balance stance), not by
+    the solver.
+    Decided to postpone: heel-to-toe foot roll (heel strike, flat, heel lift,
+    toe-off). A rigid pivot makes the ankle's speed jump when the pitch passes
+    through zero, and a real gait gets around that through the body's own
+    motion, so it is built together with walking; the foot mesh also does not
+    bend at the toes yet.
+    Still open for layer 4: the swinging foot's
     angle can still be up to about 9° off when its ankle hits its limit (12 of
     108 frames in the step); the palm solver (arms, layer 5) has the same
     kink-at-a-limit problem the leg had.
