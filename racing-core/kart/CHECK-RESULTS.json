@@ -3047,7 +3047,10 @@
       "expected": "Strict compilation passes and runtime imports no DOM/Three/old racing or motion modules.",
       "measured": {
         "typecheck": "PASS",
-        "runtimeImports": 0
+        "runtimeImports": [
+          "./dynamics.ts",
+          "./profiles.ts"
+        ]
       },
       "status": "PASS"
     }

@@ -260,3 +260,120 @@ Checks:
 Stop after delivering the verified fixed driving link. The owner's positive handling feedback is recorded; no tuning or later racing layer is authorized by this fix.
 
 Final regression verification: full shared Motion Lab browser suite and full driving browser suite pass, including all four tracks, actual device-input paths, FPV, mobile layout, Reset and video scrolling. No page errors. The new camera checks are included in every racing build so this exact bridge/boost regression stays covered.
+
+## 20 November — authorized driving-feel code pass
+
+The owner's final **Go** authorizes a complete code-first tuning pass, with
+rigorous checks between internal layers and no further per-layer approval
+stops. Preserve the approved original handling as a selectable numeric
+baseline. Do not redesign the tracks/kart/controls, add opponents or race
+rules, edit motion-core, or change frozen checkpoints. Camera/audio/art
+feedback remains a later layer. End with a checked driving test. The owner
+subsequently authorized kart resizing if the measurements justify it.
+
+### Foundation and compatibility decisions
+
+- Existing baseline: 167 racing checks pass, including all four frame rates.
+- Extend the current 120 Hz controller and contact/support pipeline. One
+  controller owns each kart; drawing remains read-only. The original profile
+  retains exact pinned-reference results.
+- SI units and immutable, validated per-kart profiles. All tunable curves,
+  response times, assist strengths and caps live in one data layer. Give each
+  profile a stable version/fingerprint for future saved runs/custom karts.
+- Keep original kart dimensions, wheelbase and contact shape. The owner's
+  800 kg / 5.5 m / 3.6 m-wheelbase figures describe a full F1-sized vehicle;
+  applying those would conflict with the accepted kart/model/track scale.
+  Use the acceleration, grip and braking performance targets as references;
+  do not invent suspension or a second wheel simulation.
+- The old 24 m/s² acceleration is substantially stronger than the provided
+  F1 low-speed target. Reference-like acceleration will soften takeoff.
+  Legacy coast drag is also already strong: about 24.5 m/s² at 180 mph.
+  Build smooth, explicit lift-off assistance instead of blindly stacking
+  additional drag onto it or double-counting drag under full throttle.
+- Initial comparison profiles: **balanced 150/200 mph**, **fast 180/220 mph**,
+  and the original 120/180 mph. Fast is the new hands-on default because the
+  owner preferred the existing 180 mph drive. A 220 mph reference profile is
+  for checking the supplied 0–62/124/186 performance targets.
+- Preserve boost as an externally granted two-second command, not inventory.
+  Starting nitro charges are unresolved in the game cards; approved mystery
+  boxes/items remain future work. No automatic drifting or free boosts.
+- Honor approved racing/time-trial/free-roam/custom-kart rules through clean
+  input, numeric surface, profile and state boundaries. No fixed global
+  terrain numbers or world/animation implementation is part of this pass.
+- Preserve E/D/S/F and arrows, Space brake, Shift boost, J/L/I/K camera,
+  current phone buttons/layout and the shared controller/camera path.
+  Driving-only adapters may retain real analog pedal/steering strength.
+
+### Internal layers and required evidence
+
+1. Configuration/math: validate/copy/freeze profiles, smooth curves and
+   steering limits; prove fingerprints and invalid-input rejection.
+2. Longitudinal response: acceleration targets, lift-off/brake ramps,
+   reverse/no-creep behavior, boost/cap recovery and no double drag.
+3. Direction and grip: persistent world momentum, bounded yaw response,
+   shared traction ellipse, progressive slip and separate traction assist.
+   Prove circles of known radius, release/countersteer and dissipative coast.
+4. Contacts/support/integration: repeat rails/pairs at 220 mph, overpass and
+   bridge/camera regressions, reset/pause/rollback, profile isolation and
+   input/controller mappings. No position integration in presentation.
+5. Existing driving-page wiring and browser/device regression, then final
+   measured results and working link. No screenshot approvals needed.
+
+Every new numerical check records a plain rule, scripted input, measured
+result and PASS/FAIL at 30/60/120/144 FPS where timing is relevant. Repeat
+earlier suites after each relevant change; no claim that numbers certify
+subjective feel or every possible future race.
+
+
+### Implemented foundation and measured tuning decisions
+
+- The accepted model measures 2.87 m long by 2.39 m wide, with a 2.03 m
+  wheelbase and 0.38 m wheel radius; its existing capsule remains a suitable
+  conservative envelope. No resize is needed. Full F1 car dimensions/mass
+  remain reference context, not misleading unused physics parameters.
+- Configuration, longitudinal response, force-limited direction/grip and
+  contact/support integration are implemented in the existing controller.
+  Original numerical reference behavior passes unchanged. Tuned nested state
+  is immutable and profile-specific; invalid adapters roll back a whole frame.
+- The raw supplied brake curve stops 200–60 mph in 1.95 s / 103.90 m, outside
+  the requested 2–3 s / 120–170 m window. Arcade service strength is 0.8 and
+  measures 2.433 s / 129.15 m; the reference keeps strength 1.0.
+- The reference reaches 62/124/186 mph in 2.642/5.208/10.575 s, including
+  pedal response. Fast is capped at 180 mph normally and 220 mph under boost;
+  Balanced remains available at 150/200 mph. Original stays at 120/180 mph.
+- No powered drag is counted twice. Lift-off assistance builds gradually,
+  brakes can override boost, and expiry reduces overspeed gradually.
+- Pure tire ellipse checks and velocity-derived known-radius turns pass.
+  Five-minute seeded tests, 220 mph thin-wall/pair contacts, stopped-wall
+  escape, all four complete courses, reset/rollback and profile isolation pass
+  at every required display rate. Course completion states/ticks match exactly;
+  course fixtures have zero contacts/falls and less than 1.16 m lateral error.
+- The driving-only adapter restores analog RT/LT values without changing the
+  shared input module. Current keys, all precise phone button placements,
+  track/view controls, FPV, zoom lock and scrollable video section are retained.
+  The optional diagnostic panel is off by default. No visual redesign.
+- API, measured conflicts, tuning and game-card compatibility are documented in
+  `kart/TUNING.md`. New headless checks run through the existing CI entry point;
+  new pedal/scale checks run in the racing build. Browser reports cover actual
+  page wiring and emulated device inputs, not physical controller certification.
+- Approval status: this code pass is authorized and internally checked. Driving
+  feel still awaits the owner's hands-on test; no tuning is claimed final.
+  Race rules, opponents, items, ghosts and avatar animation remain deferred.
+
+### Final verification before delivery
+
+- 206 distinct racing-core checks pass: the 205-check full suite plus the
+  added world-rotation/translation invariance check (and its entire 28-check
+  tuning suite rerun). Deployment runs the full updated entry point again.
+- 25 racing build-time checks pass, including pure analog pedal and measured
+  model/collision-scale checks. Full production build exits successfully.
+- Approved official-avatar regression: 8 PASS. No changes in motion-core,
+  frozen checkpoints, avatar geometry or the shared Motion Lab/input module.
+- Full driving browser suite: 12 scenario groups PASS, including all seven
+  touch layouts and all current controls. Profile/analog browser checks PASS.
+  Bridge camera replay: 16 cases PASS (180/220 mph, four display rates, two
+  mobile orientations), zero page/WebGL errors or blank/obstructed renders.
+- Reports contain plain rules, scripted inputs, expected and measured numbers,
+  and PASS/FAIL. Additional adapter/scale reports: racing-lab/PEDAL-CHECKS.json
+  and SCALE-CHECKS.json. Hardware controller/subjective feel review remains
+  the owner's test; this pass does not implement a later racing/game layer.

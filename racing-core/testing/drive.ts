@@ -2,6 +2,8 @@
 import { createTrack, TRACK_IDS } from '../track/index.ts';
 import type { TrackId } from '../track/index.ts';
 import { createKartController, normalizeKartInput } from '../kart/index.ts';
+import { resolveKartProfile } from '../kart/profiles.ts';
+import type { KartProfile, ProfileId } from '../kart/profiles.ts';
 import type { KartInput, InputScript } from '../kart/index.ts';
 import { trackBarriers } from '../contacts/index.ts';
 import { createKartContactResolver } from '../contacts/karts.ts';
@@ -13,6 +15,8 @@ export type DrivingSample = Readonly<{
     look?: Readonly<{
         x?: number;
     }>;
+    pedals?: Readonly<{ throttle: number; brake: number }>;
+    analogBrake?: number;
     actions?: Readonly<{
         left?: boolean;
         right?: boolean;
@@ -34,15 +38,20 @@ export function readDrivingInput(sample: DrivingSample, cameraYaw: number): Kart
         steer = Math.sign(steer);
     }
     const a = sample.actions ?? {};
-    if (a.gas || a.reverse)
+    if (sample.pedals) {
+        if (![sample.pedals.throttle, sample.pedals.brake].every(Number.isFinite)) throw new TypeError('Pedals must be finite');
+        throttle = clean(sample.pedals.throttle);
+    }
+    if (!sample.pedals && (a.gas || a.reverse))
         throttle = a.reverse ? -1 : 1;
     if (a.left || a.right)
         steer = Number(Boolean(a.right)) - Number(Boolean(a.left));
-    return normalizeKartInput({ throttle, steer, brake: Boolean(a.brake || a.gas && a.reverse), boost: Boolean(a.boost) });
+    return normalizeKartInput({ throttle, steer, brake: sample.pedals ? false : Boolean(a.brake || a.gas && a.reverse), ...(sample.pedals ? { brakeAmount: sample.pedals.brake } : sample.analogBrake !== undefined ? { brakeAmount: sample.analogBrake } : {}), boost: Boolean(a.boost) });
 }
-export function createDrivingTest(initialId: TrackId = 'original') {
+export function createDrivingTest(initialId: TrackId = 'original', options: Readonly<{ profile?: ProfileId | KartProfile }> = {}) {
+    const profile = resolveKartProfile(options.profile);
     let track = createTrack(initialId), controller = makeController(track);
-    function makeController(t: ReturnType<typeof createTrack>) { return createKartController({ world: t, initial: { ...t.start.point, yaw: t.start.yaw }, resolveMotion: createKartContactResolver(trackBarriers(t)) }); }
+    function makeController(t: ReturnType<typeof createTrack>) { return createKartController({ profile, world: t, initial: { ...t.start.point, yaw: t.start.yaw }, resolveMotion: createKartContactResolver(trackBarriers(t)) }); }
     return Object.freeze({
         get track() { return track; }, get controller() { return controller; },
         advance(seconds: number, input: KartInput | InputScript = {}) { return controller.advance(seconds, input); },
@@ -50,6 +59,6 @@ export function createDrivingTest(initialId: TrackId = 'original') {
         cancelInput() { controller.cancelInput(); },
         reset() { return controller.reset({ ...track.start.point, yaw: track.start.yaw }); },
         selectTrack(id: TrackId) { const next = createTrack(id), nextController = makeController(next); track = next; controller = nextController; return controller.state; },
-        getState() { return Object.freeze({ trackId: track.id, karts: 1, avatars: 0, opponents: 0, physics: controller.state, clock: controller.clock, pose: controller.sample() }); },
+        getState() { return Object.freeze({ trackId: track.id, profile: profile.id, fingerprint: profile.fingerprint, karts: 1, avatars: 0, opponents: 0, physics: controller.state, clock: controller.clock, pose: controller.sample() }); },
     });
 }

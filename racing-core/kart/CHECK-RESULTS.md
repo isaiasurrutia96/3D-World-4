@@ -351,7 +351,7 @@ Headless Node checks. Source: LetsGo Racing `573664e824a04234240a24dfc2eae2273e3
 
 - Rule: Strict compilation passes and runtime imports no DOM/Three/old racing or motion modules.
 - Scripted input: `{"script":"Compile kart/tsconfig.json with ES2022 only and no ambient types; inspect imports."}`
-- Measured result: `{"typecheck":"PASS","runtimeImports":0}`
+- Measured result: `{"typecheck":"PASS","runtimeImports":["./dynamics.ts","./profiles.ts"]}`
 - **PASS**
 
 Stop for owner review. Contacts and a playable/visual kart test are not implemented or approved by this report.
