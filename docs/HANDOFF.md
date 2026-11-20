@@ -18,6 +18,7 @@ same guide and handoff rather than introducing another set of rules.
 4. The owner calls the whole testing page the Test Lab; the Skeleton page is one section of it.
 5. (20 November 2026, new session) Keep the **rigid ragdoll avatar** with visible ball joints; it is central to the owner's goal of throws and shots that look unlike other games. Refine it rather than replace it, and do not switch to a skinned mesh. Claude does the avatar work.
 6. Plan: chunk 1 is a phone-ready **Game** copy at about 29,000 triangles (Game button in the Skeleton section; made by `LIGHT_MODE=game node scripts/build-light-avatar.mjs`, approved files untouched). Chunk 2, after owner review, is refinement one item at a time: ball joint sizes, palm ball position, nose.
+7. (20 November 2026) Chunk 1 approved on the owner's phone: Game on High quality is very smooth. The first-tap jolt was the graphics chip idling while nothing was drawn; Light and Game now draw every frame. **Game is the working avatar for movement work; Detailed is only for checking looks** (it is too heavy for a phone to move smoothly).
 
 ## Open items from the owner (for when each movement returns)
 A nose (small triangle) on the head for the look pose; the ball in the middle of the palm (the palm point sits about 12 cm too far toward the wrist); sit with hands grabbing the knees; whether the squat should spread the legs first.
