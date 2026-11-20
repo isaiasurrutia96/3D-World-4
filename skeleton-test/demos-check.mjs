@@ -81,11 +81,11 @@ const jolt=frames=>{let m=0,rm=0;for(let i=2;i<frames.length;i++){const a=frames
  for(let k=0;k<3;k++)rm=Math.max(rm,Math.abs(a.root.position[k]-2*b.root.position[k]+c.root.position[k]));}return {m,rm};};
 const restPose=S.restPose(),atRest=p=>Math.max(...allBones.flatMap(n=>AX.map(k=>Math.abs(p[n][k]-(n.startsWith('clavicle')?p[n][k]:restPose[n][k])))),...p.root.position.map(Math.abs));
 const planted=(frames,sides)=>{let e=0;for(const f of frames){const q=S.solve(f.pose);for(const sd of sides){const h=q.get('foot.'+sd).head,s0=S.bones[S.index.get('foot.'+sd)].head;e=Math.max(e,Math.hypot(h.x-s0[0],h.y-s0[1],h.z-s0[2]));}}return e;};
-for(const [name,on,off,sides] of [['sit',2.4,2.4,['L','R']],['squat',3,1.6,['L','R']],['step',1.0,2.8,['R']],['ball',2,1.2,[]]]){
+for(const [name,on,off,sides,label] of [['sit',2.4,2.4,['L','R']],['squat',3,1.6,['L','R']],['step',1.0,2.8,['R'],'step (stopped while the foot is rising)'],['step',1.9,2.8,['R'],'step (stopped after landing on the block)'],['step',3.5,2.8,['R'],'step (stopped while stepping back down)'],['ball',2,1.2,[]]]){
  const {frames,P}=simulate(name,on,off),j=jolt(frames),end=atRest(frames.at(-1).pose),feet=sides.length?planted(frames,sides):0;
- check(`${name}: starts and stops smoothly (no jolt), feet stay planted, and ends exactly at rest with nothing left running`,j.m<1&&j.rm<.0015&&end<1e-6&&feet<5e-4&&!P.layers.length&&!P.goalLayers.length,
+ check(`${label??name}: starts and stops smoothly (no jolt), feet stay planted, and ends exactly at rest with nothing left running`,j.m<1&&j.rm<.0015&&end<1e-6&&feet<5e-4&&!P.layers.length&&!P.goalLayers.length,
   `largest change in joint speed between frames ${j.m.toFixed(2)}°; in body speed ${(j.rm*1000).toFixed(2)} mm; ${sides.length?'planted foot off by '+mm(feet)+'; ':''}back at rest within ${end.toExponential(1)}`,
-  name==='step'?'the lifted foot\'s ankle still swings quickly while the knee is high (foot planning layer, next); the weight shift is done by the balance layer':'');
+  '');
 }
 
 console.table(R);const fail=R.some(r=>r.result==='FAIL'),known=R.filter(r=>r.result==='KNOWN').length;console.log(fail?'FAIL':'PASS: every reaching demo does exactly what it shows'+(known?` (${known} known item${known>1?'s':''} listed above, planned)`:'')+'.');process.exit(fail?1:0);

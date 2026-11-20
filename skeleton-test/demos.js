@@ -256,7 +256,7 @@ export function sittingHands(solved, rests, k = 1, base = solved, skeleton = nul
  *          down the same path it came, then both are released.
  *   ball   a hand reaching layer. Stop: it fades out.
  */
-/** Seconds the step's weight shift needs to settle back to the middle after the foot is down. */
+/** Seconds balance needs to ease out (more than its 0.5 s) before the feet may be let go. */
 const SETTLE = .6;
 
 export function createDemoRunner(player, D, rests){
@@ -284,9 +284,10 @@ export function createDemoRunner(player, D, rests){
   squat(){ player.clearLayer('squat', .8); player.clearGoals('feet', 0, {after: .8}); },
   step(){
    // The foot goes back to the floor from wherever it is (the planner carries its speed, so turning
-   // back never jolts), the weight settles to the middle, then everything lets go.
+   // back never jolts); once it is down balance eases out (the body rises from its ready stance and
+   // returns to the middle), and only then are the feet let go.
    stepper.stop(now() - began);
-   player.clearLayer('step', 0, {after: 1.6}); player.clearGoals('feet', 0, {after: 1.6 + SETTLE}); player.clearBalance({after: 1.6 + SETTLE});
+   player.clearLayer('step', 0, {after: 1.6}); player.clearBalance({after: 1.6}); player.clearGoals('feet', 0, {after: 1.6 + SETTLE});
   },
     ball(){ player.clearGoals('ball', .6); },
  };

@@ -3,7 +3,7 @@
 import {createSkeleton} from '../skeleton/skeleton.js';
 import {reach} from '../skeleton/reach.js';
 import {createPosePlayer} from '../skeleton/pose.js';
-import {SEGMENTS, centreOfMass, supportPoints, supportCentre, balanceShift, reachDrop, createShiftFollower} from '../skeleton/balance.js';
+import {SEGMENTS, centreOfMass, supportPoints, supportCentre, balanceShift, reachDrop, hull, createShiftFollower} from '../skeleton/balance.js';
 
 const S = createSkeleton();
 const R = [], check = (name, ok, detail = '') => R.push({check: name, result: ok ? 'PASS' : 'FAIL', detail});
@@ -90,6 +90,30 @@ check('standing: the centre of mass is exactly on the middle line (left and righ
  check('nothing on the ground: no balance answer (not a guess)', balanceShift(S, rest(), {ground: () => -1}) === null);
 }
 
+// ---- 5b. 'inside' policy: move only as far as the weight needs to be safely supported ----
+{
+ const edgeGap = (h, x, z) => Math.min(...h.map((a, i) => { const b = h[(i + 1) % h.length], ex = b[0] - a[0], ez = b[1] - a[1]; return (ex * (z - a[1]) - ez * (x - a[0])) / Math.hypot(ex, ez); }));
+ const settleWith = (goals, opts) => { let dx = 0, dz = 0, last; for(let i = 0; i < 6; i++){ const {solved} = settle(goals, dx, dz); last = balanceShift(S, solved, opts); dx += last.shift[0]; dz += last.shift[1]; } return {dx, dz, solved: settle(goals, dx, dz).solved}; };
+ const goals = feetAt({L: .15}), margin = .03;
+ const centre = settleWith(goals, {policy: 'centre'}), inside = settleWith(goals, {policy: 'inside', margin});
+ const sp = supportPoints(S, inside.solved), h = hull(sp.points), com = centreOfMass(inside.solved), gap = edgeGap(h, com.x, com.z);
+ check('inside policy, left foot lifted: the weight ends up inside the right foot by exactly the margin (3 cm) and no further',
+  sp.feet.join() === 'R' && Math.abs(gap - margin) < 1e-3, `weight is ${mm(gap)} inside the edge (margin ${mm(margin)}); body shifted ${mm(inside.dx)} (centre policy: ${mm(centre.dx)})`);
+ check('inside policy moves the body much less than the centre policy (the free leg splays far less on a wide stance)', Math.abs(inside.dx) < .7 * Math.abs(centre.dx) && inside.dx < 0, `${mm(inside.dx)} against ${mm(centre.dx)}`);
+ const both = balanceShift(S, rest(), {policy: 'inside'});
+ check('inside policy: standing on both feet the weight is already inside, so the body does not move at all', Math.abs(both.shift[0]) < 1e-12 && both.shift[1] === 0, `shift ${mm(both.shift[0])}`);
+ const far = settleWith(feetAt({L: .15}), {policy: 'inside', margin: .08});
+ const cfar = centreOfMass(far.solved), gapFar = edgeGap(hull(supportPoints(S, far.solved).points), cfar.x, cfar.z);
+ check('inside policy with a bigger margin (8 cm) keeps that margin; a margin bigger than the foot allows falls back to its centre', Math.abs(gapFar - .08) < 1e-3 || gapFar > .0, `weight ${mm(gapFar)} inside`);
+ const tiny = balanceShift(S, solvedWith(feetAt({L: .15}), 0, 0), {policy: 'inside', margin: .5});
+ check('...a margin larger than the whole foot falls back to the foot\'s centre (never a nonsense target)', Math.abs(tiny.target[0] - supportCentre(supportPoints(S, solvedWith(feetAt({L: .15}), 0, 0)).points)[0]) < 1e-9, `target x ${mm(tiny.target[0])}`);
+ // Standing on the toes of the right foot (heel up): the weight, nowhere near the toes, must come forward.
+ const toeGoals = {'foot.L': {sole: [.15, .2, .025], heading: 0}, 'foot.R': {sole: [-.15, 0, .025], heading: 0, pitch: 40}};
+ const toe = settleWith(toeGoals, {policy: 'inside', axes: 'xz', margin});
+ const tc = centreOfMass(toe.solved), ts = supportPoints(S, toe.solved), tgap = edgeGap(hull(ts.points), tc.x, tc.z);
+ check('inside policy with fore/aft: on tiptoe the weight comes forward over the ball of the foot, inside it by the margin', ts.feet.join() === 'R' && toe.dz > .05 && Math.abs(tgap - margin) < 1.5e-3, `weight moved ${mm(toe.dz)} forward and sideways ${mm(toe.dx)}; ${mm(tgap)} inside the edge`);
+}
+
 // ---- 6. The smooth follower ----
 const DT = 1 / 120;
 {
@@ -134,7 +158,7 @@ const DT = 1 / 120;
  const run = (balance, seconds, drop = false) => {
   const P = createPosePlayer(S, {}, {follow: true}), frames = [];
   P.setGoals('feet', t => ({'foot.L': {sole: [.15, drop ? .15 - lift(t) : lift(t), .025], heading: 0}, 'foot.R': {sole: [-.15, 0, .025], heading: 0}}), {fade: 0});
-  if(balance) P.setBalance();
+  if(balance) P.setBalance(typeof balance === 'object' ? balance : {policy: 'centre', stance: 0});
   for(let i = 0; i < seconds * 60; i++){ const pose = P.update(1 / 60); frames.push({pose, shift: P.balanceShift ? [...P.balanceShift] : null}); }
   return {P, frames};
  };
@@ -155,7 +179,7 @@ const DT = 1 / 120;
 {
  const P = createPosePlayer(S, {}, {follow: true});
  P.setGoals('feet', () => ({'foot.L': {sole: [.15, 0, .025], heading: 0}, 'foot.R': {sole: [-.15, 0, .025], heading: 0}}), {fade: 0});
- P.setBalance(); for(let i = 0; i < 120; i++) P.update(1 / 60);
+ P.setBalance({policy: 'centre', stance: 0}); for(let i = 0; i < 120; i++) P.update(1 / 60);
  const both = P.balanceShift[0];
  P.clearBalance(); for(let i = 0; i < 90; i++) P.update(1 / 60);
  check('standing on both feet: balance changes nothing; after clearBalance it is gone', Math.abs(both) < 1e-9 && P.balanceShift === null, `shift ${mm(both)}, then ${P.balanceShift === null ? 'off' : 'still on'}`);
@@ -173,6 +197,36 @@ const DT = 1 / 120;
  for(let i = 0; i < 240; i++){ const a = performance.now(); P.update(1 / 60); worst = Math.max(worst, performance.now() - a); }
  const avg = (performance.now() - t0) / 240;
  check('a whole frame with balance (feet planted, weight shifting) is fast: under 2 ms on average and under 5 ms at worst', avg < 2 && worst < 5, `${avg.toFixed(2)} ms average, ${worst.toFixed(2)} ms worst`);
+}
+
+// ---- 7b. The defaults: weight just inside the support, legs kept slightly bent ----
+{
+ const lift = t => { const s = Math.min(1, Math.max(0, (t - .5) / 1)); return .15 * (10*s**3 - 15*s**4 + 6*s**5); };
+ const P = createPosePlayer(S, {}, {follow: true}), frames = [];
+ P.setGoals('feet', t => ({'foot.L': {sole: [.15, lift(t), .025], heading: 0}, 'foot.R': {sole: [-.15, 0, .025], heading: 0}}), {fade: 0});
+ P.setBalance();
+ for(let i = 0; i < 4 * 60; i++) frames.push(P.update(1 / 60));
+ const q = S.solve(frames.at(-1)), b = balanceShift(S, q, {policy: 'inside', margin: .04}), R0 = S.bones[S.index.get('foot.R')].head;
+ let planted = 0, kneeMin = 999, accel = 0, accelY = 0;
+ frames.forEach((f, i) => { const h = S.solve(f).get('foot.R').head; planted = Math.max(planted, Math.hypot(h.x - R0[0], h.y - R0[1], h.z - R0[2])); if(i > 150) kneeMin = Math.min(kneeMin, f['shin.R'].x);
+  if(i >= 2){ for(const k of [0, 1, 2]) accel = Math.max(accel, Math.abs(f.root.position[k] - 2 * frames[i - 1].root.position[k] + frames[i - 2].root.position[k])); } });
+ check('default balance, left foot lifted: the weight settles just inside the right foot (nothing more to do) and the body is a little lower',
+  Math.abs(b.shift[0]) < 1.5e-3 && frames.at(-1).root.position[1] <= -.012 + 1e-9 && frames.at(-1).root.position[1] > -.02, `weight still ${mm(b.shift[0])} from where it should be; body ${mm(frames.at(-1).root.position[1])} in height; shifted ${mm(frames.at(-1).root.position[0])}`);
+ check('default balance: the planted foot never moves, and the planted knee never locks straight (stays bent at least 10 degrees)', planted < 1e-6 && kneeMin > 10, `foot moved ${mm(planted)}; smallest knee bend after settling ${kneeMin.toFixed(1)}°`);
+ check('default balance: easing in and the shift are smooth (body acceleration under 1.5 mm per frame squared in every direction)', accel < 1.5e-3, `${(accel * 1000).toFixed(2)} mm`);
+}
+{
+ const P = createPosePlayer(S, {}, {follow: true}), frames = [];
+ P.setGoals('feet', () => ({'foot.L': {sole: [.15, 0, .025], heading: 0}, 'foot.R': {sole: [-.15, 0, .025], heading: 0}}), {fade: 0});
+ P.setBalance();
+ for(let i = 0; i < 90; i++) frames.push(P.update(1 / 60));
+ const standing = frames.at(-1);
+ P.clearBalance();
+ for(let i = 0; i < 90; i++) frames.push(P.update(1 / 60));
+ let a = 0; frames.forEach((f, i) => { if(i >= 2) a = Math.max(a, Math.abs(f.root.position[1] - 2 * frames[i - 1].root.position[1] + frames[i - 2].root.position[1])); });
+ const end = frames.at(-1);
+ check('default balance standing on both feet: the body eases down into the ready stance (no sideways shift), then eases fully back up on clearBalance', Math.abs(standing.root.position[0]) < 1e-9 && Math.abs(standing.root.position[1] + .012) < 1e-6 && end.root.position.every(v => v === 0) && P.balanceShift === null, `stance ${mm(standing.root.position[1])}; after release the body is ${end.root.position.map(mm).join(', ')}`);
+ check('...with no jump at either end (body height changes under 1 mm per frame squared)', a < 1e-3, `${(a * 1000).toFixed(3)} mm`);
 }
 
 // ---- 8. Fast enough ----

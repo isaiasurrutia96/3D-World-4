@@ -83,7 +83,7 @@ export function supportPoints(skeleton, solved, {ground = () => 0, tolerance = .
 }
 
 /** Convex hull (x, z) of points, counter-clockwise (monotone chain). */
-function hull(pts){
+export function hull(pts){
  const p = pts.map(v => [v.x, v.z]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
  if(p.length < 3) return p;
  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
@@ -105,22 +105,57 @@ export function supportCentre(points){
 }
 
 /**
+ * The range of x that stays at least `margin` inside the support area at a given z (null when the area is
+ * too small to leave that margin). The hull points go counter-clockwise, so the inside is to the left of each edge.
+ */
+function insideRange(h, z, margin){
+ let lo = -Infinity, hi = Infinity;
+ for(let i = 0; i < h.length; i++){
+  const [x0, z0] = h[i], [x1, z1] = h[(i + 1) % h.length], ex = x1 - x0, ez = z1 - z0, len = Math.hypot(ex, ez);
+  if(len < 1e-9) continue;
+  // inside: (ex * (z - z0) - ez * (x - x0)) / len >= margin  →  a * x >= b
+  const a = -ez / len, b = margin - (ex * (z - z0)) / len - (ez * x0) / len;
+  if(Math.abs(a) < 1e-12){ if(0 < b - 1e-12) return null; continue; }
+  if(a > 0) lo = Math.max(lo, b / a); else hi = Math.min(hi, b / a);
+ }
+ return lo <= hi + 1e-12 && Number.isFinite(lo) && Number.isFinite(hi) ? [lo, hi] : null;
+}
+
+/**
  * Where the centre of mass should be, and how far the body must move to get it there.
  *   axes   'x' (sideways only, default) or 'xz'
- *   fore   with 'xz', where fore/aft the weight sits on the support area: 0 heels, 1 toes
+ *   policy 'centre' (default): aim at the middle of the support area, the most stable place.
+ *          'inside': move only as far as needed to bring the weight at least `margin` metres
+ *          inside the support area (not at all if it is already there): less swaying, far less
+ *          leg splay on a wide stance, and still safely supported.
+ *   margin (with 'inside', default 3 cm)
+ *   fore   with 'xz' and 'centre', where fore/aft the weight sits on the support area: 0 heels, 1 toes
  *   ground, tolerance   see supportPoints
  * Returns {shift: [dx, dz], com, target: [x, z], feet} or null when nothing carries weight.
  */
-export function balanceShift(skeleton, solved, {axes = 'x', fore = .5, ground, tolerance} = {}){
+export function balanceShift(skeleton, solved, {axes = 'x', fore = .5, policy = 'centre', margin = .03, ground, tolerance} = {}){
  const {points, feet} = supportPoints(skeleton, solved, {ground, tolerance});
  if(!points.length) return null;
  const com = centreOfMass(solved), [cx, cz] = supportCentre(points);
- let tz = cz;
+ let tx = cx, tz = cz;
  if(axes === 'xz'){
   const zs = points.map(p => p.z), lo = Math.min(...zs), hi = Math.max(...zs);
   tz = hi - lo > 1e-6 ? lo + fore * (hi - lo) : cz;
  }
- return {shift: [cx - com.x, axes === 'xz' ? tz - com.z : 0], com, target: [cx, tz], feet};
+ if(policy === 'inside'){
+  const h = hull(points), zs = h.map(p => p[1]), zlo = Math.min(...zs), zhi = Math.max(...zs);
+  if(axes === 'xz'){
+   // Move the weight to the nearest point that is inside by the margin (sideways first, then fore/aft).
+   const zi = Math.min(zhi - margin, Math.max(zlo + margin, com.z)), zRange = zhi - zlo > 2 * margin;
+   const zTarget = zRange ? zi : cz, r = insideRange(h, zTarget, margin);
+   tz = zTarget; tx = r ? Math.min(r[1], Math.max(r[0], com.x)) : cx;
+  } else {
+   const zAt = Math.min(zhi, Math.max(zlo, com.z)), r = insideRange(h, zAt, margin);
+   tx = r ? Math.min(r[1], Math.max(r[0], com.x)) : cx;
+   tz = com.z;
+  }
+ }
+ return {shift: [tx - com.x, axes === 'xz' ? tz - com.z : 0], com, target: [tx, tz], feet};
 }
 
 /**

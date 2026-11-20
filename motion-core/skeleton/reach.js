@@ -4,7 +4,9 @@
 // there. This is what lets feet land exactly on the ground (flat floor,
 // steps, slopes) without sliding or sinking, and hands grab things.
 //
-//   reach(skeleton, pose, goals, options) → {pose, error, facing}
+//   reach(skeleton, pose, goals, options) → {pose, error, facing, pointing, tilt}
+//     tilt: for a foot, how many degrees its real angle is from the angle asked for
+//     (heading, pitch, roll) — more than 0 when the ankle's own limit holds it back
 //
 //   goals: { 'hand.L': {position:[x,y,z], pole?}, 'foot.R': {sole:[x,y,z], pole?, flat?}, ... }
 //     position  where the wrist / ankle joint should be (avatar or world space,
@@ -207,12 +209,24 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
  //    need is zero (the foot decides exactly where the knee points).
  if(kind === 'foot' && (goal.flat ?? !!goal.sole) !== false && (goal.flat ?? !!goal.sole) !== 0){
   const twistNeeded = r => new Euler().setFromQuaternion(r.W2a.clone().invert().multiply(footQ).multiply(E.restQ), E.order).y;
+  const spinStart = best.spin;
   let s0 = best.spin, f0 = twistNeeded(best), s1 = s0 + .01, f1 = twistNeeded(attempt(best.mid.x, s1));
   for(let k = 0; k < 12 && Math.abs(f1) > 1e-10 && Math.abs(f1 - f0) > 1e-14; k++){
    const s2 = s1 - f1 * (s1 - s0) / (f1 - f0); s0 = s1; f0 = f1; s1 = s2; f1 = twistNeeded(attempt(best.mid.x, s1));
   }
-  const tuned = attempt(best.mid.x, s1);
-  if(tuned.err <= best.err + 1e-6 && Math.abs(f1) < Math.abs(twistNeeded(best))) best = tuned;
+  const tuned = attempt(best.mid.x, s1), twistBefore = Math.abs(twistNeeded(best));
+  if(tuned.err <= best.err + 1e-6 && Math.abs(f1) < twistBefore) best = tuned;
+  else if(Math.abs(f1) < 1e-6 && twistBefore > 1e-6){
+   // The exact answer is blocked by a joint limit (e.g. the hip cannot twist that far). Go as far
+   // toward it as the limit allows, rather than not at all: all-or-nothing makes the leg snap at the
+   // moment the limit starts to bind.
+   const spinAt = u => spinStart + u * (s1 - spinStart), ok = u => attempt(best.mid.x, spinAt(u)).err <= best.err + 1e-6;
+   let lo = 0, hi = 1;
+   for(let u = .05; u <= 1 + 1e-9; u += .05){ if(ok(Math.min(1, u))) lo = Math.min(1, u); else { hi = Math.min(1, u); break; } }
+   if(lo < 1 && hi > lo) for(let k = 0; k < 30; k++){ const mid = (lo + hi) / 2; if(ok(mid)) lo = mid; else hi = mid; }
+   const part = attempt(best.mid.x, spinAt(lo));
+   if(part.err <= best.err + 1e-6 && Math.abs(twistNeeded(part)) < twistBefore) best = part;
+  }
   // flat may be a number 0..1: how flat (1) versus the ankle's own angle in the pose (0),
   // e.g. fully flat near the ground and relaxed while the foot is in the air.
   const flatAngles = anglesFor(E, best.W2a.clone().invert().multiply(footQ), end, SOFT), w = typeof goal.flat === 'number' ? Math.min(1, Math.max(0, goal.flat)) : 1;
@@ -350,7 +364,7 @@ export function reach(skeleton, pose, goals, {follow = false, passes = 2, clavic
   for(const [b, a] of Object.entries(g)){ const own = {...skeleton.bones[skeleton.index.get(b)].rest, ...(out[b] ?? {})}; out[b] = {x: own.x + (a.x - own.x) * w, y: own.y + (a.y - own.y) * w, z: own.z + (a.z - own.z) * w}; }
  }
  // How far each goal is from being reached (metres), and for palms how far off the facing is (degrees).
- const solved = skeleton.solve(out), error = {}, facing = {}, pointing = {};
+ const solved = skeleton.solve(out), error = {}, facing = {}, pointing = {}, tilt = {};
  for(const [name, goal] of Object.entries(goals)){
   const b = solved.get(name), side = name.split('.')[1];
   if(palmGoals[name]){
@@ -363,6 +377,14 @@ export function reach(skeleton, pose, goals, {follow = false, passes = 2, clavic
   const t = new Vector3(...(goal.position ?? goal.sole));
   if(!goal.position) t.y += skeleton.bones[skeleton.index.get(name)].head[1];
   error[name] = b.head.distanceTo(t);
+  // A foot set flat on a spot: how far its real angle is from the one asked for.
+  if(goal.sole && (goal.flat === undefined || goal.flat === true || goal.flat === 1)){
+   const yaw = goal.heading !== undefined ? goal.heading * RAD : new Euler().setFromQuaternion(solved.get('pelvis').rotation, 'YXZ').y;
+   const want = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yaw);
+   if(goal.pitch) want.multiply(new Quaternion().setFromAxisAngle(X, goal.pitch * RAD));
+   if(goal.roll) want.multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), goal.roll * RAD));
+   tilt[name] = 2 * Math.acos(Math.min(1, Math.abs(b.rotation.dot(want)))) / RAD;
+  }
  }
- return {pose: out, error, facing, pointing};
+ return {pose: out, error, facing, pointing, tilt};
 }

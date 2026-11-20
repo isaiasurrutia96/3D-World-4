@@ -58,9 +58,22 @@ check('feet stay planted and flat while the body squats 32 cm (hips back), sways
   const upGot=new T.Vector3(0,1,0).applyQuaternion(f.rotation),upWant=new T.Vector3(0,1,0).applyQuaternion(want),fwdGot=new T.Vector3(0,0,1).applyQuaternion(f.rotation),fwdWant=new T.Vector3(0,0,1).applyQuaternion(want);
   worst=Math.max(worst,upGot.angleTo(upWant)/Math.PI*180,fwdGot.angleTo(fwdWant)/Math.PI*180);landErr=Math.max(landErr,r.error['foot.L']);}
  check('a foot can hang toes-down or tilted: its up and forward directions follow heading, pitch and roll exactly, and the ankle still lands exactly',worst<.01&&landErr<5e-4,`directions off by at most ${worst.toFixed(4)}°; ankle off by ${mm(landErr)}`);
+// When a joint limit starts to bind while a leg moves (the hip cannot twist any further), the leg must slow
+// into it, not snap to another answer. The foot of a high step, body shifted over the other foot, is moved smoothly
+// between two real frames of such a step (the old solver snapped the thigh by 10° when its twist reached the limit).
+{const A={root:[-0.1699,-0.03267,0.11933],sole:[0.15,0.32269,0.54593],pitch:8.262},B={root:[-0.16935,-0.02975,0.10323],sole:[0.15,0.40601,0.49407],pitch:11.337};
+ let prev=null,prevQ=null,worstStep=0,errMax=0,twistEnd=0;
+ for(let i=0;i<=200;i++){const u=i/200,root={position:A.root.map((v,k)=>lerp(v,B.root[k],u)),rotation:{x:0,y:0,z:0}},goal={sole:A.sole.map((v,k)=>lerp(v,B.sole[k],u)),heading:0,pitch:lerp(A.pitch,B.pitch,u)};
+  const r=reach(S,{...(prev??{}),root},{'foot.L':goal},{continuing:true});prev=r.pose;errMax=Math.max(errMax,r.error['foot.L']);twistEnd=r.pose['thigh.L'].y;
+  const q=S.solve({...r.pose,root}).get('thigh.L').rotation.clone();if(prevQ)worstStep=Math.max(worstStep,q.angleTo(prevQ)/Math.PI*180);prevQ=q;}
+ check('when a joint limit starts to bind mid-step, the leg slows into it instead of snapping to another answer (no turn over 1° in one small step; the foot still lands)',worstStep<1&&errMax<5e-4&&Math.abs(twistEnd+40)<.5,`largest turn of the thigh in one step ${worstStep.toFixed(2)}°; thigh twist ends at ${twistEnd.toFixed(1)}° (limit -40°); foot off by ${mm(errMax)}`);
+}
  const flat=reach(S,{},{'foot.L':{sole:[.15,.1,.2],heading:0}}),tilt=reach(S,{},{'foot.L':{sole:[.15,.1,.2],heading:0,pitch:0,roll:0}});
  let same=0;for(const k of AX)same=Math.max(same,Math.abs(flat.pose['foot.L'][k]-tilt.pose['foot.L'][k]));
  check('no pitch or roll means exactly the old flat foot',same<1e-9,`ankle angles differ by ${same.toExponential(1)}°`);
+{const ok=reach(S,{},{'foot.L':{sole:[.15,.05,.2],heading:10,pitch:15}}),stuck=reach(S,{},{'foot.L':{sole:[.15,.05,.2],heading:0,pitch:85}});
+ check('a foot reports how far its real angle is from the one asked for: about 0 when it can take it, large when the ankle limit stops it',ok.tilt['foot.L']<.05&&stuck.tilt['foot.L']>10,`reachable pitch 15°: off by ${ok.tilt['foot.L'].toFixed(3)}°; pitch 85° (past the ankle): off by ${stuck.tilt['foot.L'].toFixed(1)}°`);
+}
 }
 // 4. Out of reach: the limb points straight at the target and stops at full length (no snapping, no errors).
 const far=reach(S,{},{'hand.L':{position:[2,1.3,.5]}}),fs=S.solve(far.pose),sh=fs.get('upperArm.L').head,wr=fs.get('hand.L').head;

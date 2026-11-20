@@ -224,8 +224,8 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
  let frameFeet=null,feetNow=null;
  /**
   * Pose at a time: the base, then the layers, then the reaching layers.
-  * shift: [x, z] metres to move the whole body before the reaching layers (balance), lowering it
-  * just enough that planted feet can still reach. commit=false: a trial, nothing is remembered.
+  * shift: [x, z, y?] metres to move the whole body before the reaching layers (balance; y is the ready stance, a
+  * crouch), lowering it further just enough that planted feet can still reach. commit=false: a trial, nothing is remembered.
   */
  function poseAt(at,{shift=null,commit=true}={}){
   let pose=fromChannels(base(at).pose);
@@ -242,7 +242,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   if(follow)pose=shoulderFollow(skeleton,pose);
   if(shift){
    // Balance: move the whole body, lowered just enough that the planted feet (as last asked) can still reach.
-   const r=pose.root??ROOT0(),moved={...pose,root:{...r,position:[r.position[0]+shift[0],r.position[1],r.position[2]+shift[1]]}};
+   const r=pose.root??ROOT0(),moved={...pose,root:{...r,position:[r.position[0]+shift[0],r.position[1]+(shift[2]??0),r.position[2]+shift[1]]}};
    const drop=feetNow?reachDrop(skeleton,skeleton.solve(moved),feetNow):0;
    pose.root={...moved.root,position:[moved.root.position[0],moved.root.position[1]-drop,moved.root.position[2]]};
   }
@@ -270,12 +270,18 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   return {...skeleton.clampPose(pose),root:pose.root};
  }
 
+ // Options for setBalance (all optional): policy 'inside' (default: move the weight just inside the support area,
+ // `margin` 4 cm in) or 'centre' (all the way to its middle); axes 'x' (default) or 'xz'; stance (default 12 mm:
+ // the legs stay slightly bent, like an athlete's, so a leg is never run to fully straight where the knee would
+ // snap); duration (seconds the weight takes to shift, default 0.5); ground(x, z); tolerance. The stance and the
+ // shift ease in when balance starts and ease out when it ends (clearBalance), so keep the feet goals until
+ // balanceShift is null again.
  // Balance: while planted feet are in the goals, the whole body shifts so its centre of mass sits
  // over the feet that carry weight (balance.js). The shift is a smooth follower, so it never jolts.
  let balance=null;
  function setBalance(options={}){
-  const o={axes:'x',duration:.5,...options};
-  balance={opts:o,follower:balance?.follower??createShiftFollower({duration:o.duration,size:2}),releasing:false};
+  const o={axes:'x',policy:'inside',margin:.04,stance:.012,duration:.5,...options};
+  balance={opts:o,follower:balance?.follower??createShiftFollower({duration:o.duration,size:3}),releasing:false};
  }
  /** Stop balancing: the shift eases back to nothing (after a wait, if asked), then balance is gone. */
  function clearBalance({after=0}={}){ if(!balance)return; if(after>0)balance.clearAt=time+after; else balance.releasing=true; }
@@ -283,25 +289,25 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   const b=balance;
   if(b.clearAt!==undefined&&time>=b.clearAt)b.releasing=true;
   let wanted=b.follower.goal;
-  if(b.releasing)wanted=[0,0];
+  if(b.releasing)wanted=[0,0,0];
   else{
    // Where the body must be for the weight to sit over the support: start from where it was heading,
    // see how far off the weight still is, correct (the legs bend as the body moves, so a move can take
    // a couple of tries; a steady one takes one).
-   let total=[...b.follower.goal],found=false;
+   let total=[b.follower.goal[0],b.follower.goal[1],-b.opts.stance],found=false;
    for(let i=0;i<4;i++){
     const trial=poseAt(time,{shift:total,commit:false});
     if(!frameFeet)break;
     const bs=balanceShift(skeleton,skeleton.solve(trial),b.opts);
     if(!bs)break;
-    found=true;total=[total[0]+bs.shift[0],total[1]+bs.shift[1]];
+    found=true;total=[total[0]+bs.shift[0],total[1]+bs.shift[1],total[2]];
     if(Math.hypot(bs.shift[0],bs.shift[1])<2e-4)break;
    }
-   if(found)wanted=total;else if(!frameFeet)wanted=[0,0];
+   if(found)wanted=total;else if(!frameFeet)wanted=[0,0,0];
   }
   b.follower.retarget(wanted,b.opts.duration,b.releasing);
   const off=b.follower.update(dt);
-  if(b.releasing&&Math.abs(off[0])<1e-9&&Math.abs(off[1])<1e-9&&Math.abs(b.follower.speed[0])<1e-9&&Math.abs(b.follower.speed[1])<1e-9){balance=null;return poseAt(time);}
+  if(b.releasing&&off.every(v=>Math.abs(v)<1e-9)&&b.follower.speed.every(v=>Math.abs(v)<1e-9)){balance=null;return poseAt(time);}
   return poseAt(time,{shift:off});
  }
 
@@ -309,7 +315,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   transitionTo,setLayer,clearLayer,setGoals,clearGoals,setBalance,clearBalance,
   /** Move time forward and return the pose for that moment. */
   update(dt){time+=dt;return balance?balanced(dt):poseAt(time);},
-  /** How far balance has moved the body now: [sideways, fore/aft] metres (or null when off). */
+  /** How far balance has moved the body now: [sideways, fore/aft, height] metres (or null when off). */
   get balanceShift(){return balance?balance.follower.value:null;},
   poseAt,
   get time(){return time;},

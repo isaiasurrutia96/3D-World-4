@@ -179,12 +179,13 @@ export function createFootPlanner(skeleton, {ground = () => 0, soles = null} = {
    };
    // The peak height: clear the highest ground along the way, then raise it until no part of the foot,
    // at any moment of the step, comes closer to the ground than the lift curve asks.
-   let apex = Math.max(from.y.p, ty);
+   let highest = ty;
    for(let i = 0; i <= SAMPLES; i++){
     const u = i / SAMPLES, h = from.heading.p + (heading - from.heading.p) * u;
-    for(const p of worldContacts(side, from.x.p + (tx - from.x.p) * u, 0, from.z.p + (tz - from.z.p) * u, h, 0, 0)) apex = Math.max(apex, ground(p.x, p.z) - p.y);
+    for(const p of worldContacts(side, from.x.p + (tx - from.x.p) * u, 0, from.z.p + (tz - from.z.p) * u, h, 0, 0)) highest = Math.max(highest, ground(p.x, p.z) - p.y);
    }
-   seg.peak.y = apex + o.lift;
+   // Lift above the highest ground on the way; a foot already higher than that (changing a step in the air) does not rise further.
+   seg.peak.y = Math.max(highest + o.lift, from.y.p);
    // Raise the peak until nothing comes closer than asked. How much a raise helps depends on when the
    // closest moment is (late in the descent the foot is already near the end height), so measure it.
    for(let k = 0; k < MAX_RAISE_TRIES; k++){

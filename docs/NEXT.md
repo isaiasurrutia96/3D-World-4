@@ -293,10 +293,31 @@ Recorded 17 November 2026.
     harmless. The reach layer now understands foot `pitch` and `roll`.
     The step demo uses it, and that finished the step: the old known ankle jolt
     is gone (0.9° a frame against a 1° limit; the body ends exactly at rest).
-    Findings to carry into layer 4 (legs and feet): (a) a high lift (over about
-    7 cm above the block) folds the hip past 90°, where the hip's angles are
-    unstable (the hip bone's angle order has a gimbal point at 90°, giving 6° to
-    8° a frame jumps), so keep `lift` modest until the legs layer fixes it;
-    (b) when the ankle reaches its own limit (toes up 36°) the real foot cannot
-    match the planned angle (its toes hang up to 2 cm lower than planned); the
-    planner's clearance is exact whenever the ankle is inside its range.
+    (Its findings were then worked on in layer 4, item 39.)
+39. Layer 4, legs and feet, in progress 20 Nov 2026. Done so far:
+    (a) The leg solver no longer snaps when a joint limit starts to bind: when
+    the hip cannot twist as far as the foot's direction needs, the leg goes as
+    far toward it as the limit allows instead of all or nothing (a thigh snap of
+    10° in one frame became 0.08°; regression test in `test:reach`, which fails
+    on the old solver).
+    (b) `reach` now reports `tilt` for feet: how many degrees the real foot angle
+    is from the one asked for (0 normally; more when the ankle's own limit holds
+    it back).
+    (c) The foot planner no longer adds lift on top of a foot that is already
+    high when a step is changed in the air.
+    (d) Balance defaults changed to what tested best over the whole step cycle:
+    `policy: 'inside'` (move the weight just 4 cm inside the support instead of
+    to its centre: a 94 mm shift instead of 176 mm, so the free leg splays far
+    less) and `stance: 0.012` (the legs stay 12 mm short of straight, like an
+    athlete's, so a leg is never run to fully straight, where the knee angle
+    changes infinitely fast and snapped by 6° to 8° a frame). The stance and the
+    shift ease in and out; keep the feet goals until `balanceShift` is null
+    again after `clearBalance`. `policy: 'centre'` and `stance: 0` are still
+    available. The step demo check now has three runs (stopped while rising,
+    after landing on the block, while stepping back down); the old check only
+    watched the first second and could not see the landing. All stay under 0.9°.
+    Still open for layer 4: heel-to-toe foot roll (heel strike, flat, heel lift,
+    toe-off, with the toes bending) needed for walking; the swinging foot's
+    angle can still be up to about 9° off when its ankle hits its limit (12 of
+    108 frames in the step); the palm solver (arms, layer 5) has the same
+    kink-at-a-limit problem the leg had.
