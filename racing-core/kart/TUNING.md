@@ -16,8 +16,8 @@ the same pipeline. The live driving page explicitly selects `fast` by default.
 | Profile | Normal limit | Boost limit | Purpose |
 | --- | ---: | ---: | --- |
 | original | 120 mph | 180 mph | Accepted LetsGo reference, unchanged numeric traces |
-| balanced | 150 mph | 200 mph | Slower comparison using the new response/grip code |
-| fast | 180 mph | 220 mph | Initial hands-on tuning |
+| balanced | 150 mph | 200 mph | Slower comparison with stronger arcade grip |
+| fast | 180 mph | 220 mph | Owner-requested stronger arcade grip |
 | f1-targets | 98.3 m/s (~220 mph) | same | Headless performance reference |
 
 All computation uses metres, seconds and radians. The HUD converts to mph.
@@ -119,3 +119,27 @@ Manual browser commands: `node racing-lab/tests/driving-browser.mjs`,
 profile links, actual adapter values, phone/desktop layouts, FPV, zoom lock,
 scrolling, cancellation and the original climb at 180/220 mph. Automated checks
 establish these cases; the owner's drive is still needed to judge the feel.
+
+
+## Increased arcade grip after the first drive
+
+The owner approved the overall feel and requested substantially more turning
+ability. Fast, Balanced and custom-profile defaults now use **twice** the
+previous lateral budget: 28/40/56/76/98 m/s² at the existing speed knots. The
+steering limit reads the same curve, so wheel angle and tire capacity increase
+together. This is an explicit arcade choice; the F1 reference curve is kept.
+`PREVIOUS_FAST_PROFILE` retains every setting and the exact fingerprint of the
+first approved Fast setup for numerical comparisons; it is not a new UI mode.
+
+Input build/release is 0.18/0.14 s; yaw response remains finite at 0.10 s with
+a 10 rad/s² bound, and slip settles over 0.14 s. Low-speed wheel lock stays
+30 degrees. Actual velocity-derived turn radii at unchanged speed measure
+132.15→66.07 m at 180 mph and 197.41→98.70 m at 220 mph. Straight acceleration,
+lift, braking, reverse and boost traces match the previous profile tick for tick.
+
+Releasing the brake restores more of the existing shared tire budget to
+turning; the brake command fades rather than snapping the kart's heading or
+adding a grip/speed bonus. A scripted brake→release transition measures the
+real velocity change and the same acceleration ellipse. See `GRIP-CHECKS.json`
+and `.md` for the comparison, release/reversal and transition evidence at all
+four display rates. Subjective handling still needs the owner's next drive.

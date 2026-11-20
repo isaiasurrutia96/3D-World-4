@@ -291,7 +291,7 @@
       "status": "PASS"
     },
     {
-      "rule": "Steering builds in.25s and recentres in.18s without rotating at rest",
+      "rule": "Steering builds and recentres within the configured times without rotating at rest",
       "input": {
         "fps": [
           30,
@@ -305,19 +305,19 @@
       "measured": [
         {
           "fps": 30,
-          "firstYaw": -0.00004807167846260981
+          "firstYaw": -0.0000795795486094896
         },
         {
           "fps": 60,
-          "firstYaw": -0.00004807167846260981
+          "firstYaw": -0.0000795795486094896
         },
         {
           "fps": 120,
-          "firstYaw": -0.00004807167846260981
+          "firstYaw": -0.0000795795486094896
         },
         {
           "fps": 144,
-          "firstYaw": -0.00004807167846260981
+          "firstYaw": -0.0000795795486094896
         }
       ],
       "status": "PASS"
@@ -335,9 +335,9 @@
       },
       "expected": "Equal speed; mirrored X/yaw; independent travel direction; no instant yaw match or numeric oscillation.",
       "measured": {
-        "x": -57.40536832036278,
-        "yaw": -0.49539975043538964,
-        "lateralSpeed": 0.03973861584776728
+        "x": -100.37154772073791,
+        "yaw": -0.9701071984761472,
+        "lateralSpeed": 0.08139626547852785
       },
       "status": "PASS"
     },
@@ -358,21 +358,21 @@
           "radius": 15,
           "mph": 30,
           "required": 11.990685695999998,
-          "measured": 12.094123823843557,
-          "maxSpeedError": 0.057769041549372346
+          "measured": 12.094123823843526,
+          "maxSpeedError": 0.05776904154937412
         },
         {
           "radius": 50,
           "mph": 65,
           "required": 16.8868823552,
-          "measured": 16.936585178984743,
-          "maxSpeedError": 0.042773690853465496
+          "measured": 16.936585178984725,
+          "maxSpeedError": 0.04277369085346905
         },
         {
           "radius": 100,
           "mph": 110,
           "required": 24.181216153599998,
-          "measured": 24.190971964785398,
+          "measured": 24.19097196478539,
           "maxSpeedError": 0.009970244671016815
         },
         {
@@ -380,13 +380,13 @@
           "mph": 160,
           "required": 34.10683931306666,
           "measured": 33.98327159835158,
-          "maxSpeedError": 0.12961600660280226
+          "maxSpeedError": 0.12961600660281647
         },
         {
           "radius": 200,
           "mph": 180,
           "required": 32.3748513792,
-          "measured": 32.24571821360421,
+          "measured": 32.245718213604064,
           "maxSpeedError": 0.16058340683181882
         }
       ],
@@ -405,9 +405,9 @@
       },
       "expected": "Travel curvature remains grip-limited; slip grows over time; body and travel directions separate; same FPS states.",
       "measured": {
-        "maximumSlip": 9.52078814965351,
-        "maximumSideAcceleration": 20.140440674574887,
-        "slipAngle": 1.3452859987164887
+        "maximumSlip": 8.260743194328708,
+        "maximumSideAcceleration": 40.486027861327585,
+        "slipAngle": -1.3854148991797766
       },
       "status": "PASS"
     },
@@ -424,8 +424,8 @@
       },
       "expected": "Applied acceleration ellipse≤1+1e-10 using each tick’s independently recomputed input-speed limits; cannot produce both maxima.",
       "measured": {
-        "maximumEllipse": 1.0000000000000164,
-        "maximumBrakeDuringTurn": 2.8986679664440036
+        "maximumEllipse": 1.000000000000018,
+        "maximumBrakeDuringTurn": 3.073223125439907
       },
       "status": "PASS"
     },
@@ -444,13 +444,13 @@
       "measured": [
         {
           "assistance": 0,
-          "integratedSlip": 334.9713421690093,
-          "endSpeed": 21.1749782207368
+          "integratedSlip": 3.2442319023373383,
+          "endSpeed": 34.57220545942063
         },
         {
           "assistance": 1,
-          "integratedSlip": 321.8442892109634,
-          "endSpeed": 13.23518685940945
+          "integratedSlip": 0.6570600760952832,
+          "endSpeed": 34.48559973690483
         }
       ],
       "status": "PASS"
@@ -468,8 +468,8 @@
       },
       "expected": "Every tick speed² never rises beyond1e-8; exact FPS agreement.",
       "measured": {
-        "maximumEnergyGain": 0,
-        "endSpeed": 49.99877451454266
+        "maximumEnergyGain": 4.547473508864641e-13,
+        "endSpeed": 49.99593930342197
       },
       "status": "PASS"
     },
@@ -545,7 +545,7 @@
       "measured": {
         "maximumGripStep": 0.01891418588263205,
         "final": {
-          "fingerprint": "kart-v1-a86c3ae8d1936d52",
+          "fingerprint": "kart-v1-9addaf0b5acc2976",
           "throttle": 1,
           "brake": 0,
           "lift": 0,
@@ -557,14 +557,14 @@
           "surfaceSpeedMultiplier": 0.7000000000001065,
           "surfaceResistanceMultiplier": 1.999999999999645,
           "longitudinalLimit": 23.94970656407923,
-          "lateralLimit": 23.721673051491486,
+          "lateralLimit": 47.44334610298297,
           "acceleration": 0,
           "brakingG": 0,
           "lateralG": 0,
           "tireSlip": 0,
           "slipAngle": 0,
           "tireUtilization": 0,
-          "steeringLimit": 0.0151765881680328
+          "steeringLimit": 0.03034618834332181
         }
       },
       "status": "PASS"
@@ -641,7 +641,7 @@
         "secondsPerRate": 300,
         "ticksPerRate": 36000,
         "maxSpeedMPH": 220.00000000000006,
-        "maxSlip": 0.3211715572634081
+        "maxSlip": 0.3062974316154493
       },
       "status": "PASS"
     },
@@ -716,12 +716,12 @@
         },
         {
           "id": "suzuka",
-          "speed": 10.01374902013564,
+          "speed": 10.013749020135629,
           "grounded": true
         },
         {
           "id": "winding",
-          "speed": 10.01374902013557,
+          "speed": 10.013749020135606,
           "grounded": true
         }
       ],
@@ -751,9 +751,9 @@
       },
       "expected": "Turns away and resumes movement without tunnelling; same rate state.",
       "measured": {
-        "endX": -8.747269545134472,
-        "endSpeed": 6.2415297768241365,
-        "endYaw": -4.813990941772674
+        "endX": -3.9884597425769344,
+        "endSpeed": 10.650851010536154,
+        "endYaw": -6.6425346488334505
       },
       "status": "PASS"
     },
@@ -770,7 +770,7 @@
       },
       "expected": "World trajectory rotates/translates correctly; speed, slip and steering agree within1e-8, identically across FPS.",
       "measured": {
-        "maximumWorldTransformError": 9.663381206337363e-13
+        "maximumWorldTransformError": 1.7100329565086351e-12
       },
       "status": "PASS"
     }

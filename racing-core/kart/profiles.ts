@@ -50,7 +50,7 @@ const approved = new WeakSet<object>();
 
 // These are performance targets, not a claim that all F1 cars have these
 // specifications. They already include net full-throttle acceleration.
-const defaults: HandlingSettings = {
+const referenceDefaults: HandlingSettings = {
     id: 'fast', label: 'Fast', topSpeed: 180 * MPH, boostSpeed: 220 * MPH,
     reverseSpeed: 5.6, reverseAcceleration: 6,
     acceleration: [[0, 10.8], [28, 10.8], [55.5, 10.8], [56.5, 5.1], [83, 5.1], [95, 1.5], [98.3, 0]],
@@ -68,6 +68,15 @@ const defaults: HandlingSettings = {
     yawResponseSeconds: .12, yawAcceleration: 8, slipResponseSeconds: .18,
     tractionAssistance: .65, surfaceResponseSeconds: .15,
     boostRecoveryDeceleration: 8, boostRecoverySeconds: .20, driveJerk: 120,
+};
+// Arcade cornering deliberately exceeds the reference F1 grip. Changing the
+// shared curve increases both available tire force and the matching wheel
+// angle; increasing the wheel angle alone would just create more sliding.
+const defaults: HandlingSettings = {
+    ...referenceDefaults,
+    cornering: [[0, 28], [15, 28], [30, 40], [45, 56], [60, 76], [75, 98], [140, 98]],
+    steeringRiseSeconds: .18, steeringReleaseSeconds: .14,
+    yawResponseSeconds: .10, yawAcceleration: 10, slipResponseSeconds: .14,
 };
 const curveKeys = ['acceleration', 'boostAcceleration', 'braking', 'cornering', 'liftOff'] as const;
 const unitKeys = ['liftStrength', 'tractionAssistance', 'brakeStrength'] as const;
@@ -122,11 +131,13 @@ export function createHandlingProfile(changes: Partial<HandlingSettings> = {}): 
 }
 export const ORIGINAL_PROFILE: LegacyProfile = Object.freeze({ mode: 'legacy', version: 1, id: 'original', label: 'Original', topSpeed: 120 * MPH, boostSpeed: 180 * MPH, fingerprint: 'letsgo-573664e824a0' });
 approved.add(ORIGINAL_PROFILE);
+// Keep the exact previously approved physics available to numeric regressions.
+export const PREVIOUS_FAST_PROFILE = createHandlingProfile({ ...referenceDefaults, id: 'fast-before-grip', label: 'Fast before increased grip' });
 export const DRIVING_PROFILES = Object.freeze({
     original: ORIGINAL_PROFILE,
     balanced: createHandlingProfile({ id: 'balanced', label: 'Balanced', topSpeed: 150 * MPH, boostSpeed: 200 * MPH }),
     fast: createHandlingProfile(),
-    'f1-targets': createHandlingProfile({ id: 'f1-targets', label: 'F1 performance reference', topSpeed: 98.3, boostSpeed: 98.3, brakeStrength: 1 }),
+    'f1-targets': createHandlingProfile({ ...referenceDefaults, id: 'f1-targets', label: 'F1 performance reference', topSpeed: 98.3, boostSpeed: 98.3, brakeStrength: 1 }),
 });
 export type ProfileId = keyof typeof DRIVING_PROFILES;
 export function resolveKartProfile(value: ProfileId | KartProfile = 'original'): KartProfile {

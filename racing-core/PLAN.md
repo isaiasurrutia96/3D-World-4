@@ -377,3 +377,71 @@ subjective feel or every possible future race.
   and PASS/FAIL. Additional adapter/scale reports: racing-lab/PEDAL-CHECKS.json
   and SCALE-CHECKS.json. Hardware controller/subjective feel review remains
   the owner's test; this pass does not implement a later racing/game layer.
+
+
+## 20 November — more arcade handling after the owner's drive
+
+The owner says the driving feels great, but turns are too realistic and push
+him into railings. **Go** authorizes a focused increase in handling, code first.
+Keep the speed/acceleration/braking/lift/boost settings he just liked, all
+controls and layout, the accepted kart/track scale, and the existing camera.
+
+- Increase lateral grip to twice the previous curve at every speed. Both the
+  tire budget and its matching speed-sensitive wheel angle read this one curve;
+  changing steering lock alone would just request more sliding.
+- Quicker steering build/release: 0.18/0.14 s (previously 0.25/0.18 s).
+  Retain finite body response: yaw response 0.10 s (previously 0.12), bounded
+  yaw acceleration 10 rad/s² (previously 8). Slip recovery 0.14 s (was 0.18).
+- Keep low-speed wheel lock 30°, analog strength, persistent momentum and the
+  shared grip ellipse. No instant yaw changes, snapping, automatic rail
+  avoidance, speed reduction, extra boost or second movement system.
+- The extra grip is deliberate arcade tuning, not a claim of real F1 forces.
+  Fast/Balanced and custom-profile defaults receive it; the original LetsGo
+  and F1 reference profiles retain their previous physics. Preserve the exact
+  approved Fast profile for measured before/after regressions.
+- Check actual turn radius/response, held-turn/slalom scripts, left/right
+  symmetry, release/reversal stability, speed/brake/lift equality, tire-budget
+  invariants and all course/contact/input regressions at 30/60/120/144 FPS.
+  Record plain rules, inputs, measured results and PASS/FAIL before release.
+
+
+The owner additionally asks for releasing the brake to help turning. Pending
+clarification between brake and Gas, follow the literal brake-release request:
+the existing grip ellipse naturally reallocates force from braking to turning.
+The stronger lateral budget gives that transition more authority without a
+second grip bonus. Independent velocity-derived checks cover both Space/LT's
+independent brake and the phone Brake/Reverse adapter: after release, sideways
+force rises by more than 10% versus continuing to hold the brake, fades
+smoothly, and creates no powered acceleration or boost.
+
+### More-handling verification and delivery
+
+- 216/216 complete headless racing checks PASS, including 10 new grip/response
+  comparisons and all prior track, handling, contact and prototype regressions.
+  Exact 30/60/120/144 FPS states remain equal in the timed cases.
+- At actual 180 mph, measured full-steer radius is 132.150→66.073 m; at 220 mph
+  it is 197.414→98.702 m. Speed is equal within 0.1 mph (measured differences
+  far smaller). These are measured travel paths, not wheel-angle claims.
+- Full wheel input: 0.250→0.183 s; release: 0.183→0.142 s on the 120 Hz clock.
+  Repeated direction changes remain smooth and settle to negligible yaw/slip.
+- Every straight-line trajectory, speed, pedal and boost/contact value matches
+  the previous approved Fast trace for 16 s of Gas/lift/brake/reverse/boost.
+- Brake release: measured sideways acceleration at 0.7 s is 48.407 m/s² while
+  holding versus 55.764 m/s² after releasing; lateral grip share 85.90→98.19%.
+  The actual phone Brake/Reverse adapter separately measures 48.827→56.208
+  m/s². Both transitions obey the shared ellipse and create no boost or
+  powered acceleration; braking/response coefficients themselves are preserved.
+- All four full-course fixtures PASS with zero contacts/falls and <1.55 m
+  centerline error. Their completion snapshots/ticks match exactly across FPS.
+- 25 racing build-time checks PASS. Actual driving browser suite PASS: current
+  keys/buttons, seven touch layouts, three emulated controller identities,
+  analog triggers, cancellation, FPV, disabled zoom and scrolling videos.
+  The rendered-wheel assertion now runs while the key is held, so correct
+  faster centering cannot race a post-release assertion.
+- Live profile/analog browser checks and all 16 bridge-camera replay cases PASS
+  at 180/220 mph in both mobile orientations, zero page/WebGL errors.
+- Only handling data, measured checks/reports and this contract/plan change.
+  Kart size, track geometry, renderer/camera/control layout, motion-core,
+  avatar shapes and frozen checkpoints retain the approved version.
+- The owner approved the previous overall feel. This stronger handling is the
+  requested next tuning pass and awaits his next drive, not a later race layer.

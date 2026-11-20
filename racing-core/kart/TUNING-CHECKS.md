@@ -72,13 +72,13 @@ Measured: `[{"input":0.25,"speed":2.433313891499132,"brakeSpeed":35.144758878132
 
 **PASS**
 
-## Steering builds in.25s and recentres in.18s without rotating at rest
+## Steering builds and recentres within the configured times without rotating at rest
 
 Rule: Full normalized wheel input at.25s; zero after.18s; stationary yaw stays fixed; moving yaw changes gradually.
 
 Scripted input: `{"fps":[30,60,120,144],"script":"At rest steer fully for.25s then release for.2s. Separately start10m/s and steer for one tick."}`
 
-Measured: `[{"fps":30,"firstYaw":-0.00004807167846260981},{"fps":60,"firstYaw":-0.00004807167846260981},{"fps":120,"firstYaw":-0.00004807167846260981},{"fps":144,"firstYaw":-0.00004807167846260981}]`
+Measured: `[{"fps":30,"firstYaw":-0.0000795795486094896},{"fps":60,"firstYaw":-0.0000795795486094896},{"fps":120,"firstYaw":-0.0000795795486094896},{"fps":144,"firstYaw":-0.0000795795486094896}]`
 
 **PASS**
 
@@ -88,7 +88,7 @@ Rule: Equal speed; mirrored X/yaw; independent travel direction; no instant yaw 
 
 Scripted input: `{"fps":[30,60,120,144],"script":"At30m/s drive±.35 steering for3s, then countersteer for1s."}`
 
-Measured: `{"x":-57.40536832036278,"yaw":-0.49539975043538964,"lateralSpeed":0.03973861584776728}`
+Measured: `{"x":-100.37154772073791,"yaw":-0.9701071984761472,"lateralSpeed":0.08139626547852785}`
 
 **PASS**
 
@@ -98,7 +98,7 @@ Rule: For feasible commanded wheel angles, measured travel curvature yields side
 
 Scripted input: `{"fps":[30,60,120,144],"script":"Circles15/50/100/150/200m at30/65/110/160/180mph. Maintain target speed with proportional throttle; observe final3s of8s."}`
 
-Measured: `[{"radius":15,"mph":30,"required":11.990685695999998,"measured":12.094123823843557,"maxSpeedError":0.057769041549372346},{"radius":50,"mph":65,"required":16.8868823552,"measured":16.936585178984743,"maxSpeedError":0.042773690853465496},{"radius":100,"mph":110,"required":24.181216153599998,"measured":24.190971964785398,"maxSpeedError":0.009970244671016815},{"radius":150,"mph":160,"required":34.10683931306666,"measured":33.98327159835158,"maxSpeedError":0.12961600660280226},{"radius":200,"mph":180,"required":32.3748513792,"measured":32.24571821360421,"maxSpeedError":0.16058340683181882}]`
+Measured: `[{"radius":15,"mph":30,"required":11.990685695999998,"measured":12.094123823843526,"maxSpeedError":0.05776904154937412},{"radius":50,"mph":65,"required":16.8868823552,"measured":16.936585178984725,"maxSpeedError":0.04277369085346905},{"radius":100,"mph":110,"required":24.181216153599998,"measured":24.19097196478539,"maxSpeedError":0.009970244671016815},{"radius":150,"mph":160,"required":34.10683931306666,"measured":33.98327159835158,"maxSpeedError":0.12961600660281647},{"radius":200,"mph":180,"required":32.3748513792,"measured":32.245718213604064,"maxSpeedError":0.16058340683181882}]`
 
 **PASS**
 
@@ -108,7 +108,7 @@ Rule: Travel curvature remains grip-limited; slip grows over time; body and trav
 
 Scripted input: `{"fps":[30,60,120,144],"script":"At30m/s demand30deg steering with an intentionally uncapped test profile for2s."}`
 
-Measured: `{"maximumSlip":9.52078814965351,"maximumSideAcceleration":20.140440674574887,"slipAngle":1.3452859987164887}`
+Measured: `{"maximumSlip":8.260743194328708,"maximumSideAcceleration":40.486027861327585,"slipAngle":-1.3854148991797766}`
 
 **PASS**
 
@@ -118,7 +118,7 @@ Rule: Applied acceleration ellipse≤1+1e-10 using each tick’s independently r
 
 Scripted input: `{"fps":[30,60,120,144],"script":"Start60m/s, brake and steer hard for2s; recompute ellipse independently each tick."}`
 
-Measured: `{"maximumEllipse":1.0000000000000164,"maximumBrakeDuringTurn":2.8986679664440036}`
+Measured: `{"maximumEllipse":1.000000000000018,"maximumBrakeDuringTurn":3.073223125439907}`
 
 **PASS**
 
@@ -128,7 +128,7 @@ Rule: Same tire limits; assistance reduces excess demand/slip; no automatic drif
 
 Scripted input: `{"fps":[30,60,120,144],"script":"At14m/s hold full throttle/steer for2s, assist0 compared with1."}`
 
-Measured: `[{"assistance":0,"integratedSlip":334.9713421690093,"endSpeed":21.1749782207368},{"assistance":1,"integratedSlip":321.8442892109634,"endSpeed":13.23518685940945}]`
+Measured: `[{"assistance":0,"integratedSlip":3.2442319023373383,"endSpeed":34.57220545942063},{"assistance":1,"integratedSlip":0.6570600760952832,"endSpeed":34.48559973690483}]`
 
 **PASS**
 
@@ -138,7 +138,7 @@ Rule: Every tick speed² never rises beyond1e-8; exact FPS agreement.
 
 Scripted input: `{"fps":[30,60,120,144],"script":"Disable all coast/lift resistance; start50m/s; alternate steering for20s without Gas."}`
 
-Measured: `{"maximumEnergyGain":0,"endSpeed":49.99877451454266}`
+Measured: `{"maximumEnergyGain":4.547473508864641e-13,"endSpeed":49.99593930342197}`
 
 **PASS**
 
@@ -168,7 +168,7 @@ Rule: Multipliers approach supplied values continuously in~.15s; no abrupt speed
 
 Scripted input: `{"fps":[30,60,120,144],"script":"Synthetic surface changes atz=30: grip.65, speed.7,resistance2. Straight and steering runs."}`
 
-Measured: `{"maximumGripStep":0.01891418588263205,"final":{"fingerprint":"kart-v1-a86c3ae8d1936d52","throttle":1,"brake":0,"lift":0,"steerInput":0,"yawRate":0,"driveAcceleration":0,"recoveryDeceleration":0,"gripMultiplier":0.6500000000001244,"surfaceSpeedMultiplier":0.7000000000001065,"surfaceResistanceMultiplier":1.999999999999645,"longitudinalLimit":23.94970656407923,"lateralLimit":23.721673051491486,"acceleration":0,"brakingG":0,"lateralG":0,"tireSlip":0,"slipAngle":0,"tireUtilization":0,"steeringLimit":0.0151765881680328}}`
+Measured: `{"maximumGripStep":0.01891418588263205,"final":{"fingerprint":"kart-v1-9addaf0b5acc2976","throttle":1,"brake":0,"lift":0,"steerInput":0,"yawRate":0,"driveAcceleration":0,"recoveryDeceleration":0,"gripMultiplier":0.6500000000001244,"surfaceSpeedMultiplier":0.7000000000001065,"surfaceResistanceMultiplier":1.999999999999645,"longitudinalLimit":23.94970656407923,"lateralLimit":47.44334610298297,"acceleration":0,"brakingG":0,"lateralG":0,"tireSlip":0,"slipAngle":0,"tireUtilization":0,"steeringLimit":0.03034618834332181}}`
 
 **PASS**
 
@@ -218,7 +218,7 @@ Rule: No nonfinite state or tire limit violation; no speed above220mph; all rate
 
 Scripted input: `{"fps":[30,60,120,144],"script":"Seed0x20261120;2400 input changes, every15ticks;5min per rate."}`
 
-Measured: `{"secondsPerRate":300,"ticksPerRate":36000,"maxSpeedMPH":220.00000000000006,"maxSlip":0.3211715572634081}`
+Measured: `{"secondsPerRate":300,"ticksPerRate":36000,"maxSpeedMPH":220.00000000000006,"maxSlip":0.3062974316154493}`
 
 **PASS**
 
@@ -248,7 +248,7 @@ Rule: One checked kart, stable profile identity, clean clocks; original remains 
 
 Scripted input: `{"fps":[30,60,120,144],"script":"For every track, drive1s, reset, select another track; no race/NPC/avatar construction."}`
 
-Measured: `[{"id":"original","speed":10.013749020135641,"grounded":true},{"id":"skyline","speed":10.013749020135668,"grounded":true},{"id":"suzuka","speed":10.01374902013564,"grounded":true},{"id":"winding","speed":10.01374902013557,"grounded":true}]`
+Measured: `[{"id":"original","speed":10.013749020135641,"grounded":true},{"id":"skyline","speed":10.013749020135668,"grounded":true},{"id":"suzuka","speed":10.013749020135629,"grounded":true},{"id":"winding","speed":10.013749020135606,"grounded":true}]`
 
 **PASS**
 
@@ -268,7 +268,7 @@ Rule: Turns away and resumes movement without tunnelling; same rate state.
 
 Scripted input: `{"fps":[30,60,120,144],"script":"Start touching a wall at90degrees, hold Gas+Right5s."}`
 
-Measured: `{"endX":-8.747269545134472,"endSpeed":6.2415297768241365,"endYaw":-4.813990941772674}`
+Measured: `{"endX":-3.9884597425769344,"endSpeed":10.650851010536154,"endYaw":-6.6425346488334505}`
 
 **PASS**
 
@@ -278,6 +278,6 @@ Rule: World trajectory rotates/translates correctly; speed, slip and steering ag
 
 Scripted input: `{"fps":[30,60,120,144],"script":"Mixed pedals/steering8s; compare origin with offset(1000,-700),yaw1.234radians."}`
 
-Measured: `{"maximumWorldTransformError":9.663381206337363e-13}`
+Measured: `{"maximumWorldTransformError":1.7100329565086351e-12}`
 
 **PASS**

@@ -1,3 +1,4 @@
+import '../kart/grip-check.test.mjs';
 import '../kart/profile-check.test.mjs';
 import '../kart/tuning.test.mjs';
 import '../kart/course-check.test.mjs';

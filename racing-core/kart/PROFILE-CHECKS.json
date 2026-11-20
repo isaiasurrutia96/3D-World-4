@@ -18,12 +18,12 @@
         "balanced": {
           "normal": 150,
           "boost": 200,
-          "fingerprint": "kart-v1-8789d59df531059e"
+          "fingerprint": "kart-v1-39636b26801f80fc"
         },
         "fast": {
           "normal": 180.00000000000003,
           "boost": 220,
-          "fingerprint": "kart-v1-a86c3ae8d1936d52"
+          "fingerprint": "kart-v1-9addaf0b5acc2976"
         },
         "f1-targets": {
           "normal": 219.89083750894775,
@@ -48,9 +48,9 @@
       "input": "Same settings with different labels/ids; change a curve value by one tiny amount.",
       "expected": "Cosmetic renaming keeps identity; any numeric tuning change produces a new identity.",
       "measured": {
-        "a": "kart-v1-6984a2b8a0219d62",
-        "b": "kart-v1-6984a2b8a0219d62",
-        "c": "kart-v1-363e9dce4dbf0ba7"
+        "a": "kart-v1-55e2caeaa1c5fcca",
+        "b": "kart-v1-55e2caeaa1c5fcca",
+        "c": "kart-v1-f6c0f640762c17c7"
       },
       "status": "PASS"
     },
@@ -90,23 +90,23 @@
           },
           {
             "speed": 15,
-            "angleDegrees": 24.088621799362404
+            "angleDegrees": 25.897886049184933
           },
           {
             "speed": 25,
-            "angleDegrees": 3.4283526564274105
+            "angleDegrees": 6.832330210151897
           },
           {
             "speed": 45,
-            "angleDegrees": 1.6078208500474493
+            "angleDegrees": 3.2131134824789918
           },
           {
             "speed": 80,
-            "angleDegrees": 0.8904300554617911
+            "angleDegrees": 1.7804302039895998
           },
           {
             "speed": 98.3,
-            "angleDegrees": 0.5897831696053006
+            "angleDegrees": 1.1794413795507486
           }
         ],
         "corners": [

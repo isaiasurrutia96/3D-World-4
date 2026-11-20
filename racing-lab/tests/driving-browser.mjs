@@ -56,10 +56,12 @@ try {
     results.push('Actual S/Left keys turn left; F/Right keys turn right in the chase-camera image.');
     await p.keyboard.down('ArrowUp');
     await p.keyboard.down('ArrowLeft');
-    await p.waitForFunction(() => drivingLab.test.controller.state.steering < -.01 && drivingLab.test.controller.state.speed > 3);
+    // Check rendered wheels while the steering input is still held. The
+    // quicker centering must not race an assertion made after key release.
+    await p.waitForFunction(() => drivingLab.test.controller.state.steering < -.01 && drivingLab.test.controller.state.speed > 3 && drivingLab.kart.wheels.filter(w => w.front).every(w => Math.abs(w.node.rotation.y) > .001));
+    assert(await p.evaluate(() => drivingLab.kart.wheels.filter(w => w.front).every(w => Math.abs(w.node.rotation.y) > .001)));
     await p.keyboard.up('ArrowLeft');
     await p.keyboard.up('ArrowUp');
-    assert(await p.evaluate(() => drivingLab.kart.wheels.filter(w => w.front).every(w => Math.abs(w.node.rotation.y) > .001)));
     await reset();
     await p.keyboard.down('ArrowUp');
     await p.keyboard.down('Shift');
