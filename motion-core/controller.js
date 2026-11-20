@@ -16,7 +16,7 @@ const TAU=Math.PI*2,clamp=(v,a,b)=>Math.min(b,Math.max(a,v)),lerp=(a,b,t)=>a+(b-
 export function createMoveController(tuning=MOVE_TUNING){
  const T=tuning;
  const s={x:0,z:0,vx:0,vz:0,facing:0,speed:0,skidding:false,braking:false,
-  brakeRate:0,brakeStrength:0,momentum:0,mode:'idle',hold:false};
+  brakeRate:0,brakeStrength:0,momentum:0,mode:'idle',hold:false,aim:0};
  let carry=0;
 
  // A gentle push walks, a full push runs, with a smooth range between.
@@ -36,6 +36,7 @@ export function createMoveController(tuning=MOVE_TUNING){
   let hx=s.vx,hz=s.vz;const speed=Math.hypot(hx,hz);
   if(strength>.001){
    const dx=wishX/Math.hypot(wishX,wishZ),dz=wishZ/Math.hypot(wishX,wishZ);
+   s.aim=Math.atan2(dx,dz); // the way the stick asks him to go (radians): he turns towards it, and the walker can tell a big turn is coming
    s.braking=false;
    // Turn-first (off unless tuned on): from nearly still, a big turn is made on the spot before he sets off. `s.hold`
    // lets the caller ask him to stand and turn too (the walker asks while the feet are still stepping round).
@@ -59,6 +60,7 @@ export function createMoveController(tuning=MOVE_TUNING){
     hx=fx*newAlong+sx;hz=fz*newAlong+sz;
    }
   }else{
+   s.aim=s.facing;
    s.skidding=false;
    // Let go at a run: dig in and slide to a stop. How far depends on how
    // long he had been running (momentum).

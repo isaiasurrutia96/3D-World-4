@@ -316,6 +316,12 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
    // a couple of tries; a steady one takes one).
    const heading=typeof o.heading==='function'?o.heading(time):(o.heading??0),exclude=typeof o.exclude==='function'?o.exclude(time):o.exclude;
    let total=[b.follower.goal[0],b.follower.goal[1],-o.stance],found=false;
+   if(o.axes==='x'){
+    // Sideways only: the shift is kept sideways to the way he faces NOW. (It is stored in world coordinates, so after a turn
+    // the part that was sideways would otherwise become a forward shift that nothing ever takes back.)
+    const ch=Math.cos(heading),sh=Math.sin(heading),lat=total[0]*ch-total[1]*sh;
+    total=[lat*ch,-lat*sh,total[2]];
+   }
    for(let i=0;i<4;i++){
     const trial=poseAt(time,{shift:total,commit:false});
     if(!frameFeet)break;

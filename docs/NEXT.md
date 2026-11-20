@@ -430,4 +430,19 @@ Recorded 17 November 2026.
     another way had its feet facing north, the balance release left a jump, dead code and misplaced comments,
     and the Skeleton page's slab was only 4 m wide (it now goes along under a walking or running body, with 1 m
     grid lines so the movement shows). The demo also lets go after 60 s whatever happens.
+44. Running and turning, second fix pass, 20 Nov 2026 (after the owner's go-ahead to push to main for testing):
+    (a) A real bug, found by measuring the run in every direction: the balance layer kept its sideways weight shift
+    in world coordinates, so after any turn the old sideways part became a forward shift that nothing took back.
+    Running at 150-190° from the start (or after a U-turn) had 85% of frames with a foot off by up to 1 m, chronic.
+    Now the shift is re-expressed sideways to the way he faces now (`pose.js`, balanced()). Tests: a U-turn at a fast
+    run settles at once (it failed at 100% without the fix), and the same run in eight directions.
+    (b) The movement rules now also say where the stick asks him to go (`controller.state.aim`, radians; the walker
+    takes it as `body.aim`), so the walker knows a big turn is coming at the first frame of a flick, not after he has
+    already started to move. Turn first now really happens before he sets off (a 180° flick: turns on the spot for
+    about 0.7 s, then runs). `test:motion-core` still matches the old controller (the new field changes nothing).
+    (c) Numbers now (game speeds): planted feet are exact in every steady run and in start/stop/circle scenes; the
+    remaining planted-foot errors are in the first moments after a hard start in a new direction (up to about
+    0.4 m for 2-4% of frames) and in the stop-and-go scene (0.3 m for 2% of frames). In the air a swinging foot
+    can trail up to about 0.6 m behind where the planner wants it during a hard start (the leg stretches straight;
+    it lands exactly). Random sticks at game speed: 11.7% of frames over 1 mm (was 20.6%).
 

@@ -23,7 +23,7 @@ function simulate({seconds, stick, tuning = {}, noHold = false, speed = 1.0, sta
   const t = i * dt, [wx, wz] = stick(t, ctl.state);
   ctl.state.hold = noHold ? false : walker.holdMove; // (he turns on the spot while the feet step round to a big turn)
   ctl.advance(dt, wx, wz);
-  const s = ctl.state, body = {x: s.x, z: s.z, facing: s.facing, vx: s.vx, vz: s.vz, speed: s.speed};
+  const s = ctl.state, body = {x: s.x, z: s.z, facing: s.facing, vx: s.vx, vz: s.vz, speed: s.speed, aim: s.aim};
   walker.update(dt, body);
   const pose = player.update(dt), goals = walker.goals(player.time), solved = S.solve(pose);
   let frameErr = 0;
@@ -159,7 +159,7 @@ const run = simulate({seconds: 12, stick: t => t < 8 ? forward(t) : [0, 0]});
   const t = i / 60, a = t * .35, m = .36;
   ctl.state.hold = walker.holdMove; ctl.advance(1 / 60, Math.sin(a) * m, Math.cos(a) * m);
   const st = ctl.state, t0 = performance.now();
-  walker.update(1 / 60, {x: st.x, z: st.z, facing: st.facing, vx: st.vx, vz: st.vz, speed: st.speed}); player.update(1 / 60);
+  walker.update(1 / 60, {x: st.x, z: st.z, facing: st.facing, vx: st.vx, vz: st.vz, speed: st.speed, aim: st.aim}); player.update(1 / 60);
   if(i % 60 === 0) cost.push(0); cost[cost.length - 1] += performance.now() - t0;
  }
  const early = cost.slice(5, 25).reduce((a, b) => a + b, 0) / 20, late = cost.slice(-20).reduce((a, b) => a + b, 0) / 20;

@@ -6,7 +6,7 @@
 //   attachWalker(player, walker)                  // feet, arms and torso go on the pose player; balance is set up
 //   each frame:  controller.state.hold = walker.holdMove   // (optional: he turns on the spot before a big turn)
 //                controller.advance(dt, stickX, stickZ)
-//                walker.update(dt, body)          // body: {x, z, facing, vx, vz, speed} from the movement rules
+//                walker.update(dt, body)          // body: {x, z, facing, vx, vz, speed, aim} from the movement rules (aim: where the stick asks him to face)
 //                player.update(dt)
 //
 // Walking (slower than `runOn`): a foot lifts when it has fallen behind the body by the distance the body travels
@@ -266,7 +266,7 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
    time += dt;
    // The body faces where the movement rules say, except that it cannot get further round than the hips can twist
    // from a foot that is standing: a turn too quick for the feet waits for them to step round.
-   asked = b0.facing;
+   asked = b0.aim ?? b0.facing; // the way he is asked to face (the stick), if the movement rules say; else the way he faces now
    let wanted = wrapDeg(b0.facing * 180 / Math.PI);
    if(face === null) face = wanted;
    else {

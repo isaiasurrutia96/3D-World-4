@@ -20,7 +20,7 @@ function simulate(stick, seconds, from = 0){
  for(let i = 0; i < seconds * 60; i++){
   const t = i / 60, [wx, wz] = stick(t);
   ctl.state.hold = walker.holdMove; ctl.advance(1 / 60, wx, wz);
-  const st = ctl.state; walker.update(1 / 60, {x: st.x, z: st.z, facing: st.facing, vx: st.vx, vz: st.vz, speed: st.speed});
+  const st = ctl.state; walker.update(1 / 60, {x: st.x, z: st.z, facing: st.facing, vx: st.vx, vz: st.vz, speed: st.speed, aim: st.aim});
   const pose = player.update(1 / 60), g = walker.goals(player.time), q = S.solve(pose);
   if(t < from){ last = null; continue; }
   out.frames++; out.vMax = Math.max(out.vMax, st.speed);
@@ -49,6 +49,20 @@ for(const [stick, label, relaxed] of [[.3, 'a jog', false], [.55, 'the top of a 
  check(`steady ${label}: feet exact${relaxed ? ' (within 1 cm, 25% of frames over 1 mm: the legs are at their limit)' : ' (within 1 mm in 99% of frames)'}, never slide, nothing below the ground, every joint inside its limits, no invalid numbers`,
   exact && r.slide < 1e-6 && r.low > -1e-9 && r.bad === 0 && r.nan === 0, `${r.ctl.state.speed.toFixed(1)} m/s: ${(100 * r.off / r.frames).toFixed(1)}% of frames over 1 mm, worst ${mm(r.maxErr)}; slide ${r.slide.toExponential(1)}; lowest ${mm(r.low)}; ${r.bad} frames past a limit`);
  if(stick >= .55) check(`steady ${label}: both feet are in the air for part of every step (a real run, not a fast walk)`, r.air / r.frames > .1, `${(100 * r.air / r.frames).toFixed(0)}% of the time in the air; ${(r.steps / 5.5).toFixed(1)} steps a second`);
+}
+
+// ---- 1b. The same run in every direction (a body that faces north is not special) ----
+{
+ let worst = 0, off = 0, frames = 0, nan = 0, low = Infinity, slide = 0;
+ for(const deg of [0, 45, 90, 135, 180, 225, 270, 315]){
+  const a = deg * Math.PI / 180, r = simulate(t => t < .5 ? [0, 0] : [Math.sin(a) * .7, Math.cos(a) * .7], 9, 4);
+  worst = Math.max(worst, r.maxErr); off += r.off; frames += r.frames; nan += r.nan; low = Math.min(low, r.low); slide = Math.max(slide, r.slide);
+ }
+ check('a steady run facing each of eight directions (including due south, where the turn wraps round): feet within 1 mm in 99% of frames, never slide, nothing below the ground',
+  off / frames < .01 && worst < .005 && slide < 1e-6 && low > -1e-9 && nan === 0, `${(100 * off / frames).toFixed(2)}% of frames over 1 mm, worst ${mm(worst)}; slide ${slide.toExponential(1)}`);
+ // And after a U-turn at speed: once round, the run is as good as before (the weight shift must not carry the old direction with it).
+ const u = simulate(t => t < .5 ? [0, 0] : t < 4 ? [0, .7] : [0, -.7], 12, 7);
+ check('after a U-turn at a fast run the run settles at once: feet within 1 mm in 99% of the frames from three seconds after the turn', u.off / u.frames < .01 && u.maxErr < .005, `${(100 * u.off / u.frames).toFixed(2)}% of frames over 1 mm, worst ${mm(u.maxErr)}`);
 }
 
 // ---- 2. Starting, stopping and the changes in between ----

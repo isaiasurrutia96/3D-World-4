@@ -366,7 +366,7 @@ export function createDemoRunner(player, D, rests){
    walk.ctl.state.hold = walk.walker.holdMove;
    walk.ctl.advance(dt, wish[0], wish[1]);
    const s = walk.ctl.state;
-   walk.walker.update(dt, {x: s.x, z: s.z, facing: s.facing, vx: s.vx, vz: s.vz, speed: s.speed});
+   walk.walker.update(dt, {x: s.x, z: s.z, facing: s.facing, vx: s.vx, vz: s.vz, speed: s.speed, aim: s.aim});
    // (Let go only after standing still and square for a moment, so no closing step is left to start.)
    walk.still = walk.homing && walk.square && s.speed < .02 && walk.walker.mode === 'idle' ? (walk.still ?? 0) + dt : 0;
    // (Never stuck for ever: if it has not got home and squared up within 60 seconds, it lets go anyway.)
