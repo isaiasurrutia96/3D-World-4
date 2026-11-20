@@ -7,6 +7,9 @@ game, give one recommendation with the reason, then follow their decision.
 Sections A and B are working style and are meant to stay flexible. Section C holds
 confirmed game decisions and technical instructions, kept as they were written.
 A new session should also read `docs/HANDOFF.md` first.
+`docs/COLLABORATION.md` records shared responsibilities, review boundaries and
+which broader assignments remain recommendations. `AGENTS.md` points Codex to
+these same documents so both assistants use one working guide.
 
 ## A. How we work (flexible: adapt chunk size and testing depth to the task)
 
