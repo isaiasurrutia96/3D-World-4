@@ -50,6 +50,7 @@
     "test:racing-drive-browser": "node racing-lab/tests/driving-browser.mjs",
     "test:racing-camera": "node --test racing-lab/tests/chase-camera.test.mjs && node racing-lab/tests/chase-camera-browser.mjs",
     "test:racing-app": "node --test racing-lab/tests/app.test.mjs && node racing-lab/tests/app-browser.mjs",
+    "test:racing-home-screen": "node --test racing-lab/tests/page-activity.test.mjs && node racing-lab/tests/home-screen-browser.mjs",
     "build:racing-lab": "node racing-lab/build.mjs",
     "test:racing-lab": "node racing-lab/tests/browser.mjs",
     "test:inspection-zoom": "node --test test-lab/zoom.test.mjs",

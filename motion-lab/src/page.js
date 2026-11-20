@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {createMoveController} from '../../motion-core/controller.js';
 import {createInput} from './input.js';
+import {bindStageActivity} from './page-activity.js';
 import {updateFollowTarget} from './camera-follow.js';
 import {protectPage} from '../../public/test-lab/interactions.js';
 import {installTestLabScene} from '../../src/test-lab-scene.ts';
@@ -26,7 +27,7 @@ export function createMotionLab({title,section,videos=[],createSimulation=null,h
  function reset(){const resetView=simulation?.cameraRig?.handles(viewName)?viewName:'back';inspectionZoom?.reset();inspectionOffset.set(0,0,0);input.reset();controller.place();const s=controller.state;target.set(s.x,(s.y||0)+(simulation?.targetHeight??.1),s.z);distance=simulation?.distance||10;setView(resetView);}
  for(const button of document.querySelectorAll('[data-view]'))button.onclick=()=>setView(button.dataset.view);document.querySelector('#reset').onclick=reset;
  function setActive(value){const next=value&&!document.hidden;if(next!==active){last=0;if(!next)simulation?.onPause?.();}active=next;input.setEnabled(active);}
- new IntersectionObserver(entries=>setActive(entries[0].isIntersecting),{threshold:0.02}).observe(stage);document.addEventListener('visibilitychange',()=>{last=0;setActive(!document.hidden&&stage.getBoundingClientRect().bottom>topbar.getBoundingClientRect().bottom);});
+ bindStageActivity({stage,topbar,input,setActive});
  function tick(seconds){
   const inputYaw=yaw,controls=input.sample(seconds,yaw);yaw-=controls.look.x;pitch=T.MathUtils.clamp(pitch+controls.look.y,.08,Math.PI/2);distance=T.MathUtils.clamp(distance*Math.exp(simulation?.zoomEnabled===false?0:controls.zoom),simulation?.minDistance??3,simulation?.maxDistance??30);
   if((controls.look.x||controls.look.y)&&!simulation?.cameraRig?.handles(viewName)){viewName='free';for(const button of document.querySelectorAll('[data-view]'))button.setAttribute('aria-pressed','false');}

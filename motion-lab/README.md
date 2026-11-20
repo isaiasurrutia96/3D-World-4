@@ -21,3 +21,12 @@ For advanced tests, `createMotionLab` accepts an optional `createSimulation({sce
 Inspection zoom uses the same existing input gestures while retaining a persistent camera-focus offset. Pinch focuses beneath the fingers and supports moving the midpoint to pan; wheel zoom focuses under the cursor. The shared presentation handles both perspective and embedded isometric rendering. Static inspection adapters receive the mutable camera `target` in `bind` so near/far calculations follow the inspected part. Reset clears the focus offset; static fitted view buttons reframe the whole subject.
 
 Optional presentation-only `cameraRig` supplies extra view presets, `handles(view)`, `setView(view,camera)` and `update({camera,controls,seconds,state})`. A handled view keeps camera-look input in that mode, may override the rendered camera, and suspends inspection zoom. Reset preserves an active handled view. The driving test uses this for FPV; ordinary labs retain their existing view behavior.
+
+
+Page activity is shared through `src/page-activity.js`. Home Screen/page return,
+focus, viewport resize and the first fresh stage touch recheck visible activity;
+pagehide/freeze release input immediately. A next-frame bounds check covers
+foreground layout settling. Offscreen and hidden stages stay paused.
+The racing build runs its Node lifecycle regressions, and
+`npm run test:racing-home-screen` exercises native touch and page-return ordering.
+Set `TEST_BROWSER=webkit` to run the browser checks with an installed WebKit.

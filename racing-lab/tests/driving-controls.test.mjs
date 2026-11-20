@@ -90,9 +90,9 @@ check('Button blur clears keyboard ownership and disposal removes all event hand
     binding.dispose();down('right',12);assert.equal(input.actions.right,false);assert.equal(binding.getState().pointerCount,0);return {disposed:true};
 }));
 check('The ownership ledger rejects unknown buttons/IDs and returns immutable snapshots',
- 'Unknown button,negative/fractional ID,duplicate names; mutate returned diagnostics.',
+ 'Unknown button,missing/fractional ID,duplicate names; mutate returned diagnostics.',
  'Invalid ownership rejected; snapshots cannot mutate active internal state.',()=>{
-    const states={},h=createDrivingHolds(['right','gas'],(n,v)=>states[n]=v);assert.throws(()=>h.pressPointer('unknown',1));assert.throws(()=>h.pressPointer('right',-1));assert.throws(()=>h.pressPointer('right',.5));assert.throws(()=>createDrivingHolds(['x','x'],()=>{}));h.pressPointer('right',1);
+    const states={},h=createDrivingHolds(['right','gas'],(n,v)=>states[n]=v);assert.throws(()=>h.pressPointer('unknown',1));assert.throws(()=>h.pressPointer('right',undefined));assert.throws(()=>h.pressPointer('right',.5));assert.throws(()=>createDrivingHolds(['x','x'],()=>{}));h.pressPointer('right',1);
     const snapshot=h.getState();assert.throws(()=>snapshot.buttons.right.held=false);h.releasePointer(1);assert.equal(snapshot.buttons.right.held,true);assert.equal(h.getState().buttons.right.held,false);return {rejected:4,snapshotIsolated:true};
 });
 
@@ -102,6 +102,15 @@ check('Native touch release clears only ended buttons even if pointerup is missi
     down('gas',1);down('right',2);fire(win,'touchend',{touches:[{identifier:91,target:buttons.gas}]});
     assert.equal(input.actions.right,false);assert.equal(input.actions.gas,true);
     fire(win,'touchend',{touches:[]});assert.equal(binding.getState().pointerCount,0);return {...input.actions};
+}));
+
+check('Signed browser pointer IDs activate controls and release independently',
+ 'Press Gas with pointer -2147483648 and Right with pointer -37; release Right globally, then Gas.',
+ 'Gas and Right activate without an exception; releasing one preserves the other; no stale holds remain.',()=>fixture(({win,input,binding,fire,down})=>{
+    down('gas',-2147483648);down('right',-37);assert.equal(input.actions.gas,true);assert.equal(input.actions.right,true);
+    fire(win,'pointerup',{pointerId:-37});assert.equal(input.actions.right,false);assert.equal(input.actions.gas,true);
+    fire(win,'pointerup',{pointerId:-2147483648});assert.equal(input.actions.gas,false);assert.equal(binding.getState().pointerCount,0);
+    return {signedIdsAccepted:true,remainingPointers:0};
 }));
 check('Touch fallback preserves a second finger and keyboard hold on the same button',
  'Two Right contacts plus Space; one contact remains during touchend, then all contacts end, then keyup.',

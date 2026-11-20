@@ -1,7 +1,7 @@
 {
   "layer": "Driving button ownership and release",
   "summary": {
-    "passed": 14,
+    "passed": 15,
     "failed": 0
   },
   "checks": [
@@ -125,7 +125,7 @@
     },
     {
       "rule": "The ownership ledger rejects unknown buttons/IDs and returns immutable snapshots",
-      "input": "Unknown button,negative/fractional ID,duplicate names; mutate returned diagnostics.",
+      "input": "Unknown button,missing/fractional ID,duplicate names; mutate returned diagnostics.",
       "expected": "Invalid ownership rejected; snapshots cannot mutate active internal state.",
       "measured": {
         "rejected": 4,
@@ -143,6 +143,16 @@
         "gas": false,
         "reverse": false,
         "boost": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Signed browser pointer IDs activate controls and release independently",
+      "input": "Press Gas with pointer -2147483648 and Right with pointer -37; release Right globally, then Gas.",
+      "expected": "Gas and Right activate without an exception; releasing one preserves the other; no stale holds remain.",
+      "measured": {
+        "signedIdsAccepted": true,
+        "remainingPointers": 0
       },
       "status": "PASS"
     },

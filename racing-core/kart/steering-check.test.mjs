@@ -71,13 +71,15 @@ check('Longer holds progressively reach the full existing wheel angle',
         return {fps,full,zero,maxAngleStep,state:c.state};
     });equal(timings);return {angles:out,firstFullSeconds:timings[0].full,releaseSeconds:timings[0].zero,maxAngleStep:timings[0].maxAngleStep};
 });
-check('High-speed driving traces retain the approved response and cornering capacity exactly',
- {fps:rates,script:'Start60/80.4672/98.3488m/s; Gas plus alternating analog steering for3s; compare prior Fast on every tick. Grant boost initially at220mph.'},
+check('Progressive steering alone does not alter high-speed driving traces',
+ {fps:rates,script:'Start60/80.4672/98.3488m/s; Gas plus alternating analog steering for3s; compare the same current tire package with shaping disabled on every tick. Grant boost initially at220mph.'},
  'Above45m/s all physical state, inputs, angles, momentum and grip telemetry match bit for bit; only profile identity differs.',()=>{
+    // Isolate steering shaping from the separately approved tire upgrade.
+    const control=createHandlingProfile({id:'unshaped-current-tires',cornering:DRIVING_PROFILES.fast.cornering,slipResponseSeconds:DRIVING_PROFILES.fast.slipResponseSeconds,steeringResponse:undefined});
     let comparedTicks=0;const output=[];
     for(const v of[60,180*MPH,220*MPH]){
         const group=rates.map(fps=>{
-            const initial={speed:v,boostTime:v>180*MPH?2:0},a=make(before,initial),b=make(undefined,initial),trace=[];
+            const initial={speed:v,boostTime:v>180*MPH?2:0},a=make(control,initial),b=make(undefined,initial),trace=[];
             const command=(tick,t)=>({throttle:1,steer:t<1?.6:t<2?-.4:0});
             run(a,3,fps,(tick,t,s)=>{trace[tick]=physical(s);return command(tick,t);});
             run(b,3,fps,(tick,t,s)=>{assert.deepEqual(physical(s),trace[tick]);comparedTicks++;return command(tick,t);});

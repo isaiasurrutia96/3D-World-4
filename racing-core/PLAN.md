@@ -528,3 +528,127 @@ The standard 12-group driving browser suite, profile/analog browser checks and
 layout, avatar assets, motion-core and frozen source files have no changes.
 The final mouse guard also clears a missed primary-button release and prevents
 secondary clicks from driving; its explicit Node event-sequence check passes.
+
+Incoming collaboration: preserve and rebase onto Claude's movement changes
+through 0685fc5. This racing pass does not modify those motion/hand/skeleton
+sources. Rebuild the racing bundle against the updated shared imports and
+repeat the captured-before/current input regressions plus the full 12-group
+driving browser suite: all PASS, zero page errors. The follow-up checkpoint
+contains the rebuilt racing HTML and its updated browser-evidence SHA256.
+
+
+## 20 November — approved driving checkpoint 1
+
+The owner approved the current driving feel and said “okay save checkpoint.”
+Save this exact baseline before considering further tire or handling upgrades.
+This checkpoint does not retune physics, controls, cameras, kart dimensions,
+tracks or avatar/motion code. Further upgrades remain unstarted.
+
+- Frozen page: https://isaiasurrutia96.github.io/3D-World-4/checkpoints/driving-1/?drive=1&handling=fast
+- Approved source: `0e488a2888268c702339e0ca1c054f092507933e`;
+  source tag `driving-source-1-2026-11-20`.
+- Archive tag: `driving-checkpoint-1-2026-11-20`. The existing checkpoint
+  build preserves and verifies all archived files before publishing.
+- The viewer is the exact verified published bundle, SHA256
+  `3c55cffd851756971534c67068baaba134f9be2f4259da577dca0dc37655dc6f`.
+- Profile `fast`, physics fingerprint `kart-v1-025c0e69a91e540a`: 180 mph,
+  boost 220 mph, approved progressive steering and input-release fixes.
+- Preserved the release's numerical/browser evidence and a JSON snapshot of
+  every driving profile. Source hashes plus the source tag allow selective
+  racing restoration while preserving Claude's newer movement work.
+- Exact frozen viewer smoke checks PASS on desktop and both phone orientations:
+  all four tracks, keyboard/native simultaneous touch, separate Right release
+  while Gas stays held, Reset, FPV, disabled driving zoom and no overflow.
+  Zero page errors; no application asset requests outside the checkpoint.
+- Integrity checks PASS, including rejection of a modified settings file in a
+  temporary copy. All pre-existing checkpoints remain unchanged.
+
+
+## 20 November — Home Screen input resume repair
+
+The owner reports that the frozen checkpoint works from the phone app, while
+the previously installed Home Screen driving test ignores Gas. This is a
+launch/resume/input investigation, not another handling upgrade. Preserve
+Driving Checkpoint 1 and all other frozen archives and tags.
+
+- Reproduced against the exact approved frozen HTML: after pausing, pageshow,
+  focus or resume without an additional visibilitychange leaves the stage
+  disabled; an otherwise valid native Gas touch is then ignored. A foreground
+  visibility event with temporarily empty bounds also leaves it disabled.
+  These are controlled browser lifecycle reproductions, not a captured trace
+  of the owner's actual iOS task switch.
+- The shared lab page now has one activity adapter. It checks current viewport
+  bounds on foreground/resize, rechecks on the next frame, and recovers before
+  the first stage pointer handler. Hidden/offscreen pages remain paused.
+  Pagehide/freeze immediately disable input and release the existing holds.
+  It does not integrate motion or change any movement/vehicle physics.
+- Also corrected the input ledger's signed integer ID boundary: PointerEvent
+  IDs are not necessarily positive array indices. A valid negative ID no
+  longer throws before an action can activate. This separate conformance gap
+  is proven by a Node event-sequence test; it is not confirmed as the cause
+  on the owner's phone. Native Linux WebKit uses positive IDs in these checks.
+- 47/47 build-time Node checks PASS, including seven activity lifecycle checks
+  and 15 ownership/release checks. These run automatically in racing builds.
+- Chrome and WebKit each pass 13 lifecycle scenarios, including five captured
+  pre-fix failures and their corrected counterparts, plus hide/freeze and
+  offscreen guards. Native touches reach Gas after resume. Chrome additionally
+  holds Gas until actual speed exceeds 3 m/s. Reports pin both HTML hashes.
+- The existing 12-group driving browser suite and the complete universal
+  Motion Lab input/layout/video browser suite PASS with zero page errors.
+  The latter initially needed its existing video fixtures copied into dist;
+  it passes once the normal public assets are served.
+- Source in motion-core, avatar geometry, racing-core physics/profile settings,
+  tracks, kart dimensions, controls/layout, and checkpoint contents unchanged.
+  Actual installed iOS Home Screen launch/task switching still needs the owner
+  to check after completely closing and reopening the updated live app.
+
+
+## 20 November — modest tire and handling upgrade
+
+Owner request: “upgrade” the tire and handling, “but not so much.” Implement
+one small Fast-profile tune on the approved driving system. Subjective feel
+approval remains pending the owner's test; Driving Checkpoint 1 stays frozen.
+
+Configuration layer:
+- Only Fast changes: multiply every existing cornering-curve value by 1.06,
+  and reduce lateral settling response from .140 s to .135 s. Steering input
+  shaping/rise/release, wheel lock, yaw response, traction assistance, surfaces,
+  engine/braking/lift-off/boost curves, dimensions and fixed timestep unchanged.
+- Original, Balanced and the F1 reference retain their exact archived data and
+  fingerprints. Custom-profile defaults retain the approved base configuration.
+  This tune is an explicit, validated Fast override, not a global multiplier.
+- Physics identity changes from `kart-v1-025c0e69a91e540a` to
+  `kart-v1-c0934f4555677c0e`. The immutable checkpoint's PROFILES.json is the
+  numerical control, reconstructed through the normal profile validator.
+
+Measured logic layer:
+- Added five automatic upgrade checks and included them in the core suite, so
+  deployment reruns them. Rules include scripted input, expected behavior,
+  measured values and PASS/FAIL. All use the existing 1/120 s simulation.
+- 231/231 full core checks PASS. New turning/settling/straight comparisons agree
+  exactly at 30, 60, 120 and 144 FPS. Curve sweep: 14,001 speed samples, exactly
+  6% extra lateral budget within floating-point tolerance.
+- Starting at 90/130/180/220 mph, matched full-input tests measure turn radii
+  about 5.66–5.68% smaller, with less than .024 mph difference in end speed.
+  At 180 mph, radius changes from 66.073 m to 62.334 m; at 220 mph, 98.702 m
+  to 93.115 m. These are measured paths, not a new fixed corner-speed rule.
+- A 4 m/s sideways disturbance at 20 m/s forward settles below .05 m/s in
+  .5667 s instead of .5833 s, without a speed gain, yaw snap or forced steering.
+- 11,536 compared straight-line states have zero physical difference across
+  acceleration, boost, brake, lift-off and reverse phases. Caps stay 180/220 mph.
+- Existing shared-grip, surface, contact, all-four-course, seeded stress and
+  analog/mirrored-input checks PASS. A hard turn can still slide/spin naturally;
+  all 432 release/recovery cases PASS with no retained steering.
+- Historical grip tests now distinguish Balanced's 2x reference budget from
+  Fast's 2.12x budget. The progressive-steering equality check compares matched
+  tire packages, isolating shaping; its exact-state requirement is unchanged.
+
+Playable integration layer:
+- 47/47 existing build checks, strict TypeScript, all checkpoint integrity
+  checks, the full 12-group driving browser suite and tuning/analog browser
+  suite PASS. No visuals, layout, controls, camera or movement code changed.
+- Chromium and WebKit each pass 13 captured-before/current Home Screen
+  lifecycle cases with zero page errors. Rapid-touch/input-release regressions
+  also PASS. The Home Screen resume repair remains present.
+- Keep this as a small tunable profile change. Any further handling increase
+  waits for owner feedback; no new frozen checkpoint is created in this pass.

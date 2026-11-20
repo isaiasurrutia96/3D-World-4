@@ -32,16 +32,16 @@ check('Only cornering and steering response change from the exact approved Fast 
         assert(Object.isFrozen(before)&&Object.isFrozen(before.cornering));
         return {changed,previousFingerprint:before.fingerprint,currentFingerprint:after.fingerprint,f1Fingerprint:DRIVING_PROFILES['f1-targets'].fingerprint};
     });
-check('Both live speed profiles get stronger grip without altering speed caps or low-speed lock',
+check('Both live speed profiles retain their specified grip without altering speed caps or low-speed lock',
     'Sweep0–120m/s in.01m/s increments; compare Fast/Balanced with the prior profile.',
-    'Exactly twice lateral budget, unchanged30degree low-speed lock; wheel limits remain finite and continuous.',()=>{
+    'Balanced has twice the reference lateral budget; Fast has 2.12 times after its 6% tire upgrade. Unchanged30degree low-speed lock; wheel limits remain finite and continuous.',()=>{
         let maximumGripError=0,maximumWheelStep=0;
         for(const profile of[DRIVING_PROFILES.fast,DRIVING_PROFILES.balanced]){
             let previous=steeringLimit(profile,0,KART.wheelbase);
             near(previous,Math.PI/6);
             for(let i=0;i<=12000;i++){
                 const v=i/100,grip=sampleCurve(profile.cornering,v),old=sampleCurve(PREVIOUS_FAST_PROFILE.cornering,v),angle=steeringLimit(profile,v,KART.wheelbase);
-                maximumGripError=Math.max(maximumGripError,Math.abs(grip-2*old));
+                maximumGripError=Math.max(maximumGripError,Math.abs(grip-(profile.id==='fast'?2.12:2)*old));
                 maximumWheelStep=Math.max(maximumWheelStep,Math.abs(angle-previous));previous=angle;
                 assert(Number.isFinite(angle)&&angle>0&&angle<=Math.PI/6);
             }
