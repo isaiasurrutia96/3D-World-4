@@ -47,6 +47,7 @@ const sk=A.skeleton,D=createDemos(sk,footReach(A)),RESTS=thighRests(A);
 const prop=new T.MeshStandardMaterial({color:'#c9c4ba',roughness:1});
 const step=new T.Mesh(new T.BoxGeometry(D.STEP.width,D.STEP.height,D.STEP.depth),prop);step.position.set(...D.STEP.centre);step.castShadow=step.receiveShadow=true;step.visible=false;scene.add(step);
 const ball=new T.Mesh(new T.SphereGeometry(D.BALL.radius,24,16),new T.MeshStandardMaterial({color:'#ff9a3c',roughness:.6}));ball.visible=false;scene.add(ball);
+const lookBall=new T.Mesh(new T.SphereGeometry(.07,24,16),new T.MeshStandardMaterial({color:'#6ec6ff',roughness:.5}));lookBall.visible=false;scene.add(lookBall);
 // The seat: a simple block whose top is measured to touch him exactly when seated.
 const seatPose=reach(sk,D.sit(99).pose,D.sit(99).goals).pose,seatFit=seatTop(A,seatPose);A.apply(sk.restPose());
 const seat=new T.Mesh(new T.BoxGeometry(.5,seatFit.top,seatFit.front-seatFit.back+.04),prop);seat.position.set(0,seatFit.top/2,(seatFit.front+seatFit.back-.04)/2);seat.castShadow=seat.receiveShadow=true;seat.visible=false;scene.add(seat);
@@ -54,7 +55,7 @@ const seat=new T.Mesh(new T.BoxGeometry(.5,seatFit.top,seatFit.front-seatFit.bac
 const runner=createDemoRunner(player,D,RESTS);
 function setDemo(name){
  if(!name||name===runner.active)runner.stop();else runner.start(name);
- const on=runner.active;step.visible=on==='step';ball.visible=on==='ball';seat.visible=on==='sit';
+ const on=runner.active;step.visible=on==='step';ball.visible=on==='ball';lookBall.visible=on==='look';seat.visible=on==='sit';
  for(const b of document.querySelectorAll('[data-demo]'))b.setAttribute('aria-pressed',String(b.dataset.demo===on));
  if(on)for(const b of document.querySelectorAll('[data-pose]'))b.setAttribute('aria-pressed','false');
 }
@@ -63,6 +64,7 @@ for(const b of document.querySelectorAll('[data-demo]'))b.onclick=()=>setDemo(b.
 function framePose(dt){
  const pose=player.update(dt);
  if(runner.active==='ball')ball.position.set(...D.ball(runner.time).ball);
+ if(runner.active==='look')lookBall.position.set(...D.look(runner.time).target);
  return pose;
 }
 
@@ -98,7 +100,7 @@ renderer.setAnimationLoop(ms=>{
  if(presentation!==lastPresentation){lastPresentation=presentation;needsRender=true;}
  if(needsRender){renderer.render(scene,camera);needsRender=false;}
 });
-window.skeletonLab={camera,controls,scene,renderer,setPose,setDemo,showBones,view,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES),demos:['squat','sit','step','ball']};
+window.skeletonLab={camera,controls,scene,renderer,setPose,setDemo,showBones,view,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES),demos:['squat','sit','step','ball','look']};
 window.avatarLab=window.skeletonLab;
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
 drawBones(A.solved);renderer.render(scene,camera);

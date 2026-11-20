@@ -81,11 +81,16 @@ const jolt=frames=>{let m=0,rm=0;for(let i=2;i<frames.length;i++){const a=frames
  for(let k=0;k<3;k++)rm=Math.max(rm,Math.abs(a.root.position[k]-2*b.root.position[k]+c.root.position[k]));}return {m,rm};};
 const restPose=S.restPose(),atRest=p=>Math.max(...allBones.flatMap(n=>AX.map(k=>Math.abs(p[n][k]-(n.startsWith('clavicle')?p[n][k]:restPose[n][k])))),...p.root.position.map(Math.abs));
 const planted=(frames,sides)=>{let e=0;for(const f of frames){const q=S.solve(f.pose);for(const sd of sides){const h=q.get('foot.'+sd).head,s0=S.bones[S.index.get('foot.'+sd)].head;e=Math.max(e,Math.hypot(h.x-s0[0],h.y-s0[1],h.z-s0[2]));}}return e;};
-for(const [name,on,off,sides,label] of [['sit',2.4,2.4,['L','R']],['squat',3,1.6,['L','R']],['step',1.0,2.8,['R'],'step (stopped while the foot is rising)'],['step',1.9,2.8,['R'],'step (stopped after landing on the block)'],['step',3.5,2.8,['R'],'step (stopped while stepping back down)'],['ball',2,1.2,[]]]){
+for(const [name,on,off,sides,label] of [['sit',2.4,2.4,['L','R']],['squat',3,1.6,['L','R']],['step',1.0,2.8,['R'],'step (stopped while the foot is rising)'],['step',1.9,2.8,['R'],'step (stopped after landing on the block)'],['step',3.5,2.8,['R'],'step (stopped while stepping back down)'],['ball',2,1.2,[]],['look',4,2,[]]]){
  const {frames,P}=simulate(name,on,off),j=jolt(frames),end=atRest(frames.at(-1).pose),feet=sides.length?planted(frames,sides):0;
  check(`${label??name}: starts and stops smoothly (no jolt), feet stay planted, and ends exactly at rest with nothing left running`,j.m<1&&j.rm<.0015&&end<1e-6&&feet<5e-4&&!P.layers.length&&!P.goalLayers.length,
   `largest change in joint speed between frames ${j.m.toFixed(2)}°; in body speed ${(j.rm*1000).toFixed(2)} mm; ${sides.length?'planted foot off by '+mm(feet)+'; ':''}back at rest within ${end.toExponential(1)}`,
   '');
 }
 
+// ---- Look: the face follows the ball ----
+{const {frames}=simulate('look',6,0.1);let worst=0,sum=0,n=0,limits=true;
+ for(let i=60;i<6*60;i++){const t=i/60,pose=frames[i].pose,h=S.solve(pose).get('head'),f=new T.Vector3(0,0,1).applyQuaternion(h.rotation),want=new T.Vector3(...D.look(t).target).sub(h.head),e=f.angleTo(want)*180/Math.PI;worst=Math.max(worst,e);sum+=e;n++;if(!inLimits(pose))limits=false;}
+ check('look: the face keeps on the swinging ball (within 12° at worst after the first second, 5° on average), every joint inside its limits',worst<12&&sum/n<5&&limits,`worst ${worst.toFixed(1)}°, average ${(sum/n).toFixed(1)}° off the ball`);
+}
 console.table(R);const fail=R.some(r=>r.result==='FAIL'),known=R.filter(r=>r.result==='KNOWN').length;console.log(fail?'FAIL':'PASS: every reaching demo does exactly what it shows'+(known?` (${known} known item${known>1?'s':''} listed above, planned)`:'')+'.');process.exit(fail?1:0);

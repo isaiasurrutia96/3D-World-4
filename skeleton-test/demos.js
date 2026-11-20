@@ -23,9 +23,13 @@
 //                shifts the weight over the planted foot.
 //   ball         the palm centre touches a 3.5 cm ball circling in front of
 //                him and faces its centre.
+//   look         a ball swings from side to side and up and down in front of
+//                him (2.4 m away, up to 95° either side); the head leads, the
+//                neck, chest and waist follow (motion-core/skeleton/look.js).
 import {Vector3, Quaternion, Euler, Mesh, Raycaster} from 'three';
 import {EASE} from '../motion-core/skeleton/pose.js';
 import {createFootPlanner} from '../motion-core/skeleton/footplan.js';
+import {createLook} from '../motion-core/skeleton/look.js';
 
 const RAD = Math.PI / 180, ease = t => EASE.inOut(Math.min(1, Math.max(0, t)));
 const band = (a, b, t) => ease((t - a) / (b - a));
@@ -115,7 +119,7 @@ export function createDemos(skeleton, foot = null){
  const defaultStepper = stepper();
 
  return {
-  SOLE, STEP, BALL, LEVEL, hips, feet, body, ground,
+  skeleton, SOLE, STEP, BALL, LEVEL, hips, feet, body, ground,
   squat(t){
    const k = (1 - Math.cos(t * 1.8)) / 2, lean = 28 * k, chest = 5 * k, tip = lean + chest;
    const neck = Math.min(20, tip * .5), head = Math.min(25, tip - neck);
@@ -134,6 +138,11 @@ export function createDemos(skeleton, foot = null){
   step(t){ return defaultStepper.at(t); },
   /** A new step demo: planned by the foot planner; stop(t) brings the foot back to the floor from wherever it is. */
   stepper,
+  /** Where the look demo's ball is at a time: swinging up to 95° to either side and 15° up and down, 2.4 m from his head. */
+  look(t){
+   const head = new Vector3(...B('head').head), yaw = 95 * Math.sin(.7 * t) * RAD, up = 15 * Math.sin(1.1 * t) * RAD;
+   return {target: head.add(new Vector3(Math.sin(yaw) * Math.cos(up), Math.sin(up), Math.cos(yaw) * Math.cos(up)).multiplyScalar(2.4)).toArray()};
+  },
   ball(t){
    const a = t * 1.4, c = [.24 + .16 * Math.cos(a), 1.32 + .18 * Math.sin(a), .42 + .06 * Math.sin(2 * a)];
    return {pose: {}, ball: c, goals: {'hand.L': {touch: c, radius: BALL.radius}, ...feet}};
@@ -271,6 +280,7 @@ export function createDemoRunner(player, D, rests){
   squat(){ player.setLayer('squat', {fn: t => D.squat(t).pose, fade: .5}); player.setGoals('feet', D.feet, {fade: 0}); },
   step(){ stepper = D.stepper(); const st = stepper; player.setLayer('step', {fn: t => st.at(t).pose, fade: .3}); player.setGoals('feet', t => st.at(t).goals, {fade: 0}); player.setBalance({ground: D.ground}); },
   ball(){ player.setGoals('ball', t => ({'hand.L': D.ball(t).goals['hand.L']}), {fade: .6}); },
+  look(){ const look = createLook(D.skeleton); player.setLayer('look', {fn: t => look.sample(t, D.look(t).target).pose, fade: .5}); },
  };
  const end = {
   sit(){
@@ -290,6 +300,7 @@ export function createDemoRunner(player, D, rests){
    player.clearLayer('step', 0, {after: 1.6}); player.clearBalance({after: 1.6}); player.clearGoals('feet', 0, {after: 1.6 + SETTLE});
   },
     ball(){ player.clearGoals('ball', .6); },
+  look(){ player.clearLayer('look', .8); },
  };
  return {
   start(name){ if(active) this.stop(); if(!run[name]) return; active = name; began = now(); run[name](); },

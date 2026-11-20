@@ -331,7 +331,33 @@ Recorded 17 November 2026.
     through zero, and a real gait gets around that through the body's own
     motion, so it is built together with walking; the foot mesh also does not
     bend at the toes yet.
-    Still open for layer 4: the swinging foot's
-    angle can still be up to about 9° off when its ankle hits its limit (12 of
-    108 frames in the step); the palm solver (arms, layer 5) has the same
-    kink-at-a-limit problem the leg had.
+    Still open for layer 4: the swinging foot's angle can still be up to about
+    9° off when its ankle hits its limit (12 of 108 frames in the step; reach
+    now reports it as `tilt`).
+40. Layer 5, upper body, built so far 20 Nov 2026:
+    (a) Looking and aiming (`motion-core/skeleton/look.js`, `npm run test:look`,
+    19 checks): `lookAt` shares a turn between the waist (turns only), chest
+    (turns a little, bends only forward), neck and head by weights (the head
+    most), never past any joint's limit; a joint that is full passes the rest on.
+    The face hits any target within the joints' reach to 0.0001° whichever way
+    the body faces; targets past that (far to one side and steeply up or down at
+    once, or behind) go as far as the joints allow and say so (`saturated`,
+    `error`). Looking behind keeps the side it was on instead of snapping. 
+    `createLook` is the smooth follower: the neck, chest and waist follow on
+    their own times, the head leads and makes up for whatever the body has not
+    done yet (it may pass the target by under 4% of the turn, then settles), no
+    joint turns faster than a person's (head 600°/s), and `sample(t, target)` is
+    a pure function of time like the foot planner. The Skeleton page has a
+    "Look at the ball" demo (a ball swinging up to 95° to either side; the face
+    stays within 4.5° of it).
+    (b) Arms and hands were fuzz-tested like the legs: palm goals made from real
+    arm poses in the middle 40% of each joint's range are landed to 0.5 mm in
+    every frame, facing right, with no snaps (14,460 frames in `test:robust`).
+    Known limit, for when climbing arrives: near the extremes of the shoulder,
+    forearm roll and wrist (beyond about 60% of their range) the palm solver
+    can flip between two equally good arm poses from one frame to the next and
+    some frames miss (about 0.3% of frames in a harsh test); plain position goals
+    (no facing) are solid everywhere. More solver iterations help the facing but
+    not the flips.
+    Still to do in this layer: the chest's lean into movement and counter-twist,
+    and arm swing, which depend on walking and are built with it.

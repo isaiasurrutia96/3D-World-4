@@ -5,6 +5,7 @@ import {reach} from '../skeleton/reach.js';
 import {createFootPlanner} from '../skeleton/footplan.js';
 import {createPosePlayer} from '../skeleton/pose.js';
 import {balanceShift} from '../skeleton/balance.js';
+import {Vector3} from 'three';
 
 const S = createSkeleton();
 const R = [], check = (name, ok, detail = '') => R.push({check: name, result: ok ? 'PASS' : 'FAIL', detail});
@@ -113,6 +114,43 @@ const makeRand = seed => { let s = seed; return () => (s = (s * 16807) % 2147483
  }
  check('balance: 60 random stances (either foot lifted, any policy, any stance) all finite and settled', ok, `${n} stances`);
  check('balance: the planted foot ends exactly on its spot in every one of them (within 0.5 mm)', planted < 5e-4, `worst ${mm(planted)}`);
+}
+
+// ---- 4. Arms: palm goals made from real arm poses (so every goal can be reached), followed frame by frame ----
+{
+ const B = n => S.bones[S.index.get(n)];
+ const joints = [['upperArm.L', 'x'], ['upperArm.L', 'y'], ['upperArm.L', 'z'], ['lowerArm.L', 'x'], ['lowerArm.L', 'y'], ['hand.L', 'x'], ['hand.L', 'z']];
+ let frames = 0, exact = 0, faceOk = 0, snaps = 0, worstSnap = 0, worstErr = 0, info = '';
+ for(const seed of [7, 31, 4242]){
+  const rnd = makeRand(seed), ru = (a, b) => a + (b - a) * rnd();
+  for(let n = 0; n < 20; n++){
+   // each joint wanders smoothly inside the middle 40% of its range (the extremes are a known limit, see the notes)
+   const P = joints.map(([b, k]) => { const L = B(b).limits[k], half = (L[1] - L[0]) / 2 * .4; return {mid: (L[0] + L[1]) / 2, amp: ru(0, half), f: ru(.2, .9), ph: ru(0, 6.28)}; });
+   let prev = null, prevQ = null; const steps = [];
+   for(let i = 0; i <= 240; i++){
+    const t = i / 60, pose = {};
+    joints.forEach(([b, k], j) => { pose[b] ??= {x: B(b).rest.x, y: B(b).rest.y, z: B(b).rest.z}; pose[b][k] = P[j].mid + P[j].amp * Math.sin(P[j].f * t * 6.2832 + P[j].ph); });
+    const h = S.solve(pose).get('hand.L'), H0 = new Vector3(...B('hand.L').head), n0 = new Vector3(...S.palms.L.normal);
+    const palm = new Vector3(...S.palms.L.point).sub(H0).applyQuaternion(h.rotation).add(h.head), face = n0.clone().applyQuaternion(h.rotation);
+    const f0 = new Vector3(...B('hand.L').tail).sub(H0); f0.sub(n0.clone().multiplyScalar(f0.dot(n0))).normalize();
+    const r = reach(S, {...(prev ?? {})}, {'hand.L': {palm: palm.toArray(), face: face.toArray(), fingers: f0.applyQuaternion(h.rotation).toArray()}}, {continuing: true});
+    prev = r.pose; frames++;
+    const e = r.error['hand.L']; worstErr = Math.max(worstErr, e);
+    if(e < 5e-4) exact++;
+    if(r.facing['hand.L'] < 1) faceOk++;
+    const q = S.solve(r.pose).get('upperArm.L').rotation.clone();
+    steps.push(prevQ && i >= 14 ? q.angleTo(prevQ) / Math.PI * 180 : null); prevQ = q;
+   }
+   for(let i = 17; i < steps.length - 3; i++){
+    if([i - 3, i - 2, i - 1, i, i + 1, i + 2, i + 3].some(k => steps[k] === null)) continue;
+    const nb = Math.max(steps[i - 1], steps[i + 1], .3);
+    if(steps[i] > 3 * nb && steps[i] > 2){ snaps++; if(steps[i] > worstSnap){ worstSnap = steps[i]; info = `seed ${seed} path ${n} frame ${i}: ${steps[i].toFixed(2)}°`; } }
+   }
+  }
+ }
+ check('arms: palm goals made from real arm poses are landed within 0.5 mm in every frame (arm poses in the middle 40% of each joint range)', exact === frames, `${exact} of ${frames} frames; worst ${mm(worstErr)}`);
+ check('arms: ...with the palm facing the right way within 1° in at least 99% of frames', faceOk / frames >= .99, `${faceOk} of ${frames} frames (${(100 * faceOk / frames).toFixed(2)}%)`);
+ check('arms: ...and the arm never snaps (no one-frame turn over 3 times its neighbours)', snaps === 0, snaps ? `${snaps} snaps; worst ${info}` : `none in ${frames} frames`);
 }
 
 console.table(R);
