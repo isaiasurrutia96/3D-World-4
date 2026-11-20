@@ -456,3 +456,75 @@ is 94.841 m. No positive speed jump, automatic boost or yaw discontinuity is
 introduced. The approved lift-off response already provides this behavior;
 the stronger lateral curve makes it substantially more capable. This follow-up
 adds the explicit proof and corrected request record, not another physics model.
+
+## 20 November — progressive control and intermittent slide/input investigation
+
+The owner authorizes code-first work on a possible stuck Right input or
+rightward slide after oversteering, plus gentler low-speed corrections and
+stronger turning with a longer hold. He likes a driver-caused slide/spin and
+wants that retained. No visual redesign, track/kart changes, new racing layer,
+or changes in motion-core or frozen checkpoints.
+
+Investigation before edits:
+- 108 flat-ground hard-turn/release combinations (nine speeds, six hold
+  durations, Gas held/released) recover without persistent neutral-input yaw;
+  worst sideways speed after two seconds is 0.000217 m/s. Large initial slip
+  angles also settle. This does not reproduce the owner's exact phone event
+  and is not a reason to remove normal sliding or replace the force model.
+- The button ledger has two reproduced stale-input paths: a release delivered
+  outside the button with capture interrupted is not handled globally; and
+  resetting shared actions while its private held-token set survives allows
+  an old Right hold to return after a later tap. Stage pause currently resets
+  shared input but does not clear that private ledger. These can occur on any
+  track; fix the lifecycle boundary and test it independently of physics.
+- Build tests before fixes, keep a prior bundle for browser comparisons, then
+  implement input ownership/release cleanup and speed-dependent progressive
+  steering. Maintain the approved high-speed turning capacity, lift-off,
+  brake/boost behavior and physical slide/recovery. Compare timed traces at
+  30/60/120/144 FPS; no position/heading snapping or automatic steering expiry.
+
+### Implemented layers and measured results
+
+- Input ownership: a pure browser-independent ledger has one owner per pointer,
+  independent keyboard/contact tokens, immutable diagnostics and no hold timer.
+  The DOM adapter adds window capture releases, native touch fallback, safe
+  capture failure/loss, lifecycle cleanup and reset reconciliation. Stage pause
+  clears the ledger explicitly. All 14 new Node input checks PASS, including
+  5,000 rapid taps, separate Gas contact, key repeats and valid long holds.
+- Browser comparisons against the exact captured pre-fix f40e962 page reproduce
+  the interrupted-release and paused/private-hold failures. The new page clears
+  Right in those cases while preserving Gas. Native 150-tap stress, real stage
+  pause/resume and controller release checks PASS, with zero page errors.
+- Progressive steering: optional, deeply immutable profile data builds input
+  over 0.50 s at <=12m/s, shapes small demand with exponent1.35, and blends to
+  the approved .18s/linear response by45m/s. Full-angle/grip limits are unchanged;
+  reference profiles disable the optional group and retain their identities.
+- 226/226 complete Node racing checks PASS. Nine new steering/recovery checks
+  include exact high-speed trace equality, gentle tap paths, gradual long holds,
+  actual hard-turn spin/slip, 432 recovery scenarios and large initial slip.
+- At8m/s, a100ms press gives0.754deg eventual heading change (was6.122deg);
+  a200ms press gives4.148deg (was24.585deg). Full low-speed input is observed
+  at.5s and center at.142s after full release. No milestone can pass as null.
+- A hard held turn still creates11.72m/s lateral motion and0.997rad slip, with
+  6.254rad body rotation at release. It recovers to negligible sideways/yaw
+  motion after release. The force/energy/grip/contact model is not replaced.
+- Existing force/radius/course tests calibrate scripted input through the new
+  response when requesting a known physical angle; their measured path and
+  safety tolerances are not relaxed. All four course fixtures and previous
+  contact/braking/boost/rollback checks PASS across the required display rates.
+- The full driving browser suite passes: four tracks, current keys/phone buttons,
+  analog gamepads, all seven layouts, FPV, disabled driving zoom and video scroll.
+  No visual redesign or changes to motion-core, avatar, frozen checkpoints,
+  track geometry, kart dimensions or approved high-speed speed/grip settings.
+- This fixes reproduced stale-input paths. The exact intermittent phone incident
+  remains unconfirmed; ordinary recoverable slides/spins are intentionally kept.
+
+
+Final delivery verification: full production build passes, followed by 39/39
+final racing build-time Node checks (including the 14 input checks). All eight
+captured-before/current browser scenarios pass with both HTML SHA256s recorded.
+The standard 12-group driving browser suite, profile/analog browser checks and
+16 bridge-camera replay cases pass with zero page/WebGL errors. Renderer,
+layout, avatar assets, motion-core and frozen source files have no changes.
+The final mouse guard also clears a missed primary-button release and prevents
+secondary clicks from driving; its explicit Node event-sequence check passes.

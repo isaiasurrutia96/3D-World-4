@@ -18,12 +18,12 @@
         "balanced": {
           "normal": 150,
           "boost": 200,
-          "fingerprint": "kart-v1-39636b26801f80fc"
+          "fingerprint": "kart-v1-0ce874f9a2bb7df6"
         },
         "fast": {
           "normal": 180.00000000000003,
           "boost": 220,
-          "fingerprint": "kart-v1-9addaf0b5acc2976"
+          "fingerprint": "kart-v1-025c0e69a91e540a"
         },
         "f1-targets": {
           "normal": 219.89083750894775,
@@ -48,9 +48,9 @@
       "input": "Same settings with different labels/ids; change a curve value by one tiny amount.",
       "expected": "Cosmetic renaming keeps identity; any numeric tuning change produces a new identity.",
       "measured": {
-        "a": "kart-v1-55e2caeaa1c5fcca",
-        "b": "kart-v1-55e2caeaa1c5fcca",
-        "c": "kart-v1-f6c0f640762c17c7"
+        "a": "kart-v1-4aa8fc12743ff736",
+        "b": "kart-v1-4aa8fc12743ff736",
+        "c": "kart-v1-3f7eb75c411a3ca9"
       },
       "status": "PASS"
     },

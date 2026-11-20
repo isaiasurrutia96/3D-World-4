@@ -6,6 +6,12 @@ export type LegacyProfile = Readonly<{
     mode: 'legacy'; id: 'original'; label: string; version: 1;
     topSpeed: number; boostSpeed: number; fingerprint: string;
 }>;
+export type ProgressiveSteering = Readonly<{
+    lowSpeedRiseSeconds: number;
+    lowSpeedExponent: number;
+    blendStart: number;
+    blendEnd: number;
+}>;
 export type HandlingSettings = {
     id: string;
     label: string;
@@ -29,6 +35,7 @@ export type HandlingSettings = {
     brakeRiseSeconds: number;
     brakeReleaseSeconds: number;
     steeringLock: number;
+    steeringResponse?: ProgressiveSteering;
     steeringRiseSeconds: number;
     steeringReleaseSeconds: number;
     steeringBlendStart: number;
@@ -63,6 +70,7 @@ const referenceDefaults: HandlingSettings = {
     coastConstant: .3, coastQuadratic: .0004,
     throttleRiseSeconds: .15, throttleReleaseSeconds: .10,
     brakeRiseSeconds: .10, brakeReleaseSeconds: .08,
+    steeringResponse: undefined,
     steeringLock: Math.PI / 6, steeringRiseSeconds: .25, steeringReleaseSeconds: .18,
     steeringBlendStart: 10, steeringBlendEnd: 25,
     yawResponseSeconds: .12, yawAcceleration: 8, slipResponseSeconds: .18,
@@ -75,6 +83,7 @@ const referenceDefaults: HandlingSettings = {
 const defaults: HandlingSettings = {
     ...referenceDefaults,
     cornering: [[0, 28], [15, 28], [30, 40], [45, 56], [60, 76], [75, 98], [140, 98]],
+    steeringResponse: { lowSpeedRiseSeconds: .5, lowSpeedExponent: 1.35, blendStart: 12, blendEnd: 45 },
     steeringRiseSeconds: .18, steeringReleaseSeconds: .14,
     yawResponseSeconds: .10, yawAcceleration: 10, slipResponseSeconds: .14,
 };
@@ -100,6 +109,17 @@ function copyCurve(value: Curve, name: string): Curve {
     });
     return Object.freeze(points);
 }
+function copySteeringResponse(value: ProgressiveSteering | undefined, baseRise: number): ProgressiveSteering | undefined {
+    if (value===undefined) return undefined;
+    if (!value || typeof value!=='object' || Array.isArray(value)) throw new TypeError('steeringResponse must be a settings object');
+    const keys=['lowSpeedRiseSeconds','lowSpeedExponent','blendStart','blendEnd'];
+    for (const key of Object.keys(value)) if (!keys.includes(key)) throw new TypeError('Unknown steeringResponse setting: '+key);
+    const {lowSpeedRiseSeconds,lowSpeedExponent,blendStart,blendEnd}=value;
+    for (const key of keys) finite(value[key as keyof ProgressiveSteering], 'steeringResponse.'+key);
+    if (lowSpeedRiseSeconds<baseRise || lowSpeedExponent<1 || lowSpeedExponent>3 || blendStart<0 || blendEnd<=blendStart) throw new RangeError('Invalid progressive steering response');
+    // Construct in canonical field order; callers cannot mutate shared tuning.
+    return Object.freeze({lowSpeedRiseSeconds,lowSpeedExponent,blendStart,blendEnd});
+}
 // Stable content identity for saved runs/custom profiles, not a security hash.
 function fingerprint(data: object): string {
     // Names/cosmetics do not change a run's physics. Sort ASCII keys without
@@ -118,6 +138,7 @@ export function createHandlingProfile(changes: Partial<HandlingSettings> = {}): 
     if (typeof data.label !== 'string' || !data.label.trim() || data.label.length > 80) throw new TypeError('Invalid tuning profile label');
     for (const key of numericKeys) finite(data[key], key);
     for (const key of curveKeys) data[key] = copyCurve(data[key], key);
+    data.steeringResponse = copySteeringResponse(data.steeringResponse, data.steeringRiseSeconds);
     for (const key of numericKeys) {
         const value = data[key] as number;
         if ((nonnegativeKeys as readonly string[]).includes(key)) { if (value < 0) throw new RangeError(key + ' must be nonnegative'); }
@@ -164,4 +185,20 @@ export function steeringLimit(profile: HandlingProfile, speed: number, wheelbase
     const v = Math.abs(speed), calculated = Math.atan(wheelbase * sampleCurve(profile.cornering, v) * gripMultiplier / Math.max(v * v, 1e-12));
     const t = Math.max(0, Math.min(1, (v - profile.steeringBlendStart) / (profile.steeringBlendEnd - profile.steeringBlendStart))), blend = t * t * (3 - 2 * t);
     return Math.min(profile.steeringLock, profile.steeringLock + (calculated - profile.steeringLock) * blend);
+}
+
+/** Input response only. Full held input retains the same tire/wheel-angle limit. */
+export function steeringResponse(profile: HandlingProfile, speed: number): Readonly<{riseSeconds:number;exponent:number}> {
+    finite(speed,'Steering response speed');
+    const response=profile.steeringResponse;
+    if (!response) return Object.freeze({riseSeconds:profile.steeringRiseSeconds,exponent:1});
+    const v=Math.abs(speed);
+    if (v>=response.blendEnd) return Object.freeze({riseSeconds:profile.steeringRiseSeconds,exponent:1});
+    if (v<=response.blendStart) return Object.freeze({riseSeconds:response.lowSpeedRiseSeconds,exponent:response.lowSpeedExponent});
+    const t=(v-response.blendStart)/(response.blendEnd-response.blendStart);
+    const blend=t*t*(3-2*t);
+    return Object.freeze({
+        riseSeconds:response.lowSpeedRiseSeconds+(profile.steeringRiseSeconds-response.lowSpeedRiseSeconds)*blend,
+        exponent:response.lowSpeedExponent+(1-response.lowSpeedExponent)*blend,
+    });
 }

@@ -4,11 +4,11 @@
 
 ## Only cornering and steering response change from the exact approved Fast setup
 
-Rule: Six deliberate handling changes; all speed/pedal/braking/boost/surface settings identical; both reference hashes unchanged.
+Rule: Seven deliberate handling changes; all speed/pedal/braking/boost/surface settings identical; both reference hashes unchanged.
 
 Script: `"Compare every physical setting and pin previous Fast and F1 fingerprints."`
 
-Measured: `{"changed":["cornering","slipResponseSeconds","steeringReleaseSeconds","steeringRiseSeconds","yawAcceleration","yawResponseSeconds"],"previousFingerprint":"kart-v1-a86c3ae8d1936d52","currentFingerprint":"kart-v1-9addaf0b5acc2976","f1Fingerprint":"kart-v1-b2666c008706e548"}`
+Measured: `{"changed":["cornering","slipResponseSeconds","steeringReleaseSeconds","steeringResponse","steeringRiseSeconds","yawAcceleration","yawResponseSeconds"],"previousFingerprint":"kart-v1-a86c3ae8d1936d52","currentFingerprint":"kart-v1-025c0e69a91e540a","f1Fingerprint":"kart-v1-b2666c008706e548"}`
 
 **PASS**
 
@@ -42,11 +42,11 @@ Measured: `{"results":[{"profile":"fast-before-grip","radius":197.41433042610424
 
 **PASS**
 
-## Button steering reaches full input sooner and still releases smoothly
+## High-speed button steering reaches full input sooner and still releases smoothly
 
-Rule: Full input in≤.18s+one120Hz tick, centered in≤.14s+one tick; both faster than before; no stationary yaw or discontinuous input jumps.
+Rule: Full input in≤.18s+one120Hz tick, centered in≤.14s+one tick; both faster than the pre-grip setup; no discontinuous input jumps.
 
-Script: `{"fps":[30,60,120,144],"script":"At rest hold Right.4s and then release.3s; observe the exact first full/zero physics tick."}`
+Script: `{"fps":[30,60,120,144],"script":"At180mph hold Gas+Right.4s and then Gas straight.3s; observe the exact first full/zero physics tick."}`
 
 Measured: `[{"profile":"fast-before-grip","fullSeconds":0.25,"releaseSeconds":0.18333333333333335,"maxNormalizedStep":0.04629629629629631},{"profile":"fast","fullSeconds":0.18333333333333332,"releaseSeconds":0.1416666666666666,"maxNormalizedStep":0.059523809523809534}]`
 

@@ -18,7 +18,7 @@ function equalStates(group){for(const row of group.slice(1))assert.deepEqual(row
 function check(rule,input,expected,measure){test(rule,()=>{let measured;try{measured=measure();rows.push({rule,input,expected,measured,status:'PASS'});}catch(error){rows.push({rule,input,expected,measured:measured??null,status:'FAIL',error:error.message});throw error;}});}
 check('Only cornering and steering response change from the exact approved Fast setup',
     'Compare every physical setting and pin previous Fast and F1 fingerprints.',
-    'Six deliberate handling changes; all speed/pedal/braking/boost/surface settings identical; both reference hashes unchanged.',()=>{
+    'Seven deliberate handling changes; all speed/pedal/braking/boost/surface settings identical; both reference hashes unchanged.',()=>{
         const before=PREVIOUS_FAST_PROFILE,after=DRIVING_PROFILES.fast;
         assert.equal(before.fingerprint,'kart-v1-a86c3ae8d1936d52');
         assert.equal(DRIVING_PROFILES['f1-targets'].fingerprint,'kart-v1-b2666c008706e548');
@@ -27,7 +27,7 @@ check('Only cornering and steering response change from the exact approved Fast 
             if(['id','label','fingerprint'].includes(key))continue;
             if(JSON.stringify(before[key])!==JSON.stringify(after[key]))changed.push(key);
         }
-        assert.deepEqual(changed.sort(),['cornering','steeringRiseSeconds','steeringReleaseSeconds','yawResponseSeconds','yawAcceleration','slipResponseSeconds'].sort());
+        assert.deepEqual(changed.sort(),['cornering','steeringRiseSeconds','steeringReleaseSeconds','yawResponseSeconds','yawAcceleration','slipResponseSeconds','steeringResponse'].sort());
         assert.notEqual(after.fingerprint,before.fingerprint);
         assert(Object.isFrozen(before)&&Object.isFrozen(before.cornering));
         return {changed,previousFingerprint:before.fingerprint,currentFingerprint:after.fingerprint,f1Fingerprint:DRIVING_PROFILES['f1-targets'].fingerprint};
@@ -72,16 +72,16 @@ for(const mph of[180,220])check(`${mph}mph turns are half as wide at the same ac
         assert(results[1].radius/results[0].radius<=.52);near(results[1].minimumMPH,results[0].minimumMPH,.1);
         return {results,radiusRatio:results[1].radius/results[0].radius};
     });
-check('Button steering reaches full input sooner and still releases smoothly',
-    {fps:rates,script:'At rest hold Right.4s and then release.3s; observe the exact first full/zero physics tick.'},
-    'Full input in≤.18s+one120Hz tick, centered in≤.14s+one tick; both faster than before; no stationary yaw or discontinuous input jumps.',()=>{
+check('High-speed button steering reaches full input sooner and still releases smoothly',
+    {fps:rates,script:'At180mph hold Gas+Right.4s and then Gas straight.3s; observe the exact first full/zero physics tick.'},
+    'Full input in≤.18s+one120Hz tick, centered in≤.14s+one tick; both faster than the pre-grip setup; no discontinuous input jumps.',()=>{
         const output=[];
         for(const profile of[PREVIOUS_FAST_PROFILE,DRIVING_PROFILES.fast]){
             const group=rates.map(fps=>{
-                const c=make(profile);let full=null,zero=null,last=0,maximumStep=0;
-                run(c,.4,fps,{steer:1},(s,tick)=>{if(full===null&&s.handling.steerInput>=1-1e-12)full=tick/120;maximumStep=Math.max(maximumStep,Math.abs(s.handling.steerInput-last));last=s.handling.steerInput;});
-                run(c,.3,fps,{},(s,tick)=>{if(zero===null&&s.handling.steerInput===0)zero=tick/120-.4;maximumStep=Math.max(maximumStep,Math.abs(s.handling.steerInput-last));last=s.handling.steerInput;});
-                near(c.state.yaw,0);assert(maximumStep<=KART.step/Math.min(profile.steeringRiseSeconds,profile.steeringReleaseSeconds)+1e-10);
+                const c=make(profile,{speed:180*MPH});let full=null,zero=null,last=0,maximumStep=0;
+                run(c,.4,fps,{throttle:1,steer:1},(s,tick)=>{if(full===null&&s.handling.steerInput>=1-1e-12)full=tick/120;maximumStep=Math.max(maximumStep,Math.abs(s.handling.steerInput-last));last=s.handling.steerInput;});
+                run(c,.3,fps,{throttle:1},(s,tick)=>{if(zero===null&&s.handling.steerInput===0)zero=tick/120-.4;maximumStep=Math.max(maximumStep,Math.abs(s.handling.steerInput-last));last=s.handling.steerInput;});
+                assert(full!==null&&zero!==null,'Both response milestones must actually be observed');assert(maximumStep<=KART.step/Math.min(profile.steeringRiseSeconds,profile.steeringReleaseSeconds)+1e-10);
                 return {fps,full,zero,maximumStep,state:c.state};
             });
             equalStates(group);output.push({profile:profile.id,fullSeconds:group[0].full,releaseSeconds:group[0].zero,maxNormalizedStep:group[0].maximumStep});
