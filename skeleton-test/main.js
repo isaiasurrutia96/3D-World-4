@@ -9,8 +9,6 @@ import {loadOfficialAvatar,OFFICIAL_AVATAR} from '../avatar/src/official-avatar.
 
 import {POSES,CLIPS} from '../motion-core/skeleton/poses.js';
 import {createPosePlayer} from '../motion-core/skeleton/pose.js';
-import {reach} from '../motion-core/skeleton/reach.js';
-import {createDemos,seatTop,thighRests,footReach,createDemoRunner} from './demos.js';
 
 
 const stage=document.querySelector('#stage');
@@ -23,8 +21,6 @@ const scene=new T.Scene();scene.background=new T.Color('#405363');scene.add(A.ro
 A.root.traverse(o=>{if(o.isMesh)o.castShadow=true;});
 const floorSize=document.documentElement.dataset.avatarView==='avatar-test'?12:4;
 const slab=new T.Mesh(new T.BoxGeometry(floorSize,.6,floorSize),new T.MeshStandardMaterial({color:'#8f9295',roughness:1}));slab.position.y=-.3;slab.receiveShadow=true;scene.add(slab);
-// A walking or running body leaves the slab behind: the slab goes along under it, with 1 m grid lines that stay where they are, so you can see him move.
-const grid=new T.GridHelper(48,48,'#6f7377','#7a7e82');grid.position.y=.002;grid.visible=false;scene.add(grid);
 scene.add(new T.HemisphereLight(0xffffff,0xb6b2aa,2));
 const key=new T.DirectionalLight(0xffffff,2.4);key.position.set(-3,5,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-1.8,right:1.8,top:2,bottom:-1,near:.2,far:12});key.shadow.bias=-.0002;key.target.position.set(0,.9,0);scene.add(key,key.target);
 const fill=new T.DirectionalLight(0xffffff,.9);fill.position.set(4,2,-3);scene.add(fill);
@@ -44,36 +40,9 @@ const m4=new T.Matrix4();
 function drawBones(s){s.bones.forEach((b,i)=>{b.head.toArray(linePos,i*6);b.tail.toArray(linePos,i*6+3);m4.makeTranslation(b.head.x,b.head.y,b.head.z);dots.setMatrixAt(i,m4);});links.forEach(([p,i],k)=>{s.bones[p].head.toArray(linkPos,k*6);s.bones[i].head.toArray(linkPos,k*6+3);});linkGeo.attributes.position.needsUpdate=true;lineGeo.attributes.position.needsUpdate=true;dots.instanceMatrix.needsUpdate=true;}
 
 const player=createPosePlayer(A.skeleton,{},{follow:true});let current='rest';
-// Reaching demos (section 4, skeleton-test/demos.js). Placeholder props: simple blocks and a ball.
-const sk=A.skeleton,D=createDemos(sk,footReach(A)),RESTS=thighRests(A);
-const prop=new T.MeshStandardMaterial({color:'#c9c4ba',roughness:1});
-const step=new T.Mesh(new T.BoxGeometry(D.STEP.width,D.STEP.height,D.STEP.depth),prop);step.position.set(...D.STEP.centre);step.castShadow=step.receiveShadow=true;step.visible=false;scene.add(step);
-const ball=new T.Mesh(new T.SphereGeometry(D.BALL.radius,24,16),new T.MeshStandardMaterial({color:'#ff9a3c',roughness:.6}));ball.visible=false;scene.add(ball);
-const lookBall=new T.Mesh(new T.SphereGeometry(.07,24,16),new T.MeshStandardMaterial({color:'#6ec6ff',roughness:.5}));lookBall.visible=false;scene.add(lookBall);
-// The seat: a simple block whose top is measured to touch him exactly when seated.
-const seatPose=reach(sk,D.sit(99).pose,D.sit(99).goals).pose,seatFit=seatTop(A,seatPose);A.apply(sk.restPose());
-const seat=new T.Mesh(new T.BoxGeometry(.5,seatFit.top,seatFit.front-seatFit.back+.04),prop);seat.position.set(0,seatFit.top/2,(seatFit.front+seatFit.back-.04)/2);seat.castShadow=seat.receiveShadow=true;seat.visible=false;scene.add(seat);
-// Demos run on the pose player (smooth starts and stops); the shoulders follow inside the player.
-const runner=createDemoRunner(player,D,RESTS);
-function setDemo(name){
- if(!name||name===runner.active)runner.stop();else runner.start(name);
- const on=runner.active;step.visible=on==='step';ball.visible=on==='ball';lookBall.visible=on==='look';seat.visible=on==='sit';
- for(const b of document.querySelectorAll('[data-demo]'))b.setAttribute('aria-pressed',String(b.dataset.demo===on));
- if(on)for(const b of document.querySelectorAll('[data-pose]'))b.setAttribute('aria-pressed','false');
-}
-for(const b of document.querySelectorAll('[data-demo]'))b.onclick=()=>setDemo(b.dataset.demo===runner.active?null:b.dataset.demo);
-/** The pose for this frame (the ball prop follows the ball demo's time). */
+/** The pose for this frame. */
 function framePose(dt){
- runner.tick(dt);
- const pose=player.update(dt);
- if(runner.active==='ball')ball.position.set(...D.ball(runner.time).ball);
- if(runner.active==='look')lookBall.position.set(...D.look(runner.time).target);
- // The camera goes along with a walking body (and back to the middle when it is home again).
- const rx=pose.root?.position[0]??0,rz=pose.root?.position[2]??0,away=Math.hypot(rx,rz),follow=runner.active==='walk'||runner.active==='run'||away>.35;
- const wantX=follow?rx:0,wantZ=follow?rz:0;
- if(Math.abs(wantX-target.x)>1e-6||Math.abs(wantZ-target.z)>1e-6){const k=follow?1:.15,dx=(wantX-target.x)*k,dz=(wantZ-target.z)*k;target.x+=dx;target.z+=dz;camera.position.x+=dx;camera.position.z+=dz;controls.target.copy(target);needsRender=true;}
- slab.position.x=target.x;slab.position.z=target.z;grid.visible=follow;grid.position.x=Math.round(target.x);grid.position.z=Math.round(target.z);
- return pose;
+ return player.update(dt);
 }
 
 function setPose(name){
@@ -82,7 +51,7 @@ function setPose(name){
  else{player.clearLayer('wave',.4);player.transitionTo(POSES[name]??{},{duration:.6});}
  for(const b of document.querySelectorAll('[data-pose]'))b.setAttribute('aria-pressed',String(b.dataset.pose===name));
 }
-for(const b of document.querySelectorAll('[data-pose]'))b.onclick=()=>{if(runner.active)setDemo(null);setPose(b.dataset.pose);};
+for(const b of document.querySelectorAll('[data-pose]'))b.onclick=()=>{setPose(b.dataset.pose);};
 const bonesButton=document.querySelector('#bones');
 function showBones(on){bonesView.visible=on;needsRender=true;bonesButton.setAttribute('aria-pressed',String(on));bonesButton.textContent=on?'Hide bones':'Show bones';}
 bonesButton.onclick=()=>showBones(!bonesView.visible);
@@ -115,7 +84,7 @@ renderer.setAnimationLoop(ms=>{
  if(presentation!==lastPresentation){lastPresentation=presentation;needsRender=true;}
  if(needsRender){renderer.render(scene,camera);needsRender=false;}
 });
-window.skeletonLab={camera,controls,scene,renderer,setPose,setDemo,showBones,view,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES),demos:['squat','sit','step','ball','look','walk','run']};
+window.skeletonLab={camera,controls,scene,renderer,setPose,showBones,view,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES)};
 window.avatarLab=window.skeletonLab;
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
 drawBones(A.solved);renderer.render(scene,camera);

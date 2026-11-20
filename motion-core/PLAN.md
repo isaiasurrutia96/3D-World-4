@@ -417,3 +417,5 @@ wrist6,869ms, elbow2,696ms; decoding alone2,340ms/845ms. These are measured
 Chromium checks, not promises for every phone or connection. Lossless asset
 sizes4,339,774bytes wrist and1,190,536bytes elbow. Source factories remain
 unchanged; no appearance redesign or new Test Lab section.
+
+Reset, 20 Nov 2026: the movement layers built after the wave (looking, foot planting, walking and running, sit, squat, foot on step, follow the ball) were removed at the owner's order and are to be rebuilt one movement at a time (see docs/NEXT.md item 47). The code is in the git history (last commit before the reset: 747d0ba).

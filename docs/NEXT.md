@@ -481,4 +481,21 @@ Recorded 17 November 2026.
     is not special: the gait simply starts. (3) The hip can still flip between two ways of landing a foot in a few frames of
     a turn at full speed (random sticks: worst joint 84k at one instant in 100 seconds); a relaxed mid-swing foot keeps it rare.
     (4) Still to do from the owner's list: the nose on the head, the ball in the palm, the sit hands, the squat leg spread.
+47. RESET, 20 Nov 2026 (the owner's order, in the owner's words: "erase and forget everything and start back to where i only
+    had a few poses to choose from", after testing the rebuilt walk and run and finding them still bad). The Skeleton section
+    of the Test Lab is back to the wave point: Rest, Arms out, Arms up, Wave, Elbows bent, Kick, Knee up and Look (the commit
+    "Skeleton section 3: smooth poses, a real wave", 18 Nov 09:58, had exactly these). Removed from the page and from the code:
+    sit, squat, foot on step, follow the ball, look at the ball, walk, run, the button-switching runner, the looking layer
+    (`look.js`), the foot planner (`footplan.js`), the gait (`gait.js`), the demo checks and the tests that went with them.
+    Kept, because they are not movements: the approved avatar and its joints, the skeleton, the pose player with layers and clips
+    (the wave), the shoulder, reach, hand and balance code the pose player is built on (their tests still pass), and the tests for
+    the avatar, torso, chest, hands and shoulders. Nothing else in the repository was touched (Codex's racing and driving work,
+    the Motion Lab, the checkpoints). Everything that was removed is still in the git history: the last commit before the reset is
+    `747d0ba` ("Rebuild walk and run the way the wave is made"), and items 31 to 46 above describe it (they describe code that no
+    longer exists; do not rely on them as a description of the tree). Rule from here, owner's decision: add ONE movement at a time;
+    test each new one together with all earlier ones, at uneven frame rates, and by looking at it in a real browser (walking and
+    running in place first); move on only when the owner says it looks good. The page keeps a small frame-rate readout.
+    Still open from the owner's list (for when each movement comes back): a nose on the head for the look movement, the ball in the
+    middle of the palm (measured: the palm point sits about 12 cm too far toward the wrist, the palm's visual centre is about 12 cm
+    further toward the fingers), the sit hands grabbing the knees, and whether the squat should spread the legs first.
 
