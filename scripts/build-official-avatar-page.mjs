@@ -21,6 +21,10 @@ export async function buildOfficialAvatarPage(route){
  assert.equal(light.sourceSHA256,release.sha256,'The light copy must come from the approved master');
  assert.equal(createHash('sha256').update(lightPayload).digest('hex'),light.sha256,'Corrupt light avatar');
  assert.equal(lightPayload.length,light.bytes);
+ const game=JSON.parse(await readFile('avatar/assembled-joints/game.json','utf8')),gamePayload=await readFile('avatar/assembled-joints/'+game.asset);
+ assert.equal(game.sourceSHA256,release.sha256,'The game copy must come from the approved master');
+ assert.equal(createHash('sha256').update(gamePayload).digest('hex'),game.sha256,'Corrupt game avatar');
+ assert.equal(gamePayload.length,game.bytes);
  const worker=await build({entryPoints:['src/study-binary-worker.js'],bundle:true,write:false,minify:true,format:'iife'});
  const workerName='decode-'+createHash('sha256').update(worker.outputFiles[0].contents).digest('hex').slice(0,16)+'.js';
  const result=await build({entryPoints:['skeleton-test/main.js'],bundle:true,write:false,minify:true,format:'iife',metafile:true,define:{__AVATAR_WORKER_URL__:JSON.stringify(workerName)}});
@@ -35,6 +39,8 @@ export async function buildOfficialAvatarPage(route){
  await copyFile('avatar/assembled-joints/'+delivery.asset,'dist/avatar/assembled-joints/'+delivery.asset);
  await copyFile('avatar/assembled-joints/'+light.asset,'dist/avatar/assembled-joints/'+light.asset);
  await copyFile('avatar/assembled-joints/light.json','dist/avatar/assembled-joints/light.json');
+ await copyFile('avatar/assembled-joints/'+game.asset,'dist/avatar/assembled-joints/'+game.asset);
+ await copyFile('avatar/assembled-joints/game.json','dist/avatar/assembled-joints/game.json');
  await copyFile('avatar/assembled-joints/delivery.json','dist/avatar/assembled-joints/delivery.json');
  for(const dir of ['avatar/assembled-joints','dist/avatar/assembled-joints'])await writeFile(dir+'/'+workerName,worker.outputFiles[0].contents);
  await copyFile('avatar/official.json','dist/avatar/official.json');

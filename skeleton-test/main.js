@@ -6,7 +6,7 @@ import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import {loadOfficialAvatar,OFFICIAL_AVATAR} from '../avatar/src/official-avatar.js';
-import {loadLightAvatar,LIGHT_AVATAR} from '../avatar/src/light-avatar.js';
+import {loadLightAvatar,loadGameAvatar,LIGHT_AVATAR,GAME_AVATAR} from '../avatar/src/light-avatar.js';
 
 import {POSES,CLIPS} from '../motion-core/skeleton/poses.js';
 import {createPosePlayer} from '../motion-core/skeleton/pose.js';
@@ -15,10 +15,11 @@ import {createPosePlayer} from '../motion-core/skeleton/pose.js';
 const stage=document.querySelector('#stage');
 async function start(){
 // Which avatar to draw: the detailed approved one (default) or the light copy
-// (about 14 times fewer triangles) for testing smoothness. The choice is
-// remembered; changing it reloads the page.
-let avatarMode='detailed';try{if(localStorage.getItem('skeletonAvatar')==='light')avatarMode='light';}catch{}
-const A=avatarMode==='light'?await loadLightAvatar():await loadOfficialAvatar();
+// (about 14 times fewer triangles) or the game copy (about 29,000 triangles,
+// phone-ready) for testing smoothness. The choice is remembered; changing it
+// reloads the page.
+let avatarMode='detailed';try{const saved=localStorage.getItem('skeletonAvatar');if(saved==='light'||saved==='game')avatarMode=saved;}catch{}
+const A=avatarMode==='light'?await loadLightAvatar():avatarMode==='game'?await loadGameAvatar():await loadOfficialAvatar();
 for(const b of document.querySelectorAll('[data-avatar]')){
  b.setAttribute('aria-pressed',String(b.dataset.avatar===avatarMode));
  b.onclick=()=>{if(b.dataset.avatar===avatarMode)return;try{localStorage.setItem('skeletonAvatar',b.dataset.avatar);}catch{}location.reload();};
@@ -119,7 +120,7 @@ renderer.setAnimationLoop(ms=>{
  if(presentation!==lastPresentation){lastPresentation=presentation;needsRender=true;}
  if(needsRender){renderer.render(scene,camera);needsRender=false;}
 });
-window.skeletonLab={camera,controls,scene,renderer,setPose,showBones,view,setQuality:applyQuality,getQuality:()=>quality,avatar:A,player,release:avatarMode==='light'?LIGHT_AVATAR:OFFICIAL_AVATAR,avatarMode,poses:Object.keys(POSES)};
+window.skeletonLab={camera,controls,scene,renderer,setPose,showBones,view,setQuality:applyQuality,getQuality:()=>quality,avatar:A,player,release:avatarMode==='light'?LIGHT_AVATAR:avatarMode==='game'?GAME_AVATAR:OFFICIAL_AVATAR,avatarMode,poses:Object.keys(POSES)};
 window.avatarLab=window.skeletonLab;
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
 drawBones(A.solved);renderer.render(scene,camera);

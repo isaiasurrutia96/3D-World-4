@@ -16,6 +16,8 @@ same guide and handoff rather than introducing another set of rules.
 2. Walking and running were rejected and removed. Everything removed is in git history; the last commit before the reset is `747d0ba`.
 3. Claude owns avatar movement and the Skeleton section; Codex owns racing and driving. The owner says rules and past decisions are suggestions they can change, and wants to be challenged when something is better.
 4. The owner calls the whole testing page the Test Lab; the Skeleton page is one section of it.
+5. (20 November 2026, new session) Keep the **rigid ragdoll avatar** with visible ball joints; it is central to the owner's goal of throws and shots that look unlike other games. Refine it rather than replace it, and do not switch to a skinned mesh. Claude does the avatar work.
+6. Plan: chunk 1 is a phone-ready **Game** copy at about 29,000 triangles (Game button in the Skeleton section; made by `LIGHT_MODE=game node scripts/build-light-avatar.mjs`, approved files untouched). Chunk 2, after owner review, is refinement one item at a time: ball joint sizes, palm ball position, nose.
 
 ## Open items from the owner (for when each movement returns)
 A nose (small triangle) on the head for the look pose; the ball in the middle of the palm (the palm point sits about 12 cm too far toward the wrist); sit with hands grabbing the knees; whether the squat should spread the legs first.
