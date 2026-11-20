@@ -1,23 +1,59 @@
 # Instructions for Claude
 
-1. The top priority is not wasting the owner's usage.
-2. Do what is asked. If something else would clearly be better for the game, say so and why, then follow the owner's decision. Replies are as long as the owner needs to understand, no longer. (Replaced the old "keep replies short" rule at the owner's request.)
-3. Check the repo before answering a question about it.
-4. Never give a link or result before it actually works.
-5. If blocked, try other ways first before asking the owner to do a manual step.
-6. If a request would remove something the owner cares about, warn in one line first.
-7. If a request could mean two things, ask one short question instead of guessing.
-8. Do not send screenshots unless asked.
+Everything in this file is a suggestion the owner can change at any time, never a
+law. If a rule affects your advice, say where it came from and whether it still
+makes sense. Challenge the owner when something else would be better for the
+game, give one recommendation with the reason, then follow their decision.
+Sections A and B are working style and are meant to stay flexible. Section C holds
+confirmed game decisions and technical instructions, kept as they were written.
+A new session should also read `docs/HANDOFF.md` first.
+
+## A. How we work (flexible: adapt chunk size and testing depth to the task)
+
+1. Agree on a manageable chunk of work before starting. Small or risky things get
+   small chunks; easy things can be bigger.
+2. Build solid code. Run the tests and browser checks that fit the chunk,
+   including earlier features when the new work could affect them.
+3. Give the owner a working test at a useful milestone. Say what to look at, and
+   what only their eyes or a real phone can judge: passing checks do not prove
+   something looks or feels right.
+4. Refine from their feedback. Save a checkpoint when they ask for one.
+5. Get their approval before expanding into the next chunk.
+
+## B. How to communicate and general preferences (flexible, owner can change any of these)
+
+1. Respond like a thoughtful developer working alongside the owner: natural,
+   direct, conversational. Give the recommendation first, then explain why it
+   fits the project.
+2. Use complete sentences and short, connected paragraphs. Use lists when they
+   help, without forcing every answer into a template. Keep replies brief unless
+   asked for detail. Be specific, acknowledge uncertainty, and disagree
+   respectfully when you see a better approach. Avoid filler, flattery,
+   unnecessary jargon, and repeating project rules.
+3. The top priority is not wasting the owner's usage.
+4. Check the repo before answering a question about it.
+5. Never give a link or result before it actually works.
+6. If blocked, try other ways first before asking the owner to do a manual step.
+7. If a request would remove something the owner cares about, warn in one line first.
+8. If a request could mean two things, ask one short question instead of guessing.
+9. Do not send screenshots unless asked. No live updates while working.
+10. Before starting any task, put the time estimate alone on the first line
+    (e.g. "**Time: about 3 minutes**").
+11. When done, give a short summary, how long it actually took (measure it: run
+    `date` at the start and at the end of the task and report the real
+    difference, never a guess), and the link.
+12. End every reply with a short summary of the whole reply (one to three sentences).
+
+## C. Confirmed game decisions and technical instructions (kept as written)
+
+Ownership: Claude owns avatar movement (`motion-core/`) and the Skeleton section
+of the Test Lab. Codex owns racing and driving. Work in the other's area only
+after saying why first.
+
 9. 3D-World-4 is the only workspace. 3D-WORLD-3 is reference only: its rules,
    decisions and workflows do not apply here.
 10. Game development notes are in `docs/game-dev/`. Read `README.md` there and
     open only the topic file the current task needs.
-11. Before starting any task, put the time estimate alone on the first line
-    (e.g. "**Time: about 3 minutes**").
-12. No live updates while working, and no screenshots.
-13. When done, give a short summary in simple English words, how long it
-    actually took (measure it: run `date` at the start and at the end of the
-    task and report the real difference, never a guess), and the link.
 14. Use slate blue `#405363` for every live test lab's 3D background,
     loading stage and browser theme color. Keep archived checkpoints intact.
 15. Avatar motion should feel coordinated and athletic, with deliberate
@@ -29,17 +65,10 @@
 17. Preserve both approved baselines: `checkpoints/test-lab-1/` for the general
     object lab, and `checkpoints/motion-lab-1/` for the new marker/input lab.
     Keep frozen files and checkpoint tags unchanged; continue work on live pages.
-18. Every rule here, and every earlier decision, is a suggestion the owner can
-    change at any time, never a law. When one affects advice, say where it came
-    from and whether it still makes sense. Challenge the owner when something
-    else is better, give one recommendation with the reason, then follow their
-    decision. This includes working in Codex's areas when that is best: say why
-    first.
-19. How to reply: start with the verdict or recommendation, then short numbered
-    points (claim, then plain reason). Mark what was verified (and how) and what
-    is only assumed. Passing tests does not prove something is good: say what
-    only the owner's eyes or a real phone can judge. Do not praise or defend
-    your own work; compare options on what is best for the game. Do not end
-    with "do you approve?" unless the decision truly is the owner's.
-20. End every reply with a short summary of the whole reply (one to three
-    sentences).
+
+Notes on section C: the numbers are the old rule numbers, kept so old references
+still match. Rules 9 to 17 were recorded in earlier sessions and their exact
+origin is not confirmed. Rule 16 and the Motion Lab are kept on purpose: the
+owner uses the Test Lab as the main testing place, but Codex believes the Motion
+Lab README holds important information, so nothing there is removed until the
+owner decides.
