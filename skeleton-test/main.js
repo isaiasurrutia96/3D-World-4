@@ -68,9 +68,9 @@ new ResizeObserver(resize).observe(stage);resize();view('angled');setPose('rest'
 let last=0,lastPose='',lastPresentation='';
 // The animation clock is unchanged. A still inspection does not redraw the
 // 3.6M-triangle master and its shadow sixty times a second on a phone.
-// A small frame-rate readout (bottom left): how many frames a second, and the slowest frame in the last second. It says whether a
+// A small frame-rate readout (top left, in a dark box so it reads on any screen): how many frames a second, and the slowest frame in the last second. It says whether a
 // lag is the page or the device, and it costs nothing.
-const fpsBox=document.createElement('div');fpsBox.style.cssText='position:fixed;left:8px;bottom:6px;font:11px/1.2 system-ui,sans-serif;color:#fff;opacity:.55;pointer-events:none;z-index:5';document.body.appendChild(fpsBox);
+const fpsBox=document.createElement('div');fpsBox.style.cssText='position:fixed;left:8px;top:84px;font:12px/1.3 system-ui,sans-serif;color:#fff;background:rgba(0,0,0,.6);padding:3px 8px;border-radius:6px;pointer-events:none;z-index:50';document.body.appendChild(fpsBox);
 let fpsFrames=0,fpsWorst=0,fpsSince=0;
 renderer.setAnimationLoop(ms=>{
  if(last){const gap=ms-last;fpsFrames++;fpsWorst=Math.max(fpsWorst,gap);}
