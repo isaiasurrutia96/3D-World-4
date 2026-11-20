@@ -35,6 +35,13 @@ for planning, not newly confirmed exclusive ownership.
 | Automated testing and QA | Each implementer tests their own work; Codex coordinates shared infrastructure | The other AI reviews critical assumptions. Neither passing its own tests nor a browser emulator establishes owner/device approval. |
 | Build, release integration and deployment coordination | Codex as default coordinator | Both can build/test their own chunks. Existing owner authorization for Claude to push to main is unchanged. Coordinate shared release work. |
 
+**Owner update (20 November 2026):** for the planned avatar rebuild, the owner
+wants Claude to build the new parts, Codex to review the code, and the owner to
+approve the look. This replaces the "Avatar appearance changes" row above for
+that work. It has not started; the owner will review the sockets first. Game
+(about 29,000 triangles) is the working avatar for movement; Detailed is the
+look reference.
+
 The avatar's final triangle budget and runtime mesh choice are unresolved.
 The approved detailed asset remains the visual master. The Light copy is a
 separate test asset. The discussed 20,000–30,000 triangle target is a proposal,
