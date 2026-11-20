@@ -38,6 +38,7 @@ maxSpeed: 1.0,           // the fastest this walk goes (more would be a jog; run
  midSwingToes: 6,         // toes down in the middle of the swing
  rollOut: .14,            // seconds from the heel starting to lift until the foot leaves the ground
  rollIn: .15,             // seconds from touchdown until the foot is flat
+ stepCrouch: .012,        // standing, the body sits this much lower (metres) while a foot is in the air
  standEase: .5,          // seconds the legs take to settle between walking and standing
  standSlack: .006,      // standing, the leg may be nearly straight (a person stands with soft, not bent, knees)
  standExtension: .998,   // (the share of straight the standing leg may reach, at most)
@@ -50,9 +51,12 @@ maxSpeed: 1.0,           // the fastest this walk goes (more would be a jog; run
  startSpeed: .1,          // the body must be going this fast to start walking
  stopSpeed: .12,          // slower than this and walking ends
  maxLead: 60,              // how far ahead of the body's facing a foot is turned for a turn in progress (degrees)
- pivotAngle: 1000,           // a walk waits (turning on the spot) while both feet are further than this from the way the body is asked to face
- maxFaceAccel: 80000000,      // how fast its turning speed may change (degrees a second, a second)
- maxTurnRate: 400,        // the fastest the body turns (degrees a second)
+  pivotStep: 55,            // turning on the spot, a foot steps round at most this far (degrees) past the foot that stands
+ pivotStepTime: .3,        // seconds a big turning step takes
+ turnFirst: true,         // false: never hold him back for a turn (the feet may lag a flick)
+ pivotAngle: 70,           // a walk waits (turning on the spot) while both feet are further than this from the way the body is asked to face
+ maxFaceAccel: 1e6,      // how fast its turning speed may change (degrees a second, a second)
+ maxTurnRate: 250,        // the fastest the body turns (degrees a second)
  maxBodyTwist: 32,        // the body never turns further than this from a foot that is standing (degrees): the hip can only twist so far
  maxFootTurn: 28,         // a standing foot turned further than this from the body (degrees) steps round at once, ahead of its turn
  settleDistance: .05,     // when standing, feet more than this from where they should be get a closing step
@@ -69,7 +73,7 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
  const W = {...WALK, ...tuning};
  const planner = createFootPlanner(skeleton, {ground, soles: start ? {L: [start.x + Math.cos(start.facing) * W.footHalfWidth, undefined, start.z - Math.sin(start.facing) * W.footHalfWidth], R: [start.x - Math.cos(start.facing) * W.footHalfWidth, undefined, start.z + Math.sin(start.facing) * W.footHalfWidth]} : null});
  let time = 0, body = {x: 0, z: 0, facing: 0, vx: 0, vz: 0, speed: 0}, lastFacing = null, omega = 0, lastV = null, ax = 0, az = 0;
- let mode = 'idle', lastLifted = 'R', standK = 1, face = null, faceSpeed = 0, asked = 0;
+ let mode = 'idle', lastLifted = 'R', holding = false, standK = 1, face = null, faceSpeed = 0, asked = 0;
  const wrapDeg = a => ((a + 180) % 360 + 360) % 360 - 180, smooth = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
  const queue = [], unloaded = new Set(), state = {L: 'planted', R: 'planted'}, lastLand = {L: -1, R: -1};
  const other = f => f === 'L' ? 'R' : 'L';
@@ -131,9 +135,12 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
   else if(ev.kind === 'land'){ planner.rollTo(f, ev.t, 0, {duration: W.rollIn}); unloaded.delete(f); state[f] = 'planted'; lastLand[f] = ev.t; }
   else if(ev.kind === 'close'){ // a closing step to the stance spot, for a body that has stopped
    const spot = stanceSpot(f);
-   planner.stepTo(f, ev.t, {sole: [spot.x, spot.z], heading: spot.heading}, {duration: W.closingStep, lift: .03, toesDown: 3, landPitch: W.heelStrikePitch / 2, delay: .08, arriveEarly: .15});
+   // Turning on the spot: the foot goes round towards the way the body is asked to face, up to pivotStep degrees ahead of the foot that stands.
+   const stand = planner.state(other(f), ev.t).heading, toward = wrapDeg(asked * DEG - stand), heading = W.turnFirst ? stand + Math.max(-W.pivotStep, Math.min(W.pivotStep, toward)) : spot.heading;
+   const big = Math.abs(wrapDeg(heading - planner.state(f, ev.t).heading)) > 45, dur = big ? W.pivotStepTime : W.closingStep;
+   planner.stepTo(f, ev.t, {sole: [spot.x, spot.z], heading}, {duration: dur, lift: .03, toesDown: 3, landPitch: W.heelStrikePitch / 2, delay: .08, arriveEarly: .15});
    state[f] = 'swinging'; lastLifted = f;
-   schedule({t: ev.t + W.closingStep, kind: 'land', foot: f, closing: true});
+   schedule({t: ev.t + dur, kind: 'land', foot: f, closing: true});
   }
  }
 
@@ -166,6 +173,8 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
   get time(){ return time; },
   get mode(){ return mode; },
   get facing(){ return body.facing; },
+  /** True while the feet are still stepping round to a big turn: give it to the movement rules (`controller.state.hold = walker.holdMove`) so he turns on the spot before he sets off. */
+  get holdMove(){ return holding; },
   /** Feet that are about to lift or in the air count as not carrying weight (for balance). */
   unloaded: () => { const out = [...unloaded]; for(const f of ['L', 'R']) if(!planner.isPlanted(f, time) && !out.includes(f)) out.push(f); return out; },
 
@@ -204,7 +213,8 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
    // A walk does not start while the body is asked to face well away from its feet: it turns on the spot first (closing steps
    // bring the feet round), as a person does, instead of stepping off sideways or backwards.
    const feetWay = ['L', 'R'].map(f => Math.abs(wrapDeg(planner.state(f, time).heading - asked * DEG)));
-   const pivoting = mode !== 'walking' && Math.min(...feetWay) > W.pivotAngle;
+   const pivoting = W.turnFirst && mode !== 'walking' && Math.min(...feetWay) > W.pivotAngle;
+   holding = pivoting;
    const walking = b.speed >= W.stopSpeed && (mode === 'walking' || b.speed > W.startSpeed) && !pivoting;
    if(walking){
     if(mode !== 'walking'){
@@ -257,7 +267,14 @@ export function createWalker(skeleton, {ground = () => 0, tuning = {}, start = n
    * leg that stays about the same length lowers the body by d squared over eight legs (the stride of a rigid leg), on top
    * of the small slack that keeps the knee soft. (For balance's `height` option: it smooths this and looks ahead to it.)
    */
-  bodyHeight(t){ const {d} = this.gaitState(t); return -(this.slack() + d * d / (8 * legLength)); },
+  bodyHeight(t){
+   const {d} = this.gaitState(t);
+   // A foot in the air from a nearly straight standing leg makes the knee jump (a straight knee moves like a square root),
+   // so just before and while a foot is up the body sits a little lower, with both knees soft.
+   const up = Math.max(...[0, .1, .2].flatMap(a => ['L', 'R'].map(f => planner.state(f, t + a).sole[1])));
+   const crouch = W.stepCrouch * this.standing() * smooth(0, .03, up);
+   return -(this.slack() + d * d / (8 * legLength) + crouch);
+  },
 
   /** How much the body is standing rather than walking (1 standing, 0 walking): the knees may straighten when it stands. */
   standing(){ return smooth(0, 1, standK); },

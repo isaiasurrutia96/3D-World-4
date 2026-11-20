@@ -370,20 +370,26 @@ Recorded 17 November 2026.
     Balance, body height (the stride of a rigid leg, so the body bobs about 12 mm), sideways sway (about 3 cm),
     pelvis and chest turn and arm swing all come from the foot positions. A turn too quick for the feet is eased
     (the body may not twist past what the hips allow from a standing foot while it is slow, and never turns faster
-    than 400°/s or changes its turning speed faster than 8000°/s²). The knees are never locked: soft in the walk
-    (22° to 63°), nearly straight standing (about 10°). A walk does not start while both feet face well away from
-    the way the body is asked to face: closing steps turn it on the spot first.
-    (b) Numbers at 0.65 m/s: 2.3 steps a second, steps 0.28 m, both feet down 30% of the time, worst joint speed
+    than 250°/s). The knees are never locked: soft in the walk
+    (22° to 63°), nearly straight standing (about 10°).     (b) Numbers at 0.65 m/s: 2.3 steps a second, steps 0.28 m, both feet down 30% of the time, worst joint speed
     change 3.7° a frame, 1.2 ms a frame for the whole stack. Top walking speed is 1.0 m/s (the run gait is next).
-    (c) Known limits, honest: (1) a stick flick that swings the body round by 100° or more within a quarter of a
-    second while it starts to move outruns the feet. The hips run out of range, so a foot can be off its spot by
-    a few centimetres for a moment (random sticks: 0.6% of frames over 1 mm, worst 10 cm) and the leg solver can
-    flip an ankle for a frame. The cure is a movement rule (turn on the spot before moving when the turn is
-    large), which changes the game feel the owner approved, so it is NOT done: it needs the owner's word.
-    (2) The start and the stop of a step show a knee jolt of up to 9° a frame (closing steps, from a nearly
-    straight leg). (3) The walk was only seen in a stick-figure view and in numbers; it needs the owner's eyes.
-    (4) Higher speeds (above about 1.0 m/s) show jolts of 8-10° and 3.5 cm of bob until the run gait exists.
-    (d) Other changes made with it: foot roll in the planner (`rollTo`, heel strike and heel lift, exact pivots),
+    (c) Turn first (approved by the owner 20 Nov 2026, same day): a big turn from standing is made on the spot
+    before he sets off. The walker asks the movement rules to hold him (`controller.state.hold = walker.holdMove`,
+    set once a frame before `advance`) while both feet face more than 70° away from the way he is asked to face;
+    meanwhile closing steps turn the feet round (up to 55° a step, 0.3 s a step: a 150° flick sets off after about
+    0.65 s). The knobs, all easy to change: walker `turnFirst` (false = off), `pivotAngle` (70), `pivotStep` (55),
+    `pivotStepTime` (.3), `maxTurnRate` (250°/s), `maxBodyTwist` (32); movement rules `turnFirstAngle` (radians,
+    0 = off, the 3D-WORLD-3 feel; above 0 any turn bigger than this from nearly still is made first even without
+    the walker) and `turnFirstSpeed`. `test:motion-core` still matches the old controller (the new rule is off by
+    default there).
+    (d) Known limits, honest: (1) a very hard flick while already moving can still outrun the feet: hips run out
+    of range and a foot can be off its spot by a few centimetres for a moment (random sticks: 0.18% of frames over
+    1 mm, worst 3.4 cm; it was 0.6% and 10 cm before turn first). (2) The start of a step from standing shows a
+    knee jolt of up to 13° a frame (a nearly straight knee moves like a square root); the body now sits 12 mm
+    lower while a foot is in the air to soften it. (3) The walk was only seen in a stick-figure view and in numbers;
+    it needs the owner's eyes. (4) Speeds above about 1.0 m/s show jolts of 8-10° and 3.5 cm of bob until the run
+    gait exists (the game's own walk speed is 3.1 m/s and run 8.6 m/s, so the gait must be scaled for those).
+    (e) Other changes made with it: foot roll in the planner (`rollTo`, heel strike and heel lift, exact pivots),
     balance can follow a heading, exclude unloaded feet, plan the body height from outside and soften its safety
     drop (`hardExtension`, `hardSoftness`, numbers or functions of time), the ankle eases into its limit over its
     last 8° (was 3°; the footplan check now allows for that), the walk demo stops, turns on the spot and walks

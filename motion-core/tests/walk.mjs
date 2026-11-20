@@ -12,8 +12,8 @@ const AX = ['x', 'y', 'z'];
 const CONTACTS = Object.keys(S.footContacts.L);
 
 // A simulation: the movement rules drive a body; the walker plans the feet; the player poses everything.
-function simulate({seconds, stick, speed = 1.0, start = {x: 0, z: 0, facing: 0}, fps = 60, ground = () => 0}){
- const ctl = createMoveController({...MOVE_TUNING, walkSpeed: speed, runSpeed: speed * 1.2, acceleration: 6, deceleration: 8});
+function simulate({seconds, stick, tuning = {}, noHold = false, speed = 1.0, start = {x: 0, z: 0, facing: 0}, fps = 60, ground = () => 0}){
+ const ctl = createMoveController({...MOVE_TUNING, ...tuning, walkSpeed: speed, runSpeed: speed * 1.2, acceleration: 6, deceleration: 8});
  Object.assign(ctl.state, {x: start.x, z: start.z, facing: start.facing});
  const player = createPosePlayer(S, {}, {follow: true}), walker = createWalker(S, {start, ground});
  attachWalker(player, walker, {ground});
@@ -21,6 +21,7 @@ function simulate({seconds, stick, speed = 1.0, start = {x: 0, z: 0, facing: 0},
  let maxErr = 0, off = 0;
  for(let i = 0; i < seconds * fps; i++){
   const t = i * dt, [wx, wz] = stick(t, ctl.state);
+  ctl.state.hold = noHold ? false : walker.holdMove; // (he turns on the spot while the feet step round to a big turn)
   ctl.advance(dt, wx, wz);
   const s = ctl.state, body = {x: s.x, z: s.z, facing: s.facing, vx: s.vx, vz: s.vz, speed: s.speed};
   walker.update(dt, body);
@@ -118,6 +119,17 @@ const run = simulate({seconds: 12, stick: t => t < 8 ? forward(t) : [0, 0]});
  check('standing and turning on the spot by 115°: closing steps bring both feet round to face the new way (within 25°)', hd('L') < 25 && hd('R') < 25 && w2.mode === 'idle', `feet turned to within ${hd('L').toFixed(0)}° and ${hd('R').toFixed(0)}°`);
 }
 
+// ---- 6b. Turn first: a big flick from standing is made on the spot, then he walks ----
+{
+ const a = 150 * Math.PI / 180, sim = simulate({seconds: 6, tuning: {turnFirstAngle: 1.2}, stick: t => t < 1 ? [0, 0] : [Math.sin(a) * .4, Math.cos(a) * .4]});
+ const first = sim.frames.find(f => f.t > 1 && f.body.speed > .3), moved = sim.frames.find(f => f.t > 1 && Math.hypot(f.body.x, f.body.z) > .15);
+ const feet = sim.walker.goals(sim.player.time), way = a * 180 / Math.PI, off = sd => Math.abs(((feet['foot.' + sd].heading - way) % 360 + 540) % 360 - 180);
+ check('turn first: a 150° flick from standing is turned on the spot by stepping the feet round, and he walks off after, not before', first && first.t - 1 > .2 && first.t - 1 < 2.5 && sim.maxErr < 5e-4 && off('L') < 30 && off('R') < 30, `sets off ${first ? (first.t - 1).toFixed(2) : 'never'} s after the flick; moved 15 cm after ${moved ? (moved.t - 1).toFixed(2) : 'never'} s; feet off by ${mm(sim.maxErr)}; feet face within ${off('L').toFixed(0)}° and ${off('R').toFixed(0)}° of the new way`);
+ const same = simulate({seconds: 6, tuning: {turnFirstAngle: 0}, noHold: true, stick: t => t < 1 ? [0, 0] : [Math.sin(a) * .4, Math.cos(a) * .4]});
+ const f0 = same.frames.find(f => f.t > 1 && f.body.speed > .3);
+ check('turn first can be switched off: with turnFirstAngle 0 and no hold he sets off at once, as in the old rules', f0 && f0.t - 1 < .3, `sets off ${f0 ? (f0.t - 1).toFixed(2) : 'never'} s after the flick`);
+}
+
 // ---- 7. Random sticks ----
 {
  // Eight sticks that swing about at random (starting, stopping, flicking round), 30 seconds each. A flick that turns
@@ -134,7 +146,7 @@ const run = simulate({seconds: 12, stick: t => t < 8 ? forward(t) : [0, 0]});
   for(const f of sim.frames) for(const b of Object.values(f.pose)) if(b && typeof b === 'object' && 'x' in b && !(Number.isFinite(b.x) && Number.isFinite(b.y) && Number.isFinite(b.z))) invalid++;
   for(const side of ['L', 'R']) for(let i = 1; i < sim.frames.length; i++){ const a = sim.frames[i - 1], b = sim.frames[i]; b.pts[side].forEach((p, k) => { low = Math.min(low, p.y); if(a.touching[side][k] && b.touching[side][k]) slide = Math.max(slide, Math.hypot(p.x - a.pts[side][k].x, p.z - a.pts[side][k].z)); }); }
  }
- check('eight 30-second random sticks: no invalid numbers, never below the ground, never slide, and the feet are within 1 mm in at least 98% of frames (worst under 12 cm)', invalid === 0 && low > -1e-9 && slide < 1e-6 && off / total < .02 && errMax < .12, `${total} frames; ${(100 * off / total).toFixed(2)}% of frames off by more than 1 mm; worst ${mm(errMax)}; slide ${slide.toExponential(1)}; lowest ${mm(low)}`);
+ check('eight 30-second random sticks: no invalid numbers, never below the ground, never slide, and the feet are within 1 mm in at least 99% of frames (worst under 6 cm)', invalid === 0 && low > -1e-9 && slide < 1e-6 && off / total < .01 && errMax < .06, `${total} frames; ${(100 * off / total).toFixed(2)}% of frames off by more than 1 mm; worst ${mm(errMax)}; slide ${slide.toExponential(1)}; lowest ${mm(low)}`);
 }
 
 // ---- 8. Fast enough ----

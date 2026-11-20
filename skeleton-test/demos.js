@@ -347,13 +347,14 @@ export function createDemoRunner(player, D, rests){
     wish = !walk.halted ? [0, 0] : d <= .05 ? [0, 0] : !walk.facingHome ? [dx / d * .03, dz / d * .03] : [dx / d * push, dz / d * push];
     walk.square = walk.leg === 2 && d <= .05 && Math.max(...['L', 'R'].map(f => Math.abs(((goals['foot.' + f].heading) % 360 + 540) % 360 - 180))) < 21;
    }
+   walk.ctl.state.hold = walk.walker.holdMove;
    walk.ctl.advance(dt, wish[0], wish[1]);
    const s = walk.ctl.state;
    walk.walker.update(dt, {x: s.x, z: s.z, facing: s.facing, vx: s.vx, vz: s.vz, speed: s.speed});
    // (Let go only after standing still and square for a moment, so no closing step is left to start.)
    walk.still = walk.homing && walk.square && s.speed < .02 && walk.walker.mode === 'idle' ? (walk.still ?? 0) + dt : 0;
    if(walk.still > .7){
-    player.clearBalance(); player.clearLayer('walk', .6, {after: .3}); player.clearGoals('feet', .6, {after: .3});
+    player.clearBalance(); player.clearLayer('walk', .6, {after: .8}); player.clearGoals('feet', .6, {after: .8});
     walk = null;
    }
   },

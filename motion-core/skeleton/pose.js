@@ -251,7 +251,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
      const hardOf=v=>typeof v==='function'?v(at):v,need=reachNeed(skeleton,skeleton.solve(moved),feetNow,{extension:hardOf(safe.hardExtension)});
      drop=need===-Infinity?0:softPlus(need,hardOf(safe.hardSoftness));
     } else drop=reachDrop(skeleton,skeleton.solve(moved),feetNow);
-    drop=Math.min(.15,drop);
+    drop=Math.min(.15,drop)*dropScale;
    }
    lastDrop=drop;
    pose.root={...moved.root,position:[moved.root.position[0],moved.root.position[1]-drop,moved.root.position[2]]};
@@ -305,6 +305,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
  }
  /** Stop balancing: the shift eases back to nothing (after a wait, if asked), then balance is gone. */
  function clearBalance({after=0}={}){ if(!balance)return; if(after>0)balance.clearAt=time+after; else balance.releasing=true; }
+ let dropScale=1; // (while balance lets go, the safety lowering eases away too, so nothing jumps when it is done)
  function balanced(dt){
   const b=balance,o=b.opts;
   if(b.clearAt!==undefined&&time>=b.clearAt)b.releasing=true;
@@ -336,10 +337,11 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
     }
    }else if(!frameFeet){wantedXZ=[0,0];wantedY=0;}
   }
+  if(b.releasing){ if(b.releaseStart===undefined)b.releaseStart=time; const u=Math.min(1,(time-b.releaseStart)/Math.max(.05,o.duration)); dropScale=1-u*u*(3-2*u); } else dropScale=1;
   b.follower.retarget(wantedXZ,o.duration,b.releasing);
   b.lower.retarget([wantedY],o.lowerDuration,b.releasing);
   const off=[...b.follower.update(dt),b.lower.update(dt)[0]];
-  if(b.releasing&&off.every(v=>Math.abs(v)<1e-9)&&[...b.follower.speed,...b.lower.speed].every(v=>Math.abs(v)<1e-9)){balance=null;return poseAt(time);}
+  if(b.releasing&&dropScale<=0&&off.every(v=>Math.abs(v)<1e-9)&&[...b.follower.speed,...b.lower.speed].every(v=>Math.abs(v)<1e-9)){balance=null;dropScale=1;return poseAt(time);}
   return poseAt(time,{shift:off});
  }
 

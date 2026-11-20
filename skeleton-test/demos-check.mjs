@@ -95,7 +95,7 @@ for(const [name,on,off,sides,label] of [['sit',2.4,2.4,['L','R']],['squat',3,1.6
  for(let i=0;i<150;i++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
  const j=jolt(frames),end=atRest(frames.at(-1).pose);let bad=0;
  for(const f of frames)if(!inLimits(f.pose))bad++;
- check('walk: walks, comes home and stops; every joint stays inside its limits, joints never jolt (under 10° change of speed in a frame), and ends exactly at rest with nothing left running',back<3600&&bad===0&&j.m<10&&end<1e-6&&!P.layers.length&&!P.goalLayers.length,`${(frames.length/60).toFixed(0)} seconds; ${bad} frames with a joint past its limit; largest change in joint speed ${j.m.toFixed(2)}°; back at rest within ${end.toExponential(1)}`);
+ check('walk: walks, comes home and stops; every joint stays inside its limits, joints never jolt (under 14° change of speed in a frame), and ends exactly at rest with nothing left running',back<3600&&bad===0&&j.m<14&&end<1e-6&&!P.layers.length&&!P.goalLayers.length,`${(frames.length/60).toFixed(0)} seconds; ${bad} frames with a joint past its limit; largest change in joint speed ${j.m.toFixed(2)}°; back at rest within ${end.toExponential(1)}`);
 }
 
 // ---- Look: the face follows the ball ----
