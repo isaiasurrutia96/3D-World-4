@@ -27,7 +27,7 @@
 // (no step-by-step drift), so results are the same at any frame rate.
 import {reach} from './reach.js';
 import {shoulderFollow} from './shoulder.js';
-import {balanceShift, reachDrop, createShiftFollower} from './balance.js';
+import {balanceShift, reachDrop, reachNeed, softPlus, createShiftFollower} from './balance.js';
 
 const AXES = ['x','y','z'];
 /** Standing where he is. */
@@ -221,13 +221,13 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
  const layerWeight=(l,at)=>Math.min(1,Math.max(0,fadeAt(l,at).w));
 
  // The planted-feet goals of the last pose computed, and of the one before it (for balance).
- let frameFeet=null,feetNow=null;
+ let frameFeet=null,feetNow=null,lastDrop=0;
  /**
   * Pose at a time: the base, then the layers, then the reaching layers.
   * shift: [x, z, y?] metres to move the whole body before the reaching layers (balance; y is the ready stance, a
   * crouch), lowering it further just enough that planted feet can still reach. commit=false: a trial, nothing is remembered.
   */
- function poseAt(at,{shift=null,commit=true}={}){
+ function poseAt(at,{shift=null,commit=true,noDrop=false}={}){
   let pose=fromChannels(base(at).pose);
   for(const [name,l] of layers){
    due(l,at);
@@ -243,7 +243,17 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   if(shift){
    // Balance: move the whole body, lowered just enough that the planted feet (as last asked) can still reach.
    const r=pose.root??ROOT0(),moved={...pose,root:{...r,position:[r.position[0]+shift[0],r.position[1]+(shift[2]??0),r.position[2]+shift[1]]}};
-   const drop=feetNow?reachDrop(skeleton,skeleton.solve(moved),feetNow):0;
+   // (Never more than 15 cm: a foot that cannot be reached stretches the leg instead of folding the whole body.)
+   let drop=0;
+   if(feetNow&&!noDrop){
+    const safe=balance?.opts;
+    if(safe&&(typeof safe.hardSoftness==='function'||safe.hardSoftness>0)){ // a shortened leg with a rounded corner: never fully straight, and no sudden change of speed
+     const hardOf=v=>typeof v==='function'?v(at):v,need=reachNeed(skeleton,skeleton.solve(moved),feetNow,{extension:hardOf(safe.hardExtension)});
+     drop=need===-Infinity?0:softPlus(need,hardOf(safe.hardSoftness));
+    } else drop=reachDrop(skeleton,skeleton.solve(moved),feetNow);
+    drop=Math.min(.15,drop);
+   }
+   lastDrop=drop;
    pose.root={...moved.root,position:[moved.root.position[0],moved.root.position[1]-drop,moved.root.position[2]]};
   }
   frameFeet=null;
@@ -275,39 +285,61 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
  // the legs stay slightly bent, like an athlete's, so a leg is never run to fully straight where the knee would
  // snap); duration (seconds the weight takes to shift, default 0.5); ground(x, z); tolerance. The stance and the
  // shift ease in when balance starts and ease out when it ends (clearBalance), so keep the feet goals until
- // balanceShift is null again.
+ // balanceShift is null again. heading (radians, or a function of time returning it): the way the body faces; the
+ // sideways shift is sideways to it (default 0: the world axes). extension (default 1) and softness (default 1 cm):
+ // exclude (a list of sides, or a function of time returning one): feet to treat as unloaded.
+ // height (a function of time returning how far below standing the body should be, in metres, 0 or less): the body
+ // height is planned by the caller; balance only smooths it (lowerDuration) and looks ahead (lookahead) to it.
+ // hardExtension / hardSoftness (numbers, or functions of time): the safety net that lowers the body when a planted leg cannot reach (default: only
+ // when it cannot at all). With hardSoftness above 0 it keeps the leg at most hardExtension straight, with a
+ // rounded corner (this is what keeps a walking knee from ever locking straight).
+ // With extension below 1 (0.97 for walking) the body is also lowered, smoothly, so a planted leg is never longer
+ // than that share of straight, which is what gives a walking body its gentle bob without locked knees.
  // Balance: while planted feet are in the goals, the whole body shifts so its centre of mass sits
  // over the feet that carry weight (balance.js). The shift is a smooth follower, so it never jolts.
  let balance=null;
  function setBalance(options={}){
-  const o={axes:'x',policy:'inside',margin:.04,stance:.012,duration:.5,...options};
-  balance={opts:o,follower:balance?.follower??createShiftFollower({duration:o.duration,size:3}),releasing:false};
+  const o={axes:'x',policy:'inside',margin:.04,stance:.012,duration:.5,extension:1,softness:.01,maxLower:.15,lowerDuration:null,lookahead:0,hardExtension:1,hardSoftness:0,...options};
+  o.lowerDuration??=o.duration;
+  balance={opts:o,follower:balance?.follower??createShiftFollower({duration:o.duration,size:2}),lower:balance?.lower??createShiftFollower({duration:o.lowerDuration,size:1}),releasing:false};
  }
  /** Stop balancing: the shift eases back to nothing (after a wait, if asked), then balance is gone. */
  function clearBalance({after=0}={}){ if(!balance)return; if(after>0)balance.clearAt=time+after; else balance.releasing=true; }
  function balanced(dt){
-  const b=balance;
+  const b=balance,o=b.opts;
   if(b.clearAt!==undefined&&time>=b.clearAt)b.releasing=true;
-  let wanted=b.follower.goal;
-  if(b.releasing)wanted=[0,0,0];
+  let wantedXZ=b.follower.goal,wantedY=b.lower.goal[0];
+  if(b.releasing){wantedXZ=[0,0];wantedY=0;}
   else{
    // Where the body must be for the weight to sit over the support: start from where it was heading,
    // see how far off the weight still is, correct (the legs bend as the body moves, so a move can take
    // a couple of tries; a steady one takes one).
-   let total=[b.follower.goal[0],b.follower.goal[1],-b.opts.stance],found=false;
+   const heading=typeof o.heading==='function'?o.heading(time):(o.heading??0),exclude=typeof o.exclude==='function'?o.exclude(time):o.exclude;
+   let total=[b.follower.goal[0],b.follower.goal[1],-o.stance],found=false;
    for(let i=0;i<4;i++){
     const trial=poseAt(time,{shift:total,commit:false});
     if(!frameFeet)break;
-    const bs=balanceShift(skeleton,skeleton.solve(trial),b.opts);
+    const bs=balanceShift(skeleton,skeleton.solve(trial),{...o,heading,exclude});
     if(!bs)break;
     found=true;total=[total[0]+bs.shift[0],total[1]+bs.shift[1],total[2]];
     if(Math.hypot(bs.shift[0],bs.shift[1])<2e-4)break;
    }
-   if(found)wanted=total;else if(!frameFeet)wanted=[0,0,0];
+   if(found){
+    wantedXZ=[total[0],total[1]];wantedY=-o.stance;
+    if(typeof o.height==='function') wantedY=Math.min(0,Math.max(-o.maxLower,o.height(time+o.lookahead))); // a height the caller plans (kept smooth by the follower)
+    else if(o.extension<1){
+     // How far over a shortened reach the planted feet will be (looking `lookahead` seconds ahead along their planned
+     // paths, with the body not lowered at all): lower by that, softly, so the lowering is there before it is needed.
+     const saved=feetNow,ahead=poseAt(time+o.lookahead,{shift:[total[0],total[1],0],commit:false,noDrop:true}),aheadFeet=frameFeet;
+     feetNow=saved; // (the look ahead must not change which feet goals the next pass uses for its safety margin)
+     if(aheadFeet)wantedY=-Math.min(o.maxLower,o.stance+softPlus(reachNeed(skeleton,skeleton.solve(ahead),aheadFeet,{extension:o.extension}),o.softness));
+    }
+   }else if(!frameFeet){wantedXZ=[0,0];wantedY=0;}
   }
-  b.follower.retarget(wanted,b.opts.duration,b.releasing);
-  const off=b.follower.update(dt);
-  if(b.releasing&&off.every(v=>Math.abs(v)<1e-9)&&b.follower.speed.every(v=>Math.abs(v)<1e-9)){balance=null;return poseAt(time);}
+  b.follower.retarget(wantedXZ,o.duration,b.releasing);
+  b.lower.retarget([wantedY],o.lowerDuration,b.releasing);
+  const off=[...b.follower.update(dt),b.lower.update(dt)[0]];
+  if(b.releasing&&off.every(v=>Math.abs(v)<1e-9)&&[...b.follower.speed,...b.lower.speed].every(v=>Math.abs(v)<1e-9)){balance=null;return poseAt(time);}
   return poseAt(time,{shift:off});
  }
 
@@ -316,7 +348,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
   /** Move time forward and return the pose for that moment. */
   update(dt){time+=dt;return balance?balanced(dt):poseAt(time);},
   /** How far balance has moved the body now: [sideways, fore/aft, height] metres (or null when off). */
-  get balanceShift(){return balance?balance.follower.value:null;},
+  get balanceShift(){return balance?[...balance.follower.value,balance.lower.value[0]]:null;},
   poseAt,
   get time(){return time;},
   get layers(){return [...layers.keys()];},

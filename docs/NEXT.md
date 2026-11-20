@@ -361,3 +361,30 @@ Recorded 17 November 2026.
     not the flips.
     Still to do in this layer: the chest's lean into movement and counter-twist,
     and arm swing, which depend on walking and are built with it.
+41. Layer 6, walking, built 20 Nov 2026 (`motion-core/skeleton/walk.js`, `npm run test:walk`, 19 checks;
+    the Skeleton page has a "Walk" demo and `skeleton-test/demos-check.mjs` checks it as the page runs it):
+    (a) How it works: the feet lead. A standing foot lifts when it has fallen far enough behind the body, rolls
+    off its toe, swings (clearing the ground), strikes with its heel and rolls flat, placed ahead of the hips by
+    half a stance for the speed and acceleration the body will have when it lands. The planner stays exact: every
+    foot lands where it says (0.00 mm), no part of a planted foot ever slides, nothing goes below the ground.
+    Balance, body height (the stride of a rigid leg, so the body bobs about 12 mm), sideways sway (about 3 cm),
+    pelvis and chest turn and arm swing all come from the foot positions. A turn too quick for the feet is eased
+    (the body may not twist past what the hips allow from a standing foot while it is slow, and never turns faster
+    than 400°/s or changes its turning speed faster than 8000°/s²). The knees are never locked: soft in the walk
+    (22° to 63°), nearly straight standing (about 10°). A walk does not start while both feet face well away from
+    the way the body is asked to face: closing steps turn it on the spot first.
+    (b) Numbers at 0.65 m/s: 2.3 steps a second, steps 0.28 m, both feet down 30% of the time, worst joint speed
+    change 3.7° a frame, 1.2 ms a frame for the whole stack. Top walking speed is 1.0 m/s (the run gait is next).
+    (c) Known limits, honest: (1) a stick flick that swings the body round by 100° or more within a quarter of a
+    second while it starts to move outruns the feet. The hips run out of range, so a foot can be off its spot by
+    a few centimetres for a moment (random sticks: 0.6% of frames over 1 mm, worst 10 cm) and the leg solver can
+    flip an ankle for a frame. The cure is a movement rule (turn on the spot before moving when the turn is
+    large), which changes the game feel the owner approved, so it is NOT done: it needs the owner's word.
+    (2) The start and the stop of a step show a knee jolt of up to 9° a frame (closing steps, from a nearly
+    straight leg). (3) The walk was only seen in a stick-figure view and in numbers; it needs the owner's eyes.
+    (4) Higher speeds (above about 1.0 m/s) show jolts of 8-10° and 3.5 cm of bob until the run gait exists.
+    (d) Other changes made with it: foot roll in the planner (`rollTo`, heel strike and heel lift, exact pivots),
+    balance can follow a heading, exclude unloaded feet, plan the body height from outside and soften its safety
+    drop (`hardExtension`, `hardSoftness`, numbers or functions of time), the ankle eases into its limit over its
+    last 8° (was 3°; the footplan check now allows for that), the walk demo stops, turns on the spot and walks
+    home by way of a spot behind the start so it ends facing the way it began.

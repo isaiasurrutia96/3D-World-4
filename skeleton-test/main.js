@@ -62,9 +62,14 @@ function setDemo(name){
 for(const b of document.querySelectorAll('[data-demo]'))b.onclick=()=>setDemo(b.dataset.demo===runner.active?null:b.dataset.demo);
 /** The pose for this frame (the ball prop follows the ball demo's time). */
 function framePose(dt){
+ runner.tick(dt);
  const pose=player.update(dt);
  if(runner.active==='ball')ball.position.set(...D.ball(runner.time).ball);
  if(runner.active==='look')lookBall.position.set(...D.look(runner.time).target);
+ // The camera goes along with a walking body (and back to the middle when it is home again).
+ const rx=pose.root?.position[0]??0,rz=pose.root?.position[2]??0,away=Math.hypot(rx,rz),follow=runner.active==='walk'||away>.35;
+ const wantX=follow?rx:0,wantZ=follow?rz:0;
+ if(Math.abs(wantX-target.x)>1e-6||Math.abs(wantZ-target.z)>1e-6){const k=follow?1:.15,dx=(wantX-target.x)*k,dz=(wantZ-target.z)*k;target.x+=dx;target.z+=dz;camera.position.x+=dx;camera.position.z+=dz;controls.target.copy(target);needsRender=true;}
  return pose;
 }
 
@@ -100,7 +105,7 @@ renderer.setAnimationLoop(ms=>{
  if(presentation!==lastPresentation){lastPresentation=presentation;needsRender=true;}
  if(needsRender){renderer.render(scene,camera);needsRender=false;}
 });
-window.skeletonLab={camera,controls,scene,renderer,setPose,setDemo,showBones,view,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES),demos:['squat','sit','step','ball','look']};
+window.skeletonLab={camera,controls,scene,renderer,setPose,setDemo,showBones,view,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES),demos:['squat','sit','step','ball','look','walk']};
 window.avatarLab=window.skeletonLab;
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
 drawBones(A.solved);renderer.render(scene,camera);

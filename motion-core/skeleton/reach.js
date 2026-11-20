@@ -80,7 +80,7 @@ function softClamp(v, lo, hi, m){
  return v;
 }
 /** Margin (degrees) for joints that should ease into their limits (the ankle keeping the foot flat). */
-const SOFT = 3;
+const SOFT = 8;
 
 function anglesFor(bone, delta, near, soft = 0){
  const q = delta.clone().multiply(bone.restQ), e = new Euler().setFromQuaternion(q, bone.order);

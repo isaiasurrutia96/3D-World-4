@@ -197,11 +197,47 @@ const worst = (P, side, t0, t1, ground, need = 0, n = 4000) => {
   const t = i / 60, r = reach(S, hold, P.goals(t)), solved = S.solve({...r.pose, root: hold.root}), a = r.pose['foot.L'];
   const real = Object.values(footContactPoints(S, solved, 'L')), planned = P.contactPoints('L', t);
   const gap = Math.max(...planned.map((p, k) => p.distanceTo(real[k])));
-  // Where the ankle is held back by its own limit, the real foot cannot match (it is as flat as the ankle allows).
-  if(a.x < lim.x[0] + 3.5 || a.x > lim.x[1] - 3.5 || Math.abs(a.z) > lim.z[1] - 3.5){ bound++; boundGap = Math.max(boundGap, gap); }
+  // Where the ankle is held back by its own limit (it eases in over its last 8 degrees), the real foot cannot match (it is as flat as the ankle allows).
+  if(a.x < lim.x[0] + 8.5 || a.x > lim.x[1] - 8.5 || Math.abs(a.z) > lim.z[1] - 8.5){ bound++; boundGap = Math.max(boundGap, gap); }
   else { worstGap = Math.max(worstGap, gap); compared++; }
  }
- check('the planner\'s foot (used to keep it off the ground) is where the real solved foot is, within 1 mm, whenever the ankle is inside its range', worstGap < 1e-3 && compared > 40, `largest gap ${mm(worstGap)} over ${compared} frames; ${bound} frames had the ankle at its limit (gap there up to ${mm(boundGap)}: the toes hang lower than planned)`);
+ check('the planner\'s foot (used to keep it off the ground) is where the real solved foot is, within 1 mm, whenever the ankle is inside its range', worstGap < 1e-3 && compared > 30, `largest gap ${mm(worstGap)} over ${compared} frames; ${bound} frames had the ankle at its limit (gap there up to ${mm(boundGap)}: the toes hang lower than planned)`);
+}
+
+// ---- 13b. Rocking the foot: heel strike, flat, heel lift (a rigid foot turning about a contact that stays still) ----
+{
+ const P = createFootPlanner(S);
+ P.rollTo('L', 0, -12, {duration: .2}); P.rollTo('L', .5, 0, {duration: .2}); P.rollTo('L', 1, 20, {duration: .3});
+ let heelMove = 0, toeMove = 0, low = Infinity;
+ const heel0 = P.contactPoints('L', 0)[0], toe0 = P.contactPoints('L', 1.5)[5];
+ for(let i = 0; i <= 2000; i++){ const t = i * .001, pts = P.contactPoints('L', t); for(const p of pts) low = Math.min(low, p.y);
+  if(t <= .2) heelMove = Math.max(heelMove, pts[0].distanceTo(heel0));
+  if(t >= 1) toeMove = Math.max(toeMove, pts[5].distanceTo(toe0)); }
+ check('rocking onto the heel (toes up) keeps the heel exactly still, and rocking onto the toe tip (heel up) keeps the toe exactly still', heelMove < 1e-9 && toeMove < 1e-9, `heel moved ${heelMove.toExponential(1)} m, toe moved ${toeMove.toExponential(1)} m`);
+ check('no part of the foot goes below the ground while it rocks either way', low > -1e-9, `lowest point ${mm(low)}`);
+ const a = P.state('L', 0), b = P.state('L', 1), end = P.state('L', 1.3), back = P.state('L', .7);
+ check('a roll starts and ends at rest, and rocking back to 0 puts the foot exactly flat on its spot again', Math.hypot(...a.velocity) < 1e-6 && Math.hypot(...end.velocity) < 1e-6 && back.sole.join() === [.15, 0, .025].join() && back.pitch === 0 && b.pitch === 0, `start ${Math.hypot(...a.velocity).toExponential(1)} m/s; flat again at ${back.sole.join(', ')}`);
+ let slope = 0; const h = 1e-5;
+ for(let i = 1; i < 1500; i++){ const t = i * .001, lo = P.state('L', t - h), hi = P.state('L', t + h), m = P.state('L', t); for(let k = 0; k < 3; k++) slope = Math.max(slope, Math.abs((hi.sole[k] - lo.sole[k]) / (2 * h) - m.velocity[k])); }
+ check('while rocking, the sole point\'s speed is the slope of its path (no hidden jumps)', slope < 1e-3, `largest mismatch ${slope.toExponential(1)} m/s`);
+ let threw = false; const Q = createFootPlanner(S); Q.stepTo('L', 0, {sole: [.15, .4]}, {duration: 1});
+ try { Q.rollTo('L', .5, 10); } catch { threw = true; }
+ check('a foot that is in a step cannot be rocked (it says so instead of guessing)', threw, 'raises an error');
+ // Toe-off into a step: the swing carries on from the rocked foot with no jump.
+ const W = createFootPlanner(S); W.rollTo('L', 0, 18, {duration: .3});
+ const before = W.state('L', .2); W.stepTo('L', .2, {sole: [.15, .4]}, {duration: .6}); const after = W.state('L', .2);
+ let d = 0, dv = 0; for(let k = 0; k < 3; k++){ d = Math.max(d, Math.abs(before.sole[k] - after.sole[k])); dv = Math.max(dv, Math.abs(before.velocity[k] - after.velocity[k])); }
+ check('stepping off while the foot is still rocking (toe-off) carries its position, speed and angle straight on', d < 1e-9 && dv < 1e-6 && Math.abs(before.pitch - after.pitch) < 1e-9, `position jump ${d.toExponential(1)}, speed jump ${dv.toExponential(1)}`);
+ const M = createFootPlanner(S); M.rollTo('R', 0, 18, {duration: .3}); M.rollTo('R', .4, 0, {duration: .2});
+ let err = 0; for(let i = 0; i <= 700; i++){ const t = i / 1000, l = (() => { const X = createFootPlanner(S); return X; })(); }
+ const L2 = createFootPlanner(S); L2.rollTo('L', 0, 18, {duration: .3}); L2.rollTo('L', .4, 0, {duration: .2});
+ for(let i = 0; i <= 700; i++){ const t = i / 1000, x = L2.state('L', t), y = M.state('R', t); err = Math.max(err, Math.abs(x.sole[0] - (-y.sole[0] + 0)), Math.abs(x.sole[1] - y.sole[1]), Math.abs(x.sole[2] - y.sole[2]), Math.abs(x.pitch - y.pitch)); }
+ check('a right foot rocks as the exact mirror of a left foot', err < 1e-9, `largest difference ${err.toExponential(1)}`);
+ // With the legs: the ankle goes where the rock puts it and the foot takes the angle.
+ const Z = createFootPlanner(S); Z.rollTo('L', 0, -8, {duration: .2}); Z.rollTo('L', .4, 0, {duration: .15}); Z.rollTo('L', .8, 16, {duration: .3});
+ let e2 = 0, tilt = 0; const hold = {root: {position: [0, -.012, 0], rotation: {x: 0, y: 0, z: 0}}};
+ for(let i = 0; i <= 80; i++){ const r = reach(S, hold, Z.goals(i / 60)); e2 = Math.max(e2, r.error['foot.L'], r.error['foot.R']); tilt = Math.max(tilt, r.tilt['foot.L']); }
+ check('with the legs, a heel-strike roll and a heel lift land the ankle exactly and the foot takes the angle (within 0.1°)', e2 < 5e-4 && tilt < .1, `ankle off by ${mm(e2)}, angle off by ${tilt.toFixed(3)}°`);
 }
 
 // ---- 14. Fast ----

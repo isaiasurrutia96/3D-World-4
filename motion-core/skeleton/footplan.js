@@ -39,6 +39,7 @@ export const STEP_DEFAULTS = Object.freeze({
  delay: .15,         // from rest, the foot rises this much of the step before moving across
  arriveEarly: .1,    // it has arrived over its spot this much of the step before the end (then it settles down)
  relax: 0,           // 0 keeps the foot at its planned angle in the air; up to 1 lets the ankle go slack (it then dangles, which can hit things)
+ landPitch: 0,       // the angle it touches down at, degrees (toes up is negative: it lands on its heel; roll it flat with rollTo)
 });
 
 const CH = ['x', 'z', 'heading', 'y', 'pitch', 'roll', 'flat'];
@@ -58,6 +59,9 @@ export function createFootPlanner(skeleton, {ground = () => 0, soles = null} = {
  const offsets = {};
  for(const side of ['L', 'R']) offsets[side] = contactRest[side].map(c => [c[0] - ankleRest[side][0], c[1] - ankleRest[side][1], c[2] - ankleRest[side][2]]);
  const scratch = new Float64Array(3 * offsets.L.length);
+ // The contacts a rigid foot rocks on: the heel (toes up) and the toe tip (heel up), as offsets from the ankle.
+ const contactNames = Object.keys(skeleton.footContacts.L), pivots = {};
+ for(const side of ['L', 'R']) pivots[side] = {heel: offsets[side][contactNames.indexOf('heel')], toe: offsets[side][contactNames.indexOf('toe')]};
 
  /**
   * The foot's contact points in the world for a foot whose sole is at (x, y, z) facing `heading`,
@@ -77,6 +81,21 @@ export function createFootPlanner(skeleton, {ground = () => 0, soles = null} = {
    out[3 * i + 2] = z + m20 * o[0] + m21 * o[1] + m22 * o[2];
   });
   return out;
+ }
+
+ /**
+  * Where the sole point is for a planted foot whose flat spot is `spot` (x, y, z, heading) rocked to `pitch`
+  * degrees: it turns about its heel when its toes are up (pitch below 0) and about its toe tip when its heel is
+  * up (pitch above 0), and that contact stays exactly where it was on the ground.
+  */
+ function rolledSole(side, spot, pitch){
+  if(pitch === 0) return [spot.x, spot.y, spot.z];
+  const rel = pitch < 0 ? pivots[side].heel : pivots[side].toe, h = spot.heading * RAD, ch = Math.cos(h), sh = Math.sin(h), cp = Math.cos(pitch * RAD), sp = Math.sin(pitch * RAD);
+  // flat: the pivot is at ankle + Ry(h) rel; rocked: the ankle is that pivot minus Ry(h) Rx(pitch) rel
+  const fx = ch * rel[0] + sh * rel[2], fz = -sh * rel[0] + ch * rel[2];
+  const ry = cp * rel[1] - sp * rel[2], rz = sp * rel[1] + cp * rel[2];
+  const rx = rel[0], gx = ch * rx + sh * rz, gz = -sh * rx + ch * rz;
+  return [spot.x + fx - gx, spot.y + rel[1] - ry, spot.z + fz - gz];
  }
 
  /** The same, as Vector3s. */
@@ -104,28 +123,42 @@ export function createFootPlanner(skeleton, {ground = () => 0, soles = null} = {
  function evalSeg(seg, tau){
   const out = {}, {T, ts, te, sa} = seg;
   for(const c of ['x', 'z', 'heading']){
-   const f = seg.from[c];
-   out[c] = tau < ts ? {p: f.p, v: 0, a: 0} : quintic(f.p, f.v, f.a, seg.to[c], te - ts, tau - ts);
+   const f = seg.from[c], end = seg.end?.[c] ?? seg.to[c];
+   out[c] = tau < ts ? {p: f.p, v: 0, a: 0} : quintic(f.p, f.v, f.a, end, te - ts, tau - ts);
   }
   for(const c of ['y', 'pitch', 'flat']){
    const f = seg.from[c], peak = seg.peak[c];
-   out[c] = tau < sa * T ? quintic(f.p, f.v, f.a, peak, sa * T, tau) : quintic(peak, 0, 0, seg.to[c], (1 - sa) * T, tau - sa * T);
+   const end = c === 'y' ? (seg.end?.y ?? seg.to.y) : seg.to[c];
+   out[c] = tau < sa * T ? quintic(f.p, f.v, f.a, peak, sa * T, tau) : quintic(peak, 0, 0, end, (1 - sa) * T, tau - sa * T);
   }
   const r = seg.from.roll;
   out.roll = quintic(r.p, r.v, r.a, seg.to.roll, T, tau);
   return out;
  }
 
- const held = base => Object.fromEntries(CH.map(c => [c, {p: base[c], v: 0, a: 0}]));
+ const held = (base, side) => {
+  const out = Object.fromEntries(CH.map(c => [c, {p: base[c], v: 0, a: 0}]));
+  if(base.pitch !== 0){ const [x, y, z] = rolledSole(side, base, base.pitch); out.x.p = x; out.y.p = y; out.z.p = z; }
+  return out;
+ };
 
  /** The foot's full state (value, speed, acceleration per channel) at time t, and the step it is in (if any). */
  function stateAt(side, t){
   const f = feet[side];
   let last = null;
   for(const s of f.segs){ if(s.t0 <= t) last = s; else break; }
-  if(!last) return {ch: held(f.base), seg: null};
+  if(!last) return {ch: held(f.base, side), seg: null};
   const tau = t - last.t0;
-  if(tau >= last.T) return {ch: held(last.to), seg: null, done: last};
+  if(tau >= last.T - 1e-9) return {ch: held(last.to, side), seg: null, done: last};
+  if(last.kind === 'roll'){
+   // Rocking about a contact: the pitch follows its curve and the sole point goes where that keeps the contact still.
+   const at = u => { const q = quintic(last.from.p, last.from.v, last.from.a, last.to.pitch, last.T, u); return {q, sole: rolledSole(side, last.to, q.p)}; };
+   // (Speed and acceleration of the sole point come from the curve a hair either side; outside the roll the curve holds still, which matches its ends.)
+   const h = 1e-4, mid = at(tau), lo = at(tau - h), hi = at(tau + h), ch = held({...last.to, pitch: mid.q.p}, side);
+   ['x', 'y', 'z'].forEach((c, k) => { ch[c].p = mid.sole[k]; ch[c].v = (hi.sole[k] - lo.sole[k]) / (2 * h); ch[c].a = (hi.sole[k] - 2 * mid.sole[k] + lo.sole[k]) / (h * h); });
+   ch.pitch = mid.q;
+   return {ch, seg: null, rolling: last, tau};
+  }
   return {ch: evalSeg(last, tau), seg: last, tau};
  }
 
@@ -175,8 +208,11 @@ export function createFootPlanner(skeleton, {ground = () => 0, soles = null} = {
    const atRest = ['x', 'z'].every(c => Math.abs(from[c].v) < 1e-9 && Math.abs(from[c].a) < 1e-9);
    const seg = {
     t0: now, T, sa: o.apexAt, ts: atRest ? o.delay * T : 0, te: (1 - o.arriveEarly) * T,
-    from, to: {x: tx, z: tz, heading, pitch: 0, roll: 0, y: ty, flat: 1}, peak: {y: 0, pitch: o.toesDown, flat: 1 - o.relax},
+    from, to: {x: tx, z: tz, heading, pitch: o.landPitch, roll: 0, y: ty, flat: 1}, peak: {y: 0, pitch: o.toesDown, flat: 1 - o.relax},
    };
+   // Where the sole point ends: the flat spot, or (landing on the heel) where rocking to that angle puts it.
+   const endSole = rolledSole(side, seg.to, o.landPitch);
+   seg.end = {x: endSole[0], y: endSole[1], z: endSole[2]};
    // The peak height: clear the highest ground along the way, then raise it until no part of the foot,
    // at any moment of the step, comes closer to the ground than the lift curve asks.
    let highest = ty;
@@ -209,6 +245,23 @@ export function createFootPlanner(skeleton, {ground = () => 0, soles = null} = {
     sole: [ch.x.p, ch.y.p, ch.z.p], velocity: [ch.x.v, ch.y.v, ch.z.v],
     heading: ch.heading.p, pitch: ch.pitch.p, roll: ch.roll.p, flat: ch.flat.p,
    };
+  },
+
+  /**
+   * Rock a planted foot to a new angle (degrees, toes down is positive) starting at time `now`: heel strike
+   * (toes up, negative), flat (0), heel lift (positive). The foot turns about its heel when its toes are up and its
+   * toe tip when its heel is up; that contact stays exactly still on the ground. A roll that is already under way is
+   * replaced and carries on from its own speed. The foot must be planted. Pass through 0 only at rest (end one roll
+   * at 0 before starting one the other way): the two pivots move the ankle differently, so changing sides at speed
+   * would give the ankle a jolt.
+   */
+  rollTo(side, now, pitch, {duration = .25} = {}){
+   const f = feet[side];
+   f.segs = f.segs.filter(s => s.t0 < now);
+   const {ch, seg, rolling, done} = stateAt(side, now);
+   if(seg) throw Error('rollTo: the foot is in a step, not planted');
+   const spot = rolling ? rolling.to : done ? done.to : f.base;
+   f.segs.push({kind: 'roll', t0: now, T: Math.max(.02, duration), from: {...ch.pitch}, to: {x: spot.x, y: spot.y, z: spot.z, heading: spot.heading, pitch, roll: spot.roll, flat: spot.flat}});
   },
 
   /** Where the foot is heading at time t: the end of the step it is in, or where it stands. [x, y, z]. */

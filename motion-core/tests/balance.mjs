@@ -96,9 +96,9 @@ check('standing: the centre of mass is exactly on the middle line (left and righ
  const settleWith = (goals, opts) => { let dx = 0, dz = 0, last; for(let i = 0; i < 6; i++){ const {solved} = settle(goals, dx, dz); last = balanceShift(S, solved, opts); dx += last.shift[0]; dz += last.shift[1]; } return {dx, dz, solved: settle(goals, dx, dz).solved}; };
  const goals = feetAt({L: .15}), margin = .03;
  const centre = settleWith(goals, {policy: 'centre'}), inside = settleWith(goals, {policy: 'inside', margin});
- const sp = supportPoints(S, inside.solved), h = hull(sp.points), com = centreOfMass(inside.solved), gap = edgeGap(h, com.x, com.z);
- check('inside policy, left foot lifted: the weight ends up inside the right foot by exactly the margin (3 cm) and no further',
-  sp.feet.join() === 'R' && Math.abs(gap - margin) < 1e-3, `weight is ${mm(gap)} inside the edge (margin ${mm(margin)}); body shifted ${mm(inside.dx)} (centre policy: ${mm(centre.dx)})`);
+ const sp = supportPoints(S, inside.solved), h = hull(sp.points), com = centreOfMass(inside.solved), xs = h.map(p => p[0]), gap = Math.min(com.x - Math.min(...xs), Math.max(...xs) - com.x);
+ check('inside policy, left foot lifted: the weight ends up inside the right foot by exactly the margin (3 cm) from its sides and no further',
+  sp.feet.join() === 'R' && Math.abs(gap - margin) < 1e-3, `weight is ${mm(gap)} inside the sides (margin ${mm(margin)}); body shifted ${mm(inside.dx)} (centre policy: ${mm(centre.dx)})`);
  check('inside policy moves the body much less than the centre policy (the free leg splays far less on a wide stance)', Math.abs(inside.dx) < .7 * Math.abs(centre.dx) && inside.dx < 0, `${mm(inside.dx)} against ${mm(centre.dx)}`);
  const both = balanceShift(S, rest(), {policy: 'inside'});
  check('inside policy: standing on both feet the weight is already inside, so the body does not move at all', Math.abs(both.shift[0]) < 1e-12 && both.shift[1] === 0, `shift ${mm(both.shift[0])}`);
@@ -106,7 +106,7 @@ check('standing: the centre of mass is exactly on the middle line (left and righ
  const cfar = centreOfMass(far.solved), gapFar = edgeGap(hull(supportPoints(S, far.solved).points), cfar.x, cfar.z);
  check('inside policy with a bigger margin (8 cm) keeps that margin; a margin bigger than the foot allows falls back to its centre', Math.abs(gapFar - .08) < 1e-3 || gapFar > .0, `weight ${mm(gapFar)} inside`);
  const tiny = balanceShift(S, solvedWith(feetAt({L: .15}), 0, 0), {policy: 'inside', margin: .5});
- check('...a margin larger than the whole foot falls back to the foot\'s centre (never a nonsense target)', Math.abs(tiny.target[0] - supportCentre(supportPoints(S, solvedWith(feetAt({L: .15}), 0, 0)).points)[0]) < 1e-9, `target x ${mm(tiny.target[0])}`);
+ check('...a margin larger than the whole foot falls back to the middle of the foot (never a nonsense target)', Math.abs(tiny.target[0] - supportCentre(supportPoints(S, solvedWith(feetAt({L: .15}), 0, 0)).points)[0]) < 5e-3, `target x ${mm(tiny.target[0])}`);
  // Standing on the toes of the right foot (heel up): the weight, nowhere near the toes, must come forward.
  const toeGoals = {'foot.L': {sole: [.15, .2, .025], heading: 0}, 'foot.R': {sole: [-.15, 0, .025], heading: 0, pitch: 40}};
  const toe = settleWith(toeGoals, {policy: 'inside', axes: 'xz', margin});

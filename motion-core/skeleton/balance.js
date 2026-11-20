@@ -68,11 +68,13 @@ export function footContactPoints(skeleton, solved, side){
  * The contact points that carry weight: a point counts when it is within
  * `tolerance` metres of the ground under it. `ground(x, z)` gives the ground
  * height (flat at 0 by default); a game with terrain or stairs passes its own.
+ * `exclude`: sides to leave out (a foot that is about to lift counts as unloaded, so the body shifts before it goes).
  * Returns {points: Vector3[], feet: ['L'|'R', ...]}.
  */
-export function supportPoints(skeleton, solved, {ground = () => 0, tolerance = .02} = {}){
+export function supportPoints(skeleton, solved, {ground = () => 0, tolerance = .02, exclude = []} = {}){
  const points = [], feet = [];
  for(const side of ['L', 'R']){
+  if(exclude.includes(side)) continue;
   let any = false;
   for(const p of Object.values(footContactPoints(skeleton, solved, side))){
    if(p.y - ground(p.x, p.z) <= tolerance){ points.push(p); any = true; }
@@ -129,14 +131,21 @@ function insideRange(h, z, margin){
  *          inside the support area (not at all if it is already there): less swaying, far less
  *          leg splay on a wide stance, and still safely supported.
  *   margin (with 'inside', default 3 cm)
+ *   heading the way the body faces, in radians about the vertical (default 0: the world axes); 'x' is then
+ *          sideways to that, so walking in any direction sways sideways to it
  *   fore   with 'xz' and 'centre', where fore/aft the weight sits on the support area: 0 heels, 1 toes
- *   ground, tolerance   see supportPoints
+ *   ground, tolerance, exclude   see supportPoints
  * Returns {shift: [dx, dz], com, target: [x, z], feet} or null when nothing carries weight.
  */
-export function balanceShift(skeleton, solved, {axes = 'x', fore = .5, policy = 'centre', margin = .03, ground, tolerance} = {}){
- const {points, feet} = supportPoints(skeleton, solved, {ground, tolerance});
- if(!points.length) return null;
- const com = centreOfMass(solved), [cx, cz] = supportCentre(points);
+export function balanceShift(skeleton, solved, {axes = 'x', fore = .5, policy = 'centre', margin = .03, heading = 0, ground, tolerance, exclude} = {}){
+ const sp = supportPoints(skeleton, solved, {ground, tolerance, exclude});
+ if(!sp.points.length) return null;
+ const cosH = Math.cos(heading), sinH = Math.sin(heading);
+ // Work in the body's own frame: x is sideways (his left), z is the way he faces (heading 0: the world axes).
+ const toBody = (x, z) => ({x: x * cosH - z * sinH, z: x * sinH + z * cosH});
+ const points = sp.points.map(p => { const b = toBody(p.x, p.z); return {x: b.x, y: p.y, z: b.z}; }), feet = sp.feet;
+ const comW = centreOfMass(solved), cb = toBody(comW.x, comW.z), com = {x: cb.x, y: comW.y, z: cb.z};
+ const [cx, cz] = supportCentre(points);
  let tx = cx, tz = cz;
  if(axes === 'xz'){
   const zs = points.map(p => p.z), lo = Math.min(...zs), hi = Math.max(...zs);
@@ -150,12 +159,16 @@ export function balanceShift(skeleton, solved, {axes = 'x', fore = .5, policy = 
    const zTarget = zRange ? zi : cz, r = insideRange(h, zTarget, margin);
    tz = zTarget; tx = r ? Math.min(r[1], Math.max(r[0], com.x)) : cx;
   } else {
-   const zAt = Math.min(zhi, Math.max(zlo, com.z)), r = insideRange(h, zAt, margin);
-   tx = r ? Math.min(r[1], Math.max(r[0], com.x)) : cx;
+   // Sideways only: the margin is asked of the two sides only, over the whole width of the support (a foot far
+   // ahead of or behind the body, or a thin heel strike, still gives its full width to stand within).
+   const xs = h.map(p => p[0]), lo = Math.min(...xs) + margin, hi = Math.max(...xs) - margin;
+   tx = lo <= hi ? Math.min(hi, Math.max(lo, com.x)) : (Math.min(...xs) + Math.max(...xs)) / 2;
    tz = com.z;
   }
  }
- return {shift: [tx - com.x, axes === 'xz' ? tz - com.z : 0], com, target: [tx, tz], feet};
+ // Back to the world: the shift is along his sideways direction (and, with 'xz', the way he faces).
+ const lat = tx - com.x, fwd = axes === 'xz' ? tz - com.z : 0;
+ return {shift: [lat * cosH + fwd * sinH, -lat * sinH + fwd * cosH], com: new Vector3(comW.x, comW.y, comW.z), target: [tx * cosH + tz * sinH, -tx * sinH + tz * cosH], feet};
 }
 
 /**
@@ -165,18 +178,31 @@ export function balanceShift(skeleton, solved, {axes = 'x', fore = .5, policy = 
  * `solved` is the pose with the body already shifted; goals are the reach
  * goals ({'foot.L': {sole: [x, y, z]}, ...}).
  */
-export function reachDrop(skeleton, solved, goals, {extension = 1} = {}){
- let drop = 0;
+/** How far over its reach the planted feet are (metres, can be negative: slack); see reachDrop. */
+export function reachNeed(skeleton, solved, goals, {extension = 1, exclude = []} = {}){
+ let need = -Infinity;
  for(const side of ['L', 'R']){
   const g = goals['foot.' + side];
-  if(!g?.sole) continue;
+  if(!g?.sole || exclude.includes(side)) continue;
   const at = n => skeleton.bones[skeleton.index.get(n + '.' + side)];
   const reachLen = (at('thigh').length + at('shin').length) * extension, hip = solved.get('thigh.' + side).head;
   const ankleY = g.sole[1] + at('foot').head[1], across = Math.hypot(hip.x - g.sole[0], hip.z - g.sole[2]);
   const highest = Math.sqrt(Math.max(0, reachLen * reachLen - across * across));
-  drop = Math.max(drop, hip.y - ankleY - highest);
+  need = Math.max(need, hip.y - ankleY - highest);
  }
- return drop < 1e-9 ? 0 : drop;
+ return need;
+}
+
+export function reachDrop(skeleton, solved, goals, {extension = 1, exclude = []} = {}){
+ const need = reachNeed(skeleton, solved, goals, {extension, exclude});
+ return need < 1e-9 ? 0 : need;
+}
+
+/** A smooth version of max(0, x) that is never below it: exactly x from x = w upward, 0 below -w, curved between. */
+export function softPlus(x, w){
+ if(x >= w) return x;
+ if(x <= -w) return 0;
+ return (x + w) * (x + w) / (4 * w);
 }
 
 /**

@@ -88,6 +88,16 @@ for(const [name,on,off,sides,label] of [['sit',2.4,2.4,['L','R']],['squat',3,1.6
   '');
 }
 
+// ---- Walk: exactly as the page runs it (the demo runner ticks the walking body before the pose player) ----
+{const P=createPosePlayer(S,{},{follow:true}),run=createDemoRunner(P,D,RESTS2),frames=[];
+ run.start('walk');for(let i=0;i<14*60;i++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
+ run.stop();let back=0;for(;back<60*60&&run.walking;back++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
+ for(let i=0;i<150;i++){run.tick(1/60);frames.push({pose:P.update(1/60)});}
+ const j=jolt(frames),end=atRest(frames.at(-1).pose);let bad=0;
+ for(const f of frames)if(!inLimits(f.pose))bad++;
+ check('walk: walks, comes home and stops; every joint stays inside its limits, joints never jolt (under 10° change of speed in a frame), and ends exactly at rest with nothing left running',back<3600&&bad===0&&j.m<10&&end<1e-6&&!P.layers.length&&!P.goalLayers.length,`${(frames.length/60).toFixed(0)} seconds; ${bad} frames with a joint past its limit; largest change in joint speed ${j.m.toFixed(2)}°; back at rest within ${end.toExponential(1)}`);
+}
+
 // ---- Look: the face follows the ball ----
 {const {frames}=simulate('look',6,0.1);let worst=0,sum=0,n=0,limits=true;
  for(let i=60;i<6*60;i++){const t=i/60,pose=frames[i].pose,h=S.solve(pose).get('head'),f=new T.Vector3(0,0,1).applyQuaternion(h.rotation),want=new T.Vector3(...D.look(t).target).sub(h.head),e=f.angleTo(want)*180/Math.PI;worst=Math.max(worst,e);sum+=e;n++;if(!inLimits(pose))limits=false;}
