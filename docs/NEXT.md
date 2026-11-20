@@ -503,3 +503,9 @@ Recorded 17 November 2026.
     no shadow (the shadow draws the 3.6M-triangle avatar twice). Medium: pixel ratio 1, 512 shadow, refreshed every third moving frame and
     again when the pose settles. High: as before (pixel ratio up to 1.5, 1024 shadow). Numbers live in `QUALITY` in `skeleton-test/main.js`.
     Reason: the owner measured 45 fps when pressing Wave on the detailed official avatar. Not yet known: the "slowest frame" number.
+49. Light avatar (owner approved): a separate test copy of the approved avatar with about 14 times fewer triangles (3.59M to 0.26M), made by
+    `node scripts/build-light-avatar.mjs` from the frozen source (the approved files are only read). Same 28 parts, transforms and joint
+    data, so the same skeleton code binds it (`avatar/src/light-avatar.js`, asset `avatar/assembled-joints/light-*.bin.gz` + `light.json`).
+    Skeleton section has an "Avatar" switch (Detailed default, Light); the choice is remembered and the page reloads. Shape error under
+    0.5% of each part's size; checked side by side at extreme close-up, only faint facets on part rims. Measured in the software test
+    browser: slowest frame about 10 times shorter. Not yet known on the owner's phone.

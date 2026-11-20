@@ -6,6 +6,7 @@ import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import {loadOfficialAvatar,OFFICIAL_AVATAR} from '../avatar/src/official-avatar.js';
+import {loadLightAvatar,LIGHT_AVATAR} from '../avatar/src/light-avatar.js';
 
 import {POSES,CLIPS} from '../motion-core/skeleton/poses.js';
 import {createPosePlayer} from '../motion-core/skeleton/pose.js';
@@ -13,7 +14,15 @@ import {createPosePlayer} from '../motion-core/skeleton/pose.js';
 
 const stage=document.querySelector('#stage');
 async function start(){
-const A=await loadOfficialAvatar();
+// Which avatar to draw: the detailed approved one (default) or the light copy
+// (about 14 times fewer triangles) for testing smoothness. The choice is
+// remembered; changing it reloads the page.
+let avatarMode='detailed';try{if(localStorage.getItem('skeletonAvatar')==='light')avatarMode='light';}catch{}
+const A=avatarMode==='light'?await loadLightAvatar():await loadOfficialAvatar();
+for(const b of document.querySelectorAll('[data-avatar]')){
+ b.setAttribute('aria-pressed',String(b.dataset.avatar===avatarMode));
+ b.onclick=()=>{if(b.dataset.avatar===avatarMode)return;try{localStorage.setItem('skeletonAvatar',b.dataset.avatar);}catch{}location.reload();};
+}
 let needsRender=true;
 const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;stage.prepend(renderer.domElement);
 renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
@@ -110,7 +119,7 @@ renderer.setAnimationLoop(ms=>{
  if(presentation!==lastPresentation){lastPresentation=presentation;needsRender=true;}
  if(needsRender){renderer.render(scene,camera);needsRender=false;}
 });
-window.skeletonLab={camera,controls,scene,renderer,setPose,showBones,view,setQuality:applyQuality,getQuality:()=>quality,avatar:A,player,release:OFFICIAL_AVATAR,poses:Object.keys(POSES)};
+window.skeletonLab={camera,controls,scene,renderer,setPose,showBones,view,setQuality:applyQuality,getQuality:()=>quality,avatar:A,player,release:avatarMode==='light'?LIGHT_AVATAR:OFFICIAL_AVATAR,avatarMode,poses:Object.keys(POSES)};
 window.avatarLab=window.skeletonLab;
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
 drawBones(A.solved);renderer.render(scene,camera);
