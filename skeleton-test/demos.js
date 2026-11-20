@@ -16,15 +16,16 @@
 //                (thighRests(): a point measured on the thigh that rides with it). The block's top is measured to touch the
 //                body exactly (seatTop()).
 //   step         a simple block 15 cm tall, starting 3 cm in front of the toes
-//                (measured on the foot model);
-//                the foot rises straight up first (10 cm above the block: the
-//                toes droop when the leg lifts, as the ankle pulls them up only
-//                18°), moves over, then sets down,
-//                so it never touches the block on the way.
+//                (measured on the foot model). The foot planner (motion-core/
+//                skeleton/footplan.js) plans every step: the foot rises, moves
+//                over with its toes hanging, and sets down flat, never touching
+//                the block; the other foot stays planted; the balance layer
+//                shifts the weight over the planted foot.
 //   ball         the palm centre touches a 3.5 cm ball circling in front of
 //                him and faces its centre.
 import {Vector3, Quaternion, Euler, Mesh, Raycaster} from 'three';
 import {EASE} from '../motion-core/skeleton/pose.js';
+import {createFootPlanner} from '../motion-core/skeleton/footplan.js';
 
 const RAD = Math.PI / 180, ease = t => EASE.inOut(Math.min(1, Math.max(0, t)));
 const band = (a, b, t) => ease((t - a) / (b - a));
@@ -79,6 +80,40 @@ export function createDemos(skeleton, foot = null){
  /** The ground height under a point (the floor, or the top of the step block): balance uses it to know which foot carries weight. */
  const ground = (x, z) => Math.abs(x - STEP.centre[0]) <= STEP.width / 2 && Math.abs(z - STEP.centre[2]) <= STEP.depth / 2 ? STEP.height : 0;
 
+ /**
+  * The stepping demo. The foot planner plans each step (up onto the block, later back to the floor);
+  * the body follows the foot: it leans forward by how far across the foot has come.
+  */
+ function stepper(shape = {}){
+  const planner = createFootPlanner(skeleton, {ground}), floor = [SOLE.L[0], SOLE.L[2]], top = [SOLE.L[0], stepSoleZ];
+  let next = 0, stopped = false;
+  // Steps are scheduled as time reaches them (planning is a pure function of time, so asking again is harmless).
+  const ensure = t => {
+   while(!stopped){
+    const up = next % 2 === 0, at = Math.floor(next / 2) * 5 + (up ? 0 : 2.6);
+    if(at > t) break;
+    planner.stepTo('L', at, {sole: up ? top : floor}, {duration: 1.6, ...shape});
+    next++;
+   }
+  };
+  return {
+   planner,
+   at(t){
+    ensure(t);
+    const z = planner.state('L', t).sole[2], across = Math.min(1, Math.max(0, (z - floor[1]) / (top[1] - floor[1]))), forward = band(.45, 1, across);
+    return {pose: {root: {position: [0, -.03 * forward, .12 * forward], rotation: {x: 0, y: 0, z: 0}}}, goals: planner.goals(t)};
+   },
+   /** Bring the foot back to the floor: from the block, or turning round mid-step, carrying its speed. */
+   stop(t){
+    ensure(t);
+    stopped = true;
+    const to = planner.destination('L', t);
+    if(Math.abs(to[0] - floor[0]) > 1e-9 || Math.abs(to[2] - floor[1]) > 1e-9) planner.stepTo('L', t, {sole: floor}, {duration: 1.6, ...shape});
+   },
+  };
+ }
+ const defaultStepper = stepper();
+
  return {
   SOLE, STEP, BALL, LEVEL, hips, feet, body, ground,
   squat(t){
@@ -95,17 +130,10 @@ export function createDemos(skeleton, foot = null){
    const k = band(0, 1.4, t);
    return {pose: {root: body(k, 0)}, goals: feet, handWeight: k};
   },
-  /** How far up onto the step the foot is (0 planted, 1 on the block) at a time in the 5 s cycle. */
-  stepUp(t){ const c = t % 5; return c < 1.6 ? band(0, 1.6, c) : c < 2.6 ? 1 : c < 4.2 ? 1 - band(2.6, 4.2, c) : 0; },
-  step(t){ return this.stepAt(this.stepUp(t)); },
-  stepAt(up){
-   // Straight up first, over, then down onto the block (each overlapping smoothly).
-   const clear = .10, y = (STEP.height + clear) * band(0, .32, up) - clear * band(.78, 1, up);
-   const z = SOLE.L[2] + (stepSoleZ - SOLE.L[2]) * band(.3, .85, up);
-   const forward = band(.45, 1, up);
-   return {pose: {root: {position: [0, -.03 * forward, .12 * forward], rotation: {x: 0, y: 0, z: 0}}},
-    goals: {'foot.L': {sole: [SOLE.L[0], y, z], heading: 0}, 'foot.R': {sole: SOLE.R, heading: 0}}};
-  },
+  /** The step demo's pose and feet at a time in the 5 s cycle (up 1.6 s, wait, back down 1.6 s, wait). */
+  step(t){ return defaultStepper.at(t); },
+  /** A new step demo: planned by the foot planner; stop(t) brings the foot back to the floor from wherever it is. */
+  stepper,
   ball(t){
    const a = t * 1.4, c = [.24 + .16 * Math.cos(a), 1.32 + .18 * Math.sin(a), .42 + .06 * Math.sin(2 * a)];
    return {pose: {}, ball: c, goals: {'hand.L': {touch: c, radius: BALL.radius}, ...feet}};
@@ -232,7 +260,7 @@ export function sittingHands(solved, rests, k = 1, base = solved, skeleton = nul
 const SETTLE = .6;
 
 export function createDemoRunner(player, D, rests){
- let active = null, began = 0;
+ let active = null, began = 0, stepper = null;
  const now = () => player.time;
  /** Hands layer for sitting: k(t) = how far the hands are along their path to the thighs. */
  const sitHands = k => player.setGoals('hands', (t, pose, sk) => { const q = sk.solve(pose); return sittingHands(q, rests, k(t), q, sk); }, {fade: 0, glide: .2});
@@ -241,7 +269,7 @@ export function createDemoRunner(player, D, rests){
    // The hands travel from hanging to the thighs along a path, arriving as he sits.
    sitHands(t => band(0, 1.4, t)); },
   squat(){ player.setLayer('squat', {fn: t => D.squat(t).pose, fade: .5}); player.setGoals('feet', D.feet, {fade: 0}); },
-  step(){ player.setLayer('step', {fn: t => D.step(t).pose, fade: .3}); player.setGoals('feet', t => D.step(t).goals, {fade: 0}); player.setBalance({ground: D.ground}); },
+  step(){ stepper = D.stepper(); const st = stepper; player.setLayer('step', {fn: t => st.at(t).pose, fade: .3}); player.setGoals('feet', t => st.at(t).goals, {fade: 0}); player.setBalance({ground: D.ground}); },
   ball(){ player.setGoals('ball', t => ({'hand.L': D.ball(t).goals['hand.L']}), {fade: .6}); },
  };
  const end = {
@@ -255,16 +283,12 @@ export function createDemoRunner(player, D, rests){
   },
   squat(){ player.clearLayer('squat', .8); player.clearGoals('feet', 0, {after: .8}); },
   step(){
-   // Back down the same path from wherever the foot is, then let go.
-   // It carries on from where the foot is and how fast it is moving (a quintic curve), so
-   // turning back never jolts.
-   const t0 = now() - began, h = 1 / 240, u0 = D.stepUp(t0), v0 = (D.stepUp(t0 + h) - D.stepUp(t0 - h)) / (2 * h), a0 = (D.stepUp(t0 + h) - 2 * u0 + D.stepUp(t0 - h)) / (h * h);
-   const back = t => quintic(u0, v0, a0, 0, 1.6, t);
-   player.setLayer('step', {fn: t => D.stepAt(back(t)).pose, fade: 0}); player.setGoals('feet', t => D.stepAt(back(t)).goals, {fade: 0});
-   // The weight shift settles back to the middle (balance's own time) before the feet are let go.
+   // The foot goes back to the floor from wherever it is (the planner carries its speed, so turning
+   // back never jolts), the weight settles to the middle, then everything lets go.
+   stepper.stop(now() - began);
    player.clearLayer('step', 0, {after: 1.6}); player.clearGoals('feet', 0, {after: 1.6 + SETTLE}); player.clearBalance({after: 1.6 + SETTLE});
   },
-  ball(){ player.clearGoals('ball', .6); },
+    ball(){ player.clearGoals('ball', .6); },
  };
  return {
   start(name){ if(active) this.stop(); if(!run[name]) return; active = name; began = now(); run[name](); },

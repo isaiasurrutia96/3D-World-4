@@ -274,6 +274,29 @@ Recorded 17 November 2026.
     (`axes: 'xz'` with `fore` 0 heels to 1 toes also does fore/aft). Costs about
     0.8 ms a frame. The step demo uses it (the hand-made sideways shift in the
     step is gone) and the feet are now let go 0.6 s after the foot is down so the
-    weight can settle first. One known item left in the step: the lifted foot's
-    ankle swings quickly at high knee (3.7° a frame): that is foot planning,
-    layer 3, next.
+    weight can settle first. The ankle swing that was left in the step (3.7° a frame)
+    is fixed by foot planning (item 38).
+37. Owner rule change (20 Nov 2026): layers no longer wait for the owner's
+    approval. Claude codes and checks each layer thoroughly (automatic checks
+    plus a look at the result) before starting the next; the owner reviews when
+    they wish. Recorded in `motion-core/PLAN.md` decision 1.
+38. Layer 3, foot planning, built 20 Nov 2026 (`motion-core/skeleton/footplan.js`,
+    `npm run test:footplan`, 27 checks). A planted foot is held at an exact spot
+    (never slides). A step is a smooth path (position, speed and acceleration
+    all continuous): the foot rises first, moves across, comes down flat, starts
+    and ends at rest in the world, and clears the ground using the foot's real
+    shape (`ground(x, z)` gives stairs or blocks; checked 320 times along every
+    step). Changing a step in the middle carries the foot's speed and
+    acceleration on (no jolt); turning takes the short way round; left and right
+    are exact mirrors. It is a pure function of time (`planner.goals(t)` feeds
+    `player.setGoals`), so it works at any frame rate and trial passes are
+    harmless. The reach layer now understands foot `pitch` and `roll`.
+    The step demo uses it, and that finished the step: the old known ankle jolt
+    is gone (0.9° a frame against a 1° limit; the body ends exactly at rest).
+    Findings to carry into layer 4 (legs and feet): (a) a high lift (over about
+    7 cm above the block) folds the hip past 90°, where the hip's angles are
+    unstable (the hip bone's angle order has a gimbal point at 90°, giving 6° to
+    8° a frame jumps), so keep `lift` modest until the legs layer fixes it;
+    (b) when the ankle reaches its own limit (toes up 36°) the real foot cannot
+    match the planned angle (its toes hang up to 2 cm lower than planned); the
+    planner's clearance is exact whenever the ankle is inside its range.

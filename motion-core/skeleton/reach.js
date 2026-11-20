@@ -24,6 +24,9 @@
 //               number 0..1 mixes flat with the ankle's own angle (relaxed in the air)
 //     heading   for a foot: which way it faces (degrees about the vertical; default:
 //               the way the body faces). Planted feet keep their own heading.
+//     pitch     for a foot: tilt its toes down (degrees, negative: up) from flat, about
+//               its own sideways axis; roll: tilt it about its own forward axis.
+//               A swinging foot hangs toes-down instead of being forced flat.
 //   options.follow  let the shoulders follow the arms (shoulder.js) while reaching
 //   options.clavicles  the pose's own collarbones (if the pose already includes a follow)
 //   options.continuing the pose's limbs are last frame's answer: carry on smoothly from
@@ -119,10 +122,14 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
   if(!targetOverride && !goal.position) k.target.y += k.H0.y; // sole → ankle height above the ground (foot flat)
   // Feet face a heading (world turn about the vertical, degrees; default: where the body faces).
   k.heading = goal.heading !== undefined ? goal.heading * RAD : k.bodyYaw; k.headingQ = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), k.heading);
+  // The foot's own turn: heading, then toes down (pitch) about its sideways axis, then roll about its forward axis.
+  k.footQ = k.headingQ.clone();
+  if(goal.pitch) k.footQ.multiply(new Quaternion().setFromAxisAngle(X, goal.pitch * RAD));
+  if(goal.roll) k.footQ.multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), goal.roll * RAD));
   k.ready = !!kit;
   kit = k;
  }
- const {uName, mName, eName, U, Mb, E, S0, E0, H0, P, Pinv, Sw, bodyQ, headingQ, target} = kit;
+ const {uName, mName, eName, U, Mb, E, S0, E0, H0, P, Pinv, Sw, bodyQ, headingQ, footQ, target} = kit;
  const B = n => skeleton.bones[skeleton.index.get(n)];
  const cur = n => ({...B(n).rest, ...(pose[n] ?? {})});
  // The point of the limb that must land (wrist / ankle, or the palm centre for palm goals).
@@ -199,7 +206,7 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
  //    cannot twist, so the leg's spin is fine-tuned until the twist the ankle would
  //    need is zero (the foot decides exactly where the knee points).
  if(kind === 'foot' && (goal.flat ?? !!goal.sole) !== false && (goal.flat ?? !!goal.sole) !== 0){
-  const twistNeeded = r => new Euler().setFromQuaternion(r.W2a.clone().invert().multiply(headingQ).multiply(E.restQ), E.order).y;
+  const twistNeeded = r => new Euler().setFromQuaternion(r.W2a.clone().invert().multiply(footQ).multiply(E.restQ), E.order).y;
   let s0 = best.spin, f0 = twistNeeded(best), s1 = s0 + .01, f1 = twistNeeded(attempt(best.mid.x, s1));
   for(let k = 0; k < 12 && Math.abs(f1) > 1e-10 && Math.abs(f1 - f0) > 1e-14; k++){
    const s2 = s1 - f1 * (s1 - s0) / (f1 - f0); s0 = s1; f0 = f1; s1 = s2; f1 = twistNeeded(attempt(best.mid.x, s1));
@@ -208,7 +215,7 @@ function solveLimb(skeleton, pose, solved, kind, side, goal, endRest = null, tar
   if(tuned.err <= best.err + 1e-6 && Math.abs(f1) < Math.abs(twistNeeded(best))) best = tuned;
   // flat may be a number 0..1: how flat (1) versus the ankle's own angle in the pose (0),
   // e.g. fully flat near the ground and relaxed while the foot is in the air.
-  const flatAngles = anglesFor(E, best.W2a.clone().invert().multiply(headingQ), end, SOFT), w = typeof goal.flat === 'number' ? Math.min(1, Math.max(0, goal.flat)) : 1;
+  const flatAngles = anglesFor(E, best.W2a.clone().invert().multiply(footQ), end, SOFT), w = typeof goal.flat === 'number' ? Math.min(1, Math.max(0, goal.flat)) : 1;
   end = Object.fromEntries(['x', 'y', 'z'].map(k => [k, end[k] + (flatAngles[k] - end[k]) * w]));
  }
  return {[uName]: best.upper, [mName]: best.mid, [eName]: end, forearm: best.W2a, err: best.err};

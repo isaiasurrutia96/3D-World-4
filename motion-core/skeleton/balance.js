@@ -11,6 +11,7 @@
 // follower that turns the wanted shift into a gentle movement.
 
 import {Vector3} from 'three';
+import {quintic} from './quintic.js';
 
 /**
  * Body segments for the centre of mass. Standard human proportions
@@ -153,17 +154,7 @@ export function reachDrop(skeleton, solved, goals, {extension = 1} = {}){
 export function createShiftFollower({duration = .3, deadband = 1e-5, size = 2} = {}){
  const st = Array.from({length: size}, () => ({p0: 0, v0: 0, a0: 0, p1: 0}));
  let elapsed = 0, T = duration;
- // Position, speed and acceleration of one axis's curve at the current time.
- function eval1(c, t){
-  const s = Math.min(1, Math.max(0, t / T)), s2 = s * s, s3 = s2 * s, s4 = s3 * s, s5 = s4 * s;
-  const p0 = c.p0, v0 = c.v0 * T, a0 = c.a0 * T * T, p1 = c.p1;
-  if(s >= 1) return {p: p1, v: 0, a: 0};
-  return {
-   p: (1 - 10*s3 + 15*s4 - 6*s5)*p0 + (s - 6*s3 + 8*s4 - 3*s5)*v0 + (.5*s2 - 1.5*s3 + 1.5*s4 - .5*s5)*a0 + (10*s3 - 15*s4 + 6*s5)*p1,
-   v: ((-30*s2 + 60*s3 - 30*s4)*p0 + (1 - 18*s2 + 32*s3 - 15*s4)*v0 + (s - 4.5*s2 + 6*s3 - 2.5*s4)*a0 + (30*s2 - 60*s3 + 30*s4)*p1) / T,
-   a: ((-60*s + 180*s2 - 120*s3)*p0 + (-36*s + 96*s2 - 60*s3)*v0 + (1 - 9*s + 18*s2 - 10*s3)*a0 + (60*s - 180*s2 + 120*s3)*p1) / (T * T),
-  };
- }
+ const eval1 = (c, t) => quintic(c.p0, c.v0, c.a0, c.p1, T, t);
  return {
   /** Current shift, one number per axis. */
   get value(){ return st.map(c => eval1(c, elapsed).p); },
@@ -171,9 +162,10 @@ export function createShiftFollower({duration = .3, deadband = 1e-5, size = 2} =
   get speed(){ return st.map(c => eval1(c, elapsed).v); },
   /** Where it is heading, per axis. */
   get goal(){ return st.map(c => c.p1); },
-  /** Re-plan toward new wanted values (an array, one per axis). Ignores changes under the deadband. */
-  retarget(wanted, seconds = duration){
-   if(wanted.every((w, i) => Math.abs(w - st[i].p1) <= deadband)) return;
+  /** Re-plan toward new wanted values (an array, one per axis). Ignores changes under the deadband unless `exact` (used to come to rest exactly). */
+  retarget(wanted, seconds = duration, exact = false){
+   if(!exact && wanted.every((w, i) => Math.abs(w - st[i].p1) <= deadband)) return;
+   if(exact && wanted.every((w, i) => w === st[i].p1)) return;
    const now = st.map(c => eval1(c, elapsed));
    T = Math.max(1e-6, seconds);
    st.forEach((c, i) => { c.p0 = now[i].p; c.v0 = now[i].v; c.a0 = now[i].a; c.p1 = wanted[i]; });

@@ -299,7 +299,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
    }
    if(found)wanted=total;else if(!frameFeet)wanted=[0,0];
   }
-  b.follower.retarget(wanted,b.opts.duration);
+  b.follower.retarget(wanted,b.opts.duration,b.releasing);
   const off=b.follower.update(dt);
   if(b.releasing&&Math.abs(off[0])<1e-9&&Math.abs(off[1])<1e-9&&Math.abs(b.follower.speed[0])<1e-9&&Math.abs(b.follower.speed[1])<1e-9){balance=null;return poseAt(time);}
   return poseAt(time,{shift:off});

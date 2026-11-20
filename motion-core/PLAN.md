@@ -6,7 +6,9 @@ The source of truth for Claude's movement work. Codex builds all visuals
 ## Decisions (approved by the owner, 17 Nov 2026)
 
 1. Rebuild the 3D-WORLD-3 movement from the ground up, in layers, code first.
-   Each layer has automatic checks and is approved before the next starts.
+   Each layer has automatic checks. (Changed by the owner, 20 Nov 2026: layers
+   no longer wait for approval; Claude codes and checks each layer thoroughly
+   before moving to the next, and the owner reviews when they wish.)
 2. Layers: 1 movement rules, 2 balance, 3 foot planning, 4 legs and feet,
    5 upper body. Running, jumps and other SM64 moves come after, on top.
 3. Speeds stay exactly as in 3D-WORLD-3: walk 3.1 m/s, full run 8.6 m/s.
@@ -59,7 +61,7 @@ pivots, with the clay parts hung on the bones later. Order:
 4. Reaching: work out joint angles from where a hand or foot must go.
 5. Hands and feet detail (finger curl, spread, thumb, toes, ball of the
    foot, tiptoe), rebuilt to match the approved Codex hand and foot.
-6. Then the movement layers: balance (built, 20 Nov 2026: `skeleton/balance.js`, centre of mass + support + smooth shift, wired into the pose player), foot planning (next), legs, upper body.
+6. Then the movement layers: balance (built, 20 Nov 2026: `skeleton/balance.js`, centre of mass + support + smooth shift, wired into the pose player), foot planning (built, 20 Nov 2026: `skeleton/footplan.js`, exact planted feet, smooth steps that clear the ground, landing flat), legs, upper body (next: legs).
 Grips for mini games come later, built on the hand layer.
 
 ### Section 1 · The skeleton

@@ -50,6 +50,18 @@ for(let n=0;n<=60;n++){const dn=.32*n/60,turn=8*Math.sin(n/9),lean=2.5*Math.sin(
  for(const sd of ['L','R']){const up=new T.Vector3(0,1,0).applyQuaternion(s.get('foot.'+sd).rotation);flatErr=Math.max(flatErr,Math.acos(Math.min(1,up.y))/Math.PI*180);if(r.pose['shin.'+sd].x<-1e-9)kneesOk=false;}
  if(!inLimits(r.pose))limitOk=false;}
 check('feet stay planted and flat while the body squats 32 cm (hips back), sways, leans and turns (inside the approved ankle: toes up 18°, tilt 10°)',footErr<5e-4&&flatErr<.5&&limitOk&&kneesOk,`feet off by at most ${mm(footErr)}, tilted at most ${flatErr.toFixed(2)}°`);
+// A foot can hang toes-down (pitch) and tilt sideways (roll) about its own axes, after turning to its heading.
+{let worst=0,landErr=0;
+ for(const [heading,pitch,roll] of [[0,30,0],[0,-15,0],[20,30,0],[-25,25,0],[0,0,8],[25,20,-6]]){
+  const r=reach(S,{},{'foot.L':{sole:[.15,.1,.2],heading,pitch,roll}}),s2=S.solve(r.pose),f=s2.get('foot.L');
+  const want=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),heading*Math.PI/180).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),pitch*Math.PI/180)).multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),roll*Math.PI/180));
+  const upGot=new T.Vector3(0,1,0).applyQuaternion(f.rotation),upWant=new T.Vector3(0,1,0).applyQuaternion(want),fwdGot=new T.Vector3(0,0,1).applyQuaternion(f.rotation),fwdWant=new T.Vector3(0,0,1).applyQuaternion(want);
+  worst=Math.max(worst,upGot.angleTo(upWant)/Math.PI*180,fwdGot.angleTo(fwdWant)/Math.PI*180);landErr=Math.max(landErr,r.error['foot.L']);}
+ check('a foot can hang toes-down or tilted: its up and forward directions follow heading, pitch and roll exactly, and the ankle still lands exactly',worst<.01&&landErr<5e-4,`directions off by at most ${worst.toFixed(4)}°; ankle off by ${mm(landErr)}`);
+ const flat=reach(S,{},{'foot.L':{sole:[.15,.1,.2],heading:0}}),tilt=reach(S,{},{'foot.L':{sole:[.15,.1,.2],heading:0,pitch:0,roll:0}});
+ let same=0;for(const k of AX)same=Math.max(same,Math.abs(flat.pose['foot.L'][k]-tilt.pose['foot.L'][k]));
+ check('no pitch or roll means exactly the old flat foot',same<1e-9,`ankle angles differ by ${same.toExponential(1)}°`);
+}
 // 4. Out of reach: the limb points straight at the target and stops at full length (no snapping, no errors).
 const far=reach(S,{},{'hand.L':{position:[2,1.3,.5]}}),fs=S.solve(far.pose),sh=fs.get('upperArm.L').head,wr=fs.get('hand.L').head;
 const dirErr=wr.clone().sub(sh).normalize().angleTo(new T.Vector3(2,1.3,.5).sub(sh).normalize())/Math.PI*180;

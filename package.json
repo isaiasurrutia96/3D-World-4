@@ -22,6 +22,7 @@
     "test:skeleton": "node motion-core/tests/skeleton.mjs",
     "test:pose": "node motion-core/tests/pose.mjs",
     "test:balance": "node motion-core/tests/balance.mjs",
+    "test:footplan": "node motion-core/tests/footplan.mjs",
     "test:reach": "node motion-core/tests/reach.mjs",
     "test:grip": "node motion-core/tests/hands.mjs",
     "test:island": "node tests/island/check.mjs && node tests/island/solid.mjs",
