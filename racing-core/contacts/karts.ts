@@ -2,6 +2,8 @@
 import { prepareKartStep, finishKartStep, KART } from '../kart/index.ts';
 import type { KartState, KartInput, KartMotion, KartMotionResolver, SurfaceWorld } from '../kart/index.ts';
 import { solveKartContacts } from './index.ts';
+import type { KartProfile, ProfileId } from '../kart/profiles.ts';
+import { resolveKartProfile } from '../kart/profiles.ts';
 import type { ContactBody, BarrierWorld } from './index.ts';
 function body(id: string, motion: KartMotion): ContactBody {
     const s = motion.state;
@@ -21,10 +23,11 @@ export type KartTickEntry = Readonly<{
     state: KartState;
     input?: KartInput;
     activateBoost?: boolean;
+    profile?: ProfileId | KartProfile;
 }>;
 /** One simultaneous 120 Hz tick for future race coordination. Does not create NPCs or race rules. */
 export function stepContactKarts(entries: readonly KartTickEntry[], world: SurfaceWorld, barriers?: BarrierWorld) {
-    const prepared = entries.map(e => ({ id: e.id, motion: prepareKartStep(e.state, e.input ?? {}, e.activateBoost ?? false) }));
+    const prepared = entries.map(e => ({ id: e.id, motion: prepareKartStep(e.state, e.input ?? {}, e.activateBoost ?? false, resolveKartProfile(e.profile), world) }));
     const solved = solveKartContacts(prepared.map(e => body(e.id, e.motion)), KART.step, barriers);
     const states = prepared.map(e => Object.freeze({ id: e.id, state: finishKartStep(e.motion, movement(solved, e.id), world) }));
     return Object.freeze({ states: Object.freeze(states), events: solved.events, iterations: solved.iterations });

@@ -1,3 +1,7 @@
+import '../kart/grip-check.test.mjs';
+import '../kart/profile-check.test.mjs';
+import '../kart/tuning.test.mjs';
+import '../kart/course-check.test.mjs';
 // Run the fresh track checks in deployment CI too; prototype tests below remain separate.
 import '../track/check.test.mjs';
 import '../kart/check.test.mjs';

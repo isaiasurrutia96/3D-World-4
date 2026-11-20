@@ -1,3 +1,7 @@
+import { prepareTunedStep, initialHandling } from './dynamics.ts';
+import type { HandlingState, SurfaceSample } from './dynamics.ts';
+import { resolveKartProfile } from './profiles.ts';
+import type { KartProfile, ProfileId } from './profiles.ts';
 /** Headless LetsGo-style handling. Optional numeric contact response; no renderer or race rules. */
 export const KART = Object.freeze({
     step: 1 / 120,
@@ -39,10 +43,12 @@ export type KartInput = Readonly<{
     throttle?: number;
     steer?: number;
     brake?: boolean;
+    brakeAmount?: number;
     boost?: boolean;
 }>;
 export type SurfaceWorld = Readonly<{
     heightAt(x: number, z: number, maximum: number): number | null;
+    surfaceAt?(x: number, z: number, y: number): SurfaceSample;
 }>;
 export type KartState = Readonly<{
     x: number;
@@ -64,6 +70,7 @@ export type KartState = Readonly<{
     railContactTime: number;
     impactRecovery: number;
     contacts: number;
+    handling?: HandlingState;
 }>;
 type MutableState = {
     -readonly [P in keyof KartState]: KartState[P];
@@ -71,7 +78,7 @@ type MutableState = {
 export type KartInitial = Partial<Pick<KartState, 'x' | 'y' | 'z' | 'yaw' | 'speed' | 'lateralSpeed' | 'grounded' | 'verticalVelocity' | 'boostTime' | 'impactYawRate' | 'railContactTime' | 'impactRecovery'>>;
 /** A script is sampled at physics time, allowing identical traces at any rendering rate. */
 export type InputScript = (tick: number, seconds: number, state: KartState) => KartInput;
-type Controls = Required<KartInput>;
+type Controls = Required<Omit<KartInput, 'brakeAmount'>> & Pick<KartInput, 'brakeAmount'>;
 export type KartMotion = Readonly<{
     state: KartState;
     vx: number;
@@ -101,7 +108,7 @@ export function normalizeKartInput(input: KartInput = {}): Controls {
     for (const key of ['brake', 'boost'] as const)
         if (input[key] !== undefined && typeof input[key] !== 'boolean')
             throw new TypeError(key + ' must be boolean');
-    return Object.freeze({ throttle: clamp(finite(input.throttle ?? 0, 'throttle'), -1, 1), steer: clamp(finite(input.steer ?? 0, 'steer'), -1, 1), brake: input.brake ?? false, boost: input.boost ?? false });
+    return Object.freeze({ ...(input.brakeAmount === undefined ? {} : { brakeAmount: clamp(finite(input.brakeAmount, 'brakeAmount'), 0, 1) }), throttle: clamp(finite(input.throttle ?? 0, 'throttle'), -1, 1), steer: clamp(finite(input.steer ?? 0, 'steer'), -1, 1), brake: input.brake ?? false, boost: input.boost ?? false });
 }
 function initialState(initial: KartInitial): MutableState {
     if (!initial || typeof initial !== 'object')
@@ -135,7 +142,10 @@ function support(world: SurfaceWorld, x: number, z: number, maximum: number): nu
     return y;
 }
 /** Shared first half of a physics tick, also used by the simultaneous kart-contact step. */
-export function prepareKartStep(source: KartState, raw: KartInput, activateBoost = false): KartMotion {
+export function prepareKartStep(source: KartState, raw: KartInput, activateBoost = false, profile: KartProfile = resolveKartProfile(), world?: SurfaceWorld): KartMotion {
+    profile = resolveKartProfile(profile);
+    if (profile.mode === 'tuned') return prepareTunedStep(source, normalizeKartInput(raw), activateBoost, profile, world, KART);
+    if (source.handling) throw new Error('Tuned kart state requires its matching profile');
     const state = { ...source }, input = normalizeKartInput(raw), t = KART, dt = t.step;
     state.railContactTime = Math.max(0, state.railContactTime - dt);
     state.impactRecovery = Math.max(0, state.impactRecovery - dt);
@@ -231,8 +241,8 @@ export function finishKartStep(motion: KartMotion, movement: KartMovement, world
             finite(value, key);
     return Object.freeze(state);
 }
-function step(state: KartState, input: Controls, world: SurfaceWorld, activateBoost: boolean, resolveMotion?: KartMotionResolver): KartState {
-    const motion = prepareKartStep(state, input, activateBoost);
+function step(state: KartState, input: Controls, world: SurfaceWorld, activateBoost: boolean, resolveMotion?: KartMotionResolver, profile: KartProfile = resolveKartProfile()): KartState {
+    const motion = prepareKartStep(state, input, activateBoost, profile, world);
     const movement = resolveMotion ? resolveMotion(motion) : { x: state.x + motion.vx * KART.step, z: state.z + motion.vz * KART.step, vx: motion.vx, vz: motion.vz };
     return finishKartStep(motion, movement, world);
 }
@@ -240,11 +250,13 @@ export function createKartController(options: Readonly<{
     world: SurfaceWorld;
     initial?: KartInitial;
     resolveMotion?: KartMotionResolver;
+    profile?: ProfileId | KartProfile;
 }>) {
     if (typeof options?.world?.heightAt !== 'function')
         throw new TypeError('A numeric heightAt world is required');
-    const world = options.world, start = Object.freeze({ ...options.initial });
-    let current: KartState = Object.freeze(initialState(start)), previous = current;
+    const world = options.world, start = Object.freeze({ ...options.initial }), profile = resolveKartProfile(options.profile);
+    const initialize = (initial: KartInitial) => Object.freeze({ ...initialState(initial), ...(profile.mode === 'tuned' ? { handling: initialHandling(profile) } : {}) });
+    let current: KartState = initialize(start), previous = current;
     let ticks = 0, remainder = 0, lastBoost = false, pendingBoost = false;
     function advance(frameSeconds: number, input: KartInput | InputScript = {}): KartState {
         finite(frameSeconds, 'frameSeconds');
@@ -269,7 +281,7 @@ export function createKartController(options: Readonly<{
             if (!literal)
                 accept(controls);
             prior = Object.freeze({ ...next });
-            next = { ...step(next, controls, world, queued, options.resolveMotion) };
+            next = { ...step(next, controls, world, queued, options.resolveMotion, profile) };
             queued = false;
             for (const [key, value] of Object.entries(next))
                 if (typeof value === 'number')
@@ -296,11 +308,12 @@ export function createKartController(options: Readonly<{
         return Object.freeze(pose);
     }
     return Object.freeze({
+        profile,
         get state() { return current; },
         get clock() { return Object.freeze({ ticks, seconds: ticks * KART.step, remainder, alpha: remainder / KART.step }); },
         advance, sample,
         cancelInput() { lastBoost = pendingBoost = false; },
-        reset(initial: KartInitial = start) { const state = Object.freeze(initialState(initial)); current = previous = state; ticks = remainder = 0; lastBoost = pendingBoost = false; return current; },
+        reset(initial: KartInitial = start) { const state = initialize(initial); current = previous = state; ticks = remainder = 0; lastBoost = pendingBoost = false; return current; },
     });
 }
 export type KartController = ReturnType<typeof createKartController>;

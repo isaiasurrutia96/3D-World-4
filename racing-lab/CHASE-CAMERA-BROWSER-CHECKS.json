@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "script": "Replay the original bridge approach at 180 mph through the actual page camera at four rates, in portrait and landscape; render/read pixels, check kart framing, WebGL and FPV eye.",
+  "script": "Replay the original bridge approach at 180 and 220 mph through the actual page camera at four rates, in portrait and landscape; render/read pixels, check kart framing, WebGL and FPV eye.",
   "rows": [
     {
       "viewport": {
@@ -8,6 +8,7 @@
         "height": 390
       },
       "fps": 30,
+      "mph": 180.00000000000003,
       "minimumClearance": 0.9999999999999991,
       "minimumCameraDistance": 10.965856099730633,
       "nonBackgroundPixels": 1024,
@@ -26,6 +27,7 @@
         "height": 390
       },
       "fps": 60,
+      "mph": 180.00000000000003,
       "minimumClearance": 0.9999999999999991,
       "minimumCameraDistance": 10.965856099730631,
       "nonBackgroundPixels": 1024,
@@ -44,6 +46,7 @@
         "height": 390
       },
       "fps": 120,
+      "mph": 180.00000000000003,
       "minimumClearance": 0.9999999999999991,
       "minimumCameraDistance": 10.965856099730633,
       "nonBackgroundPixels": 1024,
@@ -62,6 +65,7 @@
         "height": 390
       },
       "fps": 144,
+      "mph": 180.00000000000003,
       "minimumClearance": 0.9999999999999991,
       "minimumCameraDistance": 10.96585609973063,
       "nonBackgroundPixels": 1024,
@@ -76,10 +80,87 @@
     },
     {
       "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "fps": 30,
+      "mph": 220,
+      "minimumClearance": 0.9999999999999991,
+      "minimumCameraDistance": 10.965856099730633,
+      "nonBackgroundPixels": 1024,
+      "projected": [
+        0,
+        -0.08497012098101622,
+        0.9906826625401728
+      ],
+      "contextLost": false,
+      "glError": 0,
+      "fpvEyeError": 0
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "fps": 60,
+      "mph": 220,
+      "minimumClearance": 0.9999999999999991,
+      "minimumCameraDistance": 10.965856099730633,
+      "nonBackgroundPixels": 1023,
+      "projected": [
+        5.108190265772643e-15,
+        -0.08497012098101622,
+        0.9906826625401728
+      ],
+      "contextLost": false,
+      "glError": 0,
+      "fpvEyeError": 0
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "fps": 120,
+      "mph": 220,
+      "minimumClearance": 0.9999999999999991,
+      "minimumCameraDistance": 10.965856099730631,
+      "nonBackgroundPixels": 1024,
+      "projected": [
+        -5.108190265772657e-15,
+        -0.08497012098101484,
+        0.9906826625401728
+      ],
+      "contextLost": false,
+      "glError": 0,
+      "fpvEyeError": 0
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "fps": 144,
+      "mph": 220,
+      "minimumClearance": 0.9999999999999991,
+      "minimumCameraDistance": 10.965856099730631,
+      "nonBackgroundPixels": 1023,
+      "projected": [
+        -5.108190265772616e-15,
+        -0.08497012098101256,
+        0.9906826625401729
+      ],
+      "contextLost": false,
+      "glError": 0,
+      "fpvEyeError": 0
+    },
+    {
+      "viewport": {
         "width": 390,
         "height": 844
       },
       "fps": 30,
+      "mph": 180.00000000000003,
       "minimumClearance": 0.9999999999999991,
       "minimumCameraDistance": 10.965856099730633,
       "nonBackgroundPixels": 1024,
@@ -98,6 +179,7 @@
         "height": 844
       },
       "fps": 60,
+      "mph": 180.00000000000003,
       "minimumClearance": 0.9999999999999991,
       "minimumCameraDistance": 10.965856099730631,
       "nonBackgroundPixels": 1024,
@@ -116,6 +198,7 @@
         "height": 844
       },
       "fps": 120,
+      "mph": 180.00000000000003,
       "minimumClearance": 0.9999999999999991,
       "minimumCameraDistance": 10.965856099730633,
       "nonBackgroundPixels": 1024,
@@ -134,12 +217,89 @@
         "height": 844
       },
       "fps": 144,
+      "mph": 180.00000000000003,
       "minimumClearance": 0.9999999999999991,
       "minimumCameraDistance": 10.96585609973063,
       "nonBackgroundPixels": 1024,
       "projected": [
         0,
         -0.084970120981016,
+        0.9906826625401729
+      ],
+      "contextLost": false,
+      "glError": 0,
+      "fpvEyeError": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "fps": 30,
+      "mph": 220,
+      "minimumClearance": 0.9999999999999991,
+      "minimumCameraDistance": 10.965856099730633,
+      "nonBackgroundPixels": 1024,
+      "projected": [
+        0,
+        -0.08497012098101622,
+        0.9906826625401728
+      ],
+      "contextLost": false,
+      "glError": 0,
+      "fpvEyeError": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "fps": 60,
+      "mph": 220,
+      "minimumClearance": 0.9999999999999991,
+      "minimumCameraDistance": 10.965856099730633,
+      "nonBackgroundPixels": 1024,
+      "projected": [
+        2.4372709808596958e-14,
+        -0.08497012098101622,
+        0.9906826625401728
+      ],
+      "contextLost": false,
+      "glError": 0,
+      "fpvEyeError": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "fps": 120,
+      "mph": 220,
+      "minimumClearance": 0.9999999999999991,
+      "minimumCameraDistance": 10.965856099730631,
+      "nonBackgroundPixels": 1024,
+      "projected": [
+        -2.4372709808597024e-14,
+        -0.08497012098101484,
+        0.9906826625401728
+      ],
+      "contextLost": false,
+      "glError": 0,
+      "fpvEyeError": 0
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "fps": 144,
+      "mph": 220,
+      "minimumClearance": 0.9999999999999991,
+      "minimumCameraDistance": 10.965856099730631,
+      "nonBackgroundPixels": 1023,
+      "projected": [
+        -2.437270980859683e-14,
+        -0.08497012098101256,
         0.9906826625401729
       ],
       "contextLost": false,

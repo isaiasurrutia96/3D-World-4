@@ -1,0 +1,152 @@
+{
+  "layer": "Configuration and math",
+  "summary": {
+    "passed": 7,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "Profiles keep the original baseline and explicit comparison caps",
+      "input": "Read all four validated built-in profiles.",
+      "expected": "Original120/180, balanced150/200, fast180/220 mph; reference98.3m/s. All immutable.",
+      "measured": {
+        "original": {
+          "normal": 120,
+          "boost": 180.00000000000003,
+          "fingerprint": "letsgo-573664e824a0"
+        },
+        "balanced": {
+          "normal": 150,
+          "boost": 200,
+          "fingerprint": "kart-v1-39636b26801f80fc"
+        },
+        "fast": {
+          "normal": 180.00000000000003,
+          "boost": 220,
+          "fingerprint": "kart-v1-9addaf0b5acc2976"
+        },
+        "f1-targets": {
+          "normal": 219.89083750894775,
+          "boost": 219.89083750894775,
+          "fingerprint": "kart-v1-b2666c008706e548"
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Custom tuning is isolated from caller mutation and other vehicles",
+      "input": "Construct from mutable curve arrays; mutate source and try to mutate result.",
+      "expected": "Independent frozen copies; no mutation of built-ins.",
+      "measured": {
+        "customAcceleration": 9,
+        "baselineAcceleration": 10.8
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Fingerprints identify physical settings, independent of labels and property order",
+      "input": "Same settings with different labels/ids; change a curve value by one tiny amount.",
+      "expected": "Cosmetic renaming keeps identity; any numeric tuning change produces a new identity.",
+      "measured": {
+        "a": "kart-v1-55e2caeaa1c5fcca",
+        "b": "kart-v1-55e2caeaa1c5fcca",
+        "c": "kart-v1-f6c0f640762c17c7"
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Malformed settings are rejected at the configuration boundary",
+      "input": "NaN/Infinity, wrong types, missing curve origin, descending/duplicate speeds, negative forces, unknown settings, invalid caps, unvalidated objects.",
+      "expected": "Every malformed profile fails without changing any built-in.",
+      "measured": {
+        "rejected": 21
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Acceleration and grip curves are continuous, bounded and match supplied reference points",
+      "input": "Sweep0–120m/s in0.001m/s increments and query every knot.",
+      "expected": "No overshoot/nonfinite/negative values; C1-smooth joins and exact target knots.",
+      "measured": {
+        "curves": 5,
+        "probes": 600005,
+        "maximumJoinDerivative": 0.0000854994297583289
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "High-speed wheel angles follow wheelbase and available sideways acceleration",
+      "input": "Speeds0,10,15,25,45,80,98.3m/s; dry and0.65grip; wheelbase2.03m.",
+      "expected": "At25m/s and above angle=atan(L*a/v²), capped30degrees. Wet has less lock; known-radius demands obey v²/r.",
+      "measured": {
+        "angles": [
+          {
+            "speed": 0,
+            "angleDegrees": 29.999999999999996
+          },
+          {
+            "speed": 10,
+            "angleDegrees": 29.999999999999996
+          },
+          {
+            "speed": 15,
+            "angleDegrees": 25.897886049184933
+          },
+          {
+            "speed": 25,
+            "angleDegrees": 6.832330210151897
+          },
+          {
+            "speed": 45,
+            "angleDegrees": 3.2131134824789918
+          },
+          {
+            "speed": 80,
+            "angleDegrees": 1.7804302039895998
+          },
+          {
+            "speed": 98.3,
+            "angleDegrees": 1.1794413795507486
+          }
+        ],
+        "corners": [
+          {
+            "radius": 15,
+            "mph": 30,
+            "requiredAcceleration": 11.990685695999998
+          },
+          {
+            "radius": 50,
+            "mph": 65,
+            "requiredAcceleration": 16.8868823552
+          },
+          {
+            "radius": 100,
+            "mph": 110,
+            "requiredAcceleration": 24.181216153599998
+          },
+          {
+            "radius": 150,
+            "mph": 160,
+            "requiredAcceleration": 34.10683931306666
+          },
+          {
+            "radius": 200,
+            "mph": 180,
+            "requiredAcceleration": 32.3748513792
+          }
+        ]
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "The profile/math layer has no browser dependencies and passes strict TypeScript",
+      "input": "Run existing ES2022-only kart typecheck.",
+      "expected": "Strict compile passes without DOM libraries.",
+      "measured": {
+        "typecheck": "PASS"
+      },
+      "status": "PASS"
+    }
+  ]
+}

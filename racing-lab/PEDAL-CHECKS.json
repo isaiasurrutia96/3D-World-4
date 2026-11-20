@@ -1,0 +1,157 @@
+{
+  "layer": "Driving-only analog pedal adapter",
+  "summary": {
+    "passed": 7,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "Xbox Controller: analog triggers survive the shared boolean snapshot",
+      "input": "RT .1/.25/.5/1 and LT half those values; start with boolean gas/brake both true.",
+      "expected": "Continuous dead-zone-remapped pedal values; no boolean promotion to full throttle/brake.",
+      "measured": [
+        {
+          "raw": 0.1,
+          "throttle": 0.052631578947368425,
+          "brake": 0
+        },
+        {
+          "raw": 0.25,
+          "throttle": 0.2105263157894737,
+          "brake": 0.07894736842105263
+        },
+        {
+          "raw": 0.5,
+          "throttle": 0.4736842105263158,
+          "brake": 0.2105263157894737
+        },
+        {
+          "raw": 1,
+          "throttle": 1,
+          "brake": 0.4736842105263158
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "DualSense Wireless Controller: analog triggers survive the shared boolean snapshot",
+      "input": "RT .1/.25/.5/1 and LT half those values; start with boolean gas/brake both true.",
+      "expected": "Continuous dead-zone-remapped pedal values; no boolean promotion to full throttle/brake.",
+      "measured": [
+        {
+          "raw": 0.1,
+          "throttle": 0.052631578947368425,
+          "brake": 0
+        },
+        {
+          "raw": 0.25,
+          "throttle": 0.2105263157894737,
+          "brake": 0.07894736842105263
+        },
+        {
+          "raw": 0.5,
+          "throttle": 0.4736842105263158,
+          "brake": 0.2105263157894737
+        },
+        {
+          "raw": 1,
+          "throttle": 1,
+          "brake": 0.4736842105263158
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Nintendo Switch Pro Controller: analog triggers survive the shared boolean snapshot",
+      "input": "RT .1/.25/.5/1 and LT half those values; start with boolean gas/brake both true.",
+      "expected": "Continuous dead-zone-remapped pedal values; no boolean promotion to full throttle/brake.",
+      "measured": [
+        {
+          "raw": 0.1,
+          "throttle": 0.052631578947368425,
+          "brake": 0
+        },
+        {
+          "raw": 0.25,
+          "throttle": 0.2105263157894737,
+          "brake": 0.07894736842105263
+        },
+        {
+          "raw": 0.5,
+          "throttle": 0.4736842105263158,
+          "brake": 0.2105263157894737
+        },
+        {
+          "raw": 1,
+          "throttle": 1,
+          "brake": 0.4736842105263158
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Stick throttle and steering retain analog strength with trigger brake and no trigger gas",
+      "input": "Stick X .3, forward .4, LT .5.",
+      "expected": "Throttle .4, steer .3, independent brake .47368421.",
+      "measured": {
+        "brakeAmount": 0.4736842105263158,
+        "throttle": 0.4,
+        "steer": 0.3,
+        "brake": false,
+        "boost": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Phone and keyboard commands override pedals while independent braking wins",
+      "input": "E/Up, D/Down, phone Gas/Reverse, Space, and simultaneous phone Gas+Reverse with RT .3.",
+      "expected": "Digital Gas 1, Reverse -1, Space/both pedals brake 1; current commands retained.",
+      "measured": {
+        "keyboardForwardCases": 2,
+        "keyboardReverseCases": 2,
+        "phoneGas": 1,
+        "spaceBrake": 1,
+        "dualPedalBrake": 1,
+        "phoneReverse": -1
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Disconnected, unmapped and noisy triggers cannot create pedal commands",
+      "input": "Disconnected pad, nonstandard mapping, .03 trigger noise, NaN trigger.",
+      "expected": "Zero throttle and zero brake in all four cases.",
+      "measured": [
+        {
+          "throttle": 0,
+          "brake": 0
+        },
+        {
+          "throttle": 0,
+          "brake": 0
+        },
+        {
+          "throttle": 0,
+          "brake": 0
+        },
+        {
+          "throttle": 0,
+          "brake": 0
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Real analog commands produce distinct checked vehicle acceleration",
+      "input": "Feed RT .25/.5/1 through the real test adapter and120 physics ticks.",
+      "expected": "Three ordered speeds; adapter is wired into checked physics.",
+      "measured": {
+        "speedsMetersPerSecond": [
+          2.0088402142394806,
+          4.790826235828693,
+          10.013704318543528
+        ]
+      },
+      "status": "PASS"
+    }
+  ]
+}
