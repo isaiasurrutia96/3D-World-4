@@ -23,7 +23,7 @@
         "fast": {
           "normal": 180.00000000000003,
           "boost": 220,
-          "fingerprint": "kart-v1-025c0e69a91e540a"
+          "fingerprint": "kart-v1-c0934f4555677c0e"
         },
         "f1-targets": {
           "normal": 219.89083750894775,
@@ -90,23 +90,23 @@
           },
           {
             "speed": 15,
-            "angleDegrees": 25.897886049184933
+            "angleDegrees": 26.10875994591572
           },
           {
             "speed": 25,
-            "angleDegrees": 6.832330210151897
+            "angleDegrees": 7.238043596374847
           },
           {
             "speed": 45,
-            "angleDegrees": 3.2131134824789918
+            "angleDegrees": 3.4054593695393103
           },
           {
             "speed": 80,
-            "angleDegrees": 1.7804302039895998
+            "angleDegrees": 1.8871809546469775
           },
           {
             "speed": 98.3,
-            "angleDegrees": 1.1794413795507486
+            "angleDegrees": 1.250186038218629
           }
         ],
         "corners": [

@@ -146,9 +146,9 @@
       "expected": "Three ordered speeds; adapter is wired into checked physics.",
       "measured": {
         "speedsMetersPerSecond": [
-          2.008840425181699,
-          4.790829074426415,
-          10.01372998309662
+          2.0088404255854746,
+          4.790829079495512,
+          10.01373002953386
         ]
       },
       "status": "PASS"

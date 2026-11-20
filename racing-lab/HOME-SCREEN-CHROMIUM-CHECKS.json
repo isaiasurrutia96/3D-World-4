@@ -2,7 +2,7 @@
   "passed": true,
   "engine": "chromium",
   "baselineCompared": true,
-  "currentSHA256": "4b17fef01681456f642ecb7bc31b954dc574e19524bfb970f3630b69983ff881",
+  "currentSHA256": "9b0f7f6046eeb7b3ce54daad6a711914d9161a74fd88100205c68b958b5d6d23",
   "baselineSHA256": "3c55cffd851756971534c67068baaba134f9be2f4259da577dca0dc37655dc6f",
   "checks": [
     {

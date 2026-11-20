@@ -335,9 +335,9 @@
       },
       "expected": "Equal speed; mirrored X/yaw; independent travel direction; no instant yaw match or numeric oscillation.",
       "measured": {
-        "x": -93.02399937348076,
-        "yaw": -0.8653528668455596,
-        "lateralSpeed": 0.08131783558363637
+        "x": -96.67337490742149,
+        "yaw": -0.9170672057824546,
+        "lateralSpeed": 0.08629694450528191
       },
       "status": "PASS"
     },
@@ -358,36 +358,36 @@
           "radius": 15,
           "mph": 30,
           "required": 11.990685695999998,
-          "measured": 12.094123823843532,
-          "maxSpeedError": 0.057769041549372346
+          "measured": 12.094123823843516,
+          "maxSpeedError": 0.0577690415493759
         },
         {
           "radius": 50,
           "mph": 65,
           "required": 16.8868823552,
-          "measured": 16.93658517898475,
+          "measured": 16.936585178984743,
           "maxSpeedError": 0.04277369085346905
         },
         {
           "radius": 100,
           "mph": 110,
           "required": 24.181216153599998,
-          "measured": 24.19097196478539,
+          "measured": 24.190971964785415,
           "maxSpeedError": 0.009970244671016815
         },
         {
           "radius": 150,
           "mph": 160,
           "required": 34.10683931306666,
-          "measured": 33.98327159835158,
+          "measured": 33.983271598351585,
           "maxSpeedError": 0.12961600660281647
         },
         {
           "radius": 200,
           "mph": 180,
           "required": 32.3748513792,
-          "measured": 32.245718213604064,
-          "maxSpeedError": 0.16058340683181882
+          "measured": 32.245718213604086,
+          "maxSpeedError": 0.1605834068318046
         }
       ],
       "status": "PASS"
@@ -424,8 +424,8 @@
       },
       "expected": "Applied acceleration ellipse≤1+1e-10 using each tick’s independently recomputed input-speed limits; cannot produce both maxima.",
       "measured": {
-        "maximumEllipse": 1.000000000000018,
-        "maximumBrakeDuringTurn": 3.073223125439907
+        "maximumEllipse": 1.0000000000000175,
+        "maximumBrakeDuringTurn": 3.079676650318459
       },
       "status": "PASS"
     },
@@ -545,7 +545,7 @@
       "measured": {
         "maximumGripStep": 0.01891418588263205,
         "final": {
-          "fingerprint": "kart-v1-025c0e69a91e540a",
+          "fingerprint": "kart-v1-c0934f4555677c0e",
           "throttle": 1,
           "brake": 0,
           "lift": 0,
@@ -557,14 +557,14 @@
           "surfaceSpeedMultiplier": 0.7000000000001065,
           "surfaceResistanceMultiplier": 1.999999999999645,
           "longitudinalLimit": 23.94970656407923,
-          "lateralLimit": 47.44334610298297,
+          "lateralLimit": 50.28994686916195,
           "acceleration": 0,
           "brakingG": 0,
           "lateralG": 0,
           "tireSlip": 0,
           "slipAngle": 0,
           "tireUtilization": 0,
-          "steeringLimit": 0.03034618834332181
+          "steeringLimit": 0.03216573951452728
         }
       },
       "status": "PASS"
@@ -641,7 +641,7 @@
         "secondsPerRate": 300,
         "ticksPerRate": 36000,
         "maxSpeedMPH": 220.00000000000006,
-        "maxSlip": 0.2955648719917
+        "maxSlip": 0.29927983587429535
       },
       "status": "PASS"
     },
@@ -751,9 +751,9 @@
       },
       "expected": "Turns away and resumes movement without tunnelling; same rate state.",
       "measured": {
-        "endX": -3.9240013728722953,
-        "endSpeed": 10.073662280674174,
-        "endYaw": -6.060308429802275
+        "endX": -3.7036434940778458,
+        "endSpeed": 10.360525891174055,
+        "endYaw": -6.18119445010287
       },
       "status": "PASS"
     },
@@ -770,7 +770,7 @@
       },
       "expected": "World trajectory rotates/translates correctly; speed, slip and steering agree within1e-8, identically across FPS.",
       "measured": {
-        "maximumWorldTransformError": 4.802175626649179e-12
+        "maximumWorldTransformError": 1.1828349242185148e-12
       },
       "status": "PASS"
     }

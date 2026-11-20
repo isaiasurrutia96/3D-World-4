@@ -157,7 +157,12 @@ export const PREVIOUS_FAST_PROFILE = createHandlingProfile({ ...referenceDefault
 export const DRIVING_PROFILES = Object.freeze({
     original: ORIGINAL_PROFILE,
     balanced: createHandlingProfile({ id: 'balanced', label: 'Balanced', topSpeed: 150 * MPH, boostSpeed: 200 * MPH }),
-    fast: createHandlingProfile(),
+    // Small tire package on Fast only. Keep the approved steering/pedal
+    // response and base settings available for comparisons and custom karts.
+    fast: createHandlingProfile({
+        cornering: defaults.cornering.map(([speed,grip])=>[speed,grip*1.06] as const),
+        slipResponseSeconds: .135,
+    }),
     'f1-targets': createHandlingProfile({ ...referenceDefaults, id: 'f1-targets', label: 'F1 performance reference', topSpeed: 98.3, boostSpeed: 98.3, brakeStrength: 1 }),
 });
 export type ProfileId = keyof typeof DRIVING_PROFILES;

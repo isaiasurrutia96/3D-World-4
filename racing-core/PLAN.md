@@ -601,3 +601,54 @@ Driving Checkpoint 1 and all other frozen archives and tags.
   tracks, kart dimensions, controls/layout, and checkpoint contents unchanged.
   Actual installed iOS Home Screen launch/task switching still needs the owner
   to check after completely closing and reopening the updated live app.
+
+
+## 20 November — modest tire and handling upgrade
+
+Owner request: “upgrade” the tire and handling, “but not so much.” Implement
+one small Fast-profile tune on the approved driving system. Subjective feel
+approval remains pending the owner's test; Driving Checkpoint 1 stays frozen.
+
+Configuration layer:
+- Only Fast changes: multiply every existing cornering-curve value by 1.06,
+  and reduce lateral settling response from .140 s to .135 s. Steering input
+  shaping/rise/release, wheel lock, yaw response, traction assistance, surfaces,
+  engine/braking/lift-off/boost curves, dimensions and fixed timestep unchanged.
+- Original, Balanced and the F1 reference retain their exact archived data and
+  fingerprints. Custom-profile defaults retain the approved base configuration.
+  This tune is an explicit, validated Fast override, not a global multiplier.
+- Physics identity changes from `kart-v1-025c0e69a91e540a` to
+  `kart-v1-c0934f4555677c0e`. The immutable checkpoint's PROFILES.json is the
+  numerical control, reconstructed through the normal profile validator.
+
+Measured logic layer:
+- Added five automatic upgrade checks and included them in the core suite, so
+  deployment reruns them. Rules include scripted input, expected behavior,
+  measured values and PASS/FAIL. All use the existing 1/120 s simulation.
+- 231/231 full core checks PASS. New turning/settling/straight comparisons agree
+  exactly at 30, 60, 120 and 144 FPS. Curve sweep: 14,001 speed samples, exactly
+  6% extra lateral budget within floating-point tolerance.
+- Starting at 90/130/180/220 mph, matched full-input tests measure turn radii
+  about 5.66–5.68% smaller, with less than .024 mph difference in end speed.
+  At 180 mph, radius changes from 66.073 m to 62.334 m; at 220 mph, 98.702 m
+  to 93.115 m. These are measured paths, not a new fixed corner-speed rule.
+- A 4 m/s sideways disturbance at 20 m/s forward settles below .05 m/s in
+  .5667 s instead of .5833 s, without a speed gain, yaw snap or forced steering.
+- 11,536 compared straight-line states have zero physical difference across
+  acceleration, boost, brake, lift-off and reverse phases. Caps stay 180/220 mph.
+- Existing shared-grip, surface, contact, all-four-course, seeded stress and
+  analog/mirrored-input checks PASS. A hard turn can still slide/spin naturally;
+  all 432 release/recovery cases PASS with no retained steering.
+- Historical grip tests now distinguish Balanced's 2x reference budget from
+  Fast's 2.12x budget. The progressive-steering equality check compares matched
+  tire packages, isolating shaping; its exact-state requirement is unchanged.
+
+Playable integration layer:
+- 47/47 existing build checks, strict TypeScript, all checkpoint integrity
+  checks, the full 12-group driving browser suite and tuning/analog browser
+  suite PASS. No visuals, layout, controls, camera or movement code changed.
+- Chromium and WebKit each pass 13 captured-before/current Home Screen
+  lifecycle cases with zero page errors. Rapid-touch/input-release regressions
+  also PASS. The Home Screen resume repair remains present.
+- Keep this as a small tunable profile change. Any further handling increase
+  waits for owner feedback; no new frozen checkpoint is created in this pass.
