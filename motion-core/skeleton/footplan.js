@@ -292,6 +292,9 @@ export function createFootPlanner(skeleton, {ground = () => 0, soles = null} = {
    return out;
   },
 
+  /** How many steps are being remembered (both feet). */
+  get remembered(){ return feet.L.segs.length + feet.R.segs.length; },
+
   /** Forget steps that finished before time t (keeps memory small in a long game). */
   prune(t){
    for(const side of ['L', 'R']){

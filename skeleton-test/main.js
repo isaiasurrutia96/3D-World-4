@@ -23,6 +23,8 @@ const scene=new T.Scene();scene.background=new T.Color('#405363');scene.add(A.ro
 A.root.traverse(o=>{if(o.isMesh)o.castShadow=true;});
 const floorSize=document.documentElement.dataset.avatarView==='avatar-test'?12:4;
 const slab=new T.Mesh(new T.BoxGeometry(floorSize,.6,floorSize),new T.MeshStandardMaterial({color:'#8f9295',roughness:1}));slab.position.y=-.3;slab.receiveShadow=true;scene.add(slab);
+// A walking or running body leaves the slab behind: the slab goes along under it, with 1 m grid lines that stay where they are, so you can see him move.
+const grid=new T.GridHelper(48,48,'#6f7377','#7a7e82');grid.position.y=.002;grid.visible=false;scene.add(grid);
 scene.add(new T.HemisphereLight(0xffffff,0xb6b2aa,2));
 const key=new T.DirectionalLight(0xffffff,2.4);key.position.set(-3,5,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);Object.assign(key.shadow.camera,{left:-1.8,right:1.8,top:2,bottom:-1,near:.2,far:12});key.shadow.bias=-.0002;key.target.position.set(0,.9,0);scene.add(key,key.target);
 const fill=new T.DirectionalLight(0xffffff,.9);fill.position.set(4,2,-3);scene.add(fill);
@@ -70,6 +72,7 @@ function framePose(dt){
  const rx=pose.root?.position[0]??0,rz=pose.root?.position[2]??0,away=Math.hypot(rx,rz),follow=runner.active==='walk'||runner.active==='run'||away>.35;
  const wantX=follow?rx:0,wantZ=follow?rz:0;
  if(Math.abs(wantX-target.x)>1e-6||Math.abs(wantZ-target.z)>1e-6){const k=follow?1:.15,dx=(wantX-target.x)*k,dz=(wantZ-target.z)*k;target.x+=dx;target.z+=dz;camera.position.x+=dx;camera.position.z+=dz;controls.target.copy(target);needsRender=true;}
+ slab.position.x=target.x;slab.position.z=target.z;grid.visible=follow;grid.position.x=Math.round(target.x);grid.position.z=Math.round(target.z);
  return pose;
 }
 

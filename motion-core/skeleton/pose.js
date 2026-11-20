@@ -221,7 +221,7 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
  const layerWeight=(l,at)=>Math.min(1,Math.max(0,fadeAt(l,at).w));
 
  // The planted-feet goals of the last pose computed, and of the one before it (for balance).
- let frameFeet=null,feetNow=null,lastDrop=0;
+ let frameFeet=null,feetNow=null;
  /**
   * Pose at a time: the base, then the layers, then the reaching layers.
   * shift: [x, z, y?] metres to move the whole body before the reaching layers (balance; y is the ready stance, a
@@ -253,7 +253,6 @@ export function createPosePlayer(skeleton, start={}, {follow=false}={}){
     } else drop=reachDrop(skeleton,skeleton.solve(moved),feetNow);
     drop=Math.min(.15,drop)*dropScale;
    }
-   lastDrop=drop;
    pose.root={...moved.root,position:[moved.root.position[0],moved.root.position[1]-drop,moved.root.position[2]]};
   }
   frameFeet=null;

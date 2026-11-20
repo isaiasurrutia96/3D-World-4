@@ -419,4 +419,15 @@ Recorded 17 November 2026.
     1.0-1.7 m/s) the change is eased over 0.35 s but not tuned. (4) Nobody has looked at it yet; it needs the
     owner's eyes, and the owner may well want the cadence slower and the leaps longer, which means the
     feet-never-slide rule would have to bend at the top speeds: that is the owner's call.
+43. Owner decisions, 20 Nov 2026 (confirmed): (a) Turn first is wanted (a big turn from standing is made on the spot).
+    (b) The running gait keeps the cartoon, arcade feel that the game's speeds force (quick steps, long hops):
+    "kind of like Super Mario", with the ragdoll feel but athletic. Do not slow the game's speeds or change the
+    avatar for it. (c) Everything must stay flexible: tuning numbers live in `WALK` (walker), `MOVE_TUNING`
+    (movement rules) and can be changed after the owner tests ("it was a bit too real" is a normal thing to say).
+    (d) A line-by-line review of the walking and running code was done the same day. Fixed: old steps were never
+    forgotten (the planner would have grown and slowed for as long as the game ran: now pruned each second, with
+    a test), the stand-up crouch used absolute foot height (wrong on raised ground), a walker started facing
+    another way had its feet facing north, the balance release left a jump, dead code and misplaced comments,
+    and the Skeleton page's slab was only 4 m wide (it now goes along under a walking or running body, with 1 m
+    grid lines so the movement shows). The demo also lets go after 60 s whatever happens.
 

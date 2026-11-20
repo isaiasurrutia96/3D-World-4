@@ -149,6 +149,34 @@ const run = simulate({seconds: 12, stick: t => t < 8 ? forward(t) : [0, 0]});
  check('eight 30-second random sticks: no invalid numbers, never below the ground, never slide, and the feet are within 1 mm in at least 99% of frames (worst under 6 cm)', invalid === 0 && low > -1e-9 && slide < 1e-6 && off / total < .01 && errMax < .06, `${total} frames; ${(100 * off / total).toFixed(2)}% of frames off by more than 1 mm; worst ${mm(errMax)}; slide ${slide.toExponential(1)}; lowest ${mm(low)}`);
 }
 
+// ---- 7b. Long games, and ground that is not at height zero ----
+{
+ // Old steps are forgotten, so a frame costs the same after minutes of walking as at the start.
+ const ctl = createMoveController({...MOVE_TUNING, walkSpeed: 1.0, runSpeed: 1.2, acceleration: 6, deceleration: 8}), player = createPosePlayer(S, {}, {follow: true}), walker = createWalker(S, {start: {x: 0, z: 0, facing: 0}});
+ attachWalker(player, walker);
+ const cost = [];
+ for(let i = 0; i < 150 * 60; i++){
+  const t = i / 60, a = t * .35, m = .36;
+  ctl.state.hold = walker.holdMove; ctl.advance(1 / 60, Math.sin(a) * m, Math.cos(a) * m);
+  const st = ctl.state, t0 = performance.now();
+  walker.update(1 / 60, {x: st.x, z: st.z, facing: st.facing, vx: st.vx, vz: st.vz, speed: st.speed}); player.update(1 / 60);
+  if(i % 60 === 0) cost.push(0); cost[cost.length - 1] += performance.now() - t0;
+ }
+ const early = cost.slice(5, 25).reduce((a, b) => a + b, 0) / 20, late = cost.slice(-20).reduce((a, b) => a + b, 0) / 20;
+ check('after two and a half minutes of walking (about 700 steps) only the last few steps are remembered, and a frame costs no more than at the start', walker.planner.remembered < 40 && late < early * 1.5 + 2, `${walker.planner.remembered} steps remembered; ${(early / 60).toFixed(2)} ms a frame at the start, ${(late / 60).toFixed(2)} ms at the end`);
+ // On raised ground the body does not crouch as if a foot were in the air.
+ const w2 = createWalker(S, {ground: () => 2, start: {x: 0, z: 0, facing: 0}});
+ check('standing on ground raised 2 m, the body height is the same as on the flat (no phantom foot in the air)', Math.abs(w2.bodyHeight(0) - createWalker(S, {start: {x: 0, z: 0, facing: 0}}).bodyHeight(0)) < 1e-9, `${mm(w2.bodyHeight(0))} against ${mm(createWalker(S, {start: {x: 0, z: 0, facing: 0}}).bodyHeight(0))}`);
+}
+
+// ---- 7c. Starting facing another way ----
+{
+ const w = createWalker(S, {start: {x: 3, z: -2, facing: 1.2}}), g = w.goals(0), want = 1.2 * 180 / Math.PI;
+ const e = sd => Math.abs(((g['foot.' + sd].heading - want) % 360 + 540) % 360 - 180);
+ const gap = Math.hypot(g['foot.L'].sole[0] - g['foot.R'].sole[0], g['foot.L'].sole[2] - g['foot.R'].sole[2]);
+ check('a walker started facing 69° stands with both feet facing that way, the stance width apart, round the start point', e('L') < 1e-9 && e('R') < 1e-9 && Math.abs(gap - .17) < 1e-9 && Math.abs((g['foot.L'].sole[0] + g['foot.R'].sole[0]) / 2 - 3) < 1e-9, `feet face within ${e('L').toFixed(3)}° and ${e('R').toFixed(3)}°, ${mm(gap)} apart`);
+}
+
 // ---- 8. Fast enough ----
 {
  const t0 = performance.now(); const sim = simulate({seconds: 8, stick: t => forward(t)}); const ms = (performance.now() - t0) / (8 * 60);
