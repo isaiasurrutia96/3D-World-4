@@ -1,76 +1,70 @@
-# Karts: choices, tiers and racing modes
+# Karts
 
-The shared source of truth for kart designs, for the owner, Claude and Codex
-(started 21 November 2026). Codex owns driving, handling and racing; Claude
-builds look-only kart models when asked. A kart design never changes handling
-unless the owner approves that separately. Like every owner decision, these
-can change when something better is found (`docs/HOW-TO-WORK-WITH-ME.md`, E).
+The shared source of truth for kart designs and kart customizing, for the
+owner, Claude and Codex. Approved by the owner on 21 November 2026. Codex owns
+driving, handling and racing; Claude builds look-only kart models when asked.
+Everything here is general: details get refined later. Like every owner
+decision, it can change when something better is found
+(`docs/HOW-TO-WORK-WITH-ME.md`, E).
 
 Related approved cards: free-roam driving (3) and custom kart building (18) in
 `docs/FEATURES.md`; kart racing in `docs/MINIGAMES.md`.
 
-## A. Confirmed by the owner (21 November 2026)
+## A. Three racing modes
 
-1. The current test kart (`racing-lab/src/reference-kart.js`) stays as it is
-   and is not replaced. It is the **starter kart everyone begins with**.
-2. New karts show in the **Test Lab**, next to the main kart, never instead
-   of it.
-3. Direction: **superkarts** (karts with full bodywork and small wings).
-4. Ten concept images were made (Higgsfield, 21 November). From those:
-   1 Classic, 2 Mini Formula, 3 Retro cigar, 4 Endurance prototype,
-   5 Brawler, 6 Stealth wedge, 7 Rally, 8 Future, 9 Muscle dragster,
-   10 Toy cartoon.
-5. **Most expensive karts: 3, 4, 7 and 9.**
-6. **Go-to (main) karts: 2 and 6.**
-7. **Three racing modes: Regular kart, GT kart and F1 kart.** Each mode can
-   have its own unique tracks.
-8. Kart 7 (Rally) should drive better off road, **or** off-road parts could
-   make any kart better off road. Which one (or both) is still open.
-9. Players can own **several karts with different driving styles**.
-10. Players will eventually modify their karts (see card 18). Deferred.
-11. Presentation: concept sheets must show **big, easy-to-read numbers**.
+1. **GoKart, GT GoKart and F1 GoKart.** Every kart belongs to one mode.
+2. Each mode has its own driving feel (tuned by the owner and Codex):
+   1. **GoKart:** lighter, arcade feel with some realism, a little slower.
+   2. **GT GoKart:** feels real and somewhat heavy, with the most grip,
+      handling and turning; slower than F1.
+   3. **F1 GoKart:** feels real, heavier, and the fastest.
+3. Each mode has its own tracks. F1 tracks suit F1 GoKarts and GT tracks suit
+   GT GoKarts. **GoKart tracks are smaller with sharper turns.**
 
-12. (Later the same day) Mode names: **GoKart, GT GoKart and F1 GoKart**.
-    Looks are a base for now and get refined after the bases are built.
-13. Kart 4 reads as a Le Mans (endurance) car. The **GT GoKart takes the
-    overall shape of kart 5 (Brawler), with its wheels covered**.
-14. Driving feel per mode (owner and Codex will tune it):
-    1. **F1 GoKart:** feels real, heavier, and the **fastest**.
-    2. **GT GoKart:** feels real and somewhat heavy, with **more grip,
-       handling and turning**; not as fast as F1.
-    3. **GoKart:** lighter, **arcade feel with some realism**, a tiny bit
-       slower.
-15. Tracks per mode: F1 tracks suit F1 GoKarts, GT tracks suit GT GoKarts,
-    and **GoKart tracks are smaller with sharper turns**.
+## B. Looks (approved pictures in `docs/karts/`)
 
-16. (Later the same day) **Concepts by mode** (looks can be refined later):
-    1. **F1 GoKart:** 2 and 6 are the main karts; 3 (old-school F1) is a
-       super-expensive F1 kart.
-    2. **GT GoKart:** 4 (Le Mans look, super expensive), 7 and 9. **GT
-       wheels are covered**, including 4 and 7. GT karts look **compact,
-       "like F1 and regular GoKarts had a baby."**
-    3. **GoKart:** the original kart is the starter; 8 and 10 are the
-       higher-end GoKarts.
-17. **Off-road wheels and lights are parts players buy** (shown on kart 7).
-18. More super-expensive karts will come later, and every kart belongs to
-    one of the three modes.
+1. `base-shapes.jpg`: one base shape per mode.
+   1. **GoKart:** based on our current test kart, a bit cooler, no wing.
+   2. **GT GoKart:** compact and wide, "like F1 and regular GoKarts had a
+      baby"; fenders arch over the wheels and **the rims stay visible**.
+   3. **F1 GoKart:** long and low, open wheels, front and rear wings.
+2. `gokart-variations.jpg`, `gt-variations.jpg`, `f1-variations.jpg`: five
+   approved variations per mode. Same overall shape; details and colours
+   differ. The owner loves all of them.
+3. The current test kart (`racing-lab/src/reference-kart.js`) stays as it is
+   and is never replaced. **Everyone starts with it.**
+4. New karts show in the **Test Lab** next to the main kart.
+5. Players can own several karts with different driving styles. There will
+   be more expensive karts later, each in one of the three modes.
+6. Concept pictures: no logos, no real teams, no copied real cars. Picture
+   sheets use big numbers and a normal (not long and skinny) layout.
 
-19. (Later the same day) **Kart 4 moves to F1.** F1 GoKart concepts are now
-    **2, 6, 3 and 4**; GT GoKart concepts are **7 and 9**. This replaces the
-    GT placement of 4 in A16.
+## C. What players can customize
 
-## B. Proposed, not approved
+1. **Paint:** main and second colour, finish (shiny, matte, metallic, chrome).
+2. **Skins** with patterns (stripes, flames, camo and more).
+3. **Stickers** to really customize a kart (our own designs, no real brands).
+4. **Body parts:** rims, tires, rear wing or spoiler, front nose and bumper,
+   rear bumper, diffuser, side panels, tire fenders, mud flaps, hood, seat,
+   steering wheel, exhaust, lights.
+5. **Effects:** boost flame colour, underglow, tire smoke and drift sparks
+   colour, horn sound.
+6. **No number or name plates.**
 
-1. Build karts from swappable parts described as data (body, nose, wings,
-   wheels, paint), so choosing and modifying karts share one foundation.
-2. Looks per mode: GoKart = open frame and bumpers (owner agreed in
-   general); GT = wheels covered by fenders (agreed); F1 = open wheels, long
-   nose, front and rear wings (agreed).
+## D. Parts that change driving
 
-## C. Open questions
+1. Some parts improve driving, for example more airflow through the bumper,
+   fenders or hood for downforce, spoilers and tire grip. **The improvement
+   is noticeable.**
+2. **Off-road tires fit any kart.** They let a kart drive on grass and dirt,
+   but on the track they are **not** an improvement. They are for players who
+   want a different kind of kart.
+3. Off-road wheels and lights are parts players buy.
 
-1. Answered in A16 and A17 (main karts, modes of 3/4/7/9, off-road parts).
-2. Karts 1 (Classic) and 5 (Brawler) have no mode yet; 5's shape guides the
-   GT base (A13).
-3. Kart 9 has huge open rear tyres; in GT, are they covered too?
-4. Kart 4 has half-covered wheels; in F1 (open wheels), does it keep them?
+## E. Open points
+
+1. Card 18 in `docs/FEATURES.md` says custom parts give "a slight overall
+   edge". D1 says the improvement is noticeable. The owner needs to confirm
+   which one wins before card 18 is changed.
+2. Exact part list per mode, prices, rarity and how parts are unlocked are
+   not decided.
