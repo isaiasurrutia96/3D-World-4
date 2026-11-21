@@ -1,5 +1,12 @@
 # Instructions for Claude
 
+**Read [docs/HOW-TO-WORK-WITH-ME.md](docs/HOW-TO-WORK-WITH-ME.md) first.** It
+is the owner's main source of truth for how to work with them (21 November
+2026): research and compare before every step, wait for "Go", summary first and
+"what I need from you" last, teach while working, honesty, and professional,
+tested code. Where anything below disagrees with it, that file wins; the notes
+below are kept for history and for the confirmed game decisions in section C.
+
 Everything in this file is a suggestion the owner can change at any time, never a
 law. If a rule affects your advice, say where it came from and whether it still
 makes sense. Challenge the owner when something else would be better for the

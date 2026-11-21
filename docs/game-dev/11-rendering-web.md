@@ -2,6 +2,15 @@
 
 ## A) Performance budgets
 
+0. **Project method: a triangle budget per part, with smooth shading**
+   (owner-approved, 21 November 2026). Every part gets a maximum triangle
+   count (the torso about 5,000; the whole phone avatar about 29,000) and uses
+   smooth shading so a light shape still looks round. Parts built from numbers
+   (like `avatar-v2/`) take a "detail" setting, so light versions come from the
+   same code. Levels of detail (lighter versions far away, swapped
+   automatically) come later, when the game has a world. Why: the 3.6-million-
+   triangle avatar made phones stutter; at about 29,000 it was smooth.
+   Triangles and draw calls both count; see item 1.
 1. **Draw calls matter more than triangles.** Each separate mesh/material is a
    draw call. Targets: under ~100–150 on phones for 60 fps, a few hundred on
    desktop. Check `renderer.info.render.calls`.
