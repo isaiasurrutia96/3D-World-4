@@ -10,6 +10,15 @@ the full version). It is shown next to **three joint-ball choices** with exactly
 300, 400 and 500 triangles (`ball-shape.js`). Earlier rounds of torso options
 stay in code (`FIRST_OPTIONS`, `ATHLETIC_OPTIONS`) for reference.
 
+**Chosen ball: 300 triangles.** Now on the page: **five upper arm and forearm
+options** (`limb-options.js`), each an upper arm, the elbow ball and a forearm,
+hanging straight and separate. Option 1 is a plain capsule; 2 to 5 are athletic
+arms with an overall capsule shape (Athletic, Strong, Defined with a Tic Tac
+cross-section, Slim). Every limb is thinner than the ball, 504 triangles.
+Open point for the joints discussion: with a separate 18 cm elbow ball the limbs
+are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
+sit separately, they would be about 12 cm and 9 cm.
+
 Balls are Fibonacci spheres (points in an even spiral, wrapped by three.js's
 ConvexHull): exact at any even count, and their triangles vary in size by only
 1.6x, against 3.6x for a usual latitude/longitude (UV) sphere of the same count.
@@ -39,6 +48,9 @@ the limbs will be redone one thing at a time after the torso is chosen.
 | `torso-variants.js` | The torso options (Original, Athletic, Round, Lean, Blocky): width, front and back depth along the height, roundness and squareness. |
 | `ball-shape.js` | Joint balls with an exact triangle count (Fibonacci sphere + convex hull), and the 300/400/500 choices. |
 | `check-ball.mjs` | Checks the balls: exact counts, sealed, outward, every point on the sphere, roundness and evenness. |
+| `limb-options.js` | The arm options: capsule limbs from a thickness profile, cross-section and muscle bumps; lengths from the skeleton; the ball between them. |
+| `check-arms.mjs` | Checks the arm options: sealed, exact lengths, thinner than the ball, capsule-shaped (with a test of that test), ball separate and centred, options distinct. |
+| `shape-checks.js` | Shared dent and groove measuring used by the torso and arm checks. |
 | `check-torso.mjs` | Checks the torso and every option: sealed, faces outward, no dents or grooves (with a test of that test), same height, left/right symmetric, distinct from each other, under 6,000 triangles. |
 
 Commands: `node avatar-v2/fit-torso.mjs` (rebuild the torso, same result every

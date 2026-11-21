@@ -1,16 +1,15 @@
-// New avatar (version 2): the chosen torso and the joint-ball choices, side by
-// side. The torso is Athletic (light) (avatar-v2/torso-variants.js, drawn by
-// torso-shape.js); the balls have exactly 300, 400 and 500 triangles
-// (avatar-v2/ball-shape.js). "Compare all" frames everything; each item's
-// button moves the camera in on that one and hides the rest. The approved
-// avatar is not used or changed here.
+// New avatar (version 2): the upper arm and forearm options, side by side.
+// Five sets (avatar-v2/limb-options.js): each an upper arm, the chosen
+// 300-triangle elbow ball and a forearm, hanging straight and separate. Option
+// 1 is a plain capsule; 2 to 5 are athletic arms with an overall capsule shape.
+// "Compare all" frames everything; each set's button moves the camera in on
+// that one and hides the rest. The chosen torso and ball live in
+// torso-variants.js and ball-shape.js. The approved avatar is not used here.
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import torso from '../avatar-v2/torso.json' with {type:'json'};
-import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
-import {TORSO_OPTIONS,makeTorsoOption} from '../avatar-v2/torso-variants.js';
-import {buildBall,BALL_OPTIONS,BALL_RADIUS} from '../avatar-v2/ball-shape.js';
+import {ARM_OPTIONS,buildArmSet} from '../avatar-v2/limb-options.js';
 
 const GAP=.3;// metres of space between items, left to right
 const stage=document.querySelector('#stage');
@@ -28,29 +27,28 @@ function label(text){
  const sprite=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(canvas)}));sprite.scale.set(.11*w/128,.11,1);return sprite;
 }
 
-// Everything on show: the torso(s), then the balls. Each item knows its mesh,
-// its centre and its width (for framing the camera).
+// Everything on show: each item is a set of parts (geometry and height), with
+// its centre and width for framing the camera.
 const geometryOf=({positions,index,normals})=>{
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(index);
  if(normals)g.setAttribute('normal',new T.Float32BufferAttribute(normals,3));else g.computeVertexNormals();
- g.computeBoundingBox();return g;
+ return g;
 };
-const items=[
- ...TORSO_OPTIONS.map(option=>({id:option.id,label:option.label,note:option.note,tag:'Torso',geometry:geometryOf(buildTorsoSurface(makeTorsoOption(torso.shape,option)))})),
- ...BALL_OPTIONS.map(option=>{
-  const geometry=geometryOf(buildBall({radius:BALL_RADIUS,triangles:option.triangles}));
-  geometry.translate(0,1.14,0);geometry.computeBoundingBox();// shown at chest height, next to the torso
-  return {id:option.id,label:option.label,note:option.note,tag:String(option.triangles),geometry};
- }),
-];
+const ARM_TOP=1.3;// height of each upper arm's top end (about shoulder height)
+const items=ARM_OPTIONS.map((option,i)=>{
+ const set=buildArmSet(option);
+ return {id:option.id,label:option.label,note:option.note,tag:String(i+1),
+  parts:[['upper-arm',set.upper],['ball-elbow',set.ball],['forearm',set.fore]].map(([name,part])=>({name,geometry:geometryOf(part),y:ARM_TOP+part.y}))};
+});
 let x=0;
 const options=items.map((item,i)=>{
- const box=item.geometry.boundingBox,width=box.max.x-box.min.x;
- if(i>0)x+=GAP;x+=width/2;
- const mesh=new T.Mesh(item.geometry,material);mesh.name=item.id;mesh.castShadow=true;
- const group=new T.Group();group.name='item-'+item.id;group.position.x=x;group.add(mesh);x+=width/2;
+ const group=new T.Group();group.name='item-'+item.id;
+ for(const part of item.parts){const mesh=new T.Mesh(part.geometry,material);mesh.name=part.name;mesh.position.y=part.y;mesh.castShadow=true;group.add(mesh);}
+ const box=new T.Box3().setFromObject(group),width=box.max.x-box.min.x;
+ if(i>0)x+=GAP;x+=width/2;group.position.x=x;x+=width/2;
  const tag=label(item.tag);tag.position.set(0,box.min.y-.1,0);group.add(tag);lineup.add(group);
- return {...item,option:item,group,mesh,width,centre:box.getCenter(new T.Vector3()).add(group.position),triangles:item.geometry.index.count/3};
+ const triangles=item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0);
+ return {...item,group,mesh:group.children[0],width,centre:box.getCenter(new T.Vector3()).add(group.position),triangles};
 });
 lineup.position.x=-x/2;// centre the row
 for(const o of options)o.centre.x-=x/2;
@@ -69,7 +67,7 @@ const allCentre=new T.Box3().setFromObject(lineup).getCenter(new T.Vector3());
 const directions={front:[0,.04,1],side:[1,.04,0],back:[0,.04,-1],top:[0,1,.0004],angled:[.5,.2,.85]};
 let focus=null,viewName='front',glide=null;
 function distance(){// close enough to fill the screen with one item, or with all of them
- const half=Math.tan(camera.fov*Math.PI/360),across=focus===null?x+.4:options[focus].width*1.7;
+ const half=Math.tan(camera.fov*Math.PI/360),across=focus===null?x+.4:Math.max(options[focus].width*1.7,.75);
  return Math.max(focus===null?1.7:.45,(across/2)/(half*Math.min(1,camera.aspect)))*1.05;
 }
 function frame(){
@@ -83,8 +81,8 @@ function setFocus(index){
  frame();
  for(const b of document.querySelectorAll('[data-option]'))b.setAttribute('aria-pressed',String(b.dataset.option===(index===null?'all':options[index].id)));
  const o=index===null?null:options[index];
- document.querySelector('#note').textContent=o?o.note:'The chosen torso and three joint balls, side by side. Tap one to look at it closely.';
- document.querySelector('#info').textContent=o?o.triangles.toLocaleString()+' triangles':options.map(o=>o.triangles.toLocaleString()).join(' · ')+' triangles';
+ document.querySelector('#note').textContent=o?o.note:'Five arm options, left to right: each an upper arm, the elbow ball and a forearm. Tap one to look at it closely.';
+ document.querySelector('#info').textContent=o?o.triangles.toLocaleString()+' triangles for this set (each limb 504, ball 300)':'Each set: 1,308 triangles';
 }
 function view(name){viewName=name;frame();for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed',String(b.dataset.view===name));}
 

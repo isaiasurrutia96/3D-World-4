@@ -45,3 +45,10 @@ export function buildTorsoSurface(shape){
  for(let s=0;s<n;s++)index.push(topPole,at(last,s+1),at(last,s));
  return {positions,index};
 }
+
+/**
+ * The same builder under a general name: any smooth shape made of stacked
+ * rings with rounded caps (the torso, the limbs). Kept as one function so a
+ * fix to it fixes every part.
+ */
+export const buildRingSurface=buildTorsoSurface;
