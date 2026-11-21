@@ -55,6 +55,10 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
 18. More super-expensive karts will come later, and every kart belongs to
     one of the three modes.
 
+19. (Later the same day) **Kart 4 moves to F1.** F1 GoKart concepts are now
+    **2, 6, 3 and 4**; GT GoKart concepts are **7 and 9**. This replaces the
+    GT placement of 4 in A16.
+
 ## B. Proposed, not approved
 
 1. Build karts from swappable parts described as data (body, nose, wings,
@@ -69,3 +73,4 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
 2. Karts 1 (Classic) and 5 (Brawler) have no mode yet; 5's shape guides the
    GT base (A13).
 3. Kart 9 has huge open rear tyres; in GT, are they covered too?
+4. Kart 4 has half-covered wheels; in F1 (open wheels), does it keep them?
