@@ -75,9 +75,9 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
 const preview=shoulderPreview('boy');
-GROUPS.push({id:'shoulder',label:'Shoulder',intro:'The boy\'s torso, one shoulder ball and the approved upper arm, exactly as you approved it (24.5 cm, same shape).',
- items:[{id:'shoulder-boy',label:'Torso · shoulder · upper arm',tag:'Boy',note:`Shoulder ball ${(preview.shoulderBall*200).toFixed(1)} cm wide on the skeleton's shoulder joint; the upper arm hangs one gap below it, unchanged at ${(preview.upper.length*100).toFixed(1)} cm. Keeping its full length puts its lower end ${(preview.lowerBy*100).toFixed(1)} cm lower than before.`,
-  parts:preview.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
+GROUPS.push({id:'shoulder',label:'Shoulders',intro:'The boy\'s torso with a shoulder ball and the approved upper arm on both sides. The balls rest against the torso, never inside it.',
+ items:[{id:'shoulder-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Shoulder balls ${(preview.shoulderBall*200).toFixed(1)} cm wide, the size of a shoulder (5% bigger than the upper arm's thickest point), resting just outside the torso. Upper arms unchanged at ${(preview.upper.length*100).toFixed(1)} cm.`,
+  parts:preview.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
 let widest=0;

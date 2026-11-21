@@ -17,7 +17,7 @@
 //    skeleton's joints would move with them.
 // The right side is the exact mirror of the left. All output is in avatar space.
 import {Quaternion,Vector3} from 'three';
-import {buildLimbShape,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,HIP,KNEE,ANKLE} from './limb-options.js';
+import {buildLimbShape,limbRadius,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 import {buildBall,CHOSEN_BALL_TRIANGLES} from './ball-shape.js';
 import {makeTorsoOption,ringAt,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,WOMEN_OPTIONS} from './torso-variants.js';
@@ -126,23 +126,31 @@ export function assemble(bodyId,placement='joints'){
  return {body:bodyId,placement,torsoShape,joints:{shoulder:S,elbow:E,wrist:W,hip:H,knee:K,ankle:A},balls,parts,face:CHOSEN_FACE,headCentre:[0,neck.head.y,0],headRadius:neck.head.radius};
 }
 
+/** The thickest a limb gets anywhere along its length, in any direction (metres). */
+export function thickestRadius(limb){let r=0;for(let k=0;k<=100;k++)for(let a=0;a<72;a++)r=Math.max(r,limbRadius(limb,k/100,a/72*Math.PI*2));return r;}
 /**
- * Owner's request (21 November 2026), after the first assembly shortened the
- * approved limbs without asking: show only the boy's torso, one shoulder ball
- * and the approved upper arm, EXACTLY as approved (same shape, same 24.5 cm
- * length). The shoulder ball sits on the skeleton's shoulder joint (92% rule)
- * and the upper arm hangs one gap below it toward the elbow. Keeping the arm's
- * full length means its lower end sits further down than before; that is
- * reported, not hidden, for the joints discussion.
+ * The shoulder ball's size (owner, 21 November 2026): "the size of a shoulder",
+ * as big as the upper arm, if not slightly bigger: 5% bigger than the upper
+ * arm's thickest point. (Other joint balls keep the 92% rule.)
+ */
+export const SHOULDER_TO_ARM=1.05;
+
+/**
+ * Owner's request (21 November 2026): the boy's torso with a shoulder ball and
+ * the approved upper arm on BOTH sides. The ball must never sit inside the
+ * torso: it starts at the skeleton's shoulder joint and moves straight out
+ * sideways until it clears the torso by the gap. The upper arm is EXACTLY as
+ * approved (same shape, same 24.5 cm length) and hangs one gap below the ball,
+ * pointing the same way as the skeleton's upper arm. The right side mirrors
+ * the left.
  */
 export function shoulderPreview(bodyId='boy'){
  const body=BODIES[bodyId],torsoShape=makeTorsoOption(torsoBase.shape,body.torso,body.torsoList);
- const arm=body.arm,rS=BALL_TO_LIMB*thinnestAt(arm.upper,0),approvedLength=pairSizes(arm,ARM_PAIR).upper;
- const S=[...SHOULDER],dir=unit(sub(ELBOW,S)),top=add(S,scale(dir,rS+BALL_GAP));
+ const arm=body.arm,rS=SHOULDER_TO_ARM*thickestRadius(arm.upper),approvedLength=pairSizes(arm,ARM_PAIR).upper;
+ const S=pushClear(torsoShape,[...SHOULDER],rS,[1,0,0]),dir=unit(sub(ELBOW,SHOULDER)),top=add(S,scale(dir,rS+BALL_GAP));
+ const ball={name:'ball-shoulder',side:'left',...ballAt(rS,S)};
  const upper={name:'upper-arm',side:'left',...place(buildLimbShape(arm.upper,approvedLength),top,dir),length:approvedLength,top,direction:dir};
- const bottom=add(top,scale(dir,approvedLength));
- return {body:bodyId,torsoShape,shoulder:S,shoulderBall:rS,upper,
-  parts:[{name:'torso',side:'centre',...buildTorsoSurface(torsoShape)},{name:'ball-shoulder',side:'left',...ballAt(rS,S)},upper],
-  // How much lower the arm's end is than the skeleton's elbow position (the upper arm kept its full length).
-  lowerBy:length(sub(bottom,S))-(length(sub(ELBOW,S))-pairSizes(arm,ARM_PAIR).ball-BALL_GAP)};
+ const parts=[{name:'torso',side:'centre',...buildTorsoSurface(torsoShape)}];
+ for(const p of [ball,upper]){parts.push(p);parts.push({...mirrored(p),side:'right',...(p.centre?{centre:mirror(p.centre)}:{})});}
+ return {body:bodyId,torsoShape,shoulder:S,movedOut:S[0]-SHOULDER[0],shoulderBall:rS,upper,parts};
 }

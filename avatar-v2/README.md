@@ -81,6 +81,11 @@ hips). About 9,400 triangles so far (no hands or feet). Open question for the
 owner: with a ball at both ends, the limbs are short (upper arm about 18 cm,
 thigh about 20 cm), a "beads on a string" look.
 
+**Shoulders** (owner rules, 21 November 2026): the ball never sits inside the
+torso, and it is shoulder-sized (5% bigger than the upper arm's thickest point).
+`shoulderPreview` shows the torso with both shoulder balls and the approved upper
+arms unchanged. The page shows only this for now.
+
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
 sit separately, they would be about 12 cm and 9 cm.

@@ -4,7 +4,7 @@
 // never inside the torso, every part sealed, and the whole body within budget.
 // Usage: node avatar-v2/check-assembly.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {assemble,insideTorso,shoulderPreview,BODIES,PLACEMENTS} from './assembly.js';
+import {assemble,insideTorso,shoulderPreview,thickestRadius,SHOULDER_TO_ARM,BODIES,PLACEMENTS} from './assembly.js';
 import {buildLimbShape,CHOSEN_ARM,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 import {CHOSEN_FACE,faceShapes} from './face.js';
@@ -97,11 +97,23 @@ check('shoulder preview: the approved upper arm is EXACTLY unchanged (same shape
  assert(worst<1e-9,'reshaped by '+worst);
  return `24.5 cm, ${approved.index.length/3} triangles, shape identical (largest difference ${worst.toExponential(0)} m)`;
 });
-check('shoulder preview: one side only, shoulder ball by the 92% rule on the skeleton\'s shoulder joint, arm one gap below it',()=>{
- const p=shoulderPreview('boy');assert.deepEqual(p.parts.map(x=>x.name),['torso','ball-shoulder','upper-arm']);
- assert(Math.abs(p.shoulderBall-BALL_TO_LIMB*thinnestAt(CHOSEN_ARM.upper,0))<1e-12);assert(dist(p.shoulder,SHOULDER)<1e-12);
- assert(Math.abs(dist(p.upper.top,SHOULDER)-(p.shoulderBall+BALL_GAP))<1e-12);
- return `ball ${(p.shoulderBall*200).toFixed(1)} cm wide; arm's end ${(p.lowerBy*100).toFixed(1)} cm lower than before (kept full length)`;
+check('shoulder preview: both sides; shoulder balls the size of a shoulder (5% bigger than the upper arm\'s thickest point)',()=>{
+ const p=shoulderPreview('boy');assert.deepEqual(p.parts.map(x=>x.name+'.'+x.side),['torso.centre','ball-shoulder.left','ball-shoulder.right','upper-arm.left','upper-arm.right']);
+ const arm=thickestRadius(CHOSEN_ARM.upper);assert(Math.abs(p.shoulderBall-SHOULDER_TO_ARM*arm)<1e-12);assert(p.shoulderBall>arm,'not bigger than the arm');
+ return `ball ${(p.shoulderBall*200).toFixed(1)} cm wide; upper arm at its thickest ${(arm*200).toFixed(1)} cm`;
+});
+check('shoulder preview: the shoulder balls are never inside the torso (clear by at least the gap)',()=>{
+ const p=shoulderPreview('boy');let worst=-Infinity;
+ for(const b of p.parts.filter(x=>x.name==='ball-shoulder'))for(let i=0;i<b.positions.length;i+=3)worst=Math.max(worst,insideTorso(p.torsoShape,b.positions.slice(i,i+3)));
+ assert(worst<=-BALL_GAP*.9,`inside or touching (${(worst*1000).toFixed(1)} mm)`);
+ return `clear by ${(-worst*1000).toFixed(1)} mm; moved out ${(p.movedOut*100).toFixed(1)} cm from the skeleton's shoulder joint`;
+});
+check('shoulder preview: right side is the exact mirror of the left; the arms hang one gap below the balls and stay out of the torso',()=>{
+ const p=shoulderPreview('boy'),get=(n,side)=>p.parts.find(x=>x.name===n&&x.side===side);
+ for(const n of ['ball-shoulder','upper-arm']){const l=get(n,'left'),r=get(n,'right');for(let i=0;i<l.positions.length;i++)assert(Math.abs(r.positions[i]-(i%3===0?-l.positions[i]:l.positions[i]))<1e-12,n);}
+ assert(Math.abs(dist(p.upper.top,p.shoulder)-(p.shoulderBall+BALL_GAP))<1e-12,'arm not one gap below the ball');
+ let worst=-Infinity;for(const side of ['left','right']){const a=get('upper-arm',side);for(let i=0;i<a.positions.length;i+=3)worst=Math.max(worst,insideTorso(p.torsoShape,a.positions.slice(i,i+3)));}
+ assert(worst<=0,'arm inside the torso by '+(worst*1000).toFixed(1)+' mm');return `arms clear of the torso by ${(-worst*1000).toFixed(1)} mm`;
 });
 console.table(results);
 const failed=results.filter(r=>r.result!=='PASS').length;
