@@ -24,7 +24,7 @@ import {makeTorsoOption,ringAt,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,WOMEN_OPTIONS} fro
 import {buildTorsoSurface} from './torso-shape.js';
 import {buildHeadSet,CHOSEN_NECK} from './head-options.js';
 import {CHOSEN_FACE} from './face.js';
-import {buildHandFoot,CHOSEN_HAND_FOOT} from './hands-feet.js';
+import {buildHandFoot,CHOSEN_HAND_FOOT,HAND_FEET_SOURCE} from './hands-feet.js';
 // The clean base torso every torso option is made from.
 import torsoBase from './torso.json' with {type:'json'};
 
@@ -277,8 +277,9 @@ export const hipBallRadius=leg=>BALL_TO_LIMB*thinnestAt(leg.thigh,0);
  *  - each leg below its hip ball: legPreview's longer leg (thigh and calf 10%
  *    longer, ankle ball 10% bigger) with the chosen foot;
  *  - then every arm and leg piece made LIMB_SCALE bigger (each whole chain
- *    scaled about its top ball), torso, neck and head unchanged; each leg moves
- *    outward just enough that the two feet do not overlap.
+ *    scaled about its top ball), torso, neck and head unchanged; then each foot
+ *    made smaller, to the head's height plus FOOT_OVER_HEAD; each leg moves
+ *    outward only if the two feet would overlap.
  * The right side is the exact mirror of the left.
  */
 export function fullBodyPreview(bodyId='boy',{limbScale=LIMB_SCALE}={}){
@@ -303,24 +304,35 @@ export function fullBodyPreview(bodyId='boy',{limbScale=LIMB_SCALE}={}){
  const H2=pushClear(torsoShape,[...HIP],hipBall*limbScale,[0,-1,0],SHOULDER_TORSO_GAP);
  const grow=(chain,c,to)=>chain.map(p=>scaledPart(p,c,limbScale,to));
  const left=[...grow(armChain,top.shoulder,S2),...grow(legChain,H,H2)];
+ // Smaller feet (owner, 21 November 2026: the feet looked huge next to the calves; each foot should be
+ // "an inch or two longer than the head"): the foot is scaled, shape kept, so its length (heel to toe,
+ // measured flat along the floor, as seen from the side) is the head's height plus FOOT_OVER_HEAD. It shrinks toward
+ // the point one (grown) gap below the ankle ball, so it stays right under the ball with the same gap.
+ {const i=left.findIndex(p=>p.name==='foot'),foot=left[i],ankle=left.find(p=>p.name==='ball-ankle'),d=l.direction,ax=unit([HAND_FEET_SOURCE.foot.axes.length[0],0,HAND_FEET_SOURCE.foot.axes.length[2]]);
+  let lo=Infinity,hi=-Infinity;for(let k=0;k<foot.positions.length;k+=3){const v=foot.positions[k]*ax[0]+foot.positions[k+1]*ax[1]+foot.positions[k+2]*ax[2];lo=Math.min(lo,v);hi=Math.max(hi,v);}
+  const headHeight=2*neck.head.radius,footScale=(headHeight+FOOT_OVER_HEAD)/(hi-lo),P=add(ankle.centre,scale(d,ankle.radius+BALL_GAP*limbScale));
+  left[i]={...scaledPart(foot,P,footScale,P),footScale,footLength:headHeight+FOOT_OVER_HEAD,headHeight};}
  // The two feet (8% bigger, chosen option 2) would overlap in the middle: each whole leg moves
  // straight outward just enough to leave the usual gap between the feet (nothing reshaped; each
  // foot stays under its own leg).
- const foot=left.find(p=>p.name==='foot');let inner=Infinity;for(let i=0;i<foot.positions.length;i+=3)inner=Math.min(inner,foot.positions[i]);
+ let foot=left.find(p=>p.name==='foot'),inner=Infinity;for(let i=0;i<foot.positions.length;i+=3)inner=Math.min(inner,foot.positions[i]);
  const footOut=Math.max(0,BALL_GAP/2-inner),legOut=[footOut,0,0];
  if(footOut)for(let i=armChain.length;i<left.length;i++)left[i]=scaledPart(left[i],[0,0,0],1,legOut);
+ foot=left.find(p=>p.name==='foot');
  for(const p of left){parts.push(p);parts.push({...mirrored(p),name:p.name,side:'right',...(p.centre?{centre:mirror(p.centre)}:{})});}
  const get=n=>left.find(p=>p.name===n);let sole=Infinity;for(let i=1;i<foot.positions.length;i+=3)sole=Math.min(sole,foot.positions[i]);
  return {body:bodyId,limbScale,torsoShape,parts,face:CHOSEN_FACE,headCentre:[0,neck.head.y,0],headRadius:neck.head.radius,
   joints:Object.fromEntries(['shoulder','elbow','wrist','hip','knee','ankle'].map(j=>[j,get('ball-'+j).centre])),
   balls:Object.fromEntries(['shoulder','elbow','wrist','hip','knee','ankle'].map(j=>[j,get('ball-'+j).radius])),
-  legOut:footOut,
+  legOut:footOut,footScale:foot.footScale,footLength:foot.footLength,headHeight:foot.headHeight,
   // Heights above the sole (the original avatar stands with its sole at 0).
   height:Math.max(...neck.head.positions.filter((_,i)=>i%3===1))+neck.head.y-sole,sole};
 }
 
 /** How much bigger every arm and leg piece is (owner, 21 November 2026: "our guy looks very skinny, at least the limbs and ball joints; increase the overall size of everything minus the torso, head and neck"). No amount given: 15% is Claude's pick, waiting for the owner's confirmation. */
 export const LIMB_SCALE=1.15;
+/** Each foot is this much longer than the head is tall (owner: "an inch or two"; 1.5 inches, Claude's pick in that range). */
+export const FOOT_OVER_HEAD=.0381;
 
 /** A part scaled by k about point c, then moved so c lands on `to` (shape kept; sizes, lengths and centres follow). */
 function scaledPart(p,c,k,to){

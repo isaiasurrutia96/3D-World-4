@@ -4,8 +4,8 @@
 // never inside the torso, every part sealed, and the whole body within budget.
 // Usage: node avatar-v2/check-assembly.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {assemble,insideTorso,shoulderPreview,wristPreview,anklePreview,legPreview,fullBodyPreview,hipBallRadius,LIMB_SCALE,LEG_LENGTHEN,ANKLE_BALL_SCALE,END_BALL_TO_LIMB,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
-import {buildHandFoot,CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS} from './hands-feet.js';
+import {assemble,insideTorso,shoulderPreview,wristPreview,anklePreview,legPreview,fullBodyPreview,hipBallRadius,LIMB_SCALE,FOOT_OVER_HEAD,LEG_LENGTHEN,ANKLE_BALL_SCALE,END_BALL_TO_LIMB,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
+import {buildHandFoot,CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS,HAND_FEET_SOURCE} from './hands-feet.js';
 import {buildLimbShape,CHOSEN_ARM,CHOSEN_LEG,BOY_ARM,GIRL_ARM,BOY_ARM_THICKER,APPROVED_ARM_LENGTHS,girlVersion,limbRadius,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 import {CHOSEN_FACE,faceShapes} from './face.js';
@@ -204,8 +204,8 @@ check('shoulder preview: right side is the exact mirror of the left; the arms ha
   let worst=0;for(const p of sh.parts){const q=f1.parts.find(x=>x.name===p.name&&x.side===p.side);assert(q,p.name);q.positions.forEach((v,i)=>{worst=Math.max(worst,Math.abs(v-p.positions[i]));});}assert(worst<1e-12,'moved '+worst);return 'identical (within rounding)';});
  check('full body: torso, neck ball and head unchanged by the bigger limbs',()=>{
   for(const n of ['torso','ball-neck','head'])assert.deepEqual(f.parts.find(p=>p.name===n).positions,f1.parts.find(p=>p.name===n).positions,n);return 'identical';});
- check('full body: every arm and leg piece exactly 15% bigger, same shape',()=>{
-  assert.equal(K,1.15);let worst=0;for(const n of limbNames){const a=f.parts.find(p=>p.name===n&&p.side==='left'),b=f1.parts.find(p=>p.name===n&&p.side==='left');worst=Math.max(worst,sameShapeScaled(a.positions,b.positions,K));}
+ check('full body: every arm and leg piece exactly 15% bigger, same shape (the feet: see below)',()=>{
+  assert.equal(K,1.15);let worst=0;for(const n of limbNames.filter(n=>n!=='foot')){const a=f.parts.find(p=>p.name===n&&p.side==='left'),b=f1.parts.find(p=>p.name===n&&p.side==='left');worst=Math.max(worst,sameShapeScaled(a.positions,b.positions,K));}
   assert(worst<1e-9,'shape changed by '+worst);return `${limbNames.length} pieces ×${K}`;});
  check('full body: limb lengths are the approved ones (legs 10% longer), then 15% bigger',()=>{
   const len=n=>f.parts.find(p=>p.name===n&&p.side==='left').length,legs=pairSizes(CHOSEN_LEG,LEG_PAIR);
@@ -230,7 +230,15 @@ check('shoulder preview: right side is the exact mirror of the left; the arms ha
     for(let k=0;k<g.length;k+=2){const qj=g[k];if(qj<=pi)continue;const names2=[p.name,f.parts[qj].name].sort().join('/');if(names2==='ball-neck/torso')continue;
      const q=f.parts[qj].positions,j=g[k+1],d=Math.hypot(q[j]-x,q[j+1]-y,q[j+2]-z);if(d<worst){worst=d;pair=`${p.name}.${p.side} / ${f.parts[qj].name}.${f.parts[qj].side}`;}}}}});
   assert(worst>=.004,`${pair} only ${(worst*1000).toFixed(1)} mm apart`);return `closest: ${pair}, ${(worst*1000).toFixed(1)} mm`;});
- check('full body: each whole leg moved outward only as far as needed to keep the feet apart',()=>{assert(f.legOut>0&&f.legOut<.05);return `each leg ${(f.legOut*100).toFixed(1)} cm outward`;});
+ check('full body: the legs move outward only if the feet would overlap (with the smaller feet they do not)',()=>{assert(f.legOut>=0&&f.legOut<.05);return f.legOut?`each leg ${(f.legOut*100).toFixed(1)} cm outward`:'not needed';});
+ check('full body: each foot is 1.5 inches longer than the head, measured flat along the floor; shape kept; one gap below the ankle ball',()=>{
+  const foot=f.parts.find(p=>p.name==='foot'&&p.side==='left'),ank=f.parts.find(p=>p.name==='ball-ankle'&&p.side==='left'),a=HAND_FEET_SOURCE.foot.axes.length,ax=[a[0],0,a[2]].map(v=>v/Math.hypot(a[0],a[2]));
+  let lo=Infinity,hi=-Infinity,top=-Infinity;for(let i=0;i<foot.positions.length;i+=3){const p=P(foot.positions,i/3),v=p[0]*ax[0]+p[2]*ax[2];lo=Math.min(lo,v);hi=Math.max(hi,v);top=Math.max(top,p[1]);}
+  const head=f.parts.find(p=>p.name==='head');let hy0=Infinity,hy1=-Infinity;for(let i=1;i<head.positions.length;i+=3){hy0=Math.min(hy0,head.positions[i]);hy1=Math.max(hy1,head.positions[i]);}
+  assert(Math.abs(FOOT_OVER_HEAD-.0381)<1e-12);assert(Math.abs((hi-lo)-((hy1-hy0)+FOOT_OVER_HEAD))<.002,`foot ${(hi-lo)*100} cm, head ${(hy1-hy0)*100} cm`);
+  const f1foot=f1.parts.find(p=>p.name==='foot'&&p.side==='left');assert(sameShapeScaled(foot.positions,f1foot.positions,K*f.footScale/f1.footScale)<1e-9,'foot reshaped');
+  const gap=(ank.centre[1]-ank.radius)-top,bigGap=BALL_GAP*K;assert(Math.abs(gap-bigGap)<1e-9,'gap below the ankle ball '+gap);
+  return `foot ${((hi-lo)*100).toFixed(1)} cm, head ${((hy1-hy0)*100).toFixed(1)} cm; gap below the ankle ball ${(gap*1000).toFixed(1)} mm`;});
  check('full body: reports his height against the original avatar (about 1.89 m)',()=>{assert(f.height>1.5&&f.height<3);return `${(f.height*100).toFixed(1)} cm`;});
 }
 console.table(results);
