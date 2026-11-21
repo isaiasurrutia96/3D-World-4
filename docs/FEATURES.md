@@ -253,9 +253,9 @@ timings, limits). The cards below are being redone with it, one at a time.
        handling).
     7. Works with: shops, prizes, levels, free-roam driving, kart racing,
        time trial.
-    8. Fairness: custom karts are an advantage only to an extent: a high
-       level plus a well-balanced build gives a slight overall edge; more
-       speed does not always mean less grip.
+    8. Fairness: parts give a **noticeable** improvement (owner, 21 Nov,
+       replacing "a slight overall edge"); more speed does not always mean
+       less grip. Details in `docs/KARTS.md`.
     9. Saved: every kart built, kept at home.
     10. Edge cases: a missing part → the build will not save until complete.
     11. Movements: none new.

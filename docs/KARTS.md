@@ -60,11 +60,14 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
    but on the track they are **not** an improvement. They are for players who
    want a different kind of kart.
 3. Off-road wheels and lights are parts players buy.
+4. **Off-road set-up for any kart:** the kart can be raised, and the wheels
+   can stick out a little more, like real off-road cars.
+5. **Suspension** (the system that holds the wheels to the kart) can be
+   upgraded.
+6. (21 November) The owner confirmed D1 over the older "slight overall edge"
+   wording; card 18 in `docs/FEATURES.md` now matches.
 
 ## E. Open points
 
-1. Card 18 in `docs/FEATURES.md` says custom parts give "a slight overall
-   edge". D1 says the improvement is noticeable. The owner needs to confirm
-   which one wins before card 18 is changed.
-2. Exact part list per mode, prices, rarity and how parts are unlocked are
+1. Exact part list per mode, prices, rarity and how parts are unlocked are
    not decided.
