@@ -4,9 +4,18 @@ The rebuild of the avatar, one part at a time, shown in the Test Lab section
 **New avatar** (`new-avatar/`). The approved avatar (`avatar/`) is the look
 reference and is never changed from here.
 
-Current state: the **clean one-piece torso** plus **four alternative torso
-shapes** made from it by numbers (`torso-variants.js`), shown side by side for
-the owner to choose from. All drawn from numbers rather than stored meshes.
+Current state: the **clean one-piece torso** plus torso options made from it
+by numbers (`torso-variants.js`), shown side by side for the owner to choose
+from. Round 1 (five body types) is kept in code; the owner liked Athletic.
+Round 2, shown now: five athletic torsos (Athletic; Full chest with rounded
+shoulders instead of the sharp upper edge; Pecs; and two light versions of
+Full chest at about 1,600 and 600 triangles).
+
+Shape tools (all in `torso-variants.js`, checked in `check-torso.mjs`): width
+and front/back depth curves, roundness, squareness, **bumps** (smooth raises
+placed by height and direction; mirrored for pecs), **shoulderRoll** (shoulders
+curve in toward the neck), **detail** (rebuild at any triangle count) and
+**basedOn** (an option reuses another's settings).
 
 The arm/elbow draft (`arm.js`, `limb-shape.js`, `check-elbow.mjs`) was
 **rejected by the owner on looks** (21 November 2026) and is no longer shown.

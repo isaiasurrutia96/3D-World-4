@@ -1,10 +1,11 @@
-// Checks the one-piece torso (avatar-v2/torso.json drawn by torso-shape.js)
-// and every torso option (torso-variants.js) shown side by side in the Test Lab.
+// Checks the one-piece torso (avatar-v2/torso.json drawn by torso-shape.js),
+// the shape tools in torso-variants.js (bumps, detail, basedOn), and every
+// torso option of both rounds (round 1 body types, round 2 athletic torsos).
 // Usage: node avatar-v2/check-torso.mjs   (npm run test:new-avatar)
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {buildTorsoSurface} from './torso-shape.js';
-import {TORSO_OPTIONS,makeTorsoOption,curveAt} from './torso-variants.js';
+import {FIRST_OPTIONS,ATHLETIC_OPTIONS,TORSO_OPTIONS,makeTorsoOption,curveAt,resolveOption,resampleShape,expandBumps,bumpAt,ringAt} from './torso-variants.js';
 
 const torso=JSON.parse(await readFile('avatar-v2/torso.json','utf8'));
 const source=JSON.parse(await readFile('avatar-v2/torso-source.json','utf8'));
@@ -23,14 +24,44 @@ check('same size as the old torso: height and width within 2 cm',()=>{
  return `height ${range(axis(positions,1)).toFixed(3)} m, width ${range(axis(positions,0)).toFixed(3)} m`;
 });
 check('attach points kept for the arms and legs',()=>{const bones=torso.attach.map(a=>a.bone).sort().join(' ');assert.equal(bones,'thigh.L thigh.R upperArm.L upperArm.R');return bones;});
-check('the options list starts with the original, unchanged',()=>{
- assert.equal(TORSO_OPTIONS[0].id,'original');assert.deepEqual(makeTorsoOption(torso.shape,TORSO_OPTIONS[0]).rings.map(r=>r.r),torso.shape.rings.map(r=>r.r.map(v=>+v.toFixed(5))));
+check('round 1 Original is exactly the clean torso',()=>{
+ assert.equal(FIRST_OPTIONS[0].id,'original');assert.deepEqual(makeTorsoOption(torso.shape,FIRST_OPTIONS[0],FIRST_OPTIONS).rings.map(r=>r.r),torso.shape.rings.map(r=>r.r.map(v=>+v.toFixed(5))));
  return 'identical to torso.json';
 });
-check('options: five, each with a unique id, a label and a note',()=>{
- assert.equal(TORSO_OPTIONS.length,5);assert.equal(new Set(TORSO_OPTIONS.map(o=>o.id)).size,5);
- for(const o of TORSO_OPTIONS){assert(o.label&&o.note,o.id);for(const c of [o.width,o.front,o.back])assert(c.every(([h,v],i)=>h>=0&&h<=1&&v>.5&&v<1.5&&(i===0||h>c[i-1][0])),o.id+' curve');assert(o.round>=0&&o.round<=1&&o.square>=0&&o.square<=1,o.id);}
- return TORSO_OPTIONS.map(o=>o.id).join(', ');
+check('the page shows round 2, and round 2 starts with round 1\'s Athletic unchanged',()=>{
+ assert.equal(TORSO_OPTIONS,ATHLETIC_OPTIONS);const {id,label,note,...a}=ATHLETIC_OPTIONS[0],{id:i2,label:l2,note:n2,...b}=FIRST_OPTIONS.find(o=>o.id==='athletic');
+ assert.deepEqual(a,b);return 'same numbers';
+});
+for(const [round,list] of [['round 1',FIRST_OPTIONS],['round 2',ATHLETIC_OPTIONS]])check(`${round}: five options, unique ids, labels, notes and valid settings`,()=>{
+ assert.equal(list.length,5);assert.equal(new Set(list.map(o=>o.id)).size,5);
+ for(const raw of list){const o=resolveOption(raw,list);assert(o.label&&o.note,o.id);
+  for(const c of [o.width,o.front,o.back].filter(Boolean))assert(c.every(([h,v],i)=>h>=0&&h<=1&&v>.5&&v<1.5&&(i===0||h>c[i-1][0])),o.id+' curve');
+  assert((o.round??0)>=0&&(o.round??0)<=1&&(o.square??0)>=0&&(o.square??0)<=1,o.id+' round/square');
+  for(const b of o.bumps??[])assert(b.h>=0&&b.h<=1&&b.hSpread>0&&b.aSpread>0&&b.aSpread<=180&&b.amount>0&&b.amount<=.05,o.id+' bump');
+  if(o.detail)assert(o.detail.segments%2===0&&o.detail.segments>=8&&o.detail.rings>=2,o.id+' detail');
+  if(o.shoulderRoll)assert(o.shoulderRoll.from>0&&o.shoulderRoll.from<1&&o.shoulderRoll.neck>.03&&o.shoulderRoll.neck<.25,o.id+' shoulderRoll');}
+ return list.map(o=>o.id).join(', ');
+});
+check('tool: basedOn fills in settings, and catches loops and missing options',()=>{
+ const list=[{id:'a',label:'A',note:'n',width:[[0,1.1],[1,1]],bumps:[{h:.5,hSpread:.1,angle:90,aSpread:20,amount:.01}]},{id:'b',basedOn:'a',label:'B',note:'n',detail:{segments:16,rings:8}}];
+ const b=resolveOption(list[1],list);assert.deepEqual(b.width,list[0].width);assert.deepEqual(b.bumps,list[0].bumps);assert.equal(b.label,'B');assert(!('basedOn' in b));
+ assert.throws(()=>resolveOption({id:'x',basedOn:'y'},[{id:'y',basedOn:'x'},{id:'x',basedOn:'y'}]),/loops/);
+ assert.throws(()=>resolveOption({id:'x',basedOn:'nope'},[]),/missing/);return 'ok';
+});
+check('tool: a bump raises the surface by exactly its amount at its centre, and mirrors to the other side',()=>{
+ const bump={h:.6,hSpread:.1,angle:62,aSpread:20,amount:.017,mirror:true},both=expandBumps([bump]);
+ assert.equal(both.length,2);assert.equal(both[1].angle,118);
+ const peak=bumpAt([{...bump,mirror:false}],.6,62*Math.PI/180);assert(Math.abs(peak-.017)<1e-12,'peak '+peak);
+ assert(bumpAt(both,.6,30*Math.PI/180)<.017*.2,'too wide');assert(Math.abs(bumpAt(both,.6,62*Math.PI/180)-bumpAt(both,.6,118*Math.PI/180))<1e-12,'not mirrored');
+ return 'peak 17.0 mm, mirrored at 118°';
+});
+check('tool: detail at the same counts changes nothing; at other counts the ends stay put',()=>{
+ const same=resampleShape(torso.shape,{segments:torso.shape.segments,rings:torso.shape.rings.length});
+ let worst=0;same.rings.forEach((ring,k)=>ring.r.forEach((r,s)=>{worst=Math.max(worst,Math.abs(r-torso.shape.rings[k].r[s]));}));
+ assert(worst<2e-5,'changed '+worst);
+ const light=resampleShape(torso.shape,{segments:16,rings:9});assert.equal(light.rings.length,9);assert.equal(light.segments,16);
+ assert.equal(light.rings[0].y,torso.shape.rings[0].y);assert.equal(light.rings.at(-1).y,torso.shape.rings.at(-1).y);
+ assert.throws(()=>resampleShape(torso.shape,{segments:15,rings:9}),/even/);return 'ok';
 });
 check('curves are smooth and pass through their points',()=>{
  const c=[[0,1],[.5,1.2],[1,.9]];assert.equal(curveAt(c,0),1);assert.equal(curveAt(c,.5),1.2);assert.equal(curveAt(c,1),.9);assert.equal(curveAt(c,-1),1);assert.equal(curveAt(c,2),.9);
@@ -74,11 +105,20 @@ check('the smoothness test catches a real dent and a real groove (test of the te
  return `narrow dent seen ${(a.dent*1000).toFixed(0)} mm, wide ${(b.dent*1000).toFixed(0)} mm, groove ${(g.groove*1000).toFixed(0)} mm`;
 });
 
-// Every option must be a proper, sealed, smooth torso.
-const built=TORSO_OPTIONS.map(o=>{const shape=makeTorsoOption(torso.shape,o);return {o,shape,...buildTorsoSurface(shape)};});
-const baseHeight=range(axis(built[0].positions,1));
-for(const {o,shape,positions,index} of built){
- const name=o.label;
+/** Radius of a shape at height y, direction a (between its rings and directions). */
+function radiusAt(shape,y,a){
+ const R=shape.rings;let i=0;while(i<R.length-2&&R[i+1].y<y)i++;
+ const t=Math.min(1,Math.max(0,(y-R[i].y)/(R[i+1].y-R[i].y)));return ringAt(R[i].r,a)*(1-t)+ringAt(R[i+1].r,a)*t;
+}
+/** Largest and average gap between two shapes, measured at shape a's own points. */
+function gap(a,b){let max=0,sum=0,count=0;for(const ring of a.rings)ring.r.forEach((r,s)=>{const d=Math.abs(r-radiusAt(b,ring.y,s/a.segments*Math.PI*2));max=Math.max(max,d);sum+=d;count++;});return {max,avg:sum/count};}
+
+// Every option of both rounds must be a proper, sealed, smooth torso.
+const rounds=[['R1',FIRST_OPTIONS],['R2',ATHLETIC_OPTIONS]];
+const builtBy=Object.fromEntries(rounds.map(([tag,list])=>[tag,list.map(o=>{const shape=makeTorsoOption(torso.shape,o,list);return {o,list,shape,...buildTorsoSurface(shape)};})]));
+const baseHeight=range(axis(builtBy.R1[0].positions,1));
+for(const [tag] of rounds)for(const {o,shape,positions,index} of builtBy[tag]){
+ const name=tag+' '+o.label;
  check(`${name}: every number is real and every radius positive`,()=>{
   assert(positions.every(Number.isFinite));assert(shape.rings.every(r=>r.r.every(v=>Number.isFinite(v)&&v>0)));return positions.length/3+' points';
  });
@@ -106,18 +146,38 @@ for(const {o,shape,positions,index} of built){
   let worst=0;const n=shape.segments;for(const ring of shape.rings)for(let s=0;s<n;s++)worst=Math.max(worst,Math.abs(ring.r[s]-ring.r[((n/2-s)%n+n)%n]));
   assert(worst<.005,(worst*1000).toFixed(1)+' mm');return 'within '+(worst*1000).toFixed(1)+' mm';
  });
- check(`${name}: phone-ready (under 6,000 triangles)`,()=>{assert(index.length/3<6000);return index.length/3+' triangles';});
+ check(`${name}: phone-ready (under 6,000 triangles; light versions at their target)`,()=>{
+  const n=shape.segments,rows=shape.rings.length+2*(shape.capRings??4),expected=(rows-1)*n*2+2*n;
+  assert.equal(index.length/3,expected,'triangle count does not match its detail');assert(index.length/3<6000);return index.length/3+' triangles';
+ });
 }
-check('the options really differ: each pair at least 1.5 cm apart somewhere, 5 mm on average',()=>{
- const out=[];
- for(let i=0;i<built.length;i++)for(let j=i+1;j<built.length;j++){
-  let max=0,sum=0,count=0;built[i].shape.rings.forEach((ring,k)=>ring.r.forEach((r,s)=>{const d=Math.abs(r-built[j].shape.rings[k].r[s]);max=Math.max(max,d);sum+=d;count++;}));
-  assert(max>=.015&&sum/count>=.005,`${built[i].o.id} and ${built[j].o.id} too alike (${(max*1000).toFixed(0)} mm max, ${(sum/count*1000).toFixed(1)} mm average)`);
-  out.push(`${built[i].o.id}/${built[j].o.id} ${(sum/count*1000).toFixed(0)}mm`);
+// Light versions must still look like the option they are based on.
+// Limits as a share of the torso's width (about 0.6 m): the light version must
+// look the same at normal viewing distance (1%, 6 mm); the lightest exists to
+// show visible facets, so it may differ more (2.5%, 15 mm).
+const LIGHT_LIMIT={'athletic-light':.006,'athletic-lightest':.015};
+for(const item of builtBy.R2.filter(b=>b.o.detail&&b.o.basedOn)){
+ check(`R2 ${item.o.label}: stays close to the full version (largest gap under ${LIGHT_LIMIT[item.o.id]*1000} mm)`,()=>{
+  const full=builtBy.R2.find(b=>b.o.id===item.o.basedOn),g=gap(full.shape,item.shape);
+  assert(LIGHT_LIMIT[item.o.id],'no limit set for '+item.o.id);
+  assert(g.max<=LIGHT_LIMIT[item.o.id],`largest gap ${(g.max*1000).toFixed(1)} mm`);
+  return `largest ${(g.max*1000).toFixed(1)} mm, average ${(g.avg*1000).toFixed(1)} mm; ${full.index.length/3} → ${item.index.length/3} triangles`;
+ });
+}
+// Options in a round must really differ, except a light version and the option it is based on.
+// "Really differ" means a difference you can see somewhere: at least 1.5 cm.
+// (An average over the whole torso would wrongly reject a chest-only change.)
+for(const [tag] of rounds)check(`${tag}: options really differ (each pair at least 1.5 cm apart somewhere)`,()=>{
+ const list=builtBy[tag],out=[],related=(a,b)=>a.o.basedOn===b.o.id||b.o.basedOn===a.o.id||(a.o.basedOn&&a.o.basedOn===b.o.basedOn);
+ for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+  if(related(list[i],list[j]))continue;
+  const g=gap(list[i].shape,list[j].shape);
+  assert(g.max>=.015,`${list[i].o.id} and ${list[j].o.id} too alike (${(g.max*1000).toFixed(0)} mm at most)`);
+  out.push(`${list[i].o.id}/${list[j].o.id}`);
  }
- return out.length+' pairs';
+ return out.length+' pairs compared';
 });
 console.table(results);
 const failed=results.filter(r=>r.result!=='PASS').length;
-console.log(failed?`FAIL: ${failed} check(s) failed.`:'PASS: the torso and all five options are sealed, smooth, symmetric and distinct.');
+console.log(failed?`FAIL: ${failed} check(s) failed.`:'PASS: the torso, the shape tools and every option of both rounds check out.');
 process.exitCode=failed?1:0;
