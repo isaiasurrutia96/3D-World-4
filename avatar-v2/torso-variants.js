@@ -69,6 +69,33 @@ export const CHOSEN_TORSO={id:'athletic-light',label:'Athletic (light)',note:'Th
 /** The torsos shown on the page now. */
 export const TORSO_OPTIONS=[CHOSEN_TORSO];
 
+/**
+ * Female torso options (21 November 2026), for the girl avatar. Same base
+ * torso and tools as the boy's; the main differences are narrower shoulders
+ * compared with the hips, a defined waist, fuller hips, softer sloping
+ * shoulders and a modest, stylized chest (kept simple, to suit a toy-like
+ * ragdoll). All at the light detail, like the chosen boy's torso.
+ */
+const LIGHT={segments:28,rings:20,capRings:4};
+const BUST=(amount,h=.72)=>[{h,hSpread:.085,angle:64,aSpread:21,amount,mirror:true}];
+export const FEMALE_OPTIONS=[
+ {id:'female-athletic',label:'F1 · Athletic',note:'Fit and sporty: shoulders a little narrower, a defined waist, slightly fuller hips.',
+  width:[[0,.98],[.2,1.02],[.48,.84],[.75,.94],[1,.9]],front:[[0,.92],[1,.94]],back:[[0,.95],[1,.92]],round:0,square:.1,
+  bumps:BUST(.016),shoulderRoll:{from:.8,neck:.1},detail:LIGHT},
+ {id:'female-hourglass',label:'F2 · Hourglass',note:'A narrow waist with hips about as wide as the shoulders.',
+  width:[[0,1.02],[.2,1.12],[.5,.75],[.78,.98],[1,.9]],front:[[0,.93],[1,.95]],back:[[0,.98],[1,.92]],round:0,square:.05,
+  bumps:BUST(.024),shoulderRoll:{from:.8,neck:.1},detail:LIGHT},
+ {id:'female-slim',label:'F3 · Slim',note:'Slender and light, with a gentle waist and a small chest.',
+  width:[[0,.9],[.25,.92],[.5,.8],[.8,.86],[1,.84]],front:[[0,.86],[1,.87]],back:[[0,.86],[1,.86]],round:0,square:0,
+  bumps:BUST(.011),shoulderRoll:{from:.82,neck:.09},detail:LIGHT},
+ {id:'female-strong',label:'F4 · Strong',note:'Sturdy and powerful: broader overall, fuller hips and chest.',
+  width:[[0,1.02],[.22,1.08],[.5,.9],[.78,1],[1,.95]],front:[[0,.96],[.5,.94],[1,.96]],back:[[0,.97],[1,.95]],round:0,square:.15,
+  bumps:BUST(.02),shoulderRoll:{from:.8,neck:.11},detail:LIGHT},
+ {id:'female-toy',label:'F5 · Toy',note:'Rounder and simpler, like a toy figure, with only a hint of a chest.',
+  width:[[0,.96],[.25,1],[.5,.88],[.8,.9],[1,.86]],front:[[0,.94],[1,.94]],back:[[0,.94],[1,.94]],round:.35,square:0,
+  bumps:BUST(.008),shoulderRoll:{from:.78,neck:.1},detail:LIGHT},
+];
+
 const TAU=Math.PI*2,RAD=Math.PI/180;
 const smooth=t=>t*t*(3-2*t);
 /** Value of a curve [[h, value], ...] at height share h (smooth between points). */

@@ -11,23 +11,27 @@
 // Both ends are rounded (the end caps are as long as the end radius, so they
 // are half-spheres for a round limb).
 //
-// Lengths come from the skeleton: each set is an upper arm, the elbow ball
-// (the chosen 300-triangle ball) and a forearm, hanging straight, separate,
-// with a small gap either side of the ball. The upper arm runs from the
-// shoulder joint's centre to the ball; the forearm from the ball to the
-// wrist joint's centre. (If the shoulder and wrist balls later also sit
-// separately, the limbs get shorter; that is part of the joints discussion.)
+// Each set is an upper arm, the elbow ball (300 triangles, the chosen count)
+// and a forearm, hanging straight, separate, with a small gap either side of
+// the ball. The ball is sized from the limbs (owner, 21 November 2026): as
+// thick as they are, but slightly smaller, 92% of the thinner limb end in its
+// thinnest direction. Joint centres stay where the skeleton has them, so a
+// smaller ball leaves the limbs longer: the upper arm runs from the shoulder
+// joint's centre to the ball, the forearm from the ball to the wrist joint's
+// centre. (If the shoulder and wrist balls later also sit separately, the
+// limbs get shorter; that is part of the joints discussion.)
 import {buildRingSurface} from './torso-shape.js';
 import {curveAt,bumpAt,expandBumps} from './torso-variants.js';
-import {buildBall,BALL_RADIUS,CHOSEN_BALL_TRIANGLES} from './ball-shape.js';
+import {buildBall,CHOSEN_BALL_TRIANGLES} from './ball-shape.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 
 const TAU=Math.PI*2,distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
 /** Space between each limb's rounded end and the ball (metres). */
 export const BALL_GAP=.006;
-/** Limb lengths, tip to tip (metres). */
-export const UPPER_ARM_LENGTH=distance(SHOULDER,ELBOW)-BALL_RADIUS-BALL_GAP;
-export const FOREARM_LENGTH=distance(ELBOW,WRIST)-BALL_RADIUS-BALL_GAP;
+/** The ball's radius as a share of the thinner limb end's radius. */
+export const BALL_TO_LIMB=.92;
+/** Joint centre to joint centre, from the skeleton (metres). */
+export const UPPER_ARM_SPAN=distance(SHOULDER,ELBOW),FOREARM_SPAN=distance(ELBOW,WRIST);
 /** How finely every limb is built: 504 triangles each. Most of a short limb is
  *  its rounded ends, so the rings go there (4 per end) rather than the middle. */
 export const LIMB_DETAIL={segments:18,rings:6,capRings:4};
@@ -74,12 +78,28 @@ export function buildLimbShape(limb,length,detail=LIMB_DETAIL){
  return {shape,...buildRingSurface(shape)};
 }
 
+/** The thinnest a limb is at share t of its length, over every direction. */
+export function thinnestAt(limb,t){let r=Infinity;for(let s=0;s<360;s++)r=Math.min(r,limbRadius(limb,t,s/360*TAU));return r;}
+
+/**
+ * Sizes for one option: the elbow ball's radius (92% of the thinner of the
+ * upper arm's bottom end and the forearm's top end) and each limb's length,
+ * tip to tip, so the ball and its gaps fit exactly between the joint centres.
+ */
+export function armSizes(option){
+ const ball=BALL_TO_LIMB*Math.min(thinnestAt(option.upper,1),thinnestAt(option.fore,0));
+ return {ball,upper:UPPER_ARM_SPAN-ball-BALL_GAP,fore:FOREARM_SPAN-ball-BALL_GAP};
+}
+
 /**
  * One option's full set: upper arm, elbow ball and forearm, with where each
  * sits (the upper arm's top tip at y = 0, everything below it).
  */
 export function buildArmSet(option){
- const upper=buildLimbShape(option.upper,UPPER_ARM_LENGTH),fore=buildLimbShape(option.fore,FOREARM_LENGTH);
- const ballY=-(UPPER_ARM_LENGTH+BALL_GAP+BALL_RADIUS),foreY=ballY-BALL_RADIUS-BALL_GAP;
- return {upper:{...upper,y:0},ball:{...buildBall({radius:BALL_RADIUS,triangles:CHOSEN_BALL_TRIANGLES}),y:ballY},fore:{...fore,y:foreY}};
+ const size=armSizes(option),upper=buildLimbShape(option.upper,size.upper),fore=buildLimbShape(option.fore,size.fore);
+ const ballY=-(size.upper+BALL_GAP+size.ball),foreY=ballY-size.ball-BALL_GAP;
+ return {size,upper:{...upper,y:0},ball:{...buildBall({radius:size.ball,triangles:CHOSEN_BALL_TRIANGLES}),y:ballY,radius:size.ball},fore:{...fore,y:foreY}};
 }
+
+/** Chosen by the owner (21 November 2026): option 2, Athletic. */
+export const CHOSEN_ARM=ARM_OPTIONS.find(o=>o.id==='athletic');

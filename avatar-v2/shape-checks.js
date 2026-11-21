@@ -30,3 +30,4 @@ export function smoothness(shape,span=2){
  for(let s=0;s<n;s++)for(let i=span;i<R.length-span;i++)groove=Math.max(groove,Math.min(R[i-span].r[s],R[i+span].r[s])-R[i].r[s]);
  return {dent,groove};
 }
+

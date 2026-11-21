@@ -15,7 +15,18 @@ options** (`limb-options.js`), each an upper arm, the elbow ball and a forearm,
 hanging straight and separate. Option 1 is a plain capsule; 2 to 5 are athletic
 arms with an overall capsule shape (Athletic, Strong, Defined with a Tic Tac
 cross-section, Slim). Every limb is thinner than the ball, 504 triangles.
-Open point for the joints discussion: with a separate 18 cm elbow ball the limbs
+**Chosen arm: 2, Athletic** (21 November 2026). The elbow ball is now sized
+from the limbs: 92% of the thinner limb end (11.8 cm wide), slightly thinner
+than the limbs. With joint centres unchanged, that leaves longer limbs: upper
+arm 24.5 cm (+15%), forearm 22.2 cm (+17%).
+
+**Girl avatar started:** five female torsos (`FEMALE_OPTIONS`: Athletic,
+Hourglass, Slim, Strong, Toy) with narrower shoulders than hips, a defined
+waist, fuller hips, softer shoulders and a modest stylized chest, all at the
+light detail. Shown next to the chosen arm. Open point: the girl may need her
+own proportions (height, limb lengths); for now she uses the same base sizes.
+
+Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
 sit separately, they would be about 12 cm and 9 cm.
 

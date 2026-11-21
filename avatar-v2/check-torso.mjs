@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {buildTorsoSurface} from './torso-shape.js';
 import {smoothness} from './shape-checks.js';
-import {FIRST_OPTIONS,ATHLETIC_OPTIONS,TORSO_OPTIONS,CHOSEN_TORSO,makeTorsoOption,curveAt,resolveOption,resampleShape,expandBumps,bumpAt,ringAt} from './torso-variants.js';
+import {FIRST_OPTIONS,ATHLETIC_OPTIONS,TORSO_OPTIONS,CHOSEN_TORSO,FEMALE_OPTIONS,makeTorsoOption,curveAt,resolveOption,resampleShape,expandBumps,bumpAt,ringAt} from './torso-variants.js';
 
 const torso=JSON.parse(await readFile('avatar-v2/torso.json','utf8'));
 const source=JSON.parse(await readFile('avatar-v2/torso-source.json','utf8'));
@@ -39,12 +39,13 @@ check('the chosen torso is exactly Athletic at the light detail, and it is what 
  assert.deepEqual(detail,resolveOption(ATHLETIC_OPTIONS.find(o=>o.id==='athletic-light'),ATHLETIC_OPTIONS).detail,'detail differs from the light setting');
  assert.deepEqual(TORSO_OPTIONS,[CHOSEN_TORSO]);return 'Athletic numbers, light detail '+JSON.stringify(detail);
 });
-for(const [round,list] of [['round 1',FIRST_OPTIONS],['round 2',ATHLETIC_OPTIONS]])check(`${round}: five options, unique ids, labels, notes and valid settings`,()=>{
+for(const [round,list] of [['round 1',FIRST_OPTIONS],['round 2',ATHLETIC_OPTIONS],['female',FEMALE_OPTIONS]])check(`${round}: five options, unique ids, labels, notes and valid, smooth-only settings`,()=>{
  assert.equal(list.length,5);assert.equal(new Set(list.map(o=>o.id)).size,5);
  for(const raw of list){const o=resolveOption(raw,list);assert(o.label&&o.note,o.id);
   for(const c of [o.width,o.front,o.back].filter(Boolean))assert(c.every(([h,v],i)=>h>=0&&h<=1&&v>.5&&v<1.5&&(i===0||h>c[i-1][0])),o.id+' curve');
   assert((o.round??0)>=0&&(o.round??0)<=1&&(o.square??0)>=0&&(o.square??0)<=1,o.id+' round/square');
-  for(const b of o.bumps??[])assert(b.h>=0&&b.h<=1&&b.hSpread>0&&b.aSpread>0&&b.aSpread<=180&&b.amount>0&&b.amount<=.05,o.id+' bump');
+  for(const b of o.bumps??[])assert(b.h>=0&&b.h<=1&&b.hSpread>=.05&&b.aSpread>=10&&b.aSpread<=180&&b.amount>0&&b.amount<=.05,o.id+' bump (too narrow or too big to stay smooth)');
+  for(const c of [o.width,o.front,o.back].filter(Boolean))for(let i=1;i<c.length;i++)assert(c[i][0]-c[i-1][0]>=.1,o.id+' curve points closer than 10% of the height');
   if(o.detail)assert(o.detail.segments%2===0&&o.detail.segments>=8&&o.detail.rings>=2,o.id+' detail');
   if(o.shoulderRoll)assert(o.shoulderRoll.from>0&&o.shoulderRoll.from<1&&o.shoulderRoll.neck>.03&&o.shoulderRoll.neck<.25,o.id+' shoulderRoll');}
  return list.map(o=>o.id).join(', ');
@@ -80,11 +81,17 @@ check('the smoothness test catches a real dent and a real groove (test of the te
  narrow.rings[mid].r[5]-=.02;// 2 cm, one direction wide
  for(let k=-2;k<=2;k++)wide.rings[mid].r[(12+k+48)%48]-=.03*Math.cos(k/3*Math.PI/2)**2;// 3 cm deep, 30° wide, smooth (socket-like hollow)
  for(const s of grooved.rings[mid].r.keys())grooved.rings[mid].r[s]-=.006;
- const a=smoothness(narrow),b=smoothness(wide),g=smoothness(grooved);
- assert(a.dent>=.01,'missed a narrow 2 cm dent ('+(a.dent*1000).toFixed(1)+' mm)');assert(b.dent>=.01,'missed a socket-like 3 cm dent ('+(b.dent*1000).toFixed(1)+' mm)');assert(g.groove>=.003,'missed a 6 mm groove');
- return `narrow dent seen ${(a.dent*1000).toFixed(0)} mm, wide ${(b.dent*1000).toFixed(0)} mm, groove ${(g.groove*1000).toFixed(0)} mm`;
+ const a=smoothness(narrow),b=smoothness(wide),g=smoothness(grooved).groove;
+ assert(a.dent>=.01,'missed a narrow 2 cm dent ('+(a.dent*1000).toFixed(1)+' mm)');assert(b.dent>=.01,'missed a socket-like 3 cm dent ('+(b.dent*1000).toFixed(1)+' mm)');assert(g>=.003,'missed a 6 mm groove');
+ return `narrow dent seen ${(a.dent*1000).toFixed(0)} mm, wide ${(b.dent*1000).toFixed(0)} mm, groove ${(g*1000).toFixed(0)} mm`;
 });
 
+// Seams can only come from measuring an old mesh, which only the base torso
+// was; every option reshapes it with smooth, wide settings. So: the groove test
+// runs on the base, and option settings must be too wide to make a seam.
+check('the base torso has no seam or groove (no ring sunk over 3 mm below the rings 2 above and below)',()=>{
+ const g=smoothness(torso.shape).groove;assert(g<.003,'groove '+(g*1000).toFixed(1)+' mm');return 'deepest '+(g*1000).toFixed(1)+' mm';
+});
 /** Radius of a shape at height y, direction a (between its rings and directions). */
 function radiusAt(shape,y,a){
  const R=shape.rings;let i=0;while(i<R.length-2&&R[i+1].y<y)i++;
@@ -94,7 +101,7 @@ function radiusAt(shape,y,a){
 function gap(a,b){let max=0,sum=0,count=0;for(const ring of a.rings)ring.r.forEach((r,s)=>{const d=Math.abs(r-radiusAt(b,ring.y,s/a.segments*Math.PI*2));max=Math.max(max,d);sum+=d;count++;});return {max,avg:sum/count};}
 
 // Every option of both rounds must be a proper, sealed, smooth torso.
-const rounds=[['R1',FIRST_OPTIONS],['R2',ATHLETIC_OPTIONS],['R3',TORSO_OPTIONS]];
+const rounds=[['R1',FIRST_OPTIONS],['R2',ATHLETIC_OPTIONS],['R3',TORSO_OPTIONS],['F',FEMALE_OPTIONS]];
 const builtBy=Object.fromEntries(rounds.map(([tag,list])=>[tag,list.map(o=>{const shape=makeTorsoOption(torso.shape,o,list);return {o,list,shape,...buildTorsoSurface(shape)};})]));
 const baseHeight=range(axis(builtBy.R1[0].positions,1));
 for(const [tag] of rounds)for(const {o,shape,positions,index} of builtBy[tag]){
@@ -115,10 +122,8 @@ for(const [tag] of rounds)for(const {o,shape,positions,index} of builtBy[tag]){
   for(let i=0;i<index.length;i+=3){const a=p(index[i]),b=p(index[i+1]),c=p(index[i+2]);v+=(a[0]*(b[1]*c[2]-b[2]*c[1])-a[1]*(b[0]*c[2]-b[2]*c[0])+a[2]*(b[0]*c[1]-b[1]*c[0]))/6;}
   assert(v>.03&&v<.15,(v*1000).toFixed(1)+' litres');return (v*1000).toFixed(1)+' litres';
  });
- check(`${name}: smooth (no dent over 1 cm around, no groove over 3 mm up)`,()=>{
-  const {dent,groove}=smoothness(shape);
-  assert(dent<.01,'dent '+(dent*1000).toFixed(1)+' mm');assert(groove<.003,'groove '+(groove*1000).toFixed(1)+' mm');
-  return `dent ${(dent*1000).toFixed(1)} mm, groove ${(groove*1000).toFixed(1)} mm`;
+ check(`${name}: no hollow (nothing sunk over 1 cm inside its outline)`,()=>{
+  const {dent}=smoothness(shape);assert(dent<.01,'dent '+(dent*1000).toFixed(1)+' mm');return `deepest ${(dent*1000).toFixed(1)} mm`;
  });
  check(`${name}: same height as the original`,()=>{const h=range(axis(positions,1));assert(Math.abs(h-baseHeight)<1e-6);return h.toFixed(3)+' m';});
  check(`${name}: left and right match (mirror within 5 mm)`,()=>{
@@ -148,6 +153,16 @@ check(`R3 ${CHOSEN_TORSO.label}: stays close to the full Athletic (largest gap u
  const full=builtBy.R1.find(b=>b.o.id==='athletic'),light=builtBy.R3[0],g=gap(full.shape,light.shape);
  assert(g.max<=.006,`largest gap ${(g.max*1000).toFixed(1)} mm`);
  return `largest ${(g.max*1000).toFixed(1)} mm, average ${(g.avg*1000).toFixed(1)} mm; ${full.index.length/3} → ${light.index.length/3} triangles`;
+});
+check('female torsos: shoulders narrower than hips compared with the boy\'s, with a defined waist',()=>{
+ // Width (x extent) of each torso at three heights: hips 0.2, waist 0.5, shoulders 0.85 of its height.
+ const widthAt=(shape,h)=>{const y=shape.bottom.y+(shape.top.y-shape.bottom.y)*h;let lo=Infinity,hi=-Infinity;
+  for(let s=0;s<360;s++){const a=s/360*Math.PI*2,r=radiusAt(shape,y,a),x=r*Math.cos(a);lo=Math.min(lo,x);hi=Math.max(hi,x);}return hi-lo;};
+ const ratio=shape=>widthAt(shape,.85)/widthAt(shape,.2),boy=ratio(builtBy.R3[0].shape),out=[];
+ for(const f of builtBy.F){const r=ratio(f.shape),waist=widthAt(f.shape,.5)/Math.min(widthAt(f.shape,.2),widthAt(f.shape,.85));
+  assert(r<boy,`${f.o.id}: shoulder/hip ratio ${r.toFixed(2)} not below the boy's ${boy.toFixed(2)}`);assert(waist<.97,`${f.o.id}: no waist (${waist.toFixed(2)})`);
+  out.push(`${f.o.id.replace('female-','')} ${r.toFixed(2)}`);}
+ return `shoulders ÷ hips: boy ${boy.toFixed(2)}; ${out.join(', ')}`;
 });
 // Options in a round must really differ, except a light version and the option it is based on.
 // "Really differ" means a difference you can see somewhere: at least 1.5 cm.

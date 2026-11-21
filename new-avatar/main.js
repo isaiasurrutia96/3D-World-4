@@ -1,15 +1,17 @@
-// New avatar (version 2): the upper arm and forearm options, side by side.
-// Five sets (avatar-v2/limb-options.js): each an upper arm, the chosen
-// 300-triangle elbow ball and a forearm, hanging straight and separate. Option
-// 1 is a plain capsule; 2 to 5 are athletic arms with an overall capsule shape.
-// "Compare all" frames everything; each set's button moves the camera in on
-// that one and hides the rest. The chosen torso and ball live in
-// torso-variants.js and ball-shape.js. The approved avatar is not used here.
+// New avatar (version 2): the chosen arm and the female torso options.
+// Left: the chosen Athletic arm (avatar-v2/limb-options.js): upper arm, an
+// elbow ball sized from the limbs (slightly thinner than them) and forearm,
+// separate. Right: five female torsos for the girl avatar
+// (avatar-v2/torso-variants.js, FEMALE_OPTIONS). "Compare all" frames
+// everything; each item's button moves the camera in on it and hides the rest.
+// The approved avatar is not used here.
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import torso from '../avatar-v2/torso.json' with {type:'json'};
-import {ARM_OPTIONS,buildArmSet} from '../avatar-v2/limb-options.js';
+import {CHOSEN_ARM,buildArmSet} from '../avatar-v2/limb-options.js';
+import {FEMALE_OPTIONS,makeTorsoOption} from '../avatar-v2/torso-variants.js';
+import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
 const GAP=.3;// metres of space between items, left to right
 const stage=document.querySelector('#stage');
@@ -35,11 +37,13 @@ const geometryOf=({positions,index,normals})=>{
  return g;
 };
 const ARM_TOP=1.3;// height of each upper arm's top end (about shoulder height)
-const items=ARM_OPTIONS.map((option,i)=>{
- const set=buildArmSet(option);
- return {id:option.id,label:option.label,note:option.note,tag:String(i+1),
-  parts:[['upper-arm',set.upper],['ball-elbow',set.ball],['forearm',set.fore]].map(([name,part])=>({name,geometry:geometryOf(part),y:ARM_TOP+part.y}))};
-});
+const arm=buildArmSet(CHOSEN_ARM);
+const items=[
+ {id:'arm-athletic',label:'Arm · Athletic',note:`The chosen arm. The ball is sized from the limbs (${(arm.size.ball*2000/10).toFixed(1)} cm wide, slightly thinner than them), which leaves the limbs longer: upper arm ${(arm.size.upper*100).toFixed(1)} cm, forearm ${(arm.size.fore*100).toFixed(1)} cm.`,tag:'Arm',
+  parts:[['upper-arm',arm.upper],['ball-elbow',arm.ball],['forearm',arm.fore]].map(([name,part])=>({name,geometry:geometryOf(part),y:ARM_TOP+part.y}))},
+ ...FEMALE_OPTIONS.map((option,i)=>({id:option.id,label:option.label,note:option.note,tag:'F'+(i+1),
+  parts:[{name:'torso',geometry:geometryOf(buildTorsoSurface(makeTorsoOption(torso.shape,option,FEMALE_OPTIONS))),y:0}]})),
+];
 let x=0;
 const options=items.map((item,i)=>{
  const group=new T.Group();group.name='item-'+item.id;
@@ -81,8 +85,8 @@ function setFocus(index){
  frame();
  for(const b of document.querySelectorAll('[data-option]'))b.setAttribute('aria-pressed',String(b.dataset.option===(index===null?'all':options[index].id)));
  const o=index===null?null:options[index];
- document.querySelector('#note').textContent=o?o.note:'Five arm options, left to right: each an upper arm, the elbow ball and a forearm. Tap one to look at it closely.';
- document.querySelector('#info').textContent=o?o.triangles.toLocaleString()+' triangles for this set (each limb 504, ball 300)':'Each set: 1,308 triangles';
+ document.querySelector('#note').textContent=o?o.note:'Left: the chosen arm. Right: five female torsos for the girl avatar. Tap one to look at it closely.';
+ document.querySelector('#info').textContent=o?o.triangles.toLocaleString()+' triangles':'Arm 1,308 triangles · each torso 1,568';
 }
 function view(name){viewName=name;frame();for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed',String(b.dataset.view===name));}
 
