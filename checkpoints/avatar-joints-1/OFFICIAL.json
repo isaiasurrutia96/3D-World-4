@@ -1,0 +1,14 @@
+{
+  "version": "approved-joints-2026-11-19",
+  "status": "official",
+  "description": "Original approved body shapes with the approved ball-and-socket joints. Cylinder experiment rejected.",
+  "assetManifest": "assembled-joints/manifest.json",
+  "sha256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+  "parts": 28,
+  "balls": 12,
+  "sockets": 24,
+  "units": "meters",
+  "poseAngles": "degrees",
+  "animationOwner": "Claude",
+  "skeleton": "motion-core/skeleton/bones.js"
+}

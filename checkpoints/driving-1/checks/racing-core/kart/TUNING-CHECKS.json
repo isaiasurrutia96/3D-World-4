@@ -1,0 +1,778 @@
+{
+  "layer": "F1-inspired arcade handling",
+  "rates": [
+    30,
+    60,
+    120,
+    144
+  ],
+  "fixedStep": 0.008333333333333333,
+  "summary": {
+    "passed": 28,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "rule": "The reference acceleration curve reaches the three supplied milestones",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Full throttle from rest for12s on flat dry ground; sample every120Hz tick."
+      },
+      "expected": "62mph in2.6±.15s;124mph in5.2±.15s;186mph in10.5±.2s; exact same results at every FPS.",
+      "measured": [
+        {
+          "fps": 30,
+          "times": {
+            "62": 2.6416666666666666,
+            "124": 5.208333333333333,
+            "186": 10.575
+          }
+        },
+        {
+          "fps": 60,
+          "times": {
+            "62": 2.6416666666666666,
+            "124": 5.208333333333333,
+            "186": 10.575
+          }
+        },
+        {
+          "fps": 120,
+          "times": {
+            "62": 2.6416666666666666,
+            "124": 5.208333333333333,
+            "186": 10.575
+          }
+        },
+        {
+          "fps": 144,
+          "times": {
+            "62": 2.6416666666666666,
+            "124": 5.208333333333333,
+            "186": 10.575
+          }
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Normal and boost caps are explicit and the original controller remains available",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Flat straight: full throttle30s, then one granted boost for2s; all comparison profiles."
+      },
+      "expected": "Normal caps120/150/180mph and boost caps180/200/220mph; no overshoot; exact per-profile rate agreement.",
+      "measured": [
+        {
+          "id": "original",
+          "byRate": [
+            {
+              "fps": 30,
+              "normal": 120,
+              "boost": 180.00000000000003
+            },
+            {
+              "fps": 60,
+              "normal": 120,
+              "boost": 180.00000000000003
+            },
+            {
+              "fps": 120,
+              "normal": 120,
+              "boost": 180.00000000000003
+            },
+            {
+              "fps": 144,
+              "normal": 120,
+              "boost": 180.00000000000003
+            }
+          ]
+        },
+        {
+          "id": "balanced",
+          "byRate": [
+            {
+              "fps": 30,
+              "normal": 150,
+              "boost": 200
+            },
+            {
+              "fps": 60,
+              "normal": 150,
+              "boost": 200
+            },
+            {
+              "fps": 120,
+              "normal": 150,
+              "boost": 200
+            },
+            {
+              "fps": 144,
+              "normal": 150,
+              "boost": 200
+            }
+          ]
+        },
+        {
+          "id": "fast",
+          "byRate": [
+            {
+              "fps": 30,
+              "normal": 180.00000000000003,
+              "boost": 220
+            },
+            {
+              "fps": 60,
+              "normal": 180.00000000000003,
+              "boost": 220
+            },
+            {
+              "fps": 120,
+              "normal": 180.00000000000003,
+              "boost": 220
+            },
+            {
+              "fps": 144,
+              "normal": 180.00000000000003,
+              "boost": 220
+            }
+          ]
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Arcade braking matches the requested stopping window without stacking lift braking",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Start200mph; full independent brake until below60mph."
+      },
+      "expected": "2–3s and120–170m; brake beats Gas/Boost; no powered drag is subtracted twice.",
+      "measured": [
+        {
+          "fps": 30,
+          "seconds": 2.433333333333333,
+          "distance": 129.14528699624148
+        },
+        {
+          "fps": 60,
+          "seconds": 2.433333333333333,
+          "distance": 129.14528699624148
+        },
+        {
+          "fps": 120,
+          "seconds": 2.433333333333333,
+          "distance": 129.14528699624148
+        },
+        {
+          "fps": 144,
+          "seconds": 2.433333333333333,
+          "distance": 129.14528699624148
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Raw F1 braking limits and the requested distance conflict is measured honestly",
+      "input": {
+        "script": "Reference profile with100% stated brake curve from200mph to60mph."
+      },
+      "expected": "Record actual raw-curve result; arcade profile uses80% service strength to meet owner stopping target.",
+      "measured": {
+        "seconds": 1.95,
+        "distance": 103.90470907274214,
+        "rawBrakeStrength": 1,
+        "arcadeBrakeStrength": 0.8
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Lift-off slowing is smooth, stronger at speed and does not reverse a stopped kart",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Start30/90/180mph; no pedals for10s; observe every physics tick."
+      },
+      "expected": "Monotonic speed decrease; high speed slows more; lift rises within.24s; no reverse or rest creep; frame rates agree.",
+      "measured": [
+        {
+          "mph": 0,
+          "quarterSpeed": 0,
+          "peakDecel": 0,
+          "endSpeed": 0
+        },
+        {
+          "mph": 30,
+          "quarterSpeed": 13.062153738340907,
+          "peakDecel": 2.2677319568066423,
+          "endSpeed": 1.625224991416361
+        },
+        {
+          "mph": 90,
+          "quarterSpeed": 38.80655431084884,
+          "peakDecel": 9.624189349810024,
+          "endSpeed": 6.0598682937518635
+        },
+        {
+          "mph": 180,
+          "quarterSpeed": 77.22287461729269,
+          "peakDecel": 21.546263441674114,
+          "endSpeed": 9.37212053551875
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Natural coasting is configurable separately from lift assistance",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Disable lift and powered jerk; start40m/s with no pedals for1s."
+      },
+      "expected": "First-tick deceleration=.3+.0004*40²=.94m/s²; exact FPS agreement; no hidden aerodynamic subtraction.",
+      "measured": {
+        "firstDeceleration": 0.94,
+        "finalSpeed": 39.06705725201202
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Pedals and steering retain real analog strength",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Use25%,50%,100% throttle for1s; independent analog braking from40m/s."
+      },
+      "expected": "Larger inputs produce larger acceleration/braking; no digital threshold in the physics; clamp inputs safely.",
+      "measured": [
+        {
+          "input": 0.25,
+          "speed": 2.433313891499132,
+          "brakeSpeed": 35.14475887813217
+        },
+        {
+          "input": 0.5,
+          "speed": 5.063371897171853,
+          "brakeSpeed": 30.86252244328065
+        },
+        {
+          "input": 1,
+          "speed": 10.013749020135672,
+          "brakeSpeed": 24.104685361555816
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Steering builds and recentres within the configured times without rotating at rest",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "At rest steer fully for.7s then release for.2s. Separately start10m/s and steer for one tick."
+      },
+      "expected": "Full normalized wheel input within the configured .5s low-speed rise; zero after .14s release; stationary yaw stays fixed; moving yaw changes gradually.",
+      "measured": [
+        {
+          "fps": 30,
+          "firstYaw": -0.000006833867986886532
+        },
+        {
+          "fps": 60,
+          "firstYaw": -0.000006833867986886532
+        },
+        {
+          "fps": 120,
+          "firstYaw": -0.000006833867986886532
+        },
+        {
+          "fps": 144,
+          "firstYaw": -0.000006833867986886532
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Left/right motion is mirrored and response changes through forces",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "At30m/s drive±.35 steering for3s, then countersteer for1s."
+      },
+      "expected": "Equal speed; mirrored X/yaw; independent travel direction; no instant yaw match or numeric oscillation.",
+      "measured": {
+        "x": -93.02399937348076,
+        "yaw": -0.8653528668455596,
+        "lateralSpeed": 0.08131783558363637
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Known-radius demands use v²/r rather than a per-corner fixed speed",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Circles15/50/100/150/200m at30/65/110/160/180mph. Maintain target speed with proportional throttle; observe final3s of8s."
+      },
+      "expected": "For feasible commanded wheel angles, measured travel curvature yields sideways force within15% of v²/r; same FPS trace.",
+      "measured": [
+        {
+          "radius": 15,
+          "mph": 30,
+          "required": 11.990685695999998,
+          "measured": 12.094123823843532,
+          "maxSpeedError": 0.057769041549372346
+        },
+        {
+          "radius": 50,
+          "mph": 65,
+          "required": 16.8868823552,
+          "measured": 16.93658517898475,
+          "maxSpeedError": 0.04277369085346905
+        },
+        {
+          "radius": 100,
+          "mph": 110,
+          "required": 24.181216153599998,
+          "measured": 24.19097196478539,
+          "maxSpeedError": 0.009970244671016815
+        },
+        {
+          "radius": 150,
+          "mph": 160,
+          "required": 34.10683931306666,
+          "measured": 33.98327159835158,
+          "maxSpeedError": 0.12961600660281647
+        },
+        {
+          "radius": 200,
+          "mph": 180,
+          "required": 32.3748513792,
+          "measured": 32.245718213604064,
+          "maxSpeedError": 0.16058340683181882
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Over-demanded turns slide progressively instead of following a forced circle",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "At30m/s demand30deg steering with an intentionally uncapped test profile for2s."
+      },
+      "expected": "Travel curvature remains grip-limited; slip grows over time; body and travel directions separate; same FPS states.",
+      "measured": {
+        "maximumSlip": 8.32959050975489,
+        "maximumSideAcceleration": 40.62097253905419,
+        "slipAngle": -1.3925989844884243
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Braking and cornering share the same tire budget",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Start60m/s, brake and steer hard for2s; recompute ellipse independently each tick."
+      },
+      "expected": "Applied acceleration ellipse≤1+1e-10 using each tick’s independently recomputed input-speed limits; cannot produce both maxima.",
+      "measured": {
+        "maximumEllipse": 1.000000000000018,
+        "maximumBrakeDuringTurn": 3.073223125439907
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Traction assistance is adjustable separately from the tire limits",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "At14m/s hold full throttle/steer for2s, assist0 compared with1; disable optional response shaping to isolate the tire-force comparison."
+      },
+      "expected": "Same tire limits; assistance reduces excess demand/slip; no automatic drift/boost.",
+      "measured": [
+        {
+          "assistance": 0,
+          "integratedSlip": 3.2442319023373383,
+          "endSpeed": 34.57220545942063
+        },
+        {
+          "assistance": 1,
+          "integratedSlip": 0.6570600760952832,
+          "endSpeed": 34.48559973690483
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Pure steering cannot create kinetic energy",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Disable all coast/lift resistance; start50m/s; alternate steering for20s without Gas."
+      },
+      "expected": "Every tick speed² never rises beyond1e-8; exact FPS agreement.",
+      "measured": {
+        "maximumEnergyGain": 4.547473508864641e-13,
+        "endSpeed": 49.99593930342197
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Reverse is limited and braking cannot turn into unintended reverse",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Reverse from rest5s, independent brake3s, forward5s, reverse request10s."
+      },
+      "expected": "Reverse reaches5.6m/s cap; brake stops; forward/reverse cross zero safely; no cap violations.",
+      "measured": {
+        "reverseSpeed": -5.6
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Boost release, braking and expiry remain controllable",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Boost-only from140mph for.5s, release both pedals.5s, brake1s, then Gas5s. Separately hold Boost10s."
+      },
+      "expected": "Release slows during active timer; brake overrides; held Boost grants once; expiry returns gradually to180mph.",
+      "measured": [
+        {
+          "fps": 30,
+          "before": 73.54795427534212,
+          "after": 68.74678474563275,
+          "maxDrop": 0.06666666666666288
+        },
+        {
+          "fps": 60,
+          "before": 73.54795427534212,
+          "after": 68.74678474563275,
+          "maxDrop": 0.06666666666666288
+        },
+        {
+          "fps": 120,
+          "before": 73.54795427534212,
+          "after": 68.74678474563275,
+          "maxDrop": 0.06666666666666288
+        },
+        {
+          "fps": 144,
+          "before": 73.54795427534212,
+          "after": 68.74678474563275,
+          "maxDrop": 0.06666666666666288
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Surface changes are smooth numeric hooks without world/animation coupling",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Synthetic surface changes atz=30: grip.65, speed.7,resistance2. Straight and steering runs."
+      },
+      "expected": "Multipliers approach supplied values continuously in~.15s; no abrupt speed cap; no unsupported world imports.",
+      "measured": {
+        "maximumGripStep": 0.01891418588263205,
+        "final": {
+          "fingerprint": "kart-v1-025c0e69a91e540a",
+          "throttle": 1,
+          "brake": 0,
+          "lift": 0,
+          "steerInput": 0,
+          "yawRate": 0,
+          "driveAcceleration": 0,
+          "recoveryDeceleration": 0,
+          "gripMultiplier": 0.6500000000001244,
+          "surfaceSpeedMultiplier": 0.7000000000001065,
+          "surfaceResistanceMultiplier": 1.999999999999645,
+          "longitudinalLimit": 23.94970656407923,
+          "lateralLimit": 47.44334610298297,
+          "acceleration": 0,
+          "brakingG": 0,
+          "lateralG": 0,
+          "tireSlip": 0,
+          "slipAngle": 0,
+          "tireUtilization": 0,
+          "steeringLimit": 0.03034618834332181
+        }
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Airborne controls cannot create tire forces or turn the kart in midair",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Starty=100 with30m/s forward and3m/s lateral, unsupported; Gas/Brake/steer/Boost for1s."
+      },
+      "expected": "Horizontal momentum preserved until landing; no air yaw from tires; shared gravity still acts.",
+      "measured": {
+        "speed": 30,
+        "lateral": 3.0000000000000027,
+        "y": 88.9083333333333
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "All tuned state is immutable, isolated and resettable",
+      "input": {
+        "script": "Mutate nested handling; reset after mixed inputs; run custom and standard karts independently."
+      },
+      "expected": "Mutation rejected; reset clears all response/slip/boost/contact timers; caller data and other kart unaffected.",
+      "measured": {
+        "resetSpeed": 0,
+        "resetSlip": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Failed surface, input or contact adapters roll back a whole frame atomically",
+      "input": {
+        "script": "Throw after first valid tick of a.25s frame; compare state/clock/boost latch with untouched control."
+      },
+      "expected": "No partial state/clock changes; next valid advance matches a fresh controller exactly.",
+      "measured": {
+        "adapters": 3,
+        "rollback": "atomic"
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Jitter, catch-up and144Hz sub-tick boost pulses use one120Hz clock",
+      "input": {
+        "script": "Mixed controls12s at30/60/120/144FPS and jitter; queue a2ms boost pulse."
+      },
+      "expected": "Identical1440 authoritative ticks and all state values; pulse retained exactly once.",
+      "measured": {
+        "ticks": 1440,
+        "jitterFrames": 207,
+        "pulseBoostTime": 1.9916666666666667
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "A seeded five-minute stress trace stays finite, bounded and deterministic",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Seed0x20261120;2400 input changes, every15ticks;5min per rate."
+      },
+      "expected": "No nonfinite state or tire limit violation; no speed above220mph; all rates produce exactly the same state.",
+      "measured": {
+        "secondsPerRate": 300,
+        "ticksPerRate": 36000,
+        "maxSpeedMPH": 220.00000000000006,
+        "maxSlip": 0.2955648719917
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "220mph contacts cannot tunnel through thin rails from either side",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Start±5m facing.1075m-thick wall; full Gas+granted Boost1s."
+      },
+      "expected": "Kart remains on its original side with capsule clearance; exact rate agreement.",
+      "measured": [
+        {
+          "side": -1,
+          "minimumClearance": 9.999999991266995e-8,
+          "endX": -1.5837500999999998
+        },
+        {
+          "side": 1,
+          "minimumClearance": 9.999999991266995e-8,
+          "endX": 1.5837500999999998
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Tuned pair contacts share one solver without profile contamination",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Two karts approach head-on at220mph; one fast, one balanced;1s and a second case8m apart vertically."
+      },
+      "expected": "No crossing/persistent overlap; different profiles remain attached; upper deck does not collide.",
+      "measured": {
+        "contacts": 1,
+        "lowerZ": -1.7852223983939695,
+        "upperZ": 1.7852223983939695,
+        "separateDeckContacts": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Driving tests keep all tracks and clean lifecycle with an explicit profile",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "For every track, drive1s, reset, select another track; no race/NPC/avatar construction."
+      },
+      "expected": "One checked kart, stable profile identity, clean clocks; original remains default for existing callers.",
+      "measured": [
+        {
+          "id": "original",
+          "speed": 10.013749020135641,
+          "grounded": true
+        },
+        {
+          "id": "skyline",
+          "speed": 10.013749020135668,
+          "grounded": true
+        },
+        {
+          "id": "suzuka",
+          "speed": 10.013749020135629,
+          "grounded": true
+        },
+        {
+          "id": "winding",
+          "speed": 10.013749020135606,
+          "grounded": true
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "rule": "Mismatched profiles and malformed surface values fail before state can be corrupted",
+      "input": {
+        "script": "Supply tuned state to legacy or a different profile; query null/array/NaN/negative surface data."
+      },
+      "expected": "Reject all invalid boundaries and preserve controller state/clock.",
+      "measured": {
+        "rejected": 8
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "A stopped kart can steer away from a rail under held Gas",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Start touching a wall at90degrees, hold Gas+Right5s."
+      },
+      "expected": "Turns away and resumes movement without tunnelling; same rate state.",
+      "measured": {
+        "endX": -3.9240013728722953,
+        "endSpeed": 10.073662280674174,
+        "endYaw": -6.060308429802275
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Moving the same scenario elsewhere or rotating the world does not alter handling",
+      "input": {
+        "fps": [
+          30,
+          60,
+          120,
+          144
+        ],
+        "script": "Mixed pedals/steering8s; compare origin with offset(1000,-700),yaw1.234radians."
+      },
+      "expected": "World trajectory rotates/translates correctly; speed, slip and steering agree within1e-8, identically across FPS.",
+      "measured": {
+        "maximumWorldTransformError": 4.802175626649179e-12
+      },
+      "status": "PASS"
+    }
+  ]
+}

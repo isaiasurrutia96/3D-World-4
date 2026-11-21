@@ -1,0 +1,103 @@
+{
+  "name": "Avatar checkpoint 2",
+  "approved": true,
+  "saved_on": "2026-11-17",
+  "tag": "avatar-checkpoint-2-2026-11-17",
+  "previous_checkpoint": "avatar-approved-2026-11-17",
+  "source_base_commit": "58ed6491de649c6364e954d2a02bea12d27ca184",
+  "avatar_revision": "f2375fb194d941c52b4de03d1063698aa9d7f520",
+  "preview_url": "https://isaiasurrutia96.github.io/3D-World-4/checkpoints/avatar-2/",
+  "editable_assembly": "avatar-lab/src/avatar.js",
+  "viewer_sha256": "2e2c44ec800568e7805d9c46453bce7d2aee800dbfdc6dc82d997e82df5436b7",
+  "design": {
+    "color": "#b9b2a6",
+    "mesh_count": 16,
+    "standing_height_m": 1.8945200003385545,
+    "preserved_upper_body_meshes": 11,
+    "feet": "rounded with medial big-toe sweep, opposite side mirrored",
+    "calves": "rigid body, flex confined to socket lip",
+    "ankle_socket_depth_m": 0.024,
+    "ankle_socket_clearance_m": 0.0006,
+    "hand_poses": [
+      "rest",
+      "relax",
+      "open",
+      "curl",
+      "point"
+    ],
+    "foot_poses": [
+      "rest",
+      "point",
+      "flex",
+      "toes",
+      "tiptoe"
+    ],
+    "fingers_together_in_playback": true,
+    "mobile_controls": true
+  },
+  "validation": {
+    "assembled_model_and_controls": "avatar-lab/tests/browser.mjs",
+    "rigid_calves_and_socket_fit": "foot-lab/tests/browser.mjs",
+    "hand_shape_and_motion": "hand-lab/tests/browser.mjs",
+    "full_assembly_verified_at": "7cb430fded4300ecafc0344c38944e0acc47a5f2",
+    "latest_playback_fix_mobile_verified_at": "5d27a4dc0c9d25f16d74368df3608015051984ab"
+  },
+  "scope": "Saved assembled avatar and motion viewer. Full-body walking, leg IK, locomotion foot locking and jumping/landing remain separate work.",
+  "source_sha256": {
+    "avatar/src/approved-avatar.js": "0fffb9eb3cd524666a0b267912e60e0dc6844cbab51093708d976f231fcc1d86",
+    "avatar/src/avatar-viewer/main.js": "6606a3c53c79c86212e9c6e52208726ee5a78c22e387e0542f54223afd6e0087",
+    "avatar/src/avatar-viewer/shell.html": "282990ac28c86ff3907c022a7cd1e50bf99cde882e63aeced90b0ea9f3bdf209",
+    "avatar/src/hand-study/assembly.js": "a931c87ad8b14249f20a680bb3112616f2260b4249be2697f621b0c5518eccc9",
+    "avatar/src/hand-study/ease-digit-sweep.js": "029a24a67cb949d54f5592467c6e8a75b518fcb99914199684cc9f1f1acbca33",
+    "avatar/src/hand-study/fit-socket.js": "83920ec28dbe806f054260788e5ab6b69e784fe64c0368fc6630f748a62d02c9",
+    "avatar/src/hand-study/hand.js": "9da9c72cd97b75d4f7b525a590d94757d5c49c5aa29c88840ca028f72ae5e2dd",
+    "avatar/src/hand-study/lengthen-digits.js": "5822568132beb054d495da419cb9f08ddb892dd96f9619e7905d13cf7dc301be",
+    "avatar/src/hand-study/reference-outline.js": "4da4457387cdbbf2b8d678670547c4f10a3fb2017888ac9c620dedc24080b2c4",
+    "avatar/src/hand-study/resting-digits.js": "1825634f09f1f637c04fcc97336ca0cb99aed665912c96a9274b975011523660",
+    "avatar/src/hand-study/soften-thumb.js": "9cc5e0ef1e6a53930840c25bcf6c41162779967ecf9ad0bc50b0fd800c79df25",
+    "avatar/src/hand-study/surface.js": "12ee4d8545acc787536d611ef18e95d5f5f9e2435197cf90e162c689623ccf5a",
+    "avatar/src/reference/PlayerModel.ts": "91fa642b962d78c1e0e294b1f7bdb1b77d932df0bfe5ece4034de4c1ba72c470",
+    "avatar-lab/build.mjs": "7576fdb83bc296134bc3ffb5895aea91640afdaaa2f04f6e7b77ef54f646c802",
+    "avatar-lab/shell.html": "7ffa5f8c945bcb0e16e6086ad555daede4883f88ff58ee8b2115641fcb86be56",
+    "avatar-lab/src/avatar.js": "d6705cf35ef17c0903623b435ce24c9efb83289b2e859051cc36daed9e8313ce",
+    "avatar-lab/src/main.js": "b4c54287d6789884e1740086145c04e52c8aedf9aa5894fce6ddb17830f8d9e7",
+    "foot-lab/src/ankle-socket.js": "a2ef6590402230227bae1059d1ce0e84ca0e65328672038e9cd8b3ffac0f7839",
+    "foot-lab/src/calf.js": "e9cf847c73fc47f1d75c6bce3cff5b679f91b79d0457c8a0c9a3e9cf91bd86cc",
+    "foot-lab/src/foot-rig.js": "740c40a8334d161204c622257cc84d7776658ce5dcbcf778afd5c834b4e79fe2",
+    "foot-lab/src/foot-shape.js": "7f6092d1e34da42b520c5e20a64df2b8cd48a2690d315e6e99352d5e726e92b0",
+    "foot-lab/src/main.js": "db71a7778644276b28e23f5fa3dc34680afe0e668819203dfbc47a32d6389ae0",
+    "hand-lab/src/capture-rest.js": "77965881e0650a4a6b1f314f764fbcb7e7d4eba847f8e4e74736a723c31404b6",
+    "hand-lab/src/hand-rig.js": "292cdf4220f34b9e0020258c41b89181f7a8cacbe1790ee619e07c327711998a",
+    "package-lock.json": "094c58c1e334631b9aae8c9d1ea3da4a35cab1d8e54b334339f4943bcc992a49",
+    "package.json": "243d6a4c13b5c6148286e26e1ece73f01d27d5d7f3b1d149195bb0993696b694",
+    "scripts/build-checkpoints.mjs": "c02e5780bb7eda676a29026f3c3790d145b19c6b432007af7c6cfb0375d2cc16"
+  },
+  "updated_on": "2026-11-18",
+  "updates": [
+    {
+      "date": "2026-11-18",
+      "approved_by_owner": true,
+      "change": "Both hands rest turned 8 degrees at the wrist (fingertips slightly forward), each about its wrist ball so it stays cradled in the forearm socket. Nothing else on the avatar changed.",
+      "source": "avatar-lab/src/avatar.js HAND_TILT_DEGREES",
+      "checks": "tests/avatar/hand-tilt.mjs",
+      "updated_at_commit": "f2375fb194d941c52b4de03d1063698aa9d7f520"
+    },
+    {
+      "date": "2026-11-18",
+      "approved_by_owner": true,
+      "change": "The torso is now two pieces, a chest and a pelvis, joined by a ball-and-socket waist so the chest can turn on the hips (±35°). The outer shape is the approved torso's except a thin 4 mm seam at the waist.",
+      "source": "avatar-lab/src/torso-split.js",
+      "checks": "tests/avatar/torso-split.mjs",
+      "updated_at_commit": "0059f40f1ea9f0c0bf8dc61f161b02cab26c08ca"
+    },
+    {
+      "date": "2026-11-18",
+      "approved_by_owner": true,
+      "change": "Chest bending approved: the chest bends forward (up to 15°) and twists (±15°) softly as one smooth piece, on a new upper-chest bone. The clay shape at rest is unchanged, so the saved viewer (index.html) is unchanged.",
+      "source": "avatar-lab/src/chest-bend.js, motion-core/skeleton/bones.js",
+      "checks": "tests/avatar/chest-bend.mjs",
+      "updated_at_commit": "457925c"
+    }
+  ],
+  "tag_note": "The tag avatar-checkpoint-2-2026-11-17 still marks the original 17 Nov version; this in-place update (same checkpoint name) is recorded under 'updates'."
+}

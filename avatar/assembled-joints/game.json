@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "mode": "game",
+  "asset": "game-cca1d05f83501637.bin.gz",
+  "bytes": 2024813,
+  "sha256": "cca1d05f83501637f0de0497a55922e796923a0025569fd73d43635945c960a4",
+  "sourceSHA256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+  "triangles": 28892,
+  "sourceTriangles": 3586000,
+  "bodyShare": 0.07,
+  "ballShare": 0.2,
+  "budgets": {
+    "upper-arm": 1500,
+    "forearm": 800,
+    "thigh": 2200,
+    "calf": 2200,
+    "hand": 2000,
+    "foot": 1000,
+    "chest": 2500,
+    "pelvis": 1500,
+    "ball": 300
+  },
+  "maxError": 0.04
+}

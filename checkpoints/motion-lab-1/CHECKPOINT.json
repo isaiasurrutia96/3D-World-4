@@ -1,0 +1,49 @@
+{
+  "name": "Universal Motion Lab checkpoint 1",
+  "approved": true,
+  "saved_on": "2026-11-17",
+  "tag": "motion-lab-checkpoint-1-2026-11-17",
+  "source_base_commit": "862a61a414510c956c1eff051c43e40f6967e140",
+  "preview_url": "https://isaiasurrutia96.github.io/3D-World-4/checkpoints/motion-lab-1/",
+  "viewer_sha256": "076bc1db3042b5ff9b8ce97b933a6fae2b9f67505ab388dd359453fe0454ba57",
+  "scope": "Code-first universal marker test template; placeholder visuals. No avatar or motion-core edits.",
+  "design": {
+    "layout": "sticky title, section, Behind/Front/Side/Top/Angled and Reset; full-screen stage; Test videos cards below",
+    "background": "#405363",
+    "floor": "solid off-white #eeeae2; no grid; lighter than clay #b9b2a6",
+    "shared_template": "motion-lab/src/page.js; configure only title/section/videos in src/main.js",
+    "shared_input": "motion-lab/src/input.js",
+    "keyboard": "ESDF/arrows move; JLIK look",
+    "mouse": "drag look; wheel zoom",
+    "touch": "floating analog left stick, right look, pinch zoom, simultaneous move/look",
+    "gamepad": "browser standard mapping; left analog move, right look; radial dead zone 0.12",
+    "movement": "createMoveController -> advance(frameSeconds, moveX, moveZ), scaled world-space vector; read x/z/facing/speed/mode",
+    "marker": "disc with facing arrow; camera follows marker"
+  },
+  "validation": {
+    "browser_suite": "npm run test:motion-lab",
+    "passed": "ESDF/arrows, JLIK, mouse drag/wheel, touch analog/right-look/pinch, three standard gamepad identities with analog strength/deadzone/look/disconnect, five camera views, Reset, sticky header, five device layouts, video playback/seeking, no page errors",
+    "gamepad_scope": "Gamepad API simulated in browser tests; physical devices not available",
+    "motion_core": "source SHA-256 unchanged; npm run test:motion-core completes (old external comparison repo unavailable)",
+    "video_capture": "actual shared keyboard and gamepad input through motion-core; 3-second MP4 clips",
+    "frozen_smoke": "Passed keyboard movement, Reset and local video playback; no page errors or requests outside the checkpoint."
+  },
+  "files_sha256": {
+    "index.html": "076bc1db3042b5ff9b8ce97b933a6fae2b9f67505ab388dd359453fe0454ba57",
+    "videos/analog.mp4": "f5f1f1fa3e0408e6308b4cc17988ce913f86a63a24be0fe2dfdde0efaa83e8d0",
+    "videos/direction.mp4": "e13f1a2c3bb89506802d5afb780440b8f71450fd21e5ffffa2653e53cb0b5a32"
+  },
+  "source_sha256": {
+    "motion-lab/src/main.js": "91976b92fd40b91e94cb8c01d40c864a79f286ab0d120c98349ce22265f4922b",
+    "motion-lab/src/page.js": "9acc18ffb67882d205313158a039185c225216837136a4e3c9f65af28d2912c5",
+    "motion-lab/src/input.js": "8f386509cc35482c3f6003ce55b24f10140c43d7b74017fadf9240f8947a26f8",
+    "motion-lab/shell.html": "f383c0d5ff81a331006e32f9574f1e1b8d4f9a0273415483c0a59c2d33a89dec",
+    "motion-lab/build.mjs": "6a2cc240d46b1292d2bd27caeddfe01f750947aac239143de5e613186c0e828c",
+    "motion-lab/test.mjs": "5203a86bbcbc6fa2ec3bf77c68805f200e44dd911e54a49d27d52f4ff000dbad",
+    "motion-lab/capture.mjs": "e98b7aec01a0e5c73d69e66e83a62dc73c6e342549db5f973c7c1f79fade55fa",
+    "package.json": "c1ab0b73434dbef926d22c9c21c1dc00bae4149c3ab665a15d482e20bf96ce67",
+    "package-lock.json": "094c58c1e334631b9aae8c9d1ea3da4a35cab1d8e54b334339f4943bcc992a49",
+    "motion-core/controller.js": "809fd27e33cfd2742021ef0f09e17a24fd2e28ca78a00472ab84d5de269e25d0",
+    "motion-core/tuning.js": "0661b325f76c833b92553bb2a0aa476de3daa1df3af3ff5639be59f08807b1d1"
+  }
+}

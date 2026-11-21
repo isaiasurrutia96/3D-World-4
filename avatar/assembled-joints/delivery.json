@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "asset": "delivery-46ecd0edf2e3c07b.bin.gz",
+  "bytes": 19962239,
+  "sha256": "46ecd0edf2e3c07be6044106c0501cf9d2926a2faf2edd29428125b229152ecc",
+  "sourceAsset": "parts-4d3988607a0d4159.json.gz",
+  "sourceSHA256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+  "exactSource": true,
+  "mirroredArrays": 18,
+  "metadataBytes": 4347451,
+  "encodedPayloadBytes": 25897600
+}

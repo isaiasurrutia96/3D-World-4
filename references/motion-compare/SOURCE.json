@@ -1,0 +1,61 @@
+{
+  "sourceAnimation": "Same original SM64 animation 0x48 as the existing Mario reference",
+  "revision": "9921382a68bb0c865e5e45eb594d9c64db59b1af",
+  "avatarCheckpoint": "avatar-checkpoint-2-2026-11-17",
+  "sync": "Each angle uses a single composite video pairing frame f with frame f; camera switching preserves time, pause state and playback rate. Avatar refinements: forward lean, closer and 15% smaller arm swing, relaxed running hand clench, and articulated toe push-off.",
+  "sourceFrames": 77,
+  "cycleSeconds": 0.8555555555555555,
+  "sampledPoses": 154,
+  "maxLegDirectionError": 7.217200222535609e-16,
+  "maxElbowSagittalErrorRadians": 1.4432899320127035e-15,
+  "swingAmplitudeRatios": [
+    0.8499997155399435,
+    0.8500003268095346
+  ],
+  "runningHandPose": {
+    "index": 0.5,
+    "middle": 0.52,
+    "ring": 0.54,
+    "little": 0.56,
+    "thumb": 0.4,
+    "opposition": 0.08,
+    "together": 0.4
+  },
+  "maxFingerMoveMetersInHandSpace": 0.039416048439121616,
+  "independentGrips": true,
+  "meanArmSpreadRatio": 0.33615605866087017,
+  "maxBoneError": 2.7755575615628914e-16,
+  "maxToeBendDegrees": [
+    30,
+    30
+  ],
+  "forwardLeanDegrees": [
+    7.591736634339842,
+    8.41790850562583
+  ],
+  "heightScale": 0.020666666532174135,
+  "measuredBones": [
+    {
+      "side": -1,
+      "upper": 0.42000000000000004,
+      "lower": 0.3859999947547912
+    },
+    {
+      "side": 1,
+      "upper": 0.42000000000000004,
+      "lower": 0.3859999947547912
+    }
+  ],
+  "mode": "Same source timing and leg poses, with forward torso lean and arms tucked closer to the sides with 15% less swing, keeping their rhythm. Relaxed running hand curl is independent of arm motion and future object grips. Ball-of-foot bend during push-off; original hip-bounce curve. In-place comparison before locomotion integration.",
+  "sha256": {
+    "side.mp4": "4b620cdc7e6a79e39098e31974bd224cd60583bf88171535e1ce5a1dffec40f9",
+    "side-slow.gif": "18d05acf95bb404dc0c6ec0e5592ecff968707558ae06a6ef5bdcbf8bb7ec513",
+    "side-poster.jpg": "47ad6480de1f0fa7a08a3350e15cb0142e3748cbcbb291545dad816679f18897",
+    "front.mp4": "9087375b996ab17e8b15777836c88d0a0cb6ffc3db146921d80a2800a23b2a11",
+    "front-slow.gif": "25c58de2eb1f8a3d59426cf1eb6262a132f8ae37b4ed0a247ec2bbc2cd1da09c",
+    "front-poster.jpg": "0c014c64ec93c8464d13c0d0ced9babf51ccc4bcbcec76577e75fcc185eb4c32",
+    "feet.mp4": "290fa8dbad3b221f9ace15c808ed9b095754374905401b133af5576a188cb944",
+    "feet-slow.gif": "715870bf886774eff6994448322c45fb763f0208b16198d6a657f2abfc38a074",
+    "feet-poster.jpg": "0899863a790bd5451f59973939878673bcdf10e342e12c0e715ffdc9a0ae69d8"
+  }
+}

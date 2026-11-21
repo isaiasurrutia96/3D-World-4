@@ -1,0 +1,51 @@
+{
+  "avatarCheckpoint": "avatar-checkpoint-2-2026-11-17",
+  "sourceAnimation": {
+    "repository": "n64decomp/sm64",
+    "revision": "9921382a68bb0c865e5e45eb594d9c64db59b1af",
+    "animation": "MARIO_ANIM_WALKING (0x48)"
+  },
+  "adaptation": "Original step timing, foot recovery progression and shoulder/elbow curves. Stride, hip height, clearance and IK use the saved avatar’s measured bones. Contact targets are fixed in world space. No original Mario meshes or textures. Not yet integrated into joystick locomotion.",
+  "cycleSeconds": 0.8555555555555555,
+  "fullCycleTravelMeters": 0.8462999944925308,
+  "speedMetersPerSecond": 0.9891818117445166,
+  "measuredLegBones": [
+    {
+      "side": -1,
+      "upper": 0.42000000000000004,
+      "lower": 0.3859999947547912
+    },
+    {
+      "side": 1,
+      "upper": 0.42000000000000004,
+      "lower": 0.3859999947547912
+    }
+  ],
+  "standingHipMeters": 0.9695200015306472,
+  "metrics": {
+    "maxPlantedSlide": 0,
+    "maxPlantedVerticalError": 3.469446951953614e-17,
+    "maxIKError": 2.7755575615628914e-16,
+    "maxReachExcess": 0,
+    "minHip": 0.9264226079874024,
+    "maxHip": 0.9675601240563116,
+    "minStanceKnee": 0.06547977737584976,
+    "maxStanceKnee": 0.7263499170966847,
+    "maxSwingKnee": 1.1980117799715473
+  },
+  "elbowRangesRadians": [
+    {
+      "min": -0.771035226408972,
+      "max": -0.5436759044057544
+    },
+    {
+      "min": -0.5955478242748548,
+      "max": -0.47863515894681935
+    }
+  ],
+  "sha256": {
+    "walk.mp4": "3dcbd925a741e57600afc12cba88ab5942636977d4f845baea953dd9d8e7919f",
+    "walk-slow.gif": "9cbbaed8811a1f47edb0d4cfbf6b5f075e55c73105801bc36cea4de3a010bde5",
+    "poster.jpg": "c86ea98117acabfe72cbc5c37006034c77c220cef3418324ef1f63d77b522b00"
+  }
+}
