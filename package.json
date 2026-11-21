@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:wrist-lab && npm run build:elbow-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints && npm run build:run-test && npm run build:walk-test && npm run build:motion-core-test && npm run build:racing-lab && npm run build:skeleton-test && npm run build:new-avatar",
+    "build": "tsc --noEmit && vite build && npm run build:hand-lab && npm run build:foot-lab && npm run build:wrist-lab && npm run build:elbow-lab && npm run build:avatar-lab && npm run build:avatar-test && npm run build:motion-lab && npm run build:checkpoints && npm run build:run-test && npm run build:walk-test && npm run build:motion-core-test && npm run build:racing-lab && npm run build:skeleton-test && npm run build:new-avatar && npm run build:karts",
     "preview": "vite preview",
     "build:hand-lab": "node hand-lab/build.mjs",
     "test:hand-lab": "node hand-lab/tests/browser.mjs",
@@ -31,6 +31,9 @@
     "build:run-test": "node run-test/build.mjs",
     "build:skeleton-test": "node skeleton-test/build.mjs",
     "build:new-avatar": "node new-avatar/build.mjs",
+    "build:karts": "node karts/build.mjs",
+    "test:karts": "node --test kart-parts/check.mjs",
+    "test:karts-browser": "node kart-parts/browser.mjs",
     "test:new-avatar": "node avatar-v2/check-torso.mjs && node avatar-v2/check-ball.mjs && node avatar-v2/check-limbs.mjs && node avatar-v2/check-head.mjs && node avatar-v2/check-face.mjs && node avatar-v2/check-assembly.mjs",
     "test:torso": "node tests/avatar/torso-split.mjs",
     "test:chest": "node tests/avatar/chest-bend.mjs",

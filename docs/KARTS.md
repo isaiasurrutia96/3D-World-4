@@ -72,3 +72,10 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
 
 1. Exact part list per mode, prices, rarity and how parts are unlocked are
    not decided.
+
+## F. Build progress
+
+1. (21 November) **Chunk 1 built, waiting for owner review:** the kart parts
+   system (`kart-parts/`) and the GoKart's real chassis with see-through boxes
+   where its body parts go, in the Test Lab section "Karts" beside the
+   unchanged main kart. Next chunk: the GoKart body, after the owner's Go.
