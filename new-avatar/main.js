@@ -14,7 +14,7 @@ import torso from '../avatar-v2/torso.json' with {type:'json'};
 import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
 import {drawFace} from '../avatar-v2/face.js';
-import {assemble,BODIES} from '../avatar-v2/assembly.js';
+import {assemble,shoulderPreview,BODIES} from '../avatar-v2/assembly.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
 const GAP=.3;// metres of space between items, left to right
@@ -60,6 +60,8 @@ function paintFace(group,head,face){
  decal.name='face';group.add(decal);
 }
 const GROUPS=[
+];
+const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder for now)
  {id:'assembly',label:'Assembly',intro:'The chosen parts put together, boy and girl. "At the joints": shoulder and hip balls sit where the skeleton turns the limbs, partly inside the torso. "Resting": pushed out until they just clear the torso (wider shoulders, longer legs). Hands and feet come next.',
   items:Object.keys(BODIES).flatMap(bodyId=>['joints','resting'].map(placement=>{const a=assemble(bodyId,placement),name=BODIES[bodyId].label;
    return {id:`${bodyId}-${placement}`,label:`${name} · ${placement==='joints'?'At the joints':'Resting'}`,tag:`${name} ${placement==='joints'?'A':'B'}`,face:a.face,
@@ -72,6 +74,11 @@ const GROUPS=[
  {id:'legs',label:'Legs',intro:'The chosen Strong legs (boy) and the girl\'s version, 8% slimmer.',
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
+const preview=shoulderPreview('boy');
+GROUPS.push({id:'shoulder',label:'Shoulder',intro:'The boy\'s torso, one shoulder ball and the approved upper arm, exactly as you approved it (24.5 cm, same shape).',
+ items:[{id:'shoulder-boy',label:'Torso · shoulder · upper arm',tag:'Boy',note:`Shoulder ball ${(preview.shoulderBall*200).toFixed(1)} cm wide on the skeleton's shoulder joint; the upper arm hangs one gap below it, unchanged at ${(preview.upper.length*100).toFixed(1)} cm. Keeping its full length puts its lower end ${(preview.lowerBy*100).toFixed(1)} cm lower than before.`,
+  parts:preview.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
+
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
 let widest=0;
 for(const group of GROUPS){

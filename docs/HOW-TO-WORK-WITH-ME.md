@@ -48,6 +48,13 @@ how it should feel), and even then, bring me options to react to.
    where they help.
 3. My questions are a central part of the work, never an interruption.
 
+## D2. Never change what I approved without asking (added 21 November 2026)
+
+Once I have approved a part (its shape, size or length), never reshape,
+resize or shorten it on your own, even if a later step seems to need it.
+If something new does not fit with an approved part, stop, show me the
+problem and the options, and let me decide.
+
 ## E. Nothing I say is a permanent rule
 
 Treat what I say as the best choice for that moment, not a law. Decisions

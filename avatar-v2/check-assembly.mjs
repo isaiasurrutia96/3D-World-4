@@ -4,8 +4,8 @@
 // never inside the torso, every part sealed, and the whole body within budget.
 // Usage: node avatar-v2/check-assembly.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {assemble,insideTorso,BODIES,PLACEMENTS} from './assembly.js';
-import {thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
+import {assemble,insideTorso,shoulderPreview,BODIES,PLACEMENTS} from './assembly.js';
+import {buildLimbShape,CHOSEN_ARM,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 import {CHOSEN_FACE,faceShapes} from './face.js';
 
@@ -86,6 +86,22 @@ check('placements: "resting" widens the shoulders and lowers the hips; "joints" 
   assert(r.joints.shoulder[0]>j.joints.shoulder[0]&&r.joints.hip[1]<j.joints.hip[1]);
   out.push(`${b}: shoulders +${((r.joints.shoulder[0]-j.joints.shoulder[0])*100).toFixed(1)} cm each side, hips ${((j.joints.hip[1]-r.joints.hip[1])*100).toFixed(1)} cm lower`);}
  return out.join('; ');
+});
+check('shoulder preview: the approved upper arm is EXACTLY unchanged (same shape settings, same 24.5 cm length, same surface)',()=>{
+ const p=shoulderPreview('boy'),approved=buildLimbShape(CHOSEN_ARM.upper,pairSizes(CHOSEN_ARM,ARM_PAIR).upper);
+ assert(Math.abs(p.upper.length-pairSizes(CHOSEN_ARM,ARM_PAIR).upper)<1e-12,'length changed');
+ assert.equal(p.upper.positions.length,approved.positions.length);assert.deepEqual(p.upper.index,approved.index);
+ // Same surface: every distance between points matches the approved limb (only moved and turned, never reshaped).
+ const P=(arr,i)=>arr.slice(3*i,3*i+3);let worst=0;
+ for(let i=0;i<approved.positions.length/3;i+=7)for(let j=i+3;j<approved.positions.length/3;j+=11)worst=Math.max(worst,Math.abs(dist(P(p.upper.positions,i),P(p.upper.positions,j))-dist(P(approved.positions,i),P(approved.positions,j))));
+ assert(worst<1e-9,'reshaped by '+worst);
+ return `24.5 cm, ${approved.index.length/3} triangles, shape identical (largest difference ${worst.toExponential(0)} m)`;
+});
+check('shoulder preview: one side only, shoulder ball by the 92% rule on the skeleton\'s shoulder joint, arm one gap below it',()=>{
+ const p=shoulderPreview('boy');assert.deepEqual(p.parts.map(x=>x.name),['torso','ball-shoulder','upper-arm']);
+ assert(Math.abs(p.shoulderBall-BALL_TO_LIMB*thinnestAt(CHOSEN_ARM.upper,0))<1e-12);assert(dist(p.shoulder,SHOULDER)<1e-12);
+ assert(Math.abs(dist(p.upper.top,SHOULDER)-(p.shoulderBall+BALL_GAP))<1e-12);
+ return `ball ${(p.shoulderBall*200).toFixed(1)} cm wide; arm's end ${(p.lowerBy*100).toFixed(1)} cm lower than before (kept full length)`;
 });
 console.table(results);
 const failed=results.filter(r=>r.result!=='PASS').length;

@@ -125,3 +125,24 @@ export function assemble(bodyId,placement='joints'){
  for(const p of left){parts.push(p);parts.push({...mirrored(p),name:p.name,side:'right',...(p.centre?{centre:mirror(p.centre)}:{})});}
  return {body:bodyId,placement,torsoShape,joints:{shoulder:S,elbow:E,wrist:W,hip:H,knee:K,ankle:A},balls,parts,face:CHOSEN_FACE,headCentre:[0,neck.head.y,0],headRadius:neck.head.radius};
 }
+
+/**
+ * Owner's request (21 November 2026), after the first assembly shortened the
+ * approved limbs without asking: show only the boy's torso, one shoulder ball
+ * and the approved upper arm, EXACTLY as approved (same shape, same 24.5 cm
+ * length). The shoulder ball sits on the skeleton's shoulder joint (92% rule)
+ * and the upper arm hangs one gap below it toward the elbow. Keeping the arm's
+ * full length means its lower end sits further down than before; that is
+ * reported, not hidden, for the joints discussion.
+ */
+export function shoulderPreview(bodyId='boy'){
+ const body=BODIES[bodyId],torsoShape=makeTorsoOption(torsoBase.shape,body.torso,body.torsoList);
+ const arm=body.arm,rS=BALL_TO_LIMB*thinnestAt(arm.upper,0),approvedLength=pairSizes(arm,ARM_PAIR).upper;
+ const S=[...SHOULDER],dir=unit(sub(ELBOW,S)),top=add(S,scale(dir,rS+BALL_GAP));
+ const upper={name:'upper-arm',side:'left',...place(buildLimbShape(arm.upper,approvedLength),top,dir),length:approvedLength,top,direction:dir};
+ const bottom=add(top,scale(dir,approvedLength));
+ return {body:bodyId,torsoShape,shoulder:S,shoulderBall:rS,upper,
+  parts:[{name:'torso',side:'centre',...buildTorsoSurface(torsoShape)},{name:'ball-shoulder',side:'left',...ballAt(rS,S)},upper],
+  // How much lower the arm's end is than the skeleton's elbow position (the upper arm kept its full length).
+  lowerBy:length(sub(bottom,S))-(length(sub(ELBOW,S))-pairSizes(arm,ARM_PAIR).ball-BALL_GAP)};
+}
