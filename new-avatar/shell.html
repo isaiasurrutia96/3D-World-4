@@ -17,14 +17,18 @@
 </head>
 <body>
  <main class="app">
-  <header><div><h1>New avatar</h1><p class="sub">Version 2 · Step 2: the torso in one piece</p></div></header>
+  <header><div><h1>New avatar</h1><p class="sub">Version 2 · Step 3: the elbow</p></div></header>
   <section id="stage" aria-label="New avatar">
    <nav class="views" aria-label="Views"><button data-view="front">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="top">Top</button><button data-view="angled">Angled</button></nav>
   </section>
   <aside>
+   <h2>Elbow bend</h2>
+   <section style="grid-template-columns:1fr 1fr 1fr"><button data-bend="0">Straight</button><button data-bend="-12.6" aria-pressed="true">Rest</button><button data-bend="-60">Half</button><button data-bend="-90">90°</button><button data-bend="-120">120°</button><button data-bend="-125">Most</button></section>
+   <h2>Forearm twist</h2>
+   <section style="grid-template-columns:1fr 1fr 1fr"><button data-twist="-80">In</button><button data-twist="0" aria-pressed="true">None</button><button data-twist="80">Out</button></section>
    <h2>About</h2>
    <p id="info"></p>
-   <p>The torso as one continuous piece, with no sockets or seam. It is drawn from numbers in code, so its shape can be adjusted precisely. The rest of the body is added one part at a time.</p>
+   <p>The new elbow: the socket is deep at the back and cut away in front, and the limbs are slimmer than the ball so they do not puff out. Shoulders and wrists are plain rounded ends until those joints are built.</p>
   </aside>
  </main>
  <div id="loading" role="status">Preparing the new avatar…</div>
