@@ -80,11 +80,10 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
  {id:'legs',label:'Legs',intro:'The chosen Strong legs (boy) and the girl\'s version, 8% slimmer.',
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
-const fullBefore=fullBodyPreview('boy',{limbScale:1}),full=fullBodyPreview('boy');
-const fullItem=(f,id,label,tag,what)=>({id,label,tag,face:f.face,note:`${what} All ${f.parts.length} pieces, separate with small gaps. He stands ${(f.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
- parts:f.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))});
-GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate. Left: normal size. Right: every arm and leg piece (balls, limbs and hands) 15% bigger; torso, neck and head unchanged. Both have smaller feet: each foot is 1.5 inches longer than the head.',
- items:[fullItem(fullBefore,'full-before','Before','Before','As before.'),fullItem(full,'full-bigger','Bigger limbs','Bigger',`Every arm and leg piece 15% bigger; each foot ${(full.footLength*100).toFixed(1)} cm long, 1.5 inches longer than the head.`)]});
+const full=fullBodyPreview('boy');
+GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate: every arm and leg piece 15% bigger (hands then 10% smaller), feet 3 inches longer than the head; torso, neck and head unchanged.',
+ items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
+  parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const legBefore=legPreview('boy',{lengthen:1,ankleBallScale:1}),legLonger=legPreview('boy');
 const legNote=(l,what)=>`${what} Thigh ${(l.thigh.length*100).toFixed(1)} cm, calf ${(l.calf.length*100).toFixed(1)} cm, knee ball ${(l.kneeBall*200).toFixed(1)} cm, ankle ball ${(l.ankleBall*200).toFixed(1)} cm. Hip to sole ${(l.hipToSole*100).toFixed(1)} cm (your original avatar: ${(l.originalHipToSole*100).toFixed(1)} cm, before sockets).`;
 GROUPS.push({id:'leg',label:'Leg',intro:'The whole leg, one side: thigh, knee ball, calf, ankle ball and your chosen foot. Left: as it was. Right: thigh and calf 10% longer and the ankle ball 10% bigger. Same shapes, only longer.',
@@ -142,7 +141,9 @@ function distance(){// close enough to fill the screen with one item (its width 
  return Math.max(focus===null?1.7:.45,wide,tall)*1.05;
 }
 function frame(){
- const target=focus===null?active.centre:options[focus].centre,dir=new T.Vector3(...directions[viewName]).normalize();
+ const centre=focus===null?active.centre:options[focus].centre,dir=new T.Vector3(...directions[viewName]).normalize();
+ // Aim a little below the middle so the bottom of the item (feet) clears the view buttons over the stage.
+ const tallest=focus===null?Math.max(...options.map(o=>o.height)):options[focus].height,target=centre.clone();if(viewName!=='top')target.y-=tallest*.08;
  glide={fromPos:camera.position.clone(),fromTarget:controls.target.clone(),toTarget:target.clone(),toPos:target.clone().add(dir.multiplyScalar(distance())),t:0};
 }
 function setFocus(index){
