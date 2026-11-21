@@ -24,6 +24,7 @@ import {makeTorsoOption,ringAt,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,WOMEN_OPTIONS} fro
 import {buildTorsoSurface} from './torso-shape.js';
 import {buildHeadSet,CHOSEN_NECK} from './head-options.js';
 import {CHOSEN_FACE} from './face.js';
+import {buildHandFoot,CHOSEN_HAND_FOOT} from './hands-feet.js';
 // The clean base torso every torso option is made from.
 import torsoBase from './torso.json' with {type:'json'};
 
@@ -159,3 +160,30 @@ export function shoulderPreview(bodyId='boy'){
  for(const p of [ball,upper]){parts.push(p);parts.push({...mirrored(p),side:'right',...(p.centre?{centre:mirror(p.centre)}:{})});}
  return {body:bodyId,torsoShape,shoulder:S,movedOut:S[0]-SHOULDER[0],shoulderBall:rS,upper,parts};
 }
+
+/**
+ * Owner's request (21 November 2026): the wrist joint, one side: the forearm,
+ * the wrist ball and the chosen hand (option 2, the original 8% bigger),
+ * separate, with the usual 6 mm gaps, laid out along the skeleton's forearm
+ * (elbow to wrist). Nothing is reshaped: the forearm is the boy's arm at its
+ * approved length (22.2 cm), starting where it sits below the elbow ball; the
+ * wrist ball follows the joint rule (92% of the forearm's end, slightly thinner
+ * than the limb); the hand only moves, straight down the forearm's line, so
+ * its top end sits one gap below the ball (the original hand reached 9.4 cm
+ * above the wrist joint, overlapping the forearm).
+ */
+export function wristPreview(bodyId='boy'){
+ const body=BODIES[bodyId],arm=body.arm,d=unit(sub(WRIST,ELBOW));
+ const elbowBall=pairSizes(arm,ARM_PAIR).ball,rW=BALL_TO_LIMB*thinnestAt(arm.fore,1),foreLength=APPROVED_ARM_LENGTHS.fore;
+ const top=add(ELBOW,scale(d,elbowBall+BALL_GAP)),bottom=add(top,scale(d,foreLength)),W=add(bottom,scale(d,BALL_GAP+rW));
+ const fore={name:'forearm',side:'left',...place(buildLimbShape(arm.fore,foreLength),top,d),length:foreLength,top,direction:d};
+ // The hand: moved along the forearm's line so its highest point sits one gap below the wrist ball.
+ const hand=buildHandFoot(CHOSEN_HAND_FOOT).hand,pivot=hand.pivot;let reach=-Infinity;
+ for(let i=0;i<hand.positions.length;i+=3)reach=Math.max(reach,-((hand.positions[i]-pivot[0])*d[0]+(hand.positions[i+1]-pivot[1])*d[1]+(hand.positions[i+2]-pivot[2])*d[2]));
+ const newPivot=add(W,scale(d,rW+BALL_GAP+reach)),shift=sub(newPivot,pivot);
+ const handPart={name:'hand',side:'left',positions:hand.positions.map((v,i)=>v+shift[i%3]),index:hand.index,pivot:newPivot,reach,shift};
+ return {body:bodyId,direction:d,wrist:W,wristBall:rW,forearm:fore,hand:handPart,parts:[fore,{name:'ball-wrist',side:'left',...ballAt(rW,W)},handPart],
+  // How far the wrist joint moved from the skeleton's wrist (the forearm kept its length and the parts are separate).
+  wristMovedBy:length(sub(W,WRIST))};
+}
+

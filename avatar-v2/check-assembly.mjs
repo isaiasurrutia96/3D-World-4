@@ -4,7 +4,8 @@
 // never inside the torso, every part sealed, and the whole body within budget.
 // Usage: node avatar-v2/check-assembly.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {assemble,insideTorso,shoulderPreview,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
+import {assemble,insideTorso,shoulderPreview,wristPreview,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
+import {buildHandFoot,CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS} from './hands-feet.js';
 import {buildLimbShape,CHOSEN_ARM,BOY_ARM,GIRL_ARM,BOY_ARM_THICKER,APPROVED_ARM_LENGTHS,girlVersion,limbRadius,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 import {CHOSEN_FACE,faceShapes} from './face.js';
@@ -13,6 +14,7 @@ const results=[];
 const check=(name,fn)=>{try{results.push({check:name,result:'PASS',detail:fn()});}catch(e){results.push({check:name,result:'FAIL',detail:e.message});}};
 const points=part=>Array.from({length:part.positions.length/3},(_,i)=>part.positions.slice(3*i,3*i+3));
 const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],scaleV=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
 const BUDGET=29000;// the whole phone avatar (the earlier Game copy's size)
 
 check('the inside-the-torso measure: positive inside, negative outside, including above and below the torso (test of the test)',()=>{
@@ -118,6 +120,33 @@ check('shoulder preview: right side is the exact mirror of the left; the arms ha
  let worst=-Infinity;for(const side of ['left','right']){const a=get('upper-arm',side);for(let i=0;i<a.positions.length;i+=3)worst=Math.max(worst,insideTorso(p.torsoShape,a.positions.slice(i,i+3)));}
  assert(worst<=0,'arm inside the torso by '+(worst*1000).toFixed(1)+' mm');return `arms clear of the torso by ${(-worst*1000).toFixed(1)} mm`;
 });
+// --- The wrist: forearm, wrist ball, chosen hand -------------------------------
+{
+ const w=wristPreview('boy'),P=(arr,i)=>arr.slice(3*i,3*i+3);
+ const sameShape=(a,b)=>{let worst=0;for(let i=0;i<b.length/3;i+=7)for(let j=i+3;j<b.length/3;j+=13)worst=Math.max(worst,Math.abs(dist(P(a,i),P(a,j))-dist(P(b,i),P(b,j))));return worst;};
+ check('wrist: the chosen hand is option 2 (the original 8% bigger); one side only: forearm, wrist ball, hand',()=>{
+  assert.equal(CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS[1]);assert.deepEqual(w.parts.map(p=>p.name),['forearm','ball-wrist','hand']);return CHOSEN_HAND_FOOT.label;
+ });
+ check('wrist: the forearm is the boy\'s, at its approved length (22.2 cm), unchanged in shape',()=>{
+  const own=buildLimbShape(BOY_ARM.fore,APPROVED_ARM_LENGTHS.fore);assert(Math.abs(w.forearm.length-APPROVED_ARM_LENGTHS.fore)<1e-12);
+  const d=sameShape(w.forearm.positions,own.positions);assert(d<1e-9,'reshaped by '+d);return `${(w.forearm.length*100).toFixed(1)} cm, shape identical`;
+ });
+ check('wrist: the wrist ball follows the joint rule (92% of the forearm\'s end, slightly thinner than the limb)',()=>{
+  const end=thinnestAt(BOY_ARM.fore,1);assert(Math.abs(w.wristBall-BALL_TO_LIMB*end)<1e-12);assert(w.wristBall<end);return `${(w.wristBall*200).toFixed(1)} cm wide (forearm end ${(end*200).toFixed(1)} cm)`;
+ });
+ check('wrist: the hand is only moved, never reshaped (every distance across it matches the chosen hand)',()=>{
+  const d=sameShape(w.hand.positions,buildHandFoot(CHOSEN_HAND_FOOT).hand.positions);assert(d<1e-9,'reshaped by '+d);return 'shape identical; moved '+(Math.hypot(...w.hand.shift)*100).toFixed(1)+' cm down the forearm';
+ });
+ check('wrist: separate parts with 6 mm gaps (forearm to ball, ball to hand); the hand never touches the ball',()=>{
+  const d=w.direction,bottom=add(w.forearm.top,scaleV(d,w.forearm.length));
+  assert(Math.abs(dist(bottom,w.wrist)-(w.wristBall+BALL_GAP))<1e-9,'forearm gap');
+  let closest=Infinity,highest=-Infinity;
+  for(let i=0;i<w.hand.positions.length;i+=3){const p=P(w.hand.positions,i/3);closest=Math.min(closest,dist(p,w.wrist));highest=Math.max(highest,-((p[0]-w.wrist[0])*d[0]+(p[1]-w.wrist[1])*d[1]+(p[2]-w.wrist[2])*d[2]));}
+  assert(Math.abs(-highest-(w.wristBall+BALL_GAP))<1e-9,'hand gap');assert(closest>=w.wristBall+BALL_GAP*.9,'hand touches the ball');
+  return `gaps ${(BALL_GAP*1000)} mm each; hand at least ${((closest-w.wristBall)*1000).toFixed(1)} mm from the ball`;
+ });
+ check('wrist: reports how far the wrist moved from the skeleton (forearm kept its length, parts separate)',()=>{assert(w.wristMovedBy>0);return `${(w.wristMovedBy*100).toFixed(1)} cm further down the arm`;});
+}
 console.table(results);
 const failed=results.filter(r=>r.result!=='PASS').length;
 console.log(failed?`FAIL: ${failed} check(s) failed.`:'PASS: the assembled boy and girl are put together as stated in both placements.');

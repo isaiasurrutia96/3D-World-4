@@ -54,3 +54,6 @@ export function adjustPart(part,option){
 export function buildHandFoot(option){
  return {hand:adjustPart(source.hand,option),foot:adjustPart(source.foot,option)};
 }
+
+/** Chosen by the owner (21 November 2026): option 2, the originals 8% bigger. */
+export const CHOSEN_HAND_FOOT=HAND_FOOT_OPTIONS.find(o=>o.id==='hf-bigger');
