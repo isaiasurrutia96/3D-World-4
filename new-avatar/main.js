@@ -1,4 +1,5 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
+//  - Ankle: calf, ankle ball and the chosen foot (avatar-v2/assembly.js);
 //  - Wrist: forearm, wrist ball and the chosen hand (avatar-v2/assembly.js);
 //  - Hands & feet: the owner's original hand and foot and four gentle variations
 //    (avatar-v2/hands-feet.js);
@@ -17,7 +18,7 @@ import torso from '../avatar-v2/torso.json' with {type:'json'};
 import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
 import {drawFace} from '../avatar-v2/face.js';
-import {assemble,shoulderPreview,wristPreview,BODIES} from '../avatar-v2/assembly.js';
+import {assemble,shoulderPreview,wristPreview,anklePreview,BODIES} from '../avatar-v2/assembly.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
@@ -78,9 +79,13 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
  {id:'legs',label:'Legs',intro:'The chosen Strong legs (boy) and the girl\'s version, 8% slimmer.',
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
+const ankle=anklePreview('boy');
+GROUPS.push({id:'ankle',label:'Ankle',intro:'The ankle joint, one side: the calf, the ankle ball and your chosen foot (option 2), separate with small gaps. Nothing reshaped.',
+ items:[{id:'ankle-boy',label:'Calf · ankle · foot',tag:'Boy',note:`Calf at its approved ${(ankle.calf.length*100).toFixed(1)} cm; ankle ball ${(ankle.ankleBall*200).toFixed(1)} cm wide, the same size as the bottom of the calf; your chosen foot one gap below it, unchanged. Keeping every length puts the ankle ${(ankle.ankleMovedBy*100).toFixed(1)} cm lower than before.`,
+  parts:ankle.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
 const wrist=wristPreview('boy');
 GROUPS.push({id:'wrist',label:'Wrist',intro:'The wrist joint, one side: the forearm, the wrist ball and your chosen hand (option 2), separate with small gaps. Nothing reshaped.',
- items:[{id:'wrist-boy',label:'Forearm · wrist · hand',tag:'Boy',note:`Forearm at its approved ${(wrist.forearm.length*100).toFixed(1)} cm; wrist ball ${(wrist.wristBall*200).toFixed(1)} cm wide (slightly thinner than the forearm); your chosen hand one gap below it, unchanged. Keeping every length puts the wrist ${(wrist.wristMovedBy*100).toFixed(1)} cm further down the arm than before.`,
+ items:[{id:'wrist-boy',label:'Forearm · wrist · hand',tag:'Boy',note:`Forearm at its approved ${(wrist.forearm.length*100).toFixed(1)} cm; wrist ball ${(wrist.wristBall*200).toFixed(1)} cm wide, the same size as the bottom of the forearm; your chosen hand one gap below it, unchanged. Keeping every length puts the wrist ${(wrist.wristMovedBy*100).toFixed(1)} cm further down the arm than before.`,
   parts:wrist.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
 GROUPS.push({id:'handsfeet',label:'Hands & feet',intro:'Your original hand and foot (option 1) and four gentle variations of them. Each keeps every finger and toe detail; the wrist and ankle stay put. Tap one to look closely.',
  items:HAND_FOOT_OPTIONS.map((option,i)=>{const r=buildHandFoot(option);
@@ -97,10 +102,13 @@ for(const group of GROUPS){
  group.options=group.items.map((item,i)=>{
   const g=new T.Group();g.name='item-'+item.id;
   for(const part of item.parts){const mesh=new T.Mesh(part.geometry,material);mesh.name=part.name;mesh.position.y=part.y;mesh.castShadow=true;g.add(mesh);}
+  // Anything that reaches below the floor is raised to stand on it (display only; the parts are unchanged).
+  // The box below already includes that lift, so the label and the centre allow for it.
+  const below=new T.Box3().setFromObject(g).min.y;if(below<0)g.position.y=-below;
   const box=new T.Box3().setFromObject(g),width=box.max.x-box.min.x,height=box.max.y-box.min.y;
   if(i>0)x+=GAP;x+=width/2;g.position.x=x;x+=width/2;
-  const tag=label(item.tag);tag.position.set(0,box.min.y-.1,0);g.add(tag);group.row.add(g);
-  return {...item,group:g,mesh:g.children[0],width,height,centre:box.getCenter(new T.Vector3()).add(g.position),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
+  const tag=label(item.tag);tag.position.set(0,box.min.y-g.position.y-.1,0);g.add(tag);group.row.add(g);
+  return {...item,group:g,mesh:g.children[0],width,height,centre:box.getCenter(new T.Vector3()).add(new T.Vector3(g.position.x,0,0)),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
  });
  group.row.position.x=-x/2;for(const o of group.options)o.centre.x-=x/2;
  // Faces are pressed on once every item is in its final place.

@@ -4,9 +4,9 @@
 // never inside the torso, every part sealed, and the whole body within budget.
 // Usage: node avatar-v2/check-assembly.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {assemble,insideTorso,shoulderPreview,wristPreview,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
+import {assemble,insideTorso,shoulderPreview,wristPreview,anklePreview,END_BALL_TO_LIMB,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
 import {buildHandFoot,CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS} from './hands-feet.js';
-import {buildLimbShape,CHOSEN_ARM,BOY_ARM,GIRL_ARM,BOY_ARM_THICKER,APPROVED_ARM_LENGTHS,girlVersion,limbRadius,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
+import {buildLimbShape,CHOSEN_ARM,CHOSEN_LEG,BOY_ARM,GIRL_ARM,BOY_ARM_THICKER,APPROVED_ARM_LENGTHS,girlVersion,limbRadius,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 import {CHOSEN_FACE,faceShapes} from './face.js';
 
@@ -120,32 +120,43 @@ check('shoulder preview: right side is the exact mirror of the left; the arms ha
  let worst=-Infinity;for(const side of ['left','right']){const a=get('upper-arm',side);for(let i=0;i<a.positions.length;i+=3)worst=Math.max(worst,insideTorso(p.torsoShape,a.positions.slice(i,i+3)));}
  assert(worst<=0,'arm inside the torso by '+(worst*1000).toFixed(1)+' mm');return `arms clear of the torso by ${(-worst*1000).toFixed(1)} mm`;
 });
-// --- The wrist: forearm, wrist ball, chosen hand -------------------------------
+// --- The wrist and the ankle: lower limb, end ball, chosen hand or foot ---------
+// Both are built the same way, so both run the same checks.
 {
- const w=wristPreview('boy'),P=(arr,i)=>arr.slice(3*i,3*i+3);
+ const P=(arr,i)=>arr.slice(3*i,3*i+3);
  const sameShape=(a,b)=>{let worst=0;for(let i=0;i<b.length/3;i+=7)for(let j=i+3;j<b.length/3;j+=13)worst=Math.max(worst,Math.abs(dist(P(a,i),P(a,j))-dist(P(b,i),P(b,j))));return worst;};
- check('wrist: the chosen hand is option 2 (the original 8% bigger); one side only: forearm, wrist ball, hand',()=>{
-  assert.equal(CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS[1]);assert.deepEqual(w.parts.map(p=>p.name),['forearm','ball-wrist','hand']);return CHOSEN_HAND_FOOT.label;
- });
- check('wrist: the forearm is the boy\'s, at its approved length (22.2 cm), unchanged in shape',()=>{
-  const own=buildLimbShape(BOY_ARM.fore,APPROVED_ARM_LENGTHS.fore);assert(Math.abs(w.forearm.length-APPROVED_ARM_LENGTHS.fore)<1e-12);
-  const d=sameShape(w.forearm.positions,own.positions);assert(d<1e-9,'reshaped by '+d);return `${(w.forearm.length*100).toFixed(1)} cm, shape identical`;
- });
- check('wrist: the wrist ball follows the joint rule (92% of the forearm\'s end, slightly thinner than the limb)',()=>{
-  const end=thinnestAt(BOY_ARM.fore,1);assert(Math.abs(w.wristBall-BALL_TO_LIMB*end)<1e-12);assert(w.wristBall<end);return `${(w.wristBall*200).toFixed(1)} cm wide (forearm end ${(end*200).toFixed(1)} cm)`;
- });
- check('wrist: the hand is only moved, never reshaped (every distance across it matches the chosen hand)',()=>{
-  const d=sameShape(w.hand.positions,buildHandFoot(CHOSEN_HAND_FOOT).hand.positions);assert(d<1e-9,'reshaped by '+d);return 'shape identical; moved '+(Math.hypot(...w.hand.shift)*100).toFixed(1)+' cm down the forearm';
- });
- check('wrist: separate parts with 6 mm gaps (forearm to ball, ball to hand); the hand never touches the ball',()=>{
-  const d=w.direction,bottom=add(w.forearm.top,scaleV(d,w.forearm.length));
-  assert(Math.abs(dist(bottom,w.wrist)-(w.wristBall+BALL_GAP))<1e-9,'forearm gap');
-  let closest=Infinity,highest=-Infinity;
-  for(let i=0;i<w.hand.positions.length;i+=3){const p=P(w.hand.positions,i/3);closest=Math.min(closest,dist(p,w.wrist));highest=Math.max(highest,-((p[0]-w.wrist[0])*d[0]+(p[1]-w.wrist[1])*d[1]+(p[2]-w.wrist[2])*d[2]));}
-  assert(Math.abs(-highest-(w.wristBall+BALL_GAP))<1e-9,'hand gap');assert(closest>=w.wristBall+BALL_GAP*.9,'hand touches the ball');
-  return `gaps ${(BALL_GAP*1000)} mm each; hand at least ${((closest-w.wristBall)*1000).toFixed(1)} mm from the ball`;
- });
- check('wrist: reports how far the wrist moved from the skeleton (forearm kept its length, parts separate)',()=>{assert(w.wristMovedBy>0);return `${(w.wristMovedBy*100).toFixed(1)} cm further down the arm`;});
+ const w=wristPreview('boy'),a=anklePreview('boy'),chosen=buildHandFoot(CHOSEN_HAND_FOOT);
+ const joints=[
+  {tag:'wrist',limb:BOY_ARM.fore,limbLength:APPROVED_ARM_LENGTHS.fore,lengthNote:'approved length (22.2 cm)',lower:w.forearm,ball:w.wristBall,J:w.wrist,d:w.direction,part:w.hand,original:chosen.hand,names:['forearm','ball-wrist','hand'],parts:w.parts,moved:w.wristMovedBy},
+  {tag:'ankle',limb:CHOSEN_LEG.calf,limbLength:pairSizes(CHOSEN_LEG,LEG_PAIR).calf,lengthNote:'approved length',lower:a.calf,ball:a.ankleBall,J:a.ankle,d:a.direction,part:a.foot,original:chosen.foot,names:['calf','ball-ankle','foot'],parts:a.parts,moved:a.ankleMovedBy},
+ ];
+ check('wrist and ankle: the chosen hand and foot are option 2 (the originals 8% bigger)',()=>{assert.equal(CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS[1]);return CHOSEN_HAND_FOOT.label;});
+ for(const j of joints){
+  check(`${j.tag}: one side only: ${j.names.join(', ')}`,()=>{assert.deepEqual(j.parts.map(p=>p.name),j.names);return j.names.join(' · ');});
+  check(`${j.tag}: the ${j.names[0]} is the boy's, at its ${j.lengthNote}, unchanged in shape`,()=>{
+   const own=buildLimbShape(j.limb,j.limbLength);assert(Math.abs(j.lower.length-j.limbLength)<1e-12);
+   const d=sameShape(j.lower.positions,own.positions);assert(d<1e-9,'reshaped by '+d);return `${(j.lower.length*100).toFixed(1)} cm, shape identical`;
+  });
+  check(`${j.tag}: the ball is the same size as the ${j.names[0]}'s bottom end (owner's rule for wrists and ankles)`,()=>{
+   assert.equal(END_BALL_TO_LIMB,1);const end=thinnestAt(j.limb,1);assert(Math.abs(j.ball-end)<1e-12);
+   // The end is round: its widest is the same as its thinnest, so the ball matches in every direction.
+   let widest=0;for(let s=0;s<360;s++)widest=Math.max(widest,limbRadius(j.limb,1,s/360*2*Math.PI));assert(widest-end<1e-6,'limb end not round');
+   // And the ball's own surface really is that size.
+   const ball=j.parts[1];let far=0;for(let i=0;i<ball.positions.length;i+=3)far=Math.max(far,dist(P(ball.positions,i/3),j.J));assert(Math.abs(far-j.ball)<1e-6,'ball surface size');
+   return `ball ${(j.ball*200).toFixed(1)} cm wide = ${j.names[0]} end ${(end*200).toFixed(1)} cm`;
+  });
+  check(`${j.tag}: the ${j.names[2]} is only moved, never reshaped`,()=>{
+   const d=sameShape(j.part.positions,j.original.positions);assert(d<1e-9,'reshaped by '+d);return `shape identical; moved ${(Math.hypot(...j.part.shift)*100).toFixed(1)} cm along the ${j.names[0]}'s line`;
+  });
+  check(`${j.tag}: separate parts with 6 mm gaps; the ${j.names[2]} never touches the ball`,()=>{
+   const bottom=add(j.lower.top,scaleV(j.d,j.lower.length));assert(Math.abs(dist(bottom,j.J)-(j.ball+BALL_GAP))<1e-9,'limb gap');
+   let closest=Infinity,highest=-Infinity;
+   for(let i=0;i<j.part.positions.length;i+=3){const p=P(j.part.positions,i/3);closest=Math.min(closest,dist(p,j.J));highest=Math.max(highest,-((p[0]-j.J[0])*j.d[0]+(p[1]-j.J[1])*j.d[1]+(p[2]-j.J[2])*j.d[2]));}
+   assert(Math.abs(-highest-(j.ball+BALL_GAP))<1e-9,'part gap');assert(closest>=j.ball+BALL_GAP*.9,'touches the ball');
+   return `gaps ${BALL_GAP*1000} mm each; ${j.names[2]} at least ${((closest-j.ball)*1000).toFixed(1)} mm from the ball`;
+  });
+  check(`${j.tag}: reports how far the joint moved from the skeleton`,()=>{assert(j.moved>0);return `${(j.moved*100).toFixed(1)} cm further along the limb`;});
+ }
 }
 console.table(results);
 const failed=results.filter(r=>r.result!=='PASS').length;

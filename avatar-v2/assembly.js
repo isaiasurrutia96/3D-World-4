@@ -5,8 +5,8 @@
 // joint balls and limbs. Every joint ball follows the rule "slightly thinner
 // than what it joins" (92% of the thinner limb end). Each limb runs between its
 // two joint balls with the usual 6 mm gap at each end. Wrists and ankles have
-// no balls yet (hands and feet come next), so the forearm and calf end at the
-// wrist and ankle joint centres.
+// no balls in this full assembly yet (see wristPreview and anklePreview), so the
+// forearm and calf end at the wrist and ankle joint centres.
 //
 // Shoulder and hip balls: two placements to choose from (owner, 21 November):
 //  - 'joints': centred exactly on the skeleton's joints. The shoulder ball then
@@ -162,28 +162,59 @@ export function shoulderPreview(bodyId='boy'){
 }
 
 /**
+ * Wrist and ankle balls: the SAME size as the bottom end of the forearm or calf
+ * (owner, 21 November 2026: "make the ball the same size as the bottom part of
+ * the forearm"). This replaces the 92% joint rule for these two balls only; the
+ * other joints keep BALL_TO_LIMB. The limb ends are round, so the ball matches
+ * them in every direction.
+ */
+export const END_BALL_TO_LIMB=1;
+
+/**
+ * One end joint, one side, laid out along the skeleton's bone (from the middle
+ * joint to the end joint): the lower limb at its approved length, starting one
+ * gap below the middle ball; the end ball one gap below the limb, the same size
+ * as the limb's bottom end; then the chosen hand or foot, only MOVED straight
+ * along the bone's line so its highest point sits one gap below the ball.
+ * Nothing is reshaped.
+ */
+function endJoint({limb,limbName,ballName,partName,limbLength,middle,end,middleBall,part}){
+ const d=unit(sub(end,middle)),r=END_BALL_TO_LIMB*thinnestAt(limb,1);
+ const top=add(middle,scale(d,middleBall+BALL_GAP)),J=add(top,scale(d,limbLength+BALL_GAP+r));
+ const lower={name:limbName,side:'left',...place(buildLimbShape(limb,limbLength),top,d),length:limbLength,top,direction:d};
+ const pivot=part.pivot;let reach=-Infinity;
+ for(let i=0;i<part.positions.length;i+=3)reach=Math.max(reach,-((part.positions[i]-pivot[0])*d[0]+(part.positions[i+1]-pivot[1])*d[1]+(part.positions[i+2]-pivot[2])*d[2]));
+ const newPivot=add(J,scale(d,r+BALL_GAP+reach)),shift=sub(newPivot,pivot);
+ const moved={name:partName,side:'left',positions:part.positions.map((v,i)=>v+shift[i%3]),index:part.index,pivot:newPivot,reach,shift};
+ return {direction:d,joint:J,ball:r,lower,moved,parts:[lower,{name:ballName,side:'left',...ballAt(r,J)},moved],movedBy:length(sub(J,end))};
+}
+
+/**
  * Owner's request (21 November 2026): the wrist joint, one side: the forearm,
  * the wrist ball and the chosen hand (option 2, the original 8% bigger),
- * separate, with the usual 6 mm gaps, laid out along the skeleton's forearm
- * (elbow to wrist). Nothing is reshaped: the forearm is the boy's arm at its
- * approved length (22.2 cm), starting where it sits below the elbow ball; the
- * wrist ball follows the joint rule (92% of the forearm's end, slightly thinner
- * than the limb); the hand only moves, straight down the forearm's line, so
- * its top end sits one gap below the ball (the original hand reached 9.4 cm
- * above the wrist joint, overlapping the forearm).
+ * separate, with the usual 6 mm gaps, along the skeleton's forearm. The forearm
+ * is the boy's at its approved length (22.2 cm); the wrist ball is the size of
+ * the forearm's bottom end; the hand is only moved.
  */
 export function wristPreview(bodyId='boy'){
- const body=BODIES[bodyId],arm=body.arm,d=unit(sub(WRIST,ELBOW));
- const elbowBall=pairSizes(arm,ARM_PAIR).ball,rW=BALL_TO_LIMB*thinnestAt(arm.fore,1),foreLength=APPROVED_ARM_LENGTHS.fore;
- const top=add(ELBOW,scale(d,elbowBall+BALL_GAP)),bottom=add(top,scale(d,foreLength)),W=add(bottom,scale(d,BALL_GAP+rW));
- const fore={name:'forearm',side:'left',...place(buildLimbShape(arm.fore,foreLength),top,d),length:foreLength,top,direction:d};
- // The hand: moved along the forearm's line so its highest point sits one gap below the wrist ball.
- const hand=buildHandFoot(CHOSEN_HAND_FOOT).hand,pivot=hand.pivot;let reach=-Infinity;
- for(let i=0;i<hand.positions.length;i+=3)reach=Math.max(reach,-((hand.positions[i]-pivot[0])*d[0]+(hand.positions[i+1]-pivot[1])*d[1]+(hand.positions[i+2]-pivot[2])*d[2]));
- const newPivot=add(W,scale(d,rW+BALL_GAP+reach)),shift=sub(newPivot,pivot);
- const handPart={name:'hand',side:'left',positions:hand.positions.map((v,i)=>v+shift[i%3]),index:hand.index,pivot:newPivot,reach,shift};
- return {body:bodyId,direction:d,wrist:W,wristBall:rW,forearm:fore,hand:handPart,parts:[fore,{name:'ball-wrist',side:'left',...ballAt(rW,W)},handPart],
+ const arm=BODIES[bodyId].arm;
+ const j=endJoint({limb:arm.fore,limbName:'forearm',ballName:'ball-wrist',partName:'hand',limbLength:APPROVED_ARM_LENGTHS.fore,
+  middle:ELBOW,end:WRIST,middleBall:pairSizes(arm,ARM_PAIR).ball,part:buildHandFoot(CHOSEN_HAND_FOOT).hand});
+ return {body:bodyId,direction:j.direction,wrist:j.joint,wristBall:j.ball,forearm:j.lower,hand:j.moved,parts:j.parts,
   // How far the wrist joint moved from the skeleton's wrist (the forearm kept its length and the parts are separate).
-  wristMovedBy:length(sub(W,WRIST))};
+  wristMovedBy:j.movedBy};
+}
+
+/**
+ * Owner's request (21 November 2026): the ankle joint, one side: the calf, the
+ * ankle ball and the chosen foot (option 2), built exactly like the wrist. The
+ * calf is the boy's (the approved Strong leg) at its approved length; the ankle
+ * ball is the size of the calf's bottom end; the foot is only moved.
+ */
+export function anklePreview(bodyId='boy'){
+ const leg=BODIES[bodyId].leg,size=pairSizes(leg,LEG_PAIR);
+ const j=endJoint({limb:leg.calf,limbName:'calf',ballName:'ball-ankle',partName:'foot',limbLength:size.calf,
+  middle:KNEE,end:ANKLE,middleBall:size.ball,part:buildHandFoot(CHOSEN_HAND_FOOT).foot});
+ return {body:bodyId,direction:j.direction,ankle:j.joint,ankleBall:j.ball,calf:j.lower,foot:j.moved,parts:j.parts,ankleMovedBy:j.movedBy};
 }
 

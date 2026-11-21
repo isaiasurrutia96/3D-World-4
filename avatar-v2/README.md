@@ -92,7 +92,9 @@ owner's original hand and foot from **before the ball joints** (Avatar Checkpoin
 hand simplified 260,380 to 20,000 triangles, 0.03% shape change; the foot whole),
 plus four gentle variations (slightly bigger, softer, sleeker, sturdier) that only
 adjust the original surface, anchored at the wrist and ankle, along directions
-from the skeleton. Next after the owner's pick: the wrist and ankle balls.
+from the skeleton. The owner picked option 2. The wrist and ankle previews
+(`wristPreview`, `anklePreview` in `assembly.js`) use balls the same size as the
+forearm's and calf's bottom ends.
 
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
