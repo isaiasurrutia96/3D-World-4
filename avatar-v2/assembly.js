@@ -312,6 +312,10 @@ export function fullBodyPreview(bodyId='boy',{limbScale=LIMB_SCALE}={}){
   let lo=Infinity,hi=-Infinity;for(let k=0;k<foot.positions.length;k+=3){const v=foot.positions[k]*ax[0]+foot.positions[k+1]*ax[1]+foot.positions[k+2]*ax[2];lo=Math.min(lo,v);hi=Math.max(hi,v);}
   const headHeight=2*neck.head.radius,footScale=(headHeight+FOOT_OVER_HEAD)/(hi-lo),P=add(ankle.centre,scale(d,ankle.radius+BALL_GAP*limbScale));
   left[i]={...scaledPart(foot,P,footScale,P),footScale,footLength:headHeight+FOOT_OVER_HEAD,headHeight};}
+ // Slightly smaller hands (owner, 21 November 2026): each hand HAND_SCALE of its size, shape kept, toward
+ // the point one (grown) gap below the wrist ball, so it stays right under the ball with the same gap.
+ {const i=left.findIndex(p=>p.name==='hand'),wrist=left.find(p=>p.name==='ball-wrist'),d=left.find(p=>p.name==='forearm').direction;
+  const P=add(wrist.centre,scale(d,wrist.radius+BALL_GAP*limbScale));left[i]={...scaledPart(left[i],P,HAND_SCALE,P),handScale:HAND_SCALE};}
  // The two feet (8% bigger, chosen option 2) would overlap in the middle: each whole leg moves
  // straight outward just enough to leave the usual gap between the feet (nothing reshaped; each
  // foot stays under its own leg).
@@ -324,15 +328,17 @@ export function fullBodyPreview(bodyId='boy',{limbScale=LIMB_SCALE}={}){
  return {body:bodyId,limbScale,torsoShape,parts,face:CHOSEN_FACE,headCentre:[0,neck.head.y,0],headRadius:neck.head.radius,
   joints:Object.fromEntries(['shoulder','elbow','wrist','hip','knee','ankle'].map(j=>[j,get('ball-'+j).centre])),
   balls:Object.fromEntries(['shoulder','elbow','wrist','hip','knee','ankle'].map(j=>[j,get('ball-'+j).radius])),
-  legOut:footOut,footScale:foot.footScale,footLength:foot.footLength,headHeight:foot.headHeight,
+  legOut:footOut,handScale:HAND_SCALE,footScale:foot.footScale,footLength:foot.footLength,headHeight:foot.headHeight,
   // Heights above the sole (the original avatar stands with its sole at 0).
   height:Math.max(...neck.head.positions.filter((_,i)=>i%3===1))+neck.head.y-sole,sole};
 }
 
 /** How much bigger every arm and leg piece is (owner, 21 November 2026: "our guy looks very skinny, at least the limbs and ball joints; increase the overall size of everything minus the torso, head and neck"). No amount given: 15% is Claude's pick, waiting for the owner's confirmation. */
 export const LIMB_SCALE=1.15;
-/** Each foot is this much longer than the head is tall (owner: "an inch or two"; 1.5 inches, Claude's pick in that range). */
-export const FOOT_OVER_HEAD=.0381;
+/** Each foot is this much longer than the head is tall (owner: first "an inch or two" (1.5 inches), then "slightly bigger": 3 inches, Claude's pick). */
+export const FOOT_OVER_HEAD=.0762;
+/** The hands' size against the 15% bigger hands (owner: "hands slightly smaller"; 10% smaller, Claude's pick). */
+export const HAND_SCALE=.9;
 
 /** A part scaled by k about point c, then moved so c lands on `to` (shape kept; sizes, lengths and centres follow). */
 function scaledPart(p,c,k,to){
