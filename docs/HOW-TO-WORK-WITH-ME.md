@@ -37,6 +37,8 @@ how it should feel), and even then, bring me options to react to.
 6. When I have to do something, give me one instruction at a time, tell me
    exactly where to go and what to click or type, and wait for me to
    confirm before giving the next one.
+7. When a link is needed, put it at the bottom of the reply as a clickable
+   link (shown in blue). (Added 21 November 2026.)
 
 ## D. Teach me while you work
 

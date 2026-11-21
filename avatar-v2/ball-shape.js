@@ -44,6 +44,9 @@ export function buildBall({radius,triangles}){
  return {positions,normals,index};
 }
 
+/** Chosen by the owner (21 November 2026): 300 triangles looks good enough and is the lightest. */
+export const CHOSEN_BALL_TRIANGLES=300;
+
 /** The ball choices shown in the Test Lab (radius of the approved avatar's balls, 90.7 mm). */
 export const BALL_RADIUS=.0907;
 export const BALL_OPTIONS=[
