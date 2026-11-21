@@ -1,4 +1,9 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
+//  - Full body: every approved piece put together, still separate (avatar-v2/assembly.js);
+//  - Leg: thigh, knee ball, calf, ankle ball and the chosen foot, before and longer (avatar-v2/assembly.js);
+//  - Wrist: forearm, wrist ball and the chosen hand (avatar-v2/assembly.js);
+//  - Hands & feet: the owner's original hand and foot and four gentle variations
+//    (avatar-v2/hands-feet.js);
 //  - Assembly: the chosen parts put together (avatar-v2/assembly.js), boy and
 //    girl, with the shoulder and hip balls at the joints or resting on the
 //    torso; the chosen base face is pressed onto the head (DecalGeometry);
@@ -14,7 +19,8 @@ import torso from '../avatar-v2/torso.json' with {type:'json'};
 import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
 import {drawFace} from '../avatar-v2/face.js';
-import {assemble,shoulderPreview,BODIES} from '../avatar-v2/assembly.js';
+import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
+import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
 const GAP=.3;// metres of space between items, left to right
@@ -74,9 +80,26 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
  {id:'legs',label:'Legs',intro:'The chosen Strong legs (boy) and the girl\'s version, 8% slimmer.',
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
+const fullBefore=fullBodyPreview('boy',{limbScale:1}),full=fullBodyPreview('boy');
+const fullItem=(f,id,label,tag,what)=>({id,label,tag,face:f.face,note:`${what} All ${f.parts.length} pieces, separate with small gaps. He stands ${(f.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
+ parts:f.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))});
+GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate. Left: normal size. Right: every arm and leg piece (balls, limbs and hands) 15% bigger; torso, neck and head unchanged. Both have smaller feet: each foot is 1.5 inches longer than the head.',
+ items:[fullItem(fullBefore,'full-before','Before','Before','As before.'),fullItem(full,'full-bigger','Bigger limbs','Bigger',`Every arm and leg piece 15% bigger; each foot ${(full.footLength*100).toFixed(1)} cm long, 1.5 inches longer than the head.`)]});
+const legBefore=legPreview('boy',{lengthen:1,ankleBallScale:1}),legLonger=legPreview('boy');
+const legNote=(l,what)=>`${what} Thigh ${(l.thigh.length*100).toFixed(1)} cm, calf ${(l.calf.length*100).toFixed(1)} cm, knee ball ${(l.kneeBall*200).toFixed(1)} cm, ankle ball ${(l.ankleBall*200).toFixed(1)} cm. Hip to sole ${(l.hipToSole*100).toFixed(1)} cm (your original avatar: ${(l.originalHipToSole*100).toFixed(1)} cm, before sockets).`;
+GROUPS.push({id:'leg',label:'Leg',intro:'The whole leg, one side: thigh, knee ball, calf, ankle ball and your chosen foot. Left: as it was. Right: thigh and calf 10% longer and the ankle ball 10% bigger. Same shapes, only longer.',
+ items:[{id:'leg-before',label:'Before',tag:'Before',note:legNote(legBefore,'The leg as it was.'),parts:legBefore.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))},
+  {id:'leg-longer',label:'Longer · bigger ankle',tag:'Longer',note:legNote(legLonger,'Thigh and calf 10% longer, ankle ball 10% bigger.'),parts:legLonger.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
+const wrist=wristPreview('boy');
+GROUPS.push({id:'wrist',label:'Wrist',intro:'The wrist joint, one side: the forearm, the wrist ball and your chosen hand (option 2), separate with small gaps. Nothing reshaped.',
+ items:[{id:'wrist-boy',label:'Forearm · wrist · hand',tag:'Boy',note:`Forearm at its approved ${(wrist.forearm.length*100).toFixed(1)} cm; wrist ball ${(wrist.wristBall*200).toFixed(1)} cm wide, the same size as the bottom edge of the forearm; your chosen hand one gap below it, unchanged. Keeping every length puts the wrist ${(wrist.wristMovedBy*100).toFixed(1)} cm further down the arm than before.`,
+  parts:wrist.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
+GROUPS.push({id:'handsfeet',label:'Hands & feet',intro:'Your original hand and foot (option 1) and four gentle variations of them. Each keeps every finger and toe detail; the wrist and ankle stay put. Tap one to look closely.',
+ items:HAND_FOOT_OPTIONS.map((option,i)=>{const r=buildHandFoot(option);
+  return {id:option.id,label:option.label,tag:String(i+1),note:option.note,parts:[{name:'hand',geometry:geometryOf(r.hand),y:0},{name:'foot',geometry:geometryOf(r.foot),y:0}]};})});
 const preview=shoulderPreview('boy');
-GROUPS.push({id:'shoulder',label:'Shoulders',intro:'The boy\'s torso with a shoulder ball and the approved upper arm on both sides. The balls are separated from the torso by a clear gap, never touching it.',
- items:[{id:'shoulder-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Shoulder balls ${(preview.shoulderBall*200).toFixed(1)} cm wide, the size of a shoulder (5% bigger than the upper arm's thickest point), separated from the torso by a 2 cm gap. Upper arms unchanged at ${(preview.upper.length*100).toFixed(1)} cm.`,
+GROUPS.push({id:'shoulder',label:'Shoulders',intro:'The boy\'s torso with a shoulder ball and the upper arm on both sides (arms 10% thicker for the boy). The balls are separated from the torso by a clear gap, never touching it.',
+ items:[{id:'shoulder-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Shoulder balls ${(preview.shoulderBall*200).toFixed(1)} cm wide, the size of a shoulder (5% bigger than the upper arm's thickest point), separated from the torso by a 2 cm gap. Upper arms 10% thicker than approved, same shape and the approved length (${(preview.upper.length*100).toFixed(1)} cm).`,
   parts:preview.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
@@ -86,10 +109,13 @@ for(const group of GROUPS){
  group.options=group.items.map((item,i)=>{
   const g=new T.Group();g.name='item-'+item.id;
   for(const part of item.parts){const mesh=new T.Mesh(part.geometry,material);mesh.name=part.name;mesh.position.y=part.y;mesh.castShadow=true;g.add(mesh);}
+  // Anything that reaches below the floor is raised to stand on it (display only; the parts are unchanged).
+  // The box below already includes that lift, so the label and the centre allow for it.
+  const below=new T.Box3().setFromObject(g).min.y;if(below<0)g.position.y=-below;
   const box=new T.Box3().setFromObject(g),width=box.max.x-box.min.x,height=box.max.y-box.min.y;
   if(i>0)x+=GAP;x+=width/2;g.position.x=x;x+=width/2;
-  const tag=label(item.tag);tag.position.set(0,box.min.y-.1,0);g.add(tag);group.row.add(g);
-  return {...item,group:g,mesh:g.children[0],width,height,centre:box.getCenter(new T.Vector3()).add(g.position),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
+  const tag=label(item.tag);tag.position.set(0,box.min.y-g.position.y-.1,0);g.add(tag);group.row.add(g);
+  return {...item,group:g,mesh:g.children[0],width,height,centre:box.getCenter(new T.Vector3()).add(new T.Vector3(g.position.x,0,0)),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
  });
  group.row.position.x=-x/2;for(const o of group.options)o.centre.x-=x/2;
  // Faces are pressed on once every item is in its final place.
@@ -112,7 +138,7 @@ const directions={front:[0,.04,1],side:[1,.04,0],back:[0,.04,-1],top:[0,1,.0004]
 let active=GROUPS[0],options=active.options,focus=null,viewName='front',glide=null;
 function distance(){// close enough to fill the screen with one item (its width and its height), or with all of them
  const half=Math.tan(camera.fov*Math.PI/360),across=focus===null?active.width+.4:Math.max(options[focus].width*1.7,.75);
- const wide=(across/2)/(half*Math.min(1,camera.aspect)),tall=focus===null?0:(options[focus].height*1.15/2)/half;
+ const wide=(across/2)/(half*Math.min(1,camera.aspect)),tall=((focus===null?Math.max(...options.map(o=>o.height)):options[focus].height)*1.2/2)/half;// the tallest item fits too (leaves room for the view buttons)
  return Math.max(focus===null?1.7:.45,wide,tall)*1.05;
 }
 function frame(){
