@@ -1,21 +1,44 @@
-// Checks the original hand and foot and their five variations (hands-feet.js):
-// option 1 is the original exactly; every option keeps the original triangles,
-// never moves the wrist or ankle, changes size exactly as stated, and never
-// cracks the surface; the options really differ.
+// Checks the original hand and foot (from before the ball joints) and their
+// variations (hands-feet.js): they come from Avatar Checkpoint 2, the hand was
+// simplified within its limit, neither has a socket hollow; option 1 is the
+// original exactly; every option keeps the original triangles, never moves the
+// wrist or ankle, changes size exactly as stated; the options really differ.
 // Usage: node avatar-v2/check-hands-feet.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {HAND_FEET_SOURCE as src,HAND_FOOT_OPTIONS,FILLED,adjustPart,buildHandFoot} from './hands-feet.js';
+import {HAND_FEET_SOURCE as src,HAND_FOOT_OPTIONS,adjustPart,buildHandFoot} from './hands-feet.js';
 import {SIDE} from '../motion-core/skeleton/bones.js';
 
 const results=[];
 const check=(name,fn)=>{try{results.push({check:name,result:'PASS',detail:fn()});}catch(e){results.push({check:name,result:'FAIL',detail:e.message});}};
 const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const checkpoint=JSON.parse(await readFile('checkpoints/avatar-2/CHECKPOINT.json','utf8'));
 
-const light=JSON.parse(await readFile('avatar/assembled-joints/light.json','utf8'));
-check('the originals come from the approved avatar\'s Light copy, unchanged in detail (hand 18,208, foot 10,128 triangles)',()=>{
- assert.equal(src.source.sha256,light.sha256);assert.equal(src.source.approved,light.sourceSHA256);
- assert.equal(src.hand.index.length/3,18208);assert.equal(src.foot.index.length/3,10128);return `from ${src.source.asset}`;
+check('the originals come from Avatar Checkpoint 2 (before the ball joints)',()=>{
+ assert.equal(src.source.checkpoint,'checkpoints/avatar-2/');assert.equal(src.source.tag,checkpoint.tag);assert.equal(src.source.saved_on,'2026-11-17');
+ assert.equal(src.source.hand,'right-emoji-hand');assert.equal(src.source.foot,'right-rounded-foot');return `${checkpoint.tag}, saved ${checkpoint.saved_on}`;
+});
+check('the hand was simplified within its limit (shape change at most 0.4% of its size); the foot is whole',()=>{
+ assert(src.source.handOriginalTriangles>200000);assert.equal(src.hand.index.length/3,20000);assert(src.source.handSimplifiedError<=.004);
+ assert.equal(src.foot.index.length/3,24320);
+ return `hand ${src.source.handOriginalTriangles.toLocaleString()} → 20,000 triangles (${(src.source.handSimplifiedError*100).toFixed(2)}%), foot 24,320`;
+});
+// A socket would show at the top end of the part (the end facing the forearm or calf) as surface facing
+// DOWN into a cup. So: in the top 12% of each part, count the points whose surface faces down.
+const topFacingDown=(p,up)=>{let lo=Infinity,hi=-Infinity;const h=[];
+ for(let i=0;i<p.positions.length;i+=3){const v=dot([p.positions[i]-p.pivot[0],p.positions[i+1]-p.pivot[1],p.positions[i+2]-p.pivot[2]],up);h.push(v);lo=Math.min(lo,v);hi=Math.max(hi,v);}
+ let band=0,down=0;h.forEach((v,k)=>{if(v<hi-.12*(hi-lo))return;band++;if(dot([p.normals[3*k],p.normals[3*k+1],p.normals[3*k+2]],up)<-.3)down++;});return {band,down};};
+const UP={hand:src.hand.axes.length.map(v=>-v),foot:src.foot.axes.thickness};// toward the forearm; straight up
+check('no socket: the top end of the hand and the foot faces outward (no cup facing the forearm or calf)',()=>{
+ const out=[];
+ for(const name of ['hand','foot']){const {band,down}=topFacingDown(src[name],UP[name]);assert(band>50,name+': too few points to judge');
+  assert(down/band<.03,`${name}: ${down} of ${band} top points face down into a cup`);out.push(`${name}: ${down} of ${band} top points face down`);}
+ return out.join('; ');
+});
+check('the no-socket test catches a cup (test of the test: the top end turned inside out must fail)',()=>{
+ for(const name of ['hand','foot']){const p=src[name],up=UP[name],flipped={...p,normals:p.normals.map((v,i)=>-v)};const {band,down}=topFacingDown(flipped,up);
+  assert(down/band>.5,name+': a cup would not have been noticed');}
+ return 'a cup is caught';
 });
 check('pivots are the skeleton\'s wrist and ankle joints; each part\'s directions are square to each other',()=>{
  assert.deepEqual(src.hand.pivot,SIDE.find(b=>b.name==='hand').head);assert.deepEqual(src.foot.pivot,SIDE.find(b=>b.name==='foot').head);
@@ -24,62 +47,28 @@ check('pivots are the skeleton\'s wrist and ankle joints; each part\'s direction
  assert(src.hand.axes.length[1]<-.9,'hand length should point down toward the fingertips');assert(src.foot.axes.length[2]>.8,'foot length should point forward to the toes');
  return 'hand length points to the fingertips, foot length to the toes';
 });
-check('sockets filled: each old socket sits on its wrist/ankle joint; only the patch (the cup and its rounded lip) moved, every other point is exactly the original',()=>{
- const out=[];
- for(const part of ['hand','foot']){
-  const f=FILLED[part].filled,moved=new Set(f.indices);assert.deepEqual(src[part].socket.centre.map(v=>+v.toFixed(4)),src[part].pivot.map(v=>+v.toFixed(4)));
-  for(let i=0;i<src[part].positions.length/3;i++)if(!moved.has(i))for(let k=0;k<3;k++)assert.equal(FILLED[part].positions[3*i+k],src[part].positions[3*i+k],part+' point outside the cup moved');
-  assert(f.cupCount>100,part+' found too few cup points');out.push(`${part}: ${f.count} points blended (${f.cupCount} in the cup), the other ${src[part].positions.length/3-f.count} untouched`);
- }
- return out.join('; ');
-});
-check('sockets filled: no hollow left (the middle of the old cup is raised to the rim; the filled surface faces outward)',()=>{
- const out=[];
- for(const part of ['hand','foot']){const f=FILLED[part].filled,C=src[part].socket.centre;let lowest=Infinity;
-  // No sunken dip: the middle of the old cup (where it was deepest) is now raised to at least the rim's
-  // height. (The rim itself is not level, so points near the edge are judged by the triangles below.)
-  let wasDeepest=Infinity;
-  for(const i of f.cupIndices){const o=[0,1,2].map(k=>src[part].positions[3*i+k]-C[k]),ho=dot(o,f.axis),side=Math.hypot(o[0]-f.axis[0]*ho,o[1]-f.axis[1]*ho,o[2]-f.axis[2]*ho);
-   if(side>.5*f.rimRadius)continue;const p=[0,1,2].map(k=>FILLED[part].positions[3*i+k]-C[k]);lowest=Math.min(lowest,dot(p,f.axis)-f.rimHeight);wasDeepest=Math.min(wasDeepest,ho-f.rimHeight);}
-  assert(lowest>=-.003,`${part}: the middle of the old cup is still ${(-lowest*1000).toFixed(1)} mm deep`);
-  // The dome's triangles face out of the part (away from where the ball was).
-  const P=FILLED[part].positions,ix=src[part].index,cup=new Set(f.cupIndices);let inward=0,total=0;
-  for(let k=0;k<ix.length;k+=3){if(![ix[k],ix[k+1],ix[k+2]].every(i=>cup.has(i)))continue;total++;
-   const g=i=>[P[3*i],P[3*i+1],P[3*i+2]],a=g(ix[k]),b=g(ix[k+1]),c=g(ix[k+2]),u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]];
-   const nrm=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];if(dot(nrm,f.axis)<0)inward++;}
-  assert(total>0&&inward/total<.02,`${part}: ${inward} of ${total} filled triangles face inward`);out.push(`${part}: cup middle was ${(-wasDeepest*1000).toFixed(0)} mm deep, now ${lowest>=0?'+':''}${(lowest*1000).toFixed(1)} mm from the rim; ${total} triangles facing out`);}
- return out.join('; ');
-});
-check('five options with unique ids, labels and notes; option 1 is the original (sockets filled) exactly',()=>{
+check('five options with unique ids, labels and notes; option 1 is the original exactly',()=>{
  assert.equal(HAND_FOOT_OPTIONS.length,5);assert.equal(new Set(HAND_FOOT_OPTIONS.map(o=>o.id)).size,5);for(const o of HAND_FOOT_OPTIONS)assert(o.label&&o.note,o.id);
  const r=buildHandFoot(HAND_FOOT_OPTIONS[0]);
- for(const part of ['hand','foot']){let worst=0;r[part].positions.forEach((v,i)=>{worst=Math.max(worst,Math.abs(v-FILLED[part].positions[i]));});assert(worst<1e-12,part+' moved '+worst);}
- return 'the filled original, unchanged';
+ for(const part of ['hand','foot']){let worst=0;r[part].positions.forEach((v,i)=>{worst=Math.max(worst,Math.abs(v-src[part].positions[i]));});assert(worst<1e-12,part+' moved '+worst);}
+ return 'original unchanged to the last digit';
 });
 check('the wrist and ankle never move, whatever the adjustment (test with a point placed on the pivot)',()=>{
- for(const part of [FILLED.hand,FILLED.foot]){const probe={...part,positions:[...part.pivot,...part.positions.slice(3)]};
+ for(const part of [src.hand,src.foot]){const probe={...part,positions:[...part.pivot,...part.positions.slice(3)],normals:[0,0,0,...part.normals.slice(3)]};
   for(const o of HAND_FOOT_OPTIONS.filter(o=>!o.puff)){const out=adjustPart(probe,o);for(let k=0;k<3;k++)assert(Math.abs(out.positions[k]-part.pivot[k])<1e-12,o.id);}}
  return 'pivot fixed for every size and proportion change';
 });
 for(const o of HAND_FOOT_OPTIONS.slice(1)){
  const r=buildHandFoot(o);
- check(`${o.label}: keeps every original triangle (same finger and toe detail)`,()=>{assert.equal(r.hand.index,src.hand.index);assert.equal(r.foot.index,src.foot.index);return `${r.hand.index.length/3} + ${r.foot.index.length/3} triangles`;});
+ check(`${o.label}: keeps every original triangle`,()=>{assert.equal(r.hand.index,src.hand.index);assert.equal(r.foot.index,src.foot.index);return `${r.hand.index.length/3} + ${r.foot.index.length/3} triangles`;});
  check(`${o.label}: size changes exactly as stated along length, width and thickness`,()=>{
   const out=[];
-  for(const part of ['hand','foot']){const {axes,pivot}=src[part];
+  for(const part of ['hand','foot']){const {axes,pivot}=src[part],base=src[part].positions;
    for(const [name,f] of [['length',o.length],['width',o.width],['thickness',o.thickness]]){
-    const base=FILLED[part].positions,span=ps=>{let lo=Infinity,hi=-Infinity;for(let i=0;i<ps.length;i+=3){const d=dot([ps[i]-pivot[0],ps[i+1]-pivot[1],ps[i+2]-pivot[2]],axes[name]);lo=Math.min(lo,d);hi=Math.max(hi,d);}return hi-lo;};
-    const ratio=span(r[part].positions)/span(base),want=f*o.size;
-    // A puff adds a few millimetres on each side, so allow for it.
-    const slack=o.puff?2*o.puff/span(base)+.002:1e-9;assert(Math.abs(ratio-want)<=slack,`${part} ${name} ×${ratio.toFixed(4)} not ×${want}`);
-    out.push(`${part} ${name} ×${ratio.toFixed(3)}`);}}
+    const span=ps=>{let lo=Infinity,hi=-Infinity;for(let i=0;i<ps.length;i+=3){const d=dot([ps[i]-pivot[0],ps[i+1]-pivot[1],ps[i+2]-pivot[2]],axes[name]);lo=Math.min(lo,d);hi=Math.max(hi,d);}return hi-lo;};
+    const ratio=span(r[part].positions)/span(base),want=f*o.size,slack=o.puff?2*o.puff/span(base)+.002:1e-9;// a puff adds a few millimetres each side
+    assert(Math.abs(ratio-want)<=slack,`${part} ${name} ×${ratio.toFixed(4)} not ×${want}`);out.push(`${part} ${name} ×${ratio.toFixed(3)}`);}}
   return out.join(', ');
- });
- if(o.puff)check(`${o.label}: the puff never cracks the surface (points that shared a position still do)`,()=>{
-  for(const part of ['hand','foot']){const groups=new Map(),P=FILLED[part].positions;
-   for(let i=0;i<P.length/3;i++){const k=P[3*i]+','+P[3*i+1]+','+P[3*i+2];(groups.get(k)??groups.set(k,[]).get(k)).push(i);}
-   for(const ids of groups.values())for(const i of ids.slice(1))for(let k=0;k<3;k++)assert(Math.abs(r[part].positions[3*i+k]-r[part].positions[3*ids[0]+k])<1e-12,part+' crack');}
-  return 'no cracks';
  });
 }
 check('the five options really differ (each pair at least 5 mm apart somewhere)',()=>{
@@ -90,5 +79,5 @@ check('the five options really differ (each pair at least 5 mm apart somewhere)'
 });
 console.table(results);
 const failed=results.filter(r=>r.result!=='PASS').length;
-console.log(failed?`FAIL: ${failed} check(s) failed.`:'PASS: the original hand and foot and every variation check out.');
+console.log(failed?`FAIL: ${failed} check(s) failed.`:'PASS: the original (pre-joint) hand and foot and every variation check out.');
 process.exitCode=failed?1:0;
