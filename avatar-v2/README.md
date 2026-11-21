@@ -4,12 +4,15 @@ The rebuild of the avatar, one part at a time, shown in the Test Lab section
 **New avatar** (`new-avatar/`). The approved avatar (`avatar/`) is the look
 reference and is never changed from here.
 
-Current state: the **clean one-piece torso** plus torso options made from it
-by numbers (`torso-variants.js`), shown side by side for the owner to choose
-from. Round 1 (five body types) is kept in code; the owner liked Athletic.
-Round 2, shown now: five athletic torsos (Athletic; Full chest with rounded
-shoulders instead of the sharp upper edge; Pecs; and two light versions of
-Full chest at about 1,600 and 600 triangles).
+Current state (21 November 2026): the **chosen torso is Athletic (light)**,
+round 1's Athletic shape at the light detail (1,568 triangles, within 4.5 mm of
+the full version). It is shown next to **three joint-ball choices** with exactly
+300, 400 and 500 triangles (`ball-shape.js`). Earlier rounds of torso options
+stay in code (`FIRST_OPTIONS`, `ATHLETIC_OPTIONS`) for reference.
+
+Balls are Fibonacci spheres (points in an even spiral, wrapped by three.js's
+ConvexHull): exact at any even count, and their triangles vary in size by only
+1.6x, against 3.6x for a usual latitude/longitude (UV) sphere of the same count.
 
 Shape tools (all in `torso-variants.js`, checked in `check-torso.mjs`): width
 and front/back depth curves, roundness, squareness, **bumps** (smooth raises
@@ -34,6 +37,8 @@ the limbs will be redone one thing at a time after the torso is chosen.
 | `check-elbow.mjs` | Bends and twists the elbow through its range and checks for collisions, seating, sealed shells, thickness and existing poses. |
 | `measure-arm.mjs` | Prints the old arm's thickness profile (reference only). |
 | `torso-variants.js` | The torso options (Original, Athletic, Round, Lean, Blocky): width, front and back depth along the height, roundness and squareness. |
+| `ball-shape.js` | Joint balls with an exact triangle count (Fibonacci sphere + convex hull), and the 300/400/500 choices. |
+| `check-ball.mjs` | Checks the balls: exact counts, sealed, outward, every point on the sphere, roundness and evenness. |
 | `check-torso.mjs` | Checks the torso and every option: sealed, faces outward, no dents or grooves (with a test of that test), same height, left/right symmetric, distinct from each other, under 6,000 triangles. |
 
 Commands: `node avatar-v2/fit-torso.mjs` (rebuild the torso, same result every

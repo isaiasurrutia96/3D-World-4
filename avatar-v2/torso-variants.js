@@ -58,8 +58,16 @@ export const ATHLETIC_OPTIONS=[
   basedOn:'athletic-full',detail:{segments:16,rings:12,capRings:3}},
 ];
 
-/** The options shown on the page now, left to right. */
-export const TORSO_OPTIONS=ATHLETIC_OPTIONS;
+/**
+ * Chosen (21 November 2026): Athletic at the light detail is the torso going
+ * forward. The owner compared it with the full and lightest versions; the
+ * light one keeps the look at about a third of the triangles.
+ */
+export const CHOSEN_TORSO={id:'athletic-light',label:'Athletic (light)',note:'The chosen torso: Athletic at the light detail (about a third of the triangles).',
+ ...ATHLETIC,detail:{segments:28,rings:20,capRings:4}};
+
+/** The torsos shown on the page now. */
+export const TORSO_OPTIONS=[CHOSEN_TORSO];
 
 const TAU=Math.PI*2,RAD=Math.PI/180;
 const smooth=t=>t*t*(3-2*t);

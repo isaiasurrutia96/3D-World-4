@@ -31,7 +31,7 @@
     "build:run-test": "node run-test/build.mjs",
     "build:skeleton-test": "node skeleton-test/build.mjs",
     "build:new-avatar": "node new-avatar/build.mjs",
-    "test:new-avatar": "node avatar-v2/check-torso.mjs",
+    "test:new-avatar": "node avatar-v2/check-torso.mjs && node avatar-v2/check-ball.mjs",
     "test:torso": "node tests/avatar/torso-split.mjs",
     "test:chest": "node tests/avatar/chest-bend.mjs",
     "test:hands": "node tests/avatar/hand-skin.mjs",

@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {buildTorsoSurface} from './torso-shape.js';
-import {FIRST_OPTIONS,ATHLETIC_OPTIONS,TORSO_OPTIONS,makeTorsoOption,curveAt,resolveOption,resampleShape,expandBumps,bumpAt,ringAt} from './torso-variants.js';
+import {FIRST_OPTIONS,ATHLETIC_OPTIONS,TORSO_OPTIONS,CHOSEN_TORSO,makeTorsoOption,curveAt,resolveOption,resampleShape,expandBumps,bumpAt,ringAt} from './torso-variants.js';
 
 const torso=JSON.parse(await readFile('avatar-v2/torso.json','utf8'));
 const source=JSON.parse(await readFile('avatar-v2/torso-source.json','utf8'));
@@ -28,9 +28,15 @@ check('round 1 Original is exactly the clean torso',()=>{
  assert.equal(FIRST_OPTIONS[0].id,'original');assert.deepEqual(makeTorsoOption(torso.shape,FIRST_OPTIONS[0],FIRST_OPTIONS).rings.map(r=>r.r),torso.shape.rings.map(r=>r.r.map(v=>+v.toFixed(5))));
  return 'identical to torso.json';
 });
-check('the page shows round 2, and round 2 starts with round 1\'s Athletic unchanged',()=>{
- assert.equal(TORSO_OPTIONS,ATHLETIC_OPTIONS);const {id,label,note,...a}=ATHLETIC_OPTIONS[0],{id:i2,label:l2,note:n2,...b}=FIRST_OPTIONS.find(o=>o.id==='athletic');
+check('round 2 starts with round 1\'s Athletic unchanged',()=>{
+ const {id,label,note,...a}=ATHLETIC_OPTIONS[0],{id:i2,label:l2,note:n2,...b}=FIRST_OPTIONS.find(o=>o.id==='athletic');
  assert.deepEqual(a,b);return 'same numbers';
+});
+check('the chosen torso is exactly Athletic at the light detail, and it is what the page shows',()=>{
+ const {id,label,note,detail,...a}=CHOSEN_TORSO,{id:i2,label:l2,note:n2,...b}=FIRST_OPTIONS.find(o=>o.id==='athletic');
+ assert.deepEqual(a,b,'shape settings differ from Athletic');
+ assert.deepEqual(detail,resolveOption(ATHLETIC_OPTIONS.find(o=>o.id==='athletic-light'),ATHLETIC_OPTIONS).detail,'detail differs from the light setting');
+ assert.deepEqual(TORSO_OPTIONS,[CHOSEN_TORSO]);return 'Athletic numbers, light detail '+JSON.stringify(detail);
 });
 for(const [round,list] of [['round 1',FIRST_OPTIONS],['round 2',ATHLETIC_OPTIONS]])check(`${round}: five options, unique ids, labels, notes and valid settings`,()=>{
  assert.equal(list.length,5);assert.equal(new Set(list.map(o=>o.id)).size,5);
@@ -114,7 +120,7 @@ function radiusAt(shape,y,a){
 function gap(a,b){let max=0,sum=0,count=0;for(const ring of a.rings)ring.r.forEach((r,s)=>{const d=Math.abs(r-radiusAt(b,ring.y,s/a.segments*Math.PI*2));max=Math.max(max,d);sum+=d;count++;});return {max,avg:sum/count};}
 
 // Every option of both rounds must be a proper, sealed, smooth torso.
-const rounds=[['R1',FIRST_OPTIONS],['R2',ATHLETIC_OPTIONS]];
+const rounds=[['R1',FIRST_OPTIONS],['R2',ATHLETIC_OPTIONS],['R3',TORSO_OPTIONS]];
 const builtBy=Object.fromEntries(rounds.map(([tag,list])=>[tag,list.map(o=>{const shape=makeTorsoOption(torso.shape,o,list);return {o,list,shape,...buildTorsoSurface(shape)};})]));
 const baseHeight=range(axis(builtBy.R1[0].positions,1));
 for(const [tag] of rounds)for(const {o,shape,positions,index} of builtBy[tag]){
@@ -164,6 +170,11 @@ for(const item of builtBy.R2.filter(b=>b.o.detail&&b.o.basedOn)){
   return `largest ${(g.max*1000).toFixed(1)} mm, average ${(g.avg*1000).toFixed(1)} mm; ${full.index.length/3} → ${item.index.length/3} triangles`;
  });
 }
+check(`R3 ${CHOSEN_TORSO.label}: stays close to the full Athletic (largest gap under 6 mm, 1% of its width)`,()=>{
+ const full=builtBy.R1.find(b=>b.o.id==='athletic'),light=builtBy.R3[0],g=gap(full.shape,light.shape);
+ assert(g.max<=.006,`largest gap ${(g.max*1000).toFixed(1)} mm`);
+ return `largest ${(g.max*1000).toFixed(1)} mm, average ${(g.avg*1000).toFixed(1)} mm; ${full.index.length/3} → ${light.index.length/3} triangles`;
+});
 // Options in a round must really differ, except a light version and the option it is based on.
 // "Really differ" means a difference you can see somewhere: at least 1.5 cm.
 // (An average over the whole torso would wrongly reject a chest-only change.)
