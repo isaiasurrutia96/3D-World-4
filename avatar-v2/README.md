@@ -91,7 +91,8 @@ owner's original hand and foot copied unchanged from the approved avatar's Light
 copy (`build-hands-feet.mjs`, hand 18,208 and foot 10,128 triangles), plus four
 gentle variations (slightly bigger, softer, sleeker, sturdier) that only adjust
 the original surface, anchored at the wrist and ankle, along directions from the
-skeleton. A phone-ready version of the chosen pair comes after the owner picks;
+skeleton. The old wrist and ankle sockets are filled (`fillSocket`: the cup and its
+lip blended smoothly into the surface). A phone-ready version of the chosen pair comes after the owner picks;
 then the wrist and ankle balls.
 
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs

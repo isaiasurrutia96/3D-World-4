@@ -6,8 +6,9 @@
 // triangles, the foot 10,128); the Game copy's 2,000-triangle hand is too
 // simplified to show the original. The approved files are only read.
 // Positions are moved into avatar space (each part's own placement applied).
-// Each part also records its pivot (wrist / ankle joint) and three directions
-// from the skeleton: length, width, thickness.
+// Each part also records its pivot (wrist / ankle joint), three directions
+// from the skeleton (length, width, thickness), and its old socket (the cup
+// where the wrist or ankle ball sat: centre and radius), so it can be filled.
 // Usage: node avatar-v2/build-hands-feet.mjs
 import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
@@ -25,9 +26,12 @@ function toWorld(part){
  const rotate=([x,y,z])=>{const ix=qw*x+qy*z-qz*y,iy=qw*y+qz*x-qx*z,iz=qw*z+qx*y-qy*x,iw=-qx*x-qy*y-qz*z;
   return [ix*qw+iw*-qx+iy*-qz-iz*-qy,iy*qw+iw*-qy+iz*-qx-ix*-qz,iz*qw+iw*-qz+ix*-qy-iy*-qx];};
  const P=part.attributes.position.array,N=part.attributes.normal.array,positions=[],normals=[];
+ // The old socket (the cup where a joint ball sat), moved into avatar space too.
+ const sk=part.transform.userData.assembly.sockets[0],sc=rotate(sk.center.map((v,i)=>v*s[i]));
+ const socket={centre:[+(sc[0]+px).toFixed(5),+(sc[1]+py).toFixed(5),+(sc[2]+pz).toFixed(5)],radius:sk.radius,fillet:sk.filletRadius};
  for(let i=0;i<P.length;i+=3){const r=rotate([P[i]*s[0],P[i+1]*s[1],P[i+2]*s[2]]);positions.push(+(r[0]+px).toFixed(5),+(r[1]+py).toFixed(5),+(r[2]+pz).toFixed(5));
   const n=rotate([N[i],N[i+1],N[i+2]]),l=Math.hypot(...n)||1;normals.push(+(n[0]/l).toFixed(4),+(n[1]/l).toFixed(4),+(n[2]/l).toFixed(4));}
- return {positions,normals,index:Array.from(part.index)};
+ return {positions,normals,index:Array.from(part.index),socket};
 }
 const bone=name=>SIDE.find(b=>b.name===name);
 const sub=(a,b)=>a.map((v,i)=>v-b[i]),unit=a=>{const l=Math.hypot(...a);return a.map(v=>v/l);};
@@ -39,7 +43,8 @@ const wrist=bone('hand').head,middle=fingerBones().filter(b=>/^middle/.test(b.na
 // Foot: ankle to the toe end of the foot bone; thickness straight up.
 const ankle=bone('foot').head,toe=bone('foot').tail;
 const out={version:1,source:{asset:light.asset,sha256:light.sha256,approved:light.sourceSHA256},
- hand:{...toWorld(data.parts.find(p=>p.transform.name==='hand.L')),pivot:wrist,axes:axes(sub(tip,wrist),PALM.normal)},
- foot:{...toWorld(data.parts.find(p=>p.transform.name==='foot.L')),pivot:ankle,axes:axes(sub(toe,ankle),[0,1,0])}};
+ hand:{...toWorld(data.parts.find(p=>p.transform.name==='hand.L')),pivot:wrist,axes:axes(sub(tip,wrist),PALM.normal),opening:unit(sub(bone('lowerArm').head,wrist))},
+ foot:{...toWorld(data.parts.find(p=>p.transform.name==='foot.L')),pivot:ankle,axes:axes(sub(toe,ankle),[0,1,0]),opening:unit(sub(bone('shin').head,ankle))}};
+// opening: the way each socket faces, toward the bone that plugged into it (elbow for the hand, knee for the foot).
 await writeFile('avatar-v2/hands-feet-source.json',JSON.stringify(out)+'\n');
 console.log(`hand ${out.hand.index.length/3} triangles, foot ${out.foot.index.length/3} triangles; wrist ${out.hand.pivot}, ankle ${out.foot.pivot}`);
