@@ -64,8 +64,8 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
    can stick out a little more, like real off-road cars.
 5. **Suspension** (the system that holds the wheels to the kart) can be
    upgraded.
-7. **Chassis upgrade:** a heavier or lighter chassis.
-6. (21 November) The owner confirmed D1 over the older "slight overall edge"
+6. **Chassis upgrade:** a heavier or lighter chassis.
+7. (21 November) The owner confirmed D1 over the older "slight overall edge"
    wording; card 18 in `docs/FEATURES.md` now matches.
 
 ## E. Open points
