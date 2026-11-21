@@ -24,6 +24,20 @@ export function fibonacciPoints(count,radius){
 }
 
 /**
+ * Triangles joining points that all lie on a sphere: the tightest skin around
+ * them (three.js ConvexHull). N points in general position give 2N - 4
+ * triangles, each wound counter-clockwise seen from outside. Returns indices.
+ */
+export function hullIndex(points){
+ const hull=new ConvexHull().setFromPoints(points),number=new Map(points.map((p,i)=>[p,i])),index=[];
+ for(const face of hull.faces){
+  const edge=face.edge;if(edge.next.next.next!==edge)throw Error('hull face is not a triangle');
+  index.push(...[edge.head(),edge.next.head(),edge.next.next.head()].map(v=>number.get(v.point)));
+ }
+ return index;
+}
+
+/**
  * Builds a ball centred at the origin with exactly `triangles` triangles
  * (an even number, 8 or more). Returns {positions, normals, index}; normals
  * point straight out from the centre, the exact normal of a sphere, so it is
@@ -32,14 +46,7 @@ export function fibonacciPoints(count,radius){
 export function buildBall({radius,triangles}){
  if(!(Number.isInteger(triangles)&&triangles>=8&&triangles%2===0))throw Error('triangles must be an even whole number, 8 or more');
  if(!(radius>0))throw Error('radius must be positive');
- const points=fibonacciPoints((triangles+4)/2,radius),hull=new ConvexHull().setFromPoints(points);
- const number=new Map(points.map((p,i)=>[p,i])),index=[];
- for(const face of hull.faces){
-  // Each hull face is a triangle wound counter-clockwise seen from outside.
-  const edge=face.edge,corners=[edge.head(),edge.next.head(),edge.next.next.head()].map(v=>number.get(v.point));
-  if(edge.next.next.next!==edge)throw Error('hull face is not a triangle');
-  index.push(...corners);
- }
+ const points=fibonacciPoints((triangles+4)/2,radius),index=hullIndex(points);
  const positions=points.flatMap(p=>[p.x,p.y,p.z]),normals=points.flatMap(p=>{const n=p.clone().normalize();return [n.x,n.y,n.z];});
  return {positions,normals,index};
 }

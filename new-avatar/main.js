@@ -1,5 +1,6 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
-//  - Head & neck: five options, each on the chosen torso (avatar-v2/head-options.js);
+//  - Heads: five mannequin heads with a face, each on the chosen torso and the
+//    chosen neck ball (avatar-v2/head-shapes.js, head-options.js);
 //  - Torsos / Arms / Legs: the chosen boy's part and the girl's version.
 // Each tab has its own row; "Compare all" frames that row, and each item's
 // button moves the camera in on it and hides the rest. The approved avatar is
@@ -10,7 +11,8 @@ import {installTestLabScene} from '../src/test-lab-scene.ts';
 import torso from '../avatar-v2/torso.json' with {type:'json'};
 import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
-import {HEAD_OPTIONS,buildHeadSet} from '../avatar-v2/head-options.js';
+import {buildFaceSet} from '../avatar-v2/head-options.js';
+import {HEAD_SHAPES} from '../avatar-v2/head-shapes.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
 const GAP=.3;// metres of space between items, left to right
@@ -46,9 +48,9 @@ const legItem=(option,id,label,tag)=>{const set=buildLegSet(option);
 const boyTorso=makeTorsoOption(torso.shape,CHOSEN_TORSO),girlTorso=makeTorsoOption(torso.shape,CHOSEN_GIRL_TORSO,WOMEN_OPTIONS);
 const torsoPart=shape=>({name:'torso',geometry:geometryOf(buildTorsoSurface(shape)),y:0});
 const GROUPS=[
- {id:'head',label:'Head & neck',intro:'Five ways to add a neck ball, each on the chosen torso. The old head sat right on the shoulders, so a neck ball makes the avatar taller: 3.6 to 19.8 cm. Tap one to look at it closely.',
-  items:HEAD_OPTIONS.map((option,i)=>{const set=buildHeadSet(option,boyTorso);
-   return {id:option.id,label:option.label,tag:String(i+1),note:`${option.note} Neck ball ${(set.ball.radius*200).toFixed(1)} cm wide; ${(set.lift*100).toFixed(1)} cm taller than before.`,
+ {id:'head',label:'Heads',intro:'Five round mannequin heads with a jaw, nose and brow, each on the chosen torso and neck ball. Tap one, then use Side and Angled to see the face.',
+  items:HEAD_SHAPES.map((shape,i)=>{const set=buildFaceSet(shape,boyTorso);
+   return {id:shape.id,label:shape.label,tag:String(i+1),note:shape.note,
     parts:[torsoPart(boyTorso),{name:'ball-neck',geometry:geometryOf(set.ball),y:set.ball.y},{name:'head',geometry:geometryOf(set.head),y:set.head.y}]};})},
  {id:'torsos',label:'Torsos',intro:'The chosen torsos: the boy\'s Athletic (light) and the girl\'s W5 Gymnast.',
   items:[{id:'torso-boy',label:'Torso · Boy',tag:'Boy',note:CHOSEN_TORSO.note,parts:[torsoPart(boyTorso)]},{id:'torso-girl',label:'Torso · Girl',tag:'Girl',note:CHOSEN_GIRL_TORSO.note,parts:[torsoPart(girlTorso)]}]},

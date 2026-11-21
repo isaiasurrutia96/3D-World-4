@@ -15,6 +15,7 @@
 // centre; with a neck ball, the natural pivot would be the ball's centre (as
 // for every other joint). That skeleton change is not made here.
 import {buildBall,CHOSEN_BALL_TRIANGLES} from './ball-shape.js';
+import {buildShapedHead,headRadius} from './head-shapes.js';
 import {makeTorsoOption,CHOSEN_TORSO} from './torso-variants.js';
 import {BALL_GAP} from './limb-options.js';
 import {SIDE,CENTRE} from '../motion-core/skeleton/bones.js';
@@ -52,4 +53,21 @@ export function buildHeadSet(option,torsoShape){
   // How much higher the top of the head is than on the approved avatar.
   lift:headY+option.head-(SKELETON_HEAD_CENTRE[1]+APPROVED_HEAD_RADIUS),
  };
+}
+
+/** Chosen by the owner (21 November 2026): option 5, a sunk neck ball with the slightly smaller head (19 cm).
+ *  Reason: a head that snaps back when hit needs to swing about a point at the neck; this option allows
+ *  about 60 degrees of swing while adding only 3.6 cm of height. At assembly the head's pivot moves to the
+ *  neck ball's centre. */
+export const CHOSEN_NECK=HEAD_OPTIONS.find(o=>o.id==='neck-full-sunk-head');
+
+/**
+ * A face-shaped head seated on the chosen neck ball: the neck ball as in
+ * buildHeadSet, and the head placed so its underside (straight below its
+ * centre) sits one gap above the ball's top, whatever its egg or chin.
+ */
+export function buildFaceSet(faceShape,torsoShape,neck=CHOSEN_NECK){
+ const set=buildHeadSet(neck,torsoShape),under=headRadius(faceShape,neck.head,0,-1,0);
+ const headY=set.ball.y+set.ball.radius+BALL_GAP+under;
+ return {ball:set.ball,head:{...buildShapedHead(faceShape,neck.head),y:headY,under},headCentre:headY};
 }

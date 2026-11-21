@@ -47,6 +47,18 @@ torso top, or a slightly smaller head). Head: Fibonacci sphere, 800 triangles.
 Open for the joints discussion: with a neck ball, the head's natural pivot is
 the ball's centre, not the head's centre as in today's skeleton.
 
+**Chosen neck: option 5** (sunk ball, 19 cm head): the owner wants the head to
+snap back when hit, which needs a pivot at the neck; measured, a head without a
+neck ball can only tip 9 degrees before hitting the shoulders, option 5 about
+60 degrees for only +3.6 cm.
+
+**Heads with a face** (`head-shapes.js`): five round mannequin heads (Classic,
+Strong jaw, Soft and young, Heroic, Extra round) shaped by numbers: egg, chin
+narrowing and smooth features (nose, brow, jaw, chin, cheeks, eye hollows). The
+ball's triangle layout is kept and points moved, so hollows work. Points are
+packed toward the face (about 1 cm apart there, 2.9 cm at the back) with 2,400
+triangles; evenly spread 1,500 had smoothed the face away.
+
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
 sit separately, they would be about 12 cm and 9 cm.
@@ -85,6 +97,7 @@ the limbs will be redone one thing at a time after the torso is chosen.
 | `shape-checks.js` | Shared dent and groove measuring used by the torso and arm checks. |
 | `head-options.js` | Head and neck options: neck ball size and placement on the torso's neck seat, head size, and the height change each causes. |
 | `check-head.mjs` | Checks the head options: sizes, placement, sealed spheres, honest height change. |
+| `head-shapes.js` | Mannequin heads with a face: egg, chin and features by numbers; face-focused point layout. |
 | `check-torso.mjs` | Checks the torso and every option: sealed, faces outward, no dents or grooves (with a test of that test), same height, left/right symmetric, distinct from each other, under 6,000 triangles. |
 
 Commands: `node avatar-v2/fit-torso.mjs` (rebuild the torso, same result every
