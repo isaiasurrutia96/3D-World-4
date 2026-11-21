@@ -1,4 +1,6 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
+//  - Faces: five base faces painted on the round head (avatar-v2/face.js),
+//    pressed onto the head with three.js's DecalGeometry;
 //  - Heads: five mannequin heads with a face, each on the chosen torso and the
 //    chosen neck ball (avatar-v2/head-shapes.js, head-options.js);
 //  - Torsos / Arms / Legs: the chosen boy's part and the girl's version.
@@ -7,11 +9,13 @@
 // not used here.
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {DecalGeometry} from 'three/addons/geometries/DecalGeometry.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import torso from '../avatar-v2/torso.json' with {type:'json'};
 import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
-import {buildFaceSet} from '../avatar-v2/head-options.js';
+import {buildFaceSet,buildHeadSet,CHOSEN_NECK} from '../avatar-v2/head-options.js';
+import {BASE_FACES,drawFace} from '../avatar-v2/face.js';
 import {HEAD_SHAPES} from '../avatar-v2/head-shapes.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
@@ -47,7 +51,21 @@ const legItem=(option,id,label,tag)=>{const set=buildLegSet(option);
   parts:partsOf(set,['thigh','ball','calf'],['thigh','ball-knee','calf'],LEG_TOP)};};
 const boyTorso=makeTorsoOption(torso.shape,CHOSEN_TORSO),girlTorso=makeTorsoOption(torso.shape,CHOSEN_GIRL_TORSO,WOMEN_OPTIONS);
 const torsoPart=shape=>({name:'torso',geometry:geometryOf(buildTorsoSurface(shape)),y:0});
+// A painted face: drawn on a canvas, then pressed onto the front of the head.
+function paintFace(group,head,face){
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=512;drawFace(canvas.getContext('2d'),512,face);
+ const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=4;
+ const r=head.geometry.boundingSphere.radius,centre=head.getWorldPosition(new T.Vector3());
+ const geometry=new DecalGeometry(head,centre.clone().add(new T.Vector3(0,0,r)),new T.Euler(),new T.Vector3(2*r,2*r,r));
+ geometry.applyMatrix4(group.matrixWorld.clone().invert());// decal is built in world space; keep it with its item
+ const decal=new T.Mesh(geometry,new T.MeshStandardMaterial({map:texture,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,roughness:.6}));
+ decal.name='face';group.add(decal);
+}
+const plainHead=buildHeadSet(CHOSEN_NECK,makeTorsoOption(torso.shape,CHOSEN_TORSO));
 const GROUPS=[
+ {id:'faces',label:'Faces',intro:'Five base faces on the round head: big oval eyes and a line mouth. Every character has the base face; expressions come next, as emotes. Tap one to look at it closely.',
+  items:BASE_FACES.map((face,i)=>({id:face.id,label:face.label,tag:String(i+1),note:face.note,face,
+   parts:[torsoPart(makeTorsoOption(torso.shape,CHOSEN_TORSO)),{name:'ball-neck',geometry:geometryOf(plainHead.ball),y:plainHead.ball.y},{name:'head',geometry:geometryOf(plainHead.head),y:plainHead.head.y}]}))},
  {id:'head',label:'Heads',intro:'Five round mannequin heads with a jaw, nose and brow, each on the chosen torso and neck ball. Tap one, then use Side and Angled to see the face.',
   items:HEAD_SHAPES.map((shape,i)=>{const set=buildFaceSet(shape,boyTorso);
    return {id:shape.id,label:shape.label,tag:String(i+1),note:shape.note,
@@ -72,6 +90,9 @@ for(const group of GROUPS){
   return {...item,group:g,mesh:g.children[0],width,centre:box.getCenter(new T.Vector3()).add(g.position),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
  });
  group.row.position.x=-x/2;for(const o of group.options)o.centre.x-=x/2;
+ // Faces are pressed on once every item is in its final place.
+ scene.updateMatrixWorld(true);
+ for(const o of group.options)if(o.face){const head=o.group.children.find(m=>m.name==='head');head.geometry.computeBoundingSphere();paintFace(o.group,head,o.face);o.triangles+=o.group.children.find(m=>m.name==='face').geometry.attributes.position.count/3;}
  group.width=x;group.centre=new T.Box3().setFromObject(group.row).getCenter(new T.Vector3());widest=Math.max(widest,x);
 }
 

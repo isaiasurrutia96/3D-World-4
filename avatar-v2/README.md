@@ -59,6 +59,15 @@ ball's triangle layout is kept and points moved, so hollows work. Points are
 packed toward the face (about 1 cm apart there, 2.9 cm at the back) with 2,400
 triangles; evenly spread 1,500 had smoothed the face away.
 
+**Painted faces** (`face.js`, checks `check-face.mjs`), the owner's new
+direction: the head stays round and plain; the face is drawn (big oval eyes, a
+line mouth) and pressed onto the head with three.js DecalGeometry. Concepts were
+made with Higgsfield (about 5 credits); sizes measured from the sheet the owner
+preferred. Five base-face options (eyes vary, same mouth). Design: every
+character has the base face; other expressions are emotes the player picks and
+keeps as long as they want. Owner-approved originality guidance: simple shapes
+are fine, never a known character's exact combination.
+
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
 sit separately, they would be about 12 cm and 9 cm.
@@ -98,6 +107,8 @@ the limbs will be redone one thing at a time after the torso is chosen.
 | `head-options.js` | Head and neck options: neck ball size and placement on the torso's neck seat, head size, and the height change each causes. |
 | `check-head.mjs` | Checks the head options: sizes, placement, sealed spheres, honest height change. |
 | `head-shapes.js` | Mannequin heads with a face: egg, chin and features by numbers; face-focused point layout. |
+| `face.js` | Painted faces as data (eyes, mouth) turned into simple shapes and drawn on a canvas; the base-face options. |
+| `check-face.mjs` | Checks the faces: sizes from the concept, mirrored, same mouth, fits the front of the head, drawing. |
 | `check-torso.mjs` | Checks the torso and every option: sealed, faces outward, no dents or grooves (with a test of that test), same height, left/right symmetric, distinct from each other, under 6,000 triangles. |
 
 Commands: `node avatar-v2/fit-torso.mjs` (rebuild the torso, same result every
