@@ -1,4 +1,5 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
+//  - Shoulder sockets: torso, shoulder balls and upper arms pressed together (avatar-v2/sockets.js);
 //  - Full body: every approved piece put together, still separate (avatar-v2/assembly.js);
 //  - Leg: thigh, knee ball, calf, ankle ball and the chosen foot, before and longer (avatar-v2/assembly.js);
 //  - Wrist: forearm, wrist ball and the chosen hand (avatar-v2/assembly.js);
@@ -20,6 +21,7 @@ import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '.
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
 import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
+import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
@@ -84,17 +86,19 @@ const full=fullBodyPreview('boy');
 GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate: every arm and leg piece 15% bigger (hands then 10% smaller), feet 3 inches longer than the head; torso, neck and head unchanged.',
  items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+const sockets=shoulderSocketPreview('boy');
+GROUPS.unshift({id:'shoulder-sockets',label:'Shoulder sockets',intro:'The torso, both shoulder balls and both upper arms pressed together like clay around a hard ball: each ball sits snug in a socket in the torso and in the top of the upper arm, with soft edges. Nothing else changed.',
+ items:[{id:'shoulder-sockets-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Each ball (${(sockets.ball.radius*200).toFixed(1)} cm) sinks ${(sockets.depth*100).toFixed(1)} cm into the torso and the same into the upper arm, with a ${(sockets.gap*1000).toFixed(0)} mm gap all round, so they never touch. The balls moved ${(sockets.inward*100).toFixed(1)} cm in and the upper arms ${(sockets.armUp*100).toFixed(1)} cm up. Where the ball rises above the torso's shoulder, a thin layer of the torso wraps over it.`,
+  parts:sockets.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 // Hand, head and foot side by side, exactly as they are on the full body (not resized): each one
 // only moved so it stands on the floor in a row.
-// The foot is turned a quarter turn (toes to the right) so the front view shows its heel-to-toe length.
-const turned=part=>({...part,positions:part.positions.map((v,i,P)=>i%3===0?P[i+2]:i%3===2?-P[i-2]:v)});
 const standing=(part,name)=>{const P=part.positions;let lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
  for(let i=0;i<P.length;i+=3)for(let k=0;k<3;k++){lo[k]=Math.min(lo[k],P[i+k]);hi[k]=Math.max(hi[k],P[i+k]);}
  const c=[(lo[0]+hi[0])/2,lo[1],(lo[2]+hi[2])/2];
  return {name,geometry:geometryOf({positions:P.map((v,i)=>v-c[i%3]),index:part.index}),y:0,size:hi.map((h,k)=>h-lo[k])};};
 const pick=(n,side)=>full.parts.find(p=>p.name===n&&p.side===side);
-const hhf=[['hand',standing(pick('hand','left'),'hand'),1],['head',standing(pick('head','centre'),'head'),1],['foot',standing(turned(pick('foot','left')),'foot'),0]];
-GROUPS.unshift({id:'hhf',label:'Hand · head · foot',intro:'The hand, head and foot side by side, exactly the sizes they are on the full body (nothing resized). The foot is turned sideways so you see its length from the front.',
+const hhf=[['hand',standing(pick('hand','left'),'hand'),1],['head',standing(pick('head','centre'),'head'),1],['foot',standing(pick('foot','left'),'foot'),2]];
+GROUPS.unshift({id:'hhf',label:'Hand · head · foot',intro:'The hand, head and foot side by side, exactly the sizes they are on the full body (nothing resized).',
  items:hhf.map(([n,part,axis])=>({id:'hhf-'+n,label:n[0].toUpperCase()+n.slice(1),tag:n[0].toUpperCase()+n.slice(1),...(n==='head'?{face:full.face}:{}),
   note:`${n[0].toUpperCase()+n.slice(1)}: ${(part.size[axis]*100).toFixed(1)} cm ${n==='foot'?'heel to toe':n==='hand'?'wrist end to fingertips':'tall'}.`,parts:[part]}))});
 const legBefore=legPreview('boy',{lengthen:1,ankleBallScale:1}),legLonger=legPreview('boy');
@@ -113,6 +117,9 @@ const preview=shoulderPreview('boy');
 GROUPS.push({id:'shoulder',label:'Shoulders',intro:'The boy\'s torso with a shoulder ball and the upper arm on both sides (arms 10% thicker for the boy). The balls are separated from the torso by a clear gap, never touching it.',
  items:[{id:'shoulder-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Shoulder balls ${(preview.shoulderBall*200).toFixed(1)} cm wide, the size of a shoulder (5% bigger than the upper arm's thickest point), separated from the torso by a 2 cm gap. Upper arms 10% thicker than approved, same shape and the approved length (${(preview.upper.length*100).toFixed(1)} cm).`,
   parts:preview.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+
+// The newest work opens first: the shoulder sockets.
+GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='shoulder-sockets'),1));
 
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
 let widest=0;
