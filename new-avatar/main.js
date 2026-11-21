@@ -75,8 +75,8 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
 const preview=shoulderPreview('boy');
-GROUPS.push({id:'shoulder',label:'Shoulders',intro:'The boy\'s torso with a shoulder ball and the approved upper arm on both sides. The balls rest against the torso, never inside it.',
- items:[{id:'shoulder-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Shoulder balls ${(preview.shoulderBall*200).toFixed(1)} cm wide, the size of a shoulder (5% bigger than the upper arm's thickest point), resting just outside the torso. Upper arms unchanged at ${(preview.upper.length*100).toFixed(1)} cm.`,
+GROUPS.push({id:'shoulder',label:'Shoulders',intro:'The boy\'s torso with a shoulder ball and the approved upper arm on both sides. The balls are separated from the torso by a clear gap, never touching it.',
+ items:[{id:'shoulder-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Shoulder balls ${(preview.shoulderBall*200).toFixed(1)} cm wide, the size of a shoulder (5% bigger than the upper arm's thickest point), separated from the torso by a 2 cm gap. Upper arms unchanged at ${(preview.upper.length*100).toFixed(1)} cm.`,
   parts:preview.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.

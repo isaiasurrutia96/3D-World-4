@@ -4,7 +4,7 @@
 // never inside the torso, every part sealed, and the whole body within budget.
 // Usage: node avatar-v2/check-assembly.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {assemble,insideTorso,shoulderPreview,thickestRadius,SHOULDER_TO_ARM,BODIES,PLACEMENTS} from './assembly.js';
+import {assemble,insideTorso,shoulderPreview,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
 import {buildLimbShape,CHOSEN_ARM,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 import {CHOSEN_FACE,faceShapes} from './face.js';
@@ -102,10 +102,10 @@ check('shoulder preview: both sides; shoulder balls the size of a shoulder (5% b
  const arm=thickestRadius(CHOSEN_ARM.upper);assert(Math.abs(p.shoulderBall-SHOULDER_TO_ARM*arm)<1e-12);assert(p.shoulderBall>arm,'not bigger than the arm');
  return `ball ${(p.shoulderBall*200).toFixed(1)} cm wide; upper arm at its thickest ${(arm*200).toFixed(1)} cm`;
 });
-check('shoulder preview: the shoulder balls are never inside the torso (clear by at least the gap)',()=>{
+check(`shoulder preview: the shoulder balls are separated from the torso by a visible gap (${SHOULDER_TORSO_GAP*100} cm), never touching it`,()=>{
  const p=shoulderPreview('boy');let worst=-Infinity;
  for(const b of p.parts.filter(x=>x.name==='ball-shoulder'))for(let i=0;i<b.positions.length;i+=3)worst=Math.max(worst,insideTorso(p.torsoShape,b.positions.slice(i,i+3)));
- assert(worst<=-BALL_GAP*.9,`inside or touching (${(worst*1000).toFixed(1)} mm)`);
+ assert(worst<=-SHOULDER_TORSO_GAP*.95,`gap only ${(-worst*1000).toFixed(1)} mm`);
  return `clear by ${(-worst*1000).toFixed(1)} mm; moved out ${(p.movedOut*100).toFixed(1)} cm from the skeleton's shoulder joint`;
 });
 check('shoulder preview: right side is the exact mirror of the left; the arms hang one gap below the balls and stay out of the torso',()=>{

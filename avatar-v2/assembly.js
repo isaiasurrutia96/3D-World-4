@@ -60,12 +60,12 @@ const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],add=(a,b)=>[a[0]+b[0],a[1]+b[1]
 const scale=(a,s)=>[a[0]*s,a[1]*s,a[2]*s],length=a=>Math.hypot(...a),unit=a=>scale(a,1/length(a));
 const mirror=p=>[-p[0],p[1],p[2]];
 
-/** Moves a ball out along `direction` until it clears the torso by the gap. */
-function pushClear(shape,centre,radius,direction){
+/** Moves a ball out along `direction` until it clears the torso by `gap` (default: the limb gap). */
+function pushClear(shape,centre,radius,direction,gap=BALL_GAP){
  const probes=Array.from({length:400},(_,i)=>{const y=1-2*(i+.5)/400,r=Math.sqrt(1-y*y),a=i*Math.PI*(3-Math.sqrt(5));return [Math.cos(a)*r,y,Math.sin(a)*r];});
  for(let d=0;d<=.3;d+=.0005){
   const c=add(centre,scale(direction,d));
-  if(probes.every(p=>insideTorso(shape,add(c,scale(p,radius+BALL_GAP)))<=0))return c;
+  if(probes.every(p=>insideTorso(shape,add(c,scale(p,radius+gap)))<=0))return c;
  }
  throw Error('could not clear the torso');
 }
@@ -134,12 +134,16 @@ export function thickestRadius(limb){let r=0;for(let k=0;k<=100;k++)for(let a=0;
  * arm's thickest point. (Other joint balls keep the 92% rule.)
  */
 export const SHOULDER_TO_ARM=1.05;
+/** Space between each shoulder ball and the torso (owner: "separated, not
+ *  resting against the torso"): 2 cm, clearly visible; the 6 mm limb gap read
+ *  as touching on screen. */
+export const SHOULDER_TORSO_GAP=.02;
 
 /**
  * Owner's request (21 November 2026): the boy's torso with a shoulder ball and
  * the approved upper arm on BOTH sides. The ball must never sit inside the
  * torso: it starts at the skeleton's shoulder joint and moves straight out
- * sideways until it clears the torso by the gap. The upper arm is EXACTLY as
+ * sideways until it is separated from the torso by SHOULDER_TORSO_GAP (2 cm). The upper arm is EXACTLY as
  * approved (same shape, same 24.5 cm length) and hangs one gap below the ball,
  * pointing the same way as the skeleton's upper arm. The right side mirrors
  * the left.
@@ -147,7 +151,7 @@ export const SHOULDER_TO_ARM=1.05;
 export function shoulderPreview(bodyId='boy'){
  const body=BODIES[bodyId],torsoShape=makeTorsoOption(torsoBase.shape,body.torso,body.torsoList);
  const arm=body.arm,rS=SHOULDER_TO_ARM*thickestRadius(arm.upper),approvedLength=pairSizes(arm,ARM_PAIR).upper;
- const S=pushClear(torsoShape,[...SHOULDER],rS,[1,0,0]),dir=unit(sub(ELBOW,SHOULDER)),top=add(S,scale(dir,rS+BALL_GAP));
+ const S=pushClear(torsoShape,[...SHOULDER],rS,[1,0,0],SHOULDER_TORSO_GAP),dir=unit(sub(ELBOW,SHOULDER)),top=add(S,scale(dir,rS+BALL_GAP));
  const ball={name:'ball-shoulder',side:'left',...ballAt(rS,S)};
  const upper={name:'upper-arm',side:'left',...place(buildLimbShape(arm.upper,approvedLength),top,dir),length:approvedLength,top,direction:dir};
  const parts=[{name:'torso',side:'centre',...buildTorsoSurface(torsoShape)}];
