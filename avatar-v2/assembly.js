@@ -165,10 +165,18 @@ export function shoulderPreview(bodyId='boy'){
  * Wrist and ankle balls: the SAME size as the bottom end of the forearm or calf
  * (owner, 21 November 2026: "make the ball the same size as the bottom part of
  * the forearm"). This replaces the 92% joint rule for these two balls only; the
- * other joints keep BALL_TO_LIMB. The limb ends are round, so the ball matches
- * them in every direction.
+ * other joints keep BALL_TO_LIMB. "The bottom part" is the limb's bottom edge
+ * as drawn: its last full-width ring, where the rounded end begins (owner,
+ * again: "make the ball the overall same size as the bottom part of the
+ * calve"). The first try used the radius at the very tip, which the drawn limb
+ * never reaches, so the ball looked smaller than the limb. The limb ends are
+ * round, so the ball matches them in every direction.
  */
 export const END_BALL_TO_LIMB=1;
+/** The radius of a limb's bottom edge as drawn (its lowest full-width ring). */
+export function bottomEdgeRadius(limb,limbLength){
+ const {rings}=buildLimbShape(limb,limbLength).shape,lowest=rings.reduce((a,b)=>b.y<a.y?b:a);return Math.max(...lowest.r);
+}
 
 /**
  * One end joint, one side, laid out along the skeleton's bone (from the middle
@@ -179,7 +187,7 @@ export const END_BALL_TO_LIMB=1;
  * Nothing is reshaped.
  */
 function endJoint({limb,limbName,ballName,partName,limbLength,middle,end,middleBall,part}){
- const d=unit(sub(end,middle)),r=END_BALL_TO_LIMB*thinnestAt(limb,1);
+ const d=unit(sub(end,middle)),r=END_BALL_TO_LIMB*bottomEdgeRadius(limb,limbLength);
  const top=add(middle,scale(d,middleBall+BALL_GAP)),J=add(top,scale(d,limbLength+BALL_GAP+r));
  const lower={name:limbName,side:'left',...place(buildLimbShape(limb,limbLength),top,d),length:limbLength,top,direction:d};
  const pivot=part.pivot;let reach=-Infinity;
@@ -194,7 +202,7 @@ function endJoint({limb,limbName,ballName,partName,limbLength,middle,end,middleB
  * the wrist ball and the chosen hand (option 2, the original 8% bigger),
  * separate, with the usual 6 mm gaps, along the skeleton's forearm. The forearm
  * is the boy's at its approved length (22.2 cm); the wrist ball is the size of
- * the forearm's bottom end; the hand is only moved.
+ * the forearm's bottom edge; the hand is only moved.
  */
 export function wristPreview(bodyId='boy'){
  const arm=BODIES[bodyId].arm;
@@ -209,7 +217,7 @@ export function wristPreview(bodyId='boy'){
  * Owner's request (21 November 2026): the ankle joint, one side: the calf, the
  * ankle ball and the chosen foot (option 2), built exactly like the wrist. The
  * calf is the boy's (the approved Strong leg) at its approved length; the ankle
- * ball is the size of the calf's bottom end; the foot is only moved.
+ * ball is the size of the calf's bottom edge; the foot is only moved.
  */
 export function anklePreview(bodyId='boy'){
  const leg=BODIES[bodyId].leg,size=pairSizes(leg,LEG_PAIR);

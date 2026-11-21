@@ -137,14 +137,21 @@ check('shoulder preview: right side is the exact mirror of the left; the arms ha
    const own=buildLimbShape(j.limb,j.limbLength);assert(Math.abs(j.lower.length-j.limbLength)<1e-12);
    const d=sameShape(j.lower.positions,own.positions);assert(d<1e-9,'reshaped by '+d);return `${(j.lower.length*100).toFixed(1)} cm, shape identical`;
   });
-  check(`${j.tag}: the ball is the same size as the ${j.names[0]}'s bottom end (owner's rule for wrists and ankles)`,()=>{
-   assert.equal(END_BALL_TO_LIMB,1);const end=thinnestAt(j.limb,1);assert(Math.abs(j.ball-end)<1e-12);
-   // The end is round: its widest is the same as its thinnest, so the ball matches in every direction.
-   let widest=0;for(let s=0;s<360;s++)widest=Math.max(widest,limbRadius(j.limb,1,s/360*2*Math.PI));assert(widest-end<1e-6,'limb end not round');
-   // And the ball's own surface really is that size.
+  check(`${j.tag}: the ball is the same size as the ${j.names[0]}'s bottom edge as drawn (owner's rule for wrists and ankles)`,()=>{
+   assert.equal(END_BALL_TO_LIMB,1);
+   // Measured on the drawn limb itself: its widest point in the bottom 30% of its length (where the rounded end begins).
+   const d=j.d,top=j.lower.top;let edge=0,edgeMin=Infinity;const ring=new Map();
+   for(let i=0;i<j.lower.positions.length;i+=3){const v=P(j.lower.positions,i/3).map((x,k)=>x-top[k]),a=v[0]*d[0]+v[1]*d[1]+v[2]*d[2];if(a<.7*j.lower.length)continue;
+    const r=Math.hypot(v[0]-a*d[0],v[1]-a*d[1],v[2]-a*d[2]);if(r>edge)edge=r;const key=a.toFixed(5);ring.set(key,Math.min(ring.get(key)??Infinity,r));}
+   assert(Math.abs(j.ball-edge)<1e-6,`ball ${(j.ball*200).toFixed(2)} cm, limb bottom edge ${(edge*200).toFixed(2)} cm`);
+   // The bottom edge is round, so the ball matches in every direction.
+   const widestRingMin=Math.max(...[...ring.values()].filter(r=>r>edge*.95)),outOfRound=2*(edge-widestRingMin);assert(outOfRound<.001,'bottom edge not round: '+(outOfRound*1000).toFixed(2)+' mm');
+   // The ball's own surface really is that size.
    const ball=j.parts[1];let far=0;for(let i=0;i<ball.positions.length;i+=3)far=Math.max(far,dist(P(ball.positions,i/3),j.J));assert(Math.abs(far-j.ball)<1e-6,'ball surface size');
-   return `ball ${(j.ball*200).toFixed(1)} cm wide = ${j.names[0]} end ${(end*200).toFixed(1)} cm`;
+   return `ball ${(j.ball*200).toFixed(1)} cm wide = ${j.names[0]} bottom edge ${(edge*200).toFixed(1)} cm (edge round within ${(outOfRound*1000).toFixed(1)} mm)`;
   });
+  // Test of the test: the first try (radius at the very tip) must be caught as too small.
+  check(`${j.tag}: the size test catches a ball sized to the limb's tip (the first try)`,()=>{const tip=thinnestAt(j.limb,1);assert(j.ball-tip>.003,'tip size not caught');return `tip ${(tip*200).toFixed(1)} cm is ${((j.ball-tip)*200).toFixed(1)} cm too small`;});
   check(`${j.tag}: the ${j.names[2]} is only moved, never reshaped`,()=>{
    const d=sameShape(j.part.positions,j.original.positions);assert(d<1e-9,'reshaped by '+d);return `shape identical; moved ${(Math.hypot(...j.part.shift)*100).toFixed(1)} cm along the ${j.names[0]}'s line`;
   });

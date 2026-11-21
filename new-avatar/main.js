@@ -81,11 +81,11 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
 ];
 const ankle=anklePreview('boy');
 GROUPS.push({id:'ankle',label:'Ankle',intro:'The ankle joint, one side: the calf, the ankle ball and your chosen foot (option 2), separate with small gaps. Nothing reshaped.',
- items:[{id:'ankle-boy',label:'Calf · ankle · foot',tag:'Boy',note:`Calf at its approved ${(ankle.calf.length*100).toFixed(1)} cm; ankle ball ${(ankle.ankleBall*200).toFixed(1)} cm wide, the same size as the bottom of the calf; your chosen foot one gap below it, unchanged. Keeping every length puts the ankle ${(ankle.ankleMovedBy*100).toFixed(1)} cm lower than before.`,
+ items:[{id:'ankle-boy',label:'Calf · ankle · foot',tag:'Boy',note:`Calf at its approved ${(ankle.calf.length*100).toFixed(1)} cm; ankle ball ${(ankle.ankleBall*200).toFixed(1)} cm wide, the same size as the bottom edge of the calf; your chosen foot one gap below it, unchanged. Keeping every length puts the ankle ${(ankle.ankleMovedBy*100).toFixed(1)} cm lower than before.`,
   parts:ankle.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
 const wrist=wristPreview('boy');
 GROUPS.push({id:'wrist',label:'Wrist',intro:'The wrist joint, one side: the forearm, the wrist ball and your chosen hand (option 2), separate with small gaps. Nothing reshaped.',
- items:[{id:'wrist-boy',label:'Forearm · wrist · hand',tag:'Boy',note:`Forearm at its approved ${(wrist.forearm.length*100).toFixed(1)} cm; wrist ball ${(wrist.wristBall*200).toFixed(1)} cm wide, the same size as the bottom of the forearm; your chosen hand one gap below it, unchanged. Keeping every length puts the wrist ${(wrist.wristMovedBy*100).toFixed(1)} cm further down the arm than before.`,
+ items:[{id:'wrist-boy',label:'Forearm · wrist · hand',tag:'Boy',note:`Forearm at its approved ${(wrist.forearm.length*100).toFixed(1)} cm; wrist ball ${(wrist.wristBall*200).toFixed(1)} cm wide, the same size as the bottom edge of the forearm; your chosen hand one gap below it, unchanged. Keeping every length puts the wrist ${(wrist.wristMovedBy*100).toFixed(1)} cm further down the arm than before.`,
   parts:wrist.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
 GROUPS.push({id:'handsfeet',label:'Hands & feet',intro:'Your original hand and foot (option 1) and four gentle variations of them. Each keeps every finger and toe detail; the wrist and ankle stay put. Tap one to look closely.',
  items:HAND_FOOT_OPTIONS.map((option,i)=>{const r=buildHandFoot(option);

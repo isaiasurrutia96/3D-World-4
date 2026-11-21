@@ -94,7 +94,7 @@ plus four gentle variations (slightly bigger, softer, sleeker, sturdier) that on
 adjust the original surface, anchored at the wrist and ankle, along directions
 from the skeleton. The owner picked option 2. The wrist and ankle previews
 (`wristPreview`, `anklePreview` in `assembly.js`) use balls the same size as the
-forearm's and calf's bottom ends.
+forearm's and calf's bottom edges as drawn (`bottomEdgeRadius`).
 
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
