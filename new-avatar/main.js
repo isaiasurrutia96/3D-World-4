@@ -1,4 +1,5 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
+//  - Full body: every approved piece put together, still separate (avatar-v2/assembly.js);
 //  - Leg: thigh, knee ball, calf, ankle ball and the chosen foot, before and longer (avatar-v2/assembly.js);
 //  - Wrist: forearm, wrist ball and the chosen hand (avatar-v2/assembly.js);
 //  - Hands & feet: the owner's original hand and foot and four gentle variations
@@ -18,7 +19,7 @@ import torso from '../avatar-v2/torso.json' with {type:'json'};
 import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
 import {drawFace} from '../avatar-v2/face.js';
-import {assemble,shoulderPreview,wristPreview,legPreview,BODIES} from '../avatar-v2/assembly.js';
+import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
@@ -79,6 +80,10 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
  {id:'legs',label:'Legs',intro:'The chosen Strong legs (boy) and the girl\'s version, 8% slimmer.',
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
+const full=fullBodyPreview('boy');
+GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate: torso, neck ball and head, shoulders, arms with elbow and wrist balls and hands, hip balls, the longer legs with knee and ankle balls and feet. Nothing reshaped.',
+ items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
+  parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const legBefore=legPreview('boy',{lengthen:1,ankleBallScale:1}),legLonger=legPreview('boy');
 const legNote=(l,what)=>`${what} Thigh ${(l.thigh.length*100).toFixed(1)} cm, calf ${(l.calf.length*100).toFixed(1)} cm, knee ball ${(l.kneeBall*200).toFixed(1)} cm, ankle ball ${(l.ankleBall*200).toFixed(1)} cm. Hip to sole ${(l.hipToSole*100).toFixed(1)} cm (your original avatar: ${(l.originalHipToSole*100).toFixed(1)} cm, before sockets).`;
 GROUPS.push({id:'leg',label:'Leg',intro:'The whole leg, one side: thigh, knee ball, calf, ankle ball and your chosen foot. Left: as it was. Right: thigh and calf 10% longer and the ankle ball 10% bigger. Same shapes, only longer.',
@@ -132,7 +137,7 @@ const directions={front:[0,.04,1],side:[1,.04,0],back:[0,.04,-1],top:[0,1,.0004]
 let active=GROUPS[0],options=active.options,focus=null,viewName='front',glide=null;
 function distance(){// close enough to fill the screen with one item (its width and its height), or with all of them
  const half=Math.tan(camera.fov*Math.PI/360),across=focus===null?active.width+.4:Math.max(options[focus].width*1.7,.75);
- const wide=(across/2)/(half*Math.min(1,camera.aspect)),tall=focus===null?0:(options[focus].height*1.15/2)/half;
+ const wide=(across/2)/(half*Math.min(1,camera.aspect)),tall=((focus===null?Math.max(...options.map(o=>o.height)):options[focus].height)*1.2/2)/half;// the tallest item fits too (leaves room for the view buttons)
  return Math.max(focus===null?1.7:.45,wide,tall)*1.05;
 }
 function frame(){

@@ -228,14 +228,14 @@ export const LEG_LENGTHEN=1.1,ANKLE_BALL_SCALE=1.1;
  * One whole leg, one side, hanging straight down the skeleton's leg line (hip
  * to ankle): thigh, knee ball, calf, ankle ball and the chosen foot, separate,
  * with the usual 6 mm gaps. The thigh starts where it sits below the hip ball
- * (the hip ball itself is not shown: its placement is still open). `lengthen`
+ * (the hip ball itself is not shown here; `hip` moves its centre). `lengthen`
  * scales both limb lengths; `ankleBallScale` scales the ankle ball against the
  * ankle ball before (the approved calf's bottom edge). With (1, 1) this is the leg as it was before.
  */
-export function legPreview(bodyId='boy',{lengthen=LEG_LENGTHEN,ankleBallScale=ANKLE_BALL_SCALE}={}){
+export function legPreview(bodyId='boy',{lengthen=LEG_LENGTHEN,ankleBallScale=ANKLE_BALL_SCALE,hip=HIP}={}){
  const leg=BODIES[bodyId].leg,size=pairSizes(leg,LEG_PAIR),d=unit(sub(ANKLE,HIP));
- const hipBall=BALL_TO_LIMB*thinnestAt(leg.thigh,0),thighLength=size.thigh*lengthen,calfLength=size.calf*lengthen;
- const thighTop=add(HIP,scale(d,hipBall+BALL_GAP)),K=add(thighTop,scale(d,thighLength+BALL_GAP+size.ball));
+ const hipBall=hipBallRadius(leg),thighLength=size.thigh*lengthen,calfLength=size.calf*lengthen;
+ const thighTop=add(hip,scale(d,hipBall+BALL_GAP)),K=add(thighTop,scale(d,thighLength+BALL_GAP+size.ball));
  const thigh={name:'thigh',side:'left',...place(buildLimbShape(leg.thigh,thighLength),thighTop,d),length:thighLength,top:thighTop,direction:d};
  const j=endJoint({limb:leg.calf,limbName:'calf',ballName:'ball-ankle',partName:'foot',limbLength:calfLength,
   middle:K,end:add(K,d),middleBall:size.ball,part:buildHandFoot(CHOSEN_HAND_FOOT).foot,
@@ -245,7 +245,7 @@ export function legPreview(bodyId='boy',{lengthen=LEG_LENGTHEN,ankleBallScale=AN
  return {body:bodyId,lengthen,ankleBallScale,direction:d,knee:K,kneeBall:size.ball,ankle:j.joint,ankleBall:j.ball,thigh,calf:j.lower,foot:j.moved,
   parts:[thigh,{name:'ball-knee',side:'left',...ballAt(size.ball,K)},...j.parts],
   // Hip joint to the bottom of the foot, to compare with the original avatar (whose sole is at y = 0).
-  hipToSole:HIP[1]-sole,originalHipToSole:HIP[1]};
+  hipToSole:hip[1]-sole,originalHipToSole:HIP[1],sole};
 }
 
 /**
@@ -257,3 +257,50 @@ export function anklePreview(bodyId='boy'){
  return {body:bodyId,direction:l.direction,ankle:l.ankle,ankleBall:l.ankleBall,calf:l.calf,foot:l.foot,parts:l.parts.slice(2),knee:l.knee,kneeBall:l.kneeBall};
 }
 
+
+/** The hip ball's size: the joint rule (92% of the thigh's top end), as in assemble(). */
+export const hipBallRadius=leg=>BALL_TO_LIMB*thinnestAt(leg.thigh,0);
+
+/**
+ * Owner's request (21 November 2026): all the approved pieces put together,
+ * still separate. Nothing is reshaped and every approved length is kept, so
+ * each joint sits where the pieces above it end:
+ *  - torso, shoulder balls and upper arms: exactly shoulderPreview (balls 2 cm
+ *    clear of the torso);
+ *  - neck ball and head: the chosen neck (option 5) with the base face;
+ *  - each arm continues down the skeleton's arm directions: elbow ball (joint
+ *    rule), forearm (approved length), wrist ball (size of the forearm's bottom
+ *    edge), chosen hand;
+ *  - hip balls (joint rule) moved straight down until 2 cm clear of the torso,
+ *    the same rule as the shoulders (Claude's assumption: the owner set it for
+ *    the shoulders; hips were never decided);
+ *  - each leg below its hip ball: legPreview's longer leg (thigh and calf 10%
+ *    longer, ankle ball 10% bigger) with the chosen foot; the feet move a few
+ *    millimetres outward so they do not overlap each other.
+ * The right side is the exact mirror of the left.
+ */
+export function fullBodyPreview(bodyId='boy'){
+ const body=BODIES[bodyId],arm=body.arm,leg=body.leg,top=shoulderPreview(bodyId),torsoShape=top.torsoShape;
+ const parts=[...top.parts];
+ const neck=buildHeadSet(CHOSEN_NECK,torsoShape);
+ parts.push({name:'ball-neck',side:'centre',...ballAt(neck.ball.radius,[0,neck.ball.y,0])});
+ parts.push({name:'head',side:'centre',positions:neck.head.positions.map((v,i)=>v+(i%3===1?neck.head.y:0)),index:neck.head.index,radius:neck.head.radius,centre:[0,neck.head.y,0]});
+ // Arm, below the approved upper arm.
+ const elbowBall=pairSizes(arm,ARM_PAIR).ball,up=top.upper,E=add(up.top,scale(up.direction,up.length+BALL_GAP+elbowBall));
+ const w=endJoint({limb:arm.fore,limbName:'forearm',ballName:'ball-wrist',partName:'hand',limbLength:APPROVED_ARM_LENGTHS.fore,
+  middle:E,end:add(E,unit(sub(WRIST,ELBOW))),middleBall:elbowBall,part:buildHandFoot(CHOSEN_HAND_FOOT).hand});
+ // Hip ball clear of the torso, then the longer leg below it.
+ const hipBall=hipBallRadius(leg),H=pushClear(torsoShape,[...HIP],hipBall,[0,-1,0],SHOULDER_TORSO_GAP);
+ const l=legPreview(bodyId,{hip:H});
+ // The two feet (8% bigger, chosen option 2) would overlap in the middle by a few millimetres:
+ // each moves straight outward just enough to leave the usual gap between them (not reshaped).
+ const foot=l.parts.find(p=>p.name==='foot');let inner=Infinity;for(let i=0;i<foot.positions.length;i+=3)inner=Math.min(inner,foot.positions[i]);
+ const footOut=Math.max(0,BALL_GAP/2-inner);if(footOut)foot.positions=foot.positions.map((v,i)=>i%3===0?v+footOut:v);
+ const left=[{name:'ball-elbow',side:'left',...ballAt(elbowBall,E)},...w.parts,{name:'ball-hip',side:'left',...ballAt(hipBall,H)},...l.parts];
+ for(const p of left){parts.push(p);parts.push({...mirrored(p),name:p.name,side:'right',...(p.centre?{centre:mirror(p.centre)}:{})});}
+ return {body:bodyId,torsoShape,parts,face:CHOSEN_FACE,headCentre:[0,neck.head.y,0],headRadius:neck.head.radius,
+  joints:{shoulder:top.shoulder,elbow:E,wrist:w.joint,hip:H,knee:l.knee,ankle:l.ankle},balls:{shoulder:top.shoulderBall,elbow:elbowBall,wrist:w.ball,hip:hipBall,knee:l.kneeBall,ankle:l.ankleBall},
+  arm:{forearm:w.lower,hand:w.moved},leg:l,footOut,
+  // Heights above the sole (the original avatar stands with its sole at 0).
+  height:Math.max(...neck.head.positions.filter((_,i)=>i%3===1))+neck.head.y-l.sole,sole:l.sole};
+}
