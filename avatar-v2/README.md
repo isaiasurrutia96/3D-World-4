@@ -68,6 +68,19 @@ character has the base face; other expressions are emotes the player picks and
 keeps as long as they want. Owner-approved originality guidance: simple shapes
 are fine, never a known character's exact combination.
 
+**Chosen base face** (`CHOSEN_FACE`): option 3's rounder eyes, slightly closer
+together (0.17 from centre), line mouth. Only the base face for now; expression
+emotes come later (owner's ideas: X X eyes, "X p" eyes with the tongue out, many
+expressions, some bought in a shop).
+
+**First assembly** (`assembly.js`, checks `check-assembly.mjs`): every chosen
+part placed from the skeleton's joints, boy and girl, with shoulder and hip
+balls (same 92% rule) either centred on the joints (partly inside the torso,
+skeleton unchanged) or pushed out to rest on the torso (wider shoulders, lower
+hips). About 9,400 triangles so far (no hands or feet). Open question for the
+owner: with a ball at both ends, the limbs are short (upper arm about 18 cm,
+thigh about 20 cm), a "beads on a string" look.
+
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
 sit separately, they would be about 12 cm and 9 cm.
@@ -109,6 +122,8 @@ the limbs will be redone one thing at a time after the torso is chosen.
 | `head-shapes.js` | Mannequin heads with a face: egg, chin and features by numbers; face-focused point layout. |
 | `face.js` | Painted faces as data (eyes, mouth) turned into simple shapes and drawn on a canvas; the base-face options. |
 | `check-face.mjs` | Checks the faces: sizes from the concept, mirrored, same mouth, fits the front of the head, drawing. |
+| `assembly.js` | The chosen parts assembled from the skeleton's joints (boy/girl; shoulder and hip balls at the joints or resting on the torso), all in avatar space. |
+| `check-assembly.mjs` | Checks the assembly: joints, ball sizes, gaps, mirror, no limb inside the torso, sealed parts, triangle budget. |
 | `check-torso.mjs` | Checks the torso and every option: sealed, faces outward, no dents or grooves (with a test of that test), same height, left/right symmetric, distinct from each other, under 6,000 triangles. |
 
 Commands: `node avatar-v2/fit-torso.mjs` (rebuild the torso, same result every

@@ -1,8 +1,7 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
-//  - Faces: five base faces painted on the round head (avatar-v2/face.js),
-//    pressed onto the head with three.js's DecalGeometry;
-//  - Heads: five mannequin heads with a face, each on the chosen torso and the
-//    chosen neck ball (avatar-v2/head-shapes.js, head-options.js);
+//  - Assembly: the chosen parts put together (avatar-v2/assembly.js), boy and
+//    girl, with the shoulder and hip balls at the joints or resting on the
+//    torso; the chosen base face is pressed onto the head (DecalGeometry);
 //  - Torsos / Arms / Legs: the chosen boy's part and the girl's version.
 // Each tab has its own row; "Compare all" frames that row, and each item's
 // button moves the camera in on it and hides the rest. The approved avatar is
@@ -14,9 +13,8 @@ import {installTestLabScene} from '../src/test-lab-scene.ts';
 import torso from '../avatar-v2/torso.json' with {type:'json'};
 import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
-import {buildFaceSet,buildHeadSet,CHOSEN_NECK} from '../avatar-v2/head-options.js';
-import {BASE_FACES,drawFace} from '../avatar-v2/face.js';
-import {HEAD_SHAPES} from '../avatar-v2/head-shapes.js';
+import {drawFace} from '../avatar-v2/face.js';
+import {assemble,BODIES} from '../avatar-v2/assembly.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
 const GAP=.3;// metres of space between items, left to right
@@ -55,21 +53,18 @@ const torsoPart=shape=>({name:'torso',geometry:geometryOf(buildTorsoSurface(shap
 function paintFace(group,head,face){
  const canvas=document.createElement('canvas');canvas.width=canvas.height=512;drawFace(canvas.getContext('2d'),512,face);
  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=4;
- const r=head.geometry.boundingSphere.radius,centre=head.getWorldPosition(new T.Vector3());
+ const sphere=head.geometry.boundingSphere,r=sphere.radius,centre=head.localToWorld(sphere.center.clone());
  const geometry=new DecalGeometry(head,centre.clone().add(new T.Vector3(0,0,r)),new T.Euler(),new T.Vector3(2*r,2*r,r));
  geometry.applyMatrix4(group.matrixWorld.clone().invert());// decal is built in world space; keep it with its item
  const decal=new T.Mesh(geometry,new T.MeshStandardMaterial({map:texture,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,roughness:.6}));
  decal.name='face';group.add(decal);
 }
-const plainHead=buildHeadSet(CHOSEN_NECK,makeTorsoOption(torso.shape,CHOSEN_TORSO));
 const GROUPS=[
- {id:'faces',label:'Faces',intro:'Five base faces on the round head: big oval eyes and a line mouth. Every character has the base face; expressions come next, as emotes. Tap one to look at it closely.',
-  items:BASE_FACES.map((face,i)=>({id:face.id,label:face.label,tag:String(i+1),note:face.note,face,
-   parts:[torsoPart(makeTorsoOption(torso.shape,CHOSEN_TORSO)),{name:'ball-neck',geometry:geometryOf(plainHead.ball),y:plainHead.ball.y},{name:'head',geometry:geometryOf(plainHead.head),y:plainHead.head.y}]}))},
- {id:'head',label:'Heads',intro:'Five round mannequin heads with a jaw, nose and brow, each on the chosen torso and neck ball. Tap one, then use Side and Angled to see the face.',
-  items:HEAD_SHAPES.map((shape,i)=>{const set=buildFaceSet(shape,boyTorso);
-   return {id:shape.id,label:shape.label,tag:String(i+1),note:shape.note,
-    parts:[torsoPart(boyTorso),{name:'ball-neck',geometry:geometryOf(set.ball),y:set.ball.y},{name:'head',geometry:geometryOf(set.head),y:set.head.y}]};})},
+ {id:'assembly',label:'Assembly',intro:'The chosen parts put together, boy and girl. "At the joints": shoulder and hip balls sit where the skeleton turns the limbs, partly inside the torso. "Resting": pushed out until they just clear the torso (wider shoulders, longer legs). Hands and feet come next.',
+  items:Object.keys(BODIES).flatMap(bodyId=>['joints','resting'].map(placement=>{const a=assemble(bodyId,placement),name=BODIES[bodyId].label;
+   return {id:`${bodyId}-${placement}`,label:`${name} · ${placement==='joints'?'At the joints':'Resting'}`,tag:`${name} ${placement==='joints'?'A':'B'}`,face:a.face,
+    note:`${name}, shoulder and hip balls ${placement==='joints'?'centred on the skeleton\'s joints (partly inside the torso)':'pushed out to just clear the torso'}. Upper arm ${(a.parts.find(p=>p.name==='upper-arm').length*100).toFixed(1)} cm, thigh ${(a.parts.find(p=>p.name==='thigh').length*100).toFixed(1)} cm.`,
+    parts:a.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))};}))},
  {id:'torsos',label:'Torsos',intro:'The chosen torsos: the boy\'s Athletic (light) and the girl\'s W5 Gymnast.',
   items:[{id:'torso-boy',label:'Torso · Boy',tag:'Boy',note:CHOSEN_TORSO.note,parts:[torsoPart(boyTorso)]},{id:'torso-girl',label:'Torso · Girl',tag:'Girl',note:CHOSEN_GIRL_TORSO.note,parts:[torsoPart(girlTorso)]}]},
  {id:'arms',label:'Arms',intro:'The chosen Athletic arm (boy) and the girl\'s version, 8% slimmer.',
@@ -84,10 +79,10 @@ for(const group of GROUPS){
  group.options=group.items.map((item,i)=>{
   const g=new T.Group();g.name='item-'+item.id;
   for(const part of item.parts){const mesh=new T.Mesh(part.geometry,material);mesh.name=part.name;mesh.position.y=part.y;mesh.castShadow=true;g.add(mesh);}
-  const box=new T.Box3().setFromObject(g),width=box.max.x-box.min.x;
+  const box=new T.Box3().setFromObject(g),width=box.max.x-box.min.x,height=box.max.y-box.min.y;
   if(i>0)x+=GAP;x+=width/2;g.position.x=x;x+=width/2;
   const tag=label(item.tag);tag.position.set(0,box.min.y-.1,0);g.add(tag);group.row.add(g);
-  return {...item,group:g,mesh:g.children[0],width,centre:box.getCenter(new T.Vector3()).add(g.position),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
+  return {...item,group:g,mesh:g.children[0],width,height,centre:box.getCenter(new T.Vector3()).add(g.position),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
  });
  group.row.position.x=-x/2;for(const o of group.options)o.centre.x-=x/2;
  // Faces are pressed on once every item is in its final place.
@@ -108,9 +103,10 @@ const camera=new T.PerspectiveCamera(36,1,.01,60),controls=new OrbitControls(cam
 controls.enableDamping=true;controls.enablePan=false;controls.minDistance=.25;controls.maxDistance=12;
 const directions={front:[0,.04,1],side:[1,.04,0],back:[0,.04,-1],top:[0,1,.0004],angled:[.5,.2,.85]};
 let active=GROUPS[0],options=active.options,focus=null,viewName='front',glide=null;
-function distance(){// close enough to fill the screen with one item, or with all of them
+function distance(){// close enough to fill the screen with one item (its width and its height), or with all of them
  const half=Math.tan(camera.fov*Math.PI/360),across=focus===null?active.width+.4:Math.max(options[focus].width*1.7,.75);
- return Math.max(focus===null?1.7:.45,(across/2)/(half*Math.min(1,camera.aspect)))*1.05;
+ const wide=(across/2)/(half*Math.min(1,camera.aspect)),tall=focus===null?0:(options[focus].height*1.15/2)/half;
+ return Math.max(focus===null?1.7:.45,wide,tall)*1.05;
 }
 function frame(){
  const target=focus===null?active.centre:options[focus].centre,dir=new T.Vector3(...directions[viewName]).normalize();

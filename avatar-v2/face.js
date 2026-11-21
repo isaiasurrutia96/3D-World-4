@@ -66,3 +66,13 @@ export function drawFace(ctx,size,face){
   ctx.fill();
  }
 }
+
+/**
+ * Chosen by the owner (21 November 2026): option 3's rounder eyes, set slightly
+ * closer together (0.17 of the head from the centre instead of 0.188; not
+ * closer, to stay clearly unlike a known character's close-set eyes).
+ * Only this base face is used for now; expressions come later (ideas kept in
+ * docs/HANDOFF.md: X X eyes, "X p" eyes with the tongue out, shop expressions).
+ */
+export const CHOSEN_FACE={id:'face-chosen',label:'Base face',note:'Rounder big oval eyes, slightly closer together, and the line mouth.',
+ eyes:{width:.196,height:.294,apart:.17,y:-.06},mouth:BASE_MOUTH};
