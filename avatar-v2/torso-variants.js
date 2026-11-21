@@ -181,3 +181,32 @@ export function makeTorsoOption(base,option,list=TORSO_OPTIONS){
  const shaped={...base,rings};
  return o.detail?resampleShape(shaped,o.detail):shaped;
 }
+
+/**
+ * Athletic women's torsos (21 November 2026). Round 1 of the female torsos
+ * read as unisex except F2, whose hips were too wide. The strongest female
+ * signal is the waist-to-hip contrast, so these sit between F1 (waist 84%,
+ * hips 102%) and F2 (waist 75%, hips 112%): a slim waist (78-82%), good but not
+ * exaggerated hips (104-108%), softer sloping shoulders, and two slight,
+ * rounded chest bumps: enough to read as female, modest enough for a game kids
+ * play. All at the light detail.
+ */
+const CHEST=(amount,h=.72)=>[{h,hSpread:.08,angle:65,aSpread:19,amount,mirror:true}];
+export const WOMEN_OPTIONS=[
+ {id:'women-classic',label:'W1 · Classic',note:'Balanced athletic: a slim waist and good hips.',
+  width:[[0,1],[.2,1.06],[.5,.8],[.78,.95],[1,.9]],front:[[0,.92],[1,.94]],back:[[0,.96],[1,.92]],round:0,square:.08,
+  bumps:CHEST(.021),shoulderRoll:{from:.8,neck:.1},detail:LIGHT},
+ {id:'women-runner',label:'W2 · Runner',note:'Leaner and flatter: a slim waist and a lighter build.',
+  width:[[0,.95],[.2,1.04],[.5,.79],[.78,.9],[1,.86]],front:[[0,.87],[1,.89]],back:[[0,.9],[1,.88]],round:0,square:.05,
+  bumps:CHEST(.019),shoulderRoll:{from:.81,neck:.095},detail:LIGHT},
+ {id:'women-swimmer',label:'W3 · Swimmer',note:'Slightly broader shoulders, a slim waist and good hips.',
+  width:[[0,1],[.2,1.05],[.5,.82],[.76,1],[1,.95]],front:[[0,.92],[1,.94]],back:[[0,.95],[1,.94]],round:0,square:.1,
+  bumps:CHEST(.02),shoulderRoll:{from:.82,neck:.1},detail:LIGHT},
+ {id:'women-soft',label:'W4 · Soft athletic',note:'A little rounder and softer, still fit.',
+  width:[[0,1],[.2,1.07],[.5,.82],[.78,.93],[1,.88]],front:[[0,1],[.5,1.01],[1,.98]],back:[[0,1],[1,.96]],round:.4,square:0,
+  bumps:CHEST(.022),shoulderRoll:{from:.79,neck:.1},detail:LIGHT},
+ {id:'women-gymnast',label:'W5 · Gymnast',note:'Compact and strong, with a defined waist.',
+  width:[[0,.97],[.2,1.04],[.5,.78],[.76,1.02],[1,.97]],front:[[0,.96],[1,.98]],back:[[0,.97],[1,.97]],round:0,square:.28,
+  bumps:CHEST(.019),shoulderRoll:{from:.8,neck:.105},detail:LIGHT},
+];
+

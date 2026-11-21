@@ -1,23 +1,24 @@
-// New avatar (version 2): the chosen arm and the female torso options.
-// Left: the chosen Athletic arm (avatar-v2/limb-options.js): upper arm, an
-// elbow ball sized from the limbs (slightly thinner than them) and forearm,
-// separate. Right: five female torsos for the girl avatar
-// (avatar-v2/torso-variants.js, FEMALE_OPTIONS). "Compare all" frames
-// everything; each item's button moves the camera in on it and hides the rest.
-// The approved avatar is not used here.
+// New avatar (version 2): parts to choose from, in tabs.
+//  - Women's torsos: five athletic women's torsos (avatar-v2/torso-variants.js,
+//    WOMEN_OPTIONS);
+//  - Arms: the chosen Athletic arm and the girl's slightly slimmer version
+//    (avatar-v2/limb-options.js);
+//  - Legs: five thigh + knee ball + calf options.
+// Each tab has its own row; "Compare all" frames that row, and each item's
+// button moves the camera in on it and hides the rest. The approved avatar is
+// not used here.
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import torso from '../avatar-v2/torso.json' with {type:'json'};
-import {CHOSEN_ARM,buildArmSet} from '../avatar-v2/limb-options.js';
-import {FEMALE_OPTIONS,makeTorsoOption} from '../avatar-v2/torso-variants.js';
+import {CHOSEN_ARM,GIRL_ARM,LEG_OPTIONS,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
+import {WOMEN_OPTIONS,makeTorsoOption} from '../avatar-v2/torso-variants.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
 const GAP=.3;// metres of space between items, left to right
 const stage=document.querySelector('#stage');
 const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;stage.prepend(renderer.domElement);
 const scene=new T.Scene();scene.background=new T.Color('#405363');
-const lineup=new T.Group();lineup.name='torso-options';scene.add(lineup);
 const material=new T.MeshStandardMaterial({color:new T.Color().setRGB(...torso.color),roughness:torso.roughness});
 
 /** A small label (a rounded tag) that always faces the camera. */
@@ -36,28 +37,39 @@ const geometryOf=({positions,index,normals})=>{
  if(normals)g.setAttribute('normal',new T.Float32BufferAttribute(normals,3));else g.computeVertexNormals();
  return g;
 };
-const ARM_TOP=1.3;// height of each upper arm's top end (about shoulder height)
-const arm=buildArmSet(CHOSEN_ARM);
-const items=[
- {id:'arm-athletic',label:'Arm · Athletic',note:`The chosen arm. The ball is sized from the limbs (${(arm.size.ball*2000/10).toFixed(1)} cm wide, slightly thinner than them), which leaves the limbs longer: upper arm ${(arm.size.upper*100).toFixed(1)} cm, forearm ${(arm.size.fore*100).toFixed(1)} cm.`,tag:'Arm',
-  parts:[['upper-arm',arm.upper],['ball-elbow',arm.ball],['forearm',arm.fore]].map(([name,part])=>({name,geometry:geometryOf(part),y:ARM_TOP+part.y}))},
- ...FEMALE_OPTIONS.map((option,i)=>({id:option.id,label:option.label,note:option.note,tag:'F'+(i+1),
-  parts:[{name:'torso',geometry:geometryOf(buildTorsoSurface(makeTorsoOption(torso.shape,option,FEMALE_OPTIONS))),y:0}]})),
+const ARM_TOP=1.3,LEG_TOP=.84;// heights of the top ends: about the shoulder and the hip
+const partsOf=(set,keys,names,top)=>keys.map((key,i)=>({name:names[i],geometry:geometryOf(set[key]),y:top+set[key].y}));
+const armItem=(option,id,label,tag)=>{const set=buildArmSet(option);
+ return {id,label,tag,note:`${option.note} Ball ${(set.size.ball*200).toFixed(1)} cm wide; upper arm ${(set.size.upper*100).toFixed(1)} cm, forearm ${(set.size.fore*100).toFixed(1)} cm.`,
+  parts:partsOf(set,['upper','ball','fore'],['upper-arm','ball-elbow','forearm'],ARM_TOP)};};
+const GROUPS=[
+ {id:'women',label:"Women's torsos",intro:'Five athletic women\'s torsos: slim waist, good hips, modest chest. Tap one to look at it closely.',
+  items:WOMEN_OPTIONS.map((option,i)=>({id:option.id,label:option.label,note:option.note,tag:'W'+(i+1),
+   parts:[{name:'torso',geometry:geometryOf(buildTorsoSurface(makeTorsoOption(torso.shape,option,WOMEN_OPTIONS))),y:0}]}))},
+ {id:'arms',label:'Arms',intro:'The chosen Athletic arm (boy) and the girl\'s version, 8% slimmer. Tap one to look at it closely.',
+  items:[armItem(CHOSEN_ARM,'arm-boy','Arm · Boy','Boy'),armItem(GIRL_ARM,'arm-girl','Arm · Girl','Girl')]},
+ {id:'legs',label:'Legs',intro:'Five leg options: thigh, knee ball and calf. Tap one to look at it closely.',
+  items:LEG_OPTIONS.map((option,i)=>{const set=buildLegSet(option);
+   return {id:option.id,label:option.label,tag:String(i+1),note:`${option.note} Knee ball ${(set.size.ball*200).toFixed(1)} cm wide; thigh ${(set.size.thigh*100).toFixed(1)} cm, calf ${(set.size.calf*100).toFixed(1)} cm.`,
+    parts:partsOf(set,['thigh','ball','calf'],['thigh','ball-knee','calf'],LEG_TOP)};})},
 ];
-let x=0;
-const options=items.map((item,i)=>{
- const group=new T.Group();group.name='item-'+item.id;
- for(const part of item.parts){const mesh=new T.Mesh(part.geometry,material);mesh.name=part.name;mesh.position.y=part.y;mesh.castShadow=true;group.add(mesh);}
- const box=new T.Box3().setFromObject(group),width=box.max.x-box.min.x;
- if(i>0)x+=GAP;x+=width/2;group.position.x=x;x+=width/2;
- const tag=label(item.tag);tag.position.set(0,box.min.y-.1,0);group.add(tag);lineup.add(group);
- const triangles=item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0);
- return {...item,group,mesh:group.children[0],width,centre:box.getCenter(new T.Vector3()).add(group.position),triangles};
-});
-lineup.position.x=-x/2;// centre the row
-for(const o of options)o.centre.x-=x/2;
+// Lay out each tab's row, centred on x = 0; only the active tab's row shows.
+let widest=0;
+for(const group of GROUPS){
+ group.row=new T.Group();group.row.name='row-'+group.id;scene.add(group.row);let x=0;
+ group.options=group.items.map((item,i)=>{
+  const g=new T.Group();g.name='item-'+item.id;
+  for(const part of item.parts){const mesh=new T.Mesh(part.geometry,material);mesh.name=part.name;mesh.position.y=part.y;mesh.castShadow=true;g.add(mesh);}
+  const box=new T.Box3().setFromObject(g),width=box.max.x-box.min.x;
+  if(i>0)x+=GAP;x+=width/2;g.position.x=x;x+=width/2;
+  const tag=label(item.tag);tag.position.set(0,box.min.y-.1,0);g.add(tag);group.row.add(g);
+  return {...item,group:g,mesh:g.children[0],width,centre:box.getCenter(new T.Vector3()).add(g.position),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
+ });
+ group.row.position.x=-x/2;for(const o of group.options)o.centre.x-=x/2;
+ group.width=x;group.centre=new T.Box3().setFromObject(group.row).getCenter(new T.Vector3());widest=Math.max(widest,x);
+}
 
-const slab=new T.Mesh(new T.BoxGeometry(x+1.6,.6,3),new T.MeshStandardMaterial({color:'#8f9295',roughness:1}));slab.position.y=-.3;slab.receiveShadow=true;scene.add(slab);
+const slab=new T.Mesh(new T.BoxGeometry(widest+1.6,.6,3),new T.MeshStandardMaterial({color:'#8f9295',roughness:1}));slab.position.y=-.3;slab.receiveShadow=true;scene.add(slab);
 scene.add(new T.HemisphereLight(0xffffff,0xb6b2aa,2));
 const key=new T.DirectionalLight(0xffffff,2.4);key.position.set(-3,5,4);key.castShadow=true;key.shadow.mapSize.set(2048,1024);
 Object.assign(key.shadow.camera,{left:-2,right:2,top:2,bottom:-1,near:.2,far:14});key.shadow.bias=-.0002;key.target.position.set(0,.9,0);scene.add(key,key.target);
@@ -67,15 +79,14 @@ const fill=new T.DirectionalLight(0xffffff,.9);fill.position.set(4,2,-3);scene.a
 // work around whatever is in focus. Moves glide over about a third of a second.
 const camera=new T.PerspectiveCamera(36,1,.01,60),controls=new OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true;controls.enablePan=false;controls.minDistance=.25;controls.maxDistance=12;
-const allCentre=new T.Box3().setFromObject(lineup).getCenter(new T.Vector3());
 const directions={front:[0,.04,1],side:[1,.04,0],back:[0,.04,-1],top:[0,1,.0004],angled:[.5,.2,.85]};
-let focus=null,viewName='front',glide=null;
+let active=GROUPS[0],options=active.options,focus=null,viewName='front',glide=null;
 function distance(){// close enough to fill the screen with one item, or with all of them
- const half=Math.tan(camera.fov*Math.PI/360),across=focus===null?x+.4:Math.max(options[focus].width*1.7,.75);
+ const half=Math.tan(camera.fov*Math.PI/360),across=focus===null?active.width+.4:Math.max(options[focus].width*1.7,.75);
  return Math.max(focus===null?1.7:.45,(across/2)/(half*Math.min(1,camera.aspect)))*1.05;
 }
 function frame(){
- const target=focus===null?allCentre:options[focus].centre,dir=new T.Vector3(...directions[viewName]).normalize();
+ const target=focus===null?active.centre:options[focus].centre,dir=new T.Vector3(...directions[viewName]).normalize();
  glide={fromPos:camera.position.clone(),fromTarget:controls.target.clone(),toTarget:target.clone(),toPos:target.clone().add(dir.multiplyScalar(distance())),t:0};
 }
 function setFocus(index){
@@ -85,22 +96,29 @@ function setFocus(index){
  frame();
  for(const b of document.querySelectorAll('[data-option]'))b.setAttribute('aria-pressed',String(b.dataset.option===(index===null?'all':options[index].id)));
  const o=index===null?null:options[index];
- document.querySelector('#note').textContent=o?o.note:'Left: the chosen arm. Right: five female torsos for the girl avatar. Tap one to look at it closely.';
- document.querySelector('#info').textContent=o?o.triangles.toLocaleString()+' triangles':'Arm 1,308 triangles · each torso 1,568';
+ document.querySelector('#note').textContent=o?o.note:active.intro;
+ document.querySelector('#info').textContent=o?o.triangles.toLocaleString()+' triangles':options.map(o=>o.triangles.toLocaleString()).join(' · ')+' triangles';
 }
 function view(name){viewName=name;frame();for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed',String(b.dataset.view===name));}
 
-// Buttons: one per option, plus "Compare all".
-const list=document.querySelector('#options');
-const button=(id,text)=>{const b=document.createElement('button');b.dataset.option=id;b.textContent=text;b.setAttribute('aria-pressed','false');list.append(b);return b;};
-button('all','Compare all').onclick=()=>setFocus(null);
-options.forEach((o,i)=>{button(o.id,o.label).onclick=()=>setFocus(i);});
+// Tabs (one per group) and, for the active tab, one button per item plus "Compare all".
+const list=document.querySelector('#options'),tabs=document.querySelector('#groups');
+const button=(parent,data,id,text)=>{const b=document.createElement('button');b.dataset[data]=id;b.textContent=text;b.setAttribute('aria-pressed','false');parent.append(b);return b;};
+function setGroup(id){
+ active=GROUPS.find(g=>g.id===id)??GROUPS[0];options=active.options;
+ for(const g of GROUPS)g.row.visible=g===active;
+ for(const b of tabs.children)b.setAttribute('aria-pressed',String(b.dataset.group===active.id));
+ list.replaceChildren();button(list,'option','all','Compare all').onclick=()=>setFocus(null);
+ options.forEach((o,i)=>{button(list,'option',o.id,o.label).onclick=()=>setFocus(i);});
+ setFocus(null);
+}
+for(const g of GROUPS)button(tabs,'group',g.id,g.label).onclick=()=>setGroup(g.id);
 for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>view(b.dataset.view);
 controls.addEventListener('start',()=>{glide=null;for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed','false');});
 
 function resize(){const {width,height}=stage.getBoundingClientRect();if(!width||!height)return;camera.aspect=width/height;camera.fov=camera.aspect<.7?46:36;camera.updateProjectionMatrix();renderer.setSize(width,height);}
 new ResizeObserver(resize).observe(stage);resize();
-setFocus(null);view('front');
+setGroup(GROUPS[0].id);view('front');
 camera.position.copy(glide.toPos);controls.target.copy(glide.toTarget);glide=null;controls.update();// start in place
 installTestLabScene({scene,camera,renderer,floors:[slab],getTarget:()=>controls.target,updateControls:()=>controls.update()});
 
@@ -112,5 +130,5 @@ renderer.setAnimationLoop(ms=>{
   camera.position.lerpVectors(glide.fromPos,glide.toPos,k);controls.target.lerpVectors(glide.fromTarget,glide.toTarget,k);if(glide.t>=1)glide=null;}
  controls.update();renderer.render(scene,camera);
 });
-window.newAvatarLab={scene,camera,controls,renderer,lineup,options,setFocus,view,torso,getFocus:()=>focus};
+window.newAvatarLab={scene,camera,controls,renderer,groups:GROUPS,get options(){return options;},setGroup,setFocus,view,torso,getFocus:()=>focus,getGroup:()=>active.id};
 document.querySelector('#loading').hidden=true;window.newAvatarReady=true;

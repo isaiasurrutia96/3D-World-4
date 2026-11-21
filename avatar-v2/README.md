@@ -26,6 +26,16 @@ waist, fuller hips, softer shoulders and a modest stylized chest, all at the
 light detail. Shown next to the chosen arm. Open point: the girl may need her
 own proportions (height, limb lengths); for now she uses the same base sizes.
 
+**21 November 2026, later:** five **athletic women's torsos** (`WOMEN_OPTIONS`:
+Classic, Runner, Swimmer, Soft athletic, Gymnast) between F1 and F2: waist
+78-82%, hips 104-108%, two modest chest bumps (17-25 mm). **Legs**: five thigh +
+knee ball + calf options (`LEG_OPTIONS`), same capsule and ball rules as the
+arms (one shared pair builder, `buildPair`). **Girl limbs**: any boy limb made
+8% slimmer (`girlVersion`), her ball follows the 92% rule and joints stay put.
+Assembly guideline: fingertips around the middle of the knee; the skeleton
+already puts them at knee height (47.1 cm at rest, knee joint 47.2 cm).
+The page shows these in three tabs.
+
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
 sit separately, they would be about 12 cm and 9 cm.
@@ -59,8 +69,8 @@ the limbs will be redone one thing at a time after the torso is chosen.
 | `torso-variants.js` | The torso options (Original, Athletic, Round, Lean, Blocky): width, front and back depth along the height, roundness and squareness. |
 | `ball-shape.js` | Joint balls with an exact triangle count (Fibonacci sphere + convex hull), and the 300/400/500 choices. |
 | `check-ball.mjs` | Checks the balls: exact counts, sealed, outward, every point on the sphere, roundness and evenness. |
-| `limb-options.js` | The arm options: capsule limbs from a thickness profile, cross-section and muscle bumps; lengths from the skeleton; the ball between them. |
-| `check-arms.mjs` | Checks the arm options: sealed, exact lengths, thinner than the ball, capsule-shaped (with a test of that test), ball separate and centred, options distinct. |
+| `limb-options.js` | Arm and leg options and the girl's slimmer versions: capsule limbs from a thickness profile, cross-section and muscle bumps; one pair builder places the limb-sized ball between three skeleton joint centres. |
+| `check-limbs.mjs` | Checks every limb set (arms, legs, girl versions): sealed, exact lengths, capsule-shaped (with a test of that test), ball sized from the limbs and separate, joints unchanged, options distinct. |
 | `shape-checks.js` | Shared dent and groove measuring used by the torso and arm checks. |
 | `check-torso.mjs` | Checks the torso and every option: sealed, faces outward, no dents or grooves (with a test of that test), same height, left/right symmetric, distinct from each other, under 6,000 triangles. |
 

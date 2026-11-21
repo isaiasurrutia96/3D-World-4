@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {buildTorsoSurface} from './torso-shape.js';
 import {smoothness} from './shape-checks.js';
-import {FIRST_OPTIONS,ATHLETIC_OPTIONS,TORSO_OPTIONS,CHOSEN_TORSO,FEMALE_OPTIONS,makeTorsoOption,curveAt,resolveOption,resampleShape,expandBumps,bumpAt,ringAt} from './torso-variants.js';
+import {FIRST_OPTIONS,ATHLETIC_OPTIONS,TORSO_OPTIONS,CHOSEN_TORSO,FEMALE_OPTIONS,WOMEN_OPTIONS,makeTorsoOption,curveAt,resolveOption,resampleShape,expandBumps,bumpAt,ringAt} from './torso-variants.js';
 
 const torso=JSON.parse(await readFile('avatar-v2/torso.json','utf8'));
 const source=JSON.parse(await readFile('avatar-v2/torso-source.json','utf8'));
@@ -39,7 +39,7 @@ check('the chosen torso is exactly Athletic at the light detail, and it is what 
  assert.deepEqual(detail,resolveOption(ATHLETIC_OPTIONS.find(o=>o.id==='athletic-light'),ATHLETIC_OPTIONS).detail,'detail differs from the light setting');
  assert.deepEqual(TORSO_OPTIONS,[CHOSEN_TORSO]);return 'Athletic numbers, light detail '+JSON.stringify(detail);
 });
-for(const [round,list] of [['round 1',FIRST_OPTIONS],['round 2',ATHLETIC_OPTIONS],['female',FEMALE_OPTIONS]])check(`${round}: five options, unique ids, labels, notes and valid, smooth-only settings`,()=>{
+for(const [round,list] of [['round 1',FIRST_OPTIONS],['round 2',ATHLETIC_OPTIONS],['female',FEMALE_OPTIONS],['women',WOMEN_OPTIONS]])check(`${round}: five options, unique ids, labels, notes and valid, smooth-only settings`,()=>{
  assert.equal(list.length,5);assert.equal(new Set(list.map(o=>o.id)).size,5);
  for(const raw of list){const o=resolveOption(raw,list);assert(o.label&&o.note,o.id);
   for(const c of [o.width,o.front,o.back].filter(Boolean))assert(c.every(([h,v],i)=>h>=0&&h<=1&&v>.5&&v<1.5&&(i===0||h>c[i-1][0])),o.id+' curve');
@@ -101,7 +101,7 @@ function radiusAt(shape,y,a){
 function gap(a,b){let max=0,sum=0,count=0;for(const ring of a.rings)ring.r.forEach((r,s)=>{const d=Math.abs(r-radiusAt(b,ring.y,s/a.segments*Math.PI*2));max=Math.max(max,d);sum+=d;count++;});return {max,avg:sum/count};}
 
 // Every option of both rounds must be a proper, sealed, smooth torso.
-const rounds=[['R1',FIRST_OPTIONS],['R2',ATHLETIC_OPTIONS],['R3',TORSO_OPTIONS],['F',FEMALE_OPTIONS]];
+const rounds=[['R1',FIRST_OPTIONS],['R2',ATHLETIC_OPTIONS],['R3',TORSO_OPTIONS],['F',FEMALE_OPTIONS],['W',WOMEN_OPTIONS]];
 const builtBy=Object.fromEntries(rounds.map(([tag,list])=>[tag,list.map(o=>{const shape=makeTorsoOption(torso.shape,o,list);return {o,list,shape,...buildTorsoSurface(shape)};})]));
 const baseHeight=range(axis(builtBy.R1[0].positions,1));
 for(const [tag] of rounds)for(const {o,shape,positions,index} of builtBy[tag]){
@@ -163,6 +163,20 @@ check('female torsos: shoulders narrower than hips compared with the boy\'s, wit
   assert(r<boy,`${f.o.id}: shoulder/hip ratio ${r.toFixed(2)} not below the boy's ${boy.toFixed(2)}`);assert(waist<.97,`${f.o.id}: no waist (${waist.toFixed(2)})`);
   out.push(`${f.o.id.replace('female-','')} ${r.toFixed(2)}`);}
  return `shoulders ÷ hips: boy ${boy.toFixed(2)}; ${out.join(', ')}`;
+});
+check('women\'s torsos: slim waist, hips wider than F1 but clearly narrower than F2, modest chest',()=>{
+ // Widths (x extent) at hips (0.2), waist (0.5) and shoulders (0.85 of the height).
+ const widthAt=(shape,h)=>{const y=shape.bottom.y+(shape.top.y-shape.bottom.y)*h;let lo=Infinity,hi=-Infinity;
+  for(let s=0;s<360;s++){const a=s/360*Math.PI*2,r=radiusAt(shape,y,a),x=r*Math.cos(a);lo=Math.min(lo,x);hi=Math.max(hi,x);}return hi-lo;};
+ const hips=shape=>widthAt(shape,.2),waistRatio=shape=>widthAt(shape,.5)/Math.min(widthAt(shape,.2),widthAt(shape,.85));
+ const f1=hips(builtBy.F[0].shape),f2=hips(builtBy.F[1].shape),out=[];
+ for(const w of builtBy.W){
+  const h=hips(w.shape),waist=waistRatio(w.shape),chest=Math.max(...expandBumps(resolveOption(w.o,WOMEN_OPTIONS).bumps).map(b=>b.amount));
+  assert(h>f1&&h<f2-.01,`${w.o.id}: hips ${(h*100).toFixed(1)} cm not between F1 ${(f1*100).toFixed(1)} and F2 ${(f2*100).toFixed(1)} minus 1 cm`);
+  assert(waist<.9,`${w.o.id}: waist not slim (${waist.toFixed(2)})`);assert(chest>=.017&&chest<=.025,`${w.o.id}: chest ${chest*1000} mm outside the modest range 17-25 mm`);
+  out.push(`${w.o.id.replace('women-','')} hips ${(h*100).toFixed(1)} cm, waist ${(waist*100).toFixed(0)}%`);
+ }
+ return `F1 hips ${(f1*100).toFixed(1)}, F2 ${(f2*100).toFixed(1)} cm; ${out.join('; ')}`;
 });
 // Options in a round must really differ, except a light version and the option it is based on.
 // "Really differ" means a difference you can see somewhere: at least 1.5 cm.
