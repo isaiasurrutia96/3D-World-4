@@ -86,15 +86,13 @@ GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put togethe
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 // Hand, head and foot side by side, exactly as they are on the full body (not resized): each one
 // only moved so it stands on the floor in a row.
-// The foot is turned a quarter turn (toes to the right) so the front view shows its heel-to-toe length.
-const turned=part=>({...part,positions:part.positions.map((v,i,P)=>i%3===0?P[i+2]:i%3===2?-P[i-2]:v)});
 const standing=(part,name)=>{const P=part.positions;let lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
  for(let i=0;i<P.length;i+=3)for(let k=0;k<3;k++){lo[k]=Math.min(lo[k],P[i+k]);hi[k]=Math.max(hi[k],P[i+k]);}
  const c=[(lo[0]+hi[0])/2,lo[1],(lo[2]+hi[2])/2];
  return {name,geometry:geometryOf({positions:P.map((v,i)=>v-c[i%3]),index:part.index}),y:0,size:hi.map((h,k)=>h-lo[k])};};
 const pick=(n,side)=>full.parts.find(p=>p.name===n&&p.side===side);
-const hhf=[['hand',standing(pick('hand','left'),'hand'),1],['head',standing(pick('head','centre'),'head'),1],['foot',standing(turned(pick('foot','left')),'foot'),0]];
-GROUPS.unshift({id:'hhf',label:'Hand · head · foot',intro:'The hand, head and foot side by side, exactly the sizes they are on the full body (nothing resized). The foot is turned sideways so you see its length from the front.',
+const hhf=[['hand',standing(pick('hand','left'),'hand'),1],['head',standing(pick('head','centre'),'head'),1],['foot',standing(pick('foot','left'),'foot'),2]];
+GROUPS.unshift({id:'hhf',label:'Hand · head · foot',intro:'The hand, head and foot side by side, exactly the sizes they are on the full body (nothing resized).',
  items:hhf.map(([n,part,axis])=>({id:'hhf-'+n,label:n[0].toUpperCase()+n.slice(1),tag:n[0].toUpperCase()+n.slice(1),...(n==='head'?{face:full.face}:{}),
   note:`${n[0].toUpperCase()+n.slice(1)}: ${(part.size[axis]*100).toFixed(1)} cm ${n==='foot'?'heel to toe':n==='hand'?'wrist end to fingertips':'tall'}.`,parts:[part]}))});
 const legBefore=legPreview('boy',{lengthen:1,ankleBallScale:1}),legLonger=legPreview('boy');
