@@ -4,7 +4,7 @@
 // never inside the torso, every part sealed, and the whole body within budget.
 // Usage: node avatar-v2/check-assembly.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {assemble,insideTorso,shoulderPreview,wristPreview,anklePreview,END_BALL_TO_LIMB,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
+import {assemble,insideTorso,shoulderPreview,wristPreview,anklePreview,legPreview,LEG_LENGTHEN,ANKLE_BALL_SCALE,END_BALL_TO_LIMB,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
 import {buildHandFoot,CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS} from './hands-feet.js';
 import {buildLimbShape,CHOSEN_ARM,CHOSEN_LEG,BOY_ARM,GIRL_ARM,BOY_ARM_THICKER,APPROVED_ARM_LENGTHS,girlVersion,limbRadius,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
@@ -127,8 +127,8 @@ check('shoulder preview: right side is the exact mirror of the left; the arms ha
  const sameShape=(a,b)=>{let worst=0;for(let i=0;i<b.length/3;i+=7)for(let j=i+3;j<b.length/3;j+=13)worst=Math.max(worst,Math.abs(dist(P(a,i),P(a,j))-dist(P(b,i),P(b,j))));return worst;};
  const w=wristPreview('boy'),a=anklePreview('boy'),chosen=buildHandFoot(CHOSEN_HAND_FOOT);
  const joints=[
-  {tag:'wrist',limb:BOY_ARM.fore,limbLength:APPROVED_ARM_LENGTHS.fore,lengthNote:'approved length (22.2 cm)',lower:w.forearm,ball:w.wristBall,J:w.wrist,d:w.direction,part:w.hand,original:chosen.hand,names:['forearm','ball-wrist','hand'],parts:w.parts,moved:w.wristMovedBy},
-  {tag:'ankle',limb:CHOSEN_LEG.calf,limbLength:pairSizes(CHOSEN_LEG,LEG_PAIR).calf,lengthNote:'approved length',lower:a.calf,ball:a.ankleBall,J:a.ankle,d:a.direction,part:a.foot,original:chosen.foot,names:['calf','ball-ankle','foot'],parts:a.parts,moved:a.ankleMovedBy},
+  {tag:'wrist',ballScale:1,limb:BOY_ARM.fore,limbLength:APPROVED_ARM_LENGTHS.fore,lengthNote:'approved length (22.2 cm)',lower:w.forearm,ball:w.wristBall,J:w.wrist,d:w.direction,part:w.hand,original:chosen.hand,names:['forearm','ball-wrist','hand'],parts:w.parts,moved:w.wristMovedBy},
+  {tag:'ankle',limb:CHOSEN_LEG.calf,limbLength:pairSizes(CHOSEN_LEG,LEG_PAIR).calf*LEG_LENGTHEN,ballScale:ANKLE_BALL_SCALE,edgeLength:pairSizes(CHOSEN_LEG,LEG_PAIR).calf,lengthNote:'approved length made 10% longer',lower:a.calf,ball:a.ankleBall,J:a.ankle,d:a.direction,part:a.foot,original:chosen.foot,names:['calf','ball-ankle','foot'],parts:a.parts,moved:null},
  ];
  check('wrist and ankle: the chosen hand and foot are option 2 (the originals 8% bigger)',()=>{assert.equal(CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS[1]);return CHOSEN_HAND_FOOT.label;});
  for(const j of joints){
@@ -137,21 +137,22 @@ check('shoulder preview: right side is the exact mirror of the left; the arms ha
    const own=buildLimbShape(j.limb,j.limbLength);assert(Math.abs(j.lower.length-j.limbLength)<1e-12);
    const d=sameShape(j.lower.positions,own.positions);assert(d<1e-9,'reshaped by '+d);return `${(j.lower.length*100).toFixed(1)} cm, shape identical`;
   });
-  check(`${j.tag}: the ball is the same size as the ${j.names[0]}'s bottom edge as drawn (owner's rule for wrists and ankles)`,()=>{
+  check(`${j.tag}: the ball is ${j.ballScale===1?'the same size as':(Math.round((j.ballScale-1)*100))+'% bigger than'} the ${j.names[0]}'s bottom edge as drawn${j.edgeLength?' (at its approved length)':''}`,()=>{
    assert.equal(END_BALL_TO_LIMB,1);
    // Measured on the drawn limb itself: its widest point in the bottom 30% of its length (where the rounded end begins).
-   const d=j.d,top=j.lower.top;let edge=0,edgeMin=Infinity;const ring=new Map();
-   for(let i=0;i<j.lower.positions.length;i+=3){const v=P(j.lower.positions,i/3).map((x,k)=>x-top[k]),a=v[0]*d[0]+v[1]*d[1]+v[2]*d[2];if(a<.7*j.lower.length)continue;
+   // (measured on a limb of the length the ball is sized from: placed straight down from the origin)
+   const len=j.edgeLength??j.lower.length,drawn=j.edgeLength?buildLimbShape(j.limb,len).positions:j.lower.positions,d=j.edgeLength?[0,-1,0]:j.d,top=j.edgeLength?[0,0,0]:j.lower.top;let edge=0;const ring=new Map();
+   for(let i=0;i<drawn.length;i+=3){const v=P(drawn,i/3).map((x,k)=>x-top[k]),a=v[0]*d[0]+v[1]*d[1]+v[2]*d[2];if(a<.7*len)continue;
     const r=Math.hypot(v[0]-a*d[0],v[1]-a*d[1],v[2]-a*d[2]);if(r>edge)edge=r;const key=a.toFixed(5);ring.set(key,Math.min(ring.get(key)??Infinity,r));}
-   assert(Math.abs(j.ball-edge)<1e-6,`ball ${(j.ball*200).toFixed(2)} cm, limb bottom edge ${(edge*200).toFixed(2)} cm`);
+   assert(Math.abs(j.ball-j.ballScale*edge)<1e-6,`ball ${(j.ball*200).toFixed(2)} cm, limb bottom edge ${(edge*200).toFixed(2)} cm`);
    // The bottom edge is round, so the ball matches in every direction.
    const widestRingMin=Math.max(...[...ring.values()].filter(r=>r>edge*.95)),outOfRound=2*(edge-widestRingMin);assert(outOfRound<.001,'bottom edge not round: '+(outOfRound*1000).toFixed(2)+' mm');
    // The ball's own surface really is that size.
    const ball=j.parts[1];let far=0;for(let i=0;i<ball.positions.length;i+=3)far=Math.max(far,dist(P(ball.positions,i/3),j.J));assert(Math.abs(far-j.ball)<1e-6,'ball surface size');
-   return `ball ${(j.ball*200).toFixed(1)} cm wide = ${j.names[0]} bottom edge ${(edge*200).toFixed(1)} cm (edge round within ${(outOfRound*1000).toFixed(1)} mm)`;
+   return `ball ${(j.ball*200).toFixed(1)} cm wide; ${j.names[0]} bottom edge ${(edge*200).toFixed(1)} cm (edge round within ${(outOfRound*1000).toFixed(1)} mm)`;
   });
   // Test of the test: the first try (radius at the very tip) must be caught as too small.
-  check(`${j.tag}: the size test catches a ball sized to the limb's tip (the first try)`,()=>{const tip=thinnestAt(j.limb,1);assert(j.ball-tip>.003,'tip size not caught');return `tip ${(tip*200).toFixed(1)} cm is ${((j.ball-tip)*200).toFixed(1)} cm too small`;});
+  check(`${j.tag}: the size test catches a ball sized to the limb's tip (the first try)`,()=>{const tip=j.ballScale*thinnestAt(j.limb,1);assert(j.ball-tip>.003,'tip size not caught');return `tip ${(tip*200).toFixed(1)} cm is ${((j.ball-tip)*200).toFixed(1)} cm too small`;});
   check(`${j.tag}: the ${j.names[2]} is only moved, never reshaped`,()=>{
    const d=sameShape(j.part.positions,j.original.positions);assert(d<1e-9,'reshaped by '+d);return `shape identical; moved ${(Math.hypot(...j.part.shift)*100).toFixed(1)} cm along the ${j.names[0]}'s line`;
   });
@@ -162,8 +163,35 @@ check('shoulder preview: right side is the exact mirror of the left; the arms ha
    assert(Math.abs(-highest-(j.ball+BALL_GAP))<1e-9,'part gap');assert(closest>=j.ball+BALL_GAP*.9,'touches the ball');
    return `gaps ${BALL_GAP*1000} mm each; ${j.names[2]} at least ${((closest-j.ball)*1000).toFixed(1)} mm from the ball`;
   });
-  check(`${j.tag}: reports how far the joint moved from the skeleton`,()=>{assert(j.moved>0);return `${(j.moved*100).toFixed(1)} cm further along the limb`;});
+  if(j.moved!==null)check(`${j.tag}: reports how far the joint moved from the skeleton`,()=>{assert(j.moved>0);return `${(j.moved*100).toFixed(1)} cm further along the limb`;});
  }
+}
+// --- The whole leg: longer limbs, bigger ankle ball (owner, 21 November 2026) -----
+{
+ const before=legPreview('boy',{lengthen:1,ankleBallScale:1}),after=legPreview('boy'),size=pairSizes(CHOSEN_LEG,LEG_PAIR);
+ const P=(arr,i)=>arr.slice(3*i,3*i+3);
+ const sameShape=(a,b)=>{let worst=0;for(let i=0;i<b.length/3;i+=7)for(let j=i+3;j<b.length/3;j+=13)worst=Math.max(worst,Math.abs(dist(P(a,i),P(a,j))-dist(P(b,i),P(b,j))));return worst;};
+ check('leg: thigh, knee ball, calf, ankle ball, foot, in order',()=>{assert.deepEqual(after.parts.map(p=>p.name),['thigh','ball-knee','calf','ball-ankle','foot']);return after.parts.map(p=>p.name).join(' · ');});
+ check('leg: before = the approved lengths; longer = exactly 10% longer thigh and calf, same shape and thickness',()=>{
+  assert(Math.abs(before.thigh.length-size.thigh)<1e-12&&Math.abs(before.calf.length-size.calf)<1e-12);assert.equal(LEG_LENGTHEN,1.1);
+  assert(Math.abs(after.thigh.length-1.1*size.thigh)<1e-12&&Math.abs(after.calf.length-1.1*size.calf)<1e-12);
+  for(const k of ['thigh','calf']){const own=buildLimbShape(CHOSEN_LEG[k],after[k].length);assert(sameShape(after[k].positions,own.positions)<1e-9,k+' reshaped');}// same limb recipe, so same thickness
+  return `thigh ${(before.thigh.length*100).toFixed(1)} → ${(after.thigh.length*100).toFixed(1)} cm, calf ${(before.calf.length*100).toFixed(1)} → ${(after.calf.length*100).toFixed(1)} cm`;
+ });
+ check('leg: knee ball unchanged by the lengthening; ankle ball 10% bigger than before',()=>{
+  assert(Math.abs(after.kneeBall-before.kneeBall)<1e-12);assert.equal(ANKLE_BALL_SCALE,1.1);
+  const ratio=after.ankleBall/before.ankleBall;assert(Math.abs(ratio-1.1)<.005,'ankle ball ratio '+ratio);// the longer calf's bottom edge is within 0.5% of the shorter one's
+  return `knee ${(after.kneeBall*200).toFixed(1)} cm; ankle ${(before.ankleBall*200).toFixed(1)} → ${(after.ankleBall*200).toFixed(1)} cm`;
+ });
+ check('leg: every part separate, 6 mm gaps along the leg line (thigh to knee ball to calf)',()=>{
+  const d=after.direction,thighBottom=add(after.thigh.top,scaleV(d,after.thigh.length));
+  assert(Math.abs(dist(thighBottom,after.knee)-(after.kneeBall+BALL_GAP))<1e-9,'thigh gap');assert(Math.abs(dist(after.calf.top,after.knee)-(after.kneeBall+BALL_GAP))<1e-9,'calf gap');
+  return 'gaps 6 mm';
+ });
+ check('leg: longer leg is longer than before and than the original avatar (hip to sole)',()=>{
+  assert(after.hipToSole>before.hipToSole&&before.hipToSole>before.originalHipToSole);
+  return `original ${(before.originalHipToSole*100).toFixed(1)} cm, before ${(before.hipToSole*100).toFixed(1)} cm, longer ${(after.hipToSole*100).toFixed(1)} cm`;
+ });
 }
 console.table(results);
 const failed=results.filter(r=>r.result!=='PASS').length;

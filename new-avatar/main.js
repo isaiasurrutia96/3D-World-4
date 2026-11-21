@@ -1,5 +1,5 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
-//  - Ankle: calf, ankle ball and the chosen foot (avatar-v2/assembly.js);
+//  - Leg: thigh, knee ball, calf, ankle ball and the chosen foot, before and longer (avatar-v2/assembly.js);
 //  - Wrist: forearm, wrist ball and the chosen hand (avatar-v2/assembly.js);
 //  - Hands & feet: the owner's original hand and foot and four gentle variations
 //    (avatar-v2/hands-feet.js);
@@ -18,7 +18,7 @@ import torso from '../avatar-v2/torso.json' with {type:'json'};
 import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
 import {drawFace} from '../avatar-v2/face.js';
-import {assemble,shoulderPreview,wristPreview,anklePreview,BODIES} from '../avatar-v2/assembly.js';
+import {assemble,shoulderPreview,wristPreview,legPreview,BODIES} from '../avatar-v2/assembly.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
@@ -79,10 +79,11 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
  {id:'legs',label:'Legs',intro:'The chosen Strong legs (boy) and the girl\'s version, 8% slimmer.',
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
-const ankle=anklePreview('boy');
-GROUPS.push({id:'ankle',label:'Ankle',intro:'The ankle joint, one side: the calf, the ankle ball and your chosen foot (option 2), separate with small gaps. Nothing reshaped.',
- items:[{id:'ankle-boy',label:'Calf · ankle · foot',tag:'Boy',note:`Calf at its approved ${(ankle.calf.length*100).toFixed(1)} cm; ankle ball ${(ankle.ankleBall*200).toFixed(1)} cm wide, the same size as the bottom edge of the calf; your chosen foot one gap below it, unchanged. Keeping every length puts the ankle ${(ankle.ankleMovedBy*100).toFixed(1)} cm lower than before.`,
-  parts:ankle.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
+const legBefore=legPreview('boy',{lengthen:1,ankleBallScale:1}),legLonger=legPreview('boy');
+const legNote=(l,what)=>`${what} Thigh ${(l.thigh.length*100).toFixed(1)} cm, calf ${(l.calf.length*100).toFixed(1)} cm, knee ball ${(l.kneeBall*200).toFixed(1)} cm, ankle ball ${(l.ankleBall*200).toFixed(1)} cm. Hip to sole ${(l.hipToSole*100).toFixed(1)} cm (your original avatar: ${(l.originalHipToSole*100).toFixed(1)} cm, before sockets).`;
+GROUPS.push({id:'leg',label:'Leg',intro:'The whole leg, one side: thigh, knee ball, calf, ankle ball and your chosen foot. Left: as it was. Right: thigh and calf 10% longer and the ankle ball 10% bigger. Same shapes, only longer.',
+ items:[{id:'leg-before',label:'Before',tag:'Before',note:legNote(legBefore,'The leg as it was.'),parts:legBefore.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))},
+  {id:'leg-longer',label:'Longer · bigger ankle',tag:'Longer',note:legNote(legLonger,'Thigh and calf 10% longer, ankle ball 10% bigger.'),parts:legLonger.parts.map(p=>({name:p.name,geometry:geometryOf(p),y:0}))}]});
 const wrist=wristPreview('boy');
 GROUPS.push({id:'wrist',label:'Wrist',intro:'The wrist joint, one side: the forearm, the wrist ball and your chosen hand (option 2), separate with small gaps. Nothing reshaped.',
  items:[{id:'wrist-boy',label:'Forearm · wrist · hand',tag:'Boy',note:`Forearm at its approved ${(wrist.forearm.length*100).toFixed(1)} cm; wrist ball ${(wrist.wristBall*200).toFixed(1)} cm wide, the same size as the bottom edge of the forearm; your chosen hand one gap below it, unchanged. Keeping every length puts the wrist ${(wrist.wristMovedBy*100).toFixed(1)} cm further down the arm than before.`,

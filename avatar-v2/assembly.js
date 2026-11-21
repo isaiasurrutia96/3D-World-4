@@ -186,8 +186,8 @@ export function bottomEdgeRadius(limb,limbLength){
  * along the bone's line so its highest point sits one gap below the ball.
  * Nothing is reshaped.
  */
-function endJoint({limb,limbName,ballName,partName,limbLength,middle,end,middleBall,part}){
- const d=unit(sub(end,middle)),r=END_BALL_TO_LIMB*bottomEdgeRadius(limb,limbLength);
+function endJoint({limb,limbName,ballName,partName,limbLength,middle,end,middleBall,part,ballRadius}){
+ const d=unit(sub(end,middle)),r=ballRadius??END_BALL_TO_LIMB*bottomEdgeRadius(limb,limbLength);
  const top=add(middle,scale(d,middleBall+BALL_GAP)),J=add(top,scale(d,limbLength+BALL_GAP+r));
  const lower={name:limbName,side:'left',...place(buildLimbShape(limb,limbLength),top,d),length:limbLength,top,direction:d};
  const pivot=part.pivot;let reach=-Infinity;
@@ -214,15 +214,46 @@ export function wristPreview(bodyId='boy'){
 }
 
 /**
- * Owner's request (21 November 2026): the ankle joint, one side: the calf, the
- * ankle ball and the chosen foot (option 2), built exactly like the wrist. The
- * calf is the boy's (the approved Strong leg) at its approved length; the ankle
- * ball is the size of the calf's bottom edge; the foot is only moved.
+ * Longer legs and a bigger ankle ball (owner, 21 November 2026: the leg limbs
+ * look too short, and once the balls sit in sockets the limbs will overlap them
+ * and the avatar would come out shorter than the original; "lengthen the
+ * overall size and make the ankle ball bigger"). The owner gave no amounts:
+ * 10% each is Claude's pick, waiting for the owner's confirmation. The thigh
+ * and calf keep their shape and thickness; only their length changes. The
+ * knee ball stays by its rule (it depends on the limbs' thickness, not length).
+ */
+export const LEG_LENGTHEN=1.1,ANKLE_BALL_SCALE=1.1;
+
+/**
+ * One whole leg, one side, hanging straight down the skeleton's leg line (hip
+ * to ankle): thigh, knee ball, calf, ankle ball and the chosen foot, separate,
+ * with the usual 6 mm gaps. The thigh starts where it sits below the hip ball
+ * (the hip ball itself is not shown: its placement is still open). `lengthen`
+ * scales both limb lengths; `ankleBallScale` scales the ankle ball against the
+ * ankle ball before (the approved calf's bottom edge). With (1, 1) this is the leg as it was before.
+ */
+export function legPreview(bodyId='boy',{lengthen=LEG_LENGTHEN,ankleBallScale=ANKLE_BALL_SCALE}={}){
+ const leg=BODIES[bodyId].leg,size=pairSizes(leg,LEG_PAIR),d=unit(sub(ANKLE,HIP));
+ const hipBall=BALL_TO_LIMB*thinnestAt(leg.thigh,0),thighLength=size.thigh*lengthen,calfLength=size.calf*lengthen;
+ const thighTop=add(HIP,scale(d,hipBall+BALL_GAP)),K=add(thighTop,scale(d,thighLength+BALL_GAP+size.ball));
+ const thigh={name:'thigh',side:'left',...place(buildLimbShape(leg.thigh,thighLength),thighTop,d),length:thighLength,top:thighTop,direction:d};
+ const j=endJoint({limb:leg.calf,limbName:'calf',ballName:'ball-ankle',partName:'foot',limbLength:calfLength,
+  middle:K,end:add(K,d),middleBall:size.ball,part:buildHandFoot(CHOSEN_HAND_FOOT).foot,
+  // Bigger than the ankle ball before (the size of the approved calf's bottom edge), whatever the calf's length.
+  ballRadius:ankleBallScale*END_BALL_TO_LIMB*bottomEdgeRadius(leg.calf,size.calf)});
+ let sole=Infinity;for(let i=1;i<j.moved.positions.length;i+=3)sole=Math.min(sole,j.moved.positions[i]);
+ return {body:bodyId,lengthen,ankleBallScale,direction:d,knee:K,kneeBall:size.ball,ankle:j.joint,ankleBall:j.ball,thigh,calf:j.lower,foot:j.moved,
+  parts:[thigh,{name:'ball-knee',side:'left',...ballAt(size.ball,K)},...j.parts],
+  // Hip joint to the bottom of the foot, to compare with the original avatar (whose sole is at y = 0).
+  hipToSole:HIP[1]-sole,originalHipToSole:HIP[1]};
+}
+
+/**
+ * The ankle joint, one side: the calf, the ankle ball and the chosen foot (the
+ * lower part of legPreview, with the longer calf and the bigger ankle ball).
  */
 export function anklePreview(bodyId='boy'){
- const leg=BODIES[bodyId].leg,size=pairSizes(leg,LEG_PAIR);
- const j=endJoint({limb:leg.calf,limbName:'calf',ballName:'ball-ankle',partName:'foot',limbLength:size.calf,
-  middle:KNEE,end:ANKLE,middleBall:size.ball,part:buildHandFoot(CHOSEN_HAND_FOOT).foot});
- return {body:bodyId,direction:j.direction,ankle:j.joint,ankleBall:j.ball,calf:j.lower,foot:j.moved,parts:j.parts,ankleMovedBy:j.movedBy};
+ const l=legPreview(bodyId);
+ return {body:bodyId,direction:l.direction,ankle:l.ankle,ankleBall:l.ankleBall,calf:l.calf,foot:l.foot,parts:l.parts.slice(2),knee:l.knee,kneeBall:l.kneeBall};
 }
 
