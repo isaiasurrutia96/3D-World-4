@@ -275,32 +275,56 @@ export const hipBallRadius=leg=>BALL_TO_LIMB*thinnestAt(leg.thigh,0);
  *    the same rule as the shoulders (Claude's assumption: the owner set it for
  *    the shoulders; hips were never decided);
  *  - each leg below its hip ball: legPreview's longer leg (thigh and calf 10%
- *    longer, ankle ball 10% bigger) with the chosen foot; the feet move a few
- *    millimetres outward so they do not overlap each other.
+ *    longer, ankle ball 10% bigger) with the chosen foot;
+ *  - then every arm and leg piece made LIMB_SCALE bigger (each whole chain
+ *    scaled about its top ball), torso, neck and head unchanged; each leg moves
+ *    outward just enough that the two feet do not overlap.
  * The right side is the exact mirror of the left.
  */
-export function fullBodyPreview(bodyId='boy'){
+export function fullBodyPreview(bodyId='boy',{limbScale=LIMB_SCALE}={}){
  const body=BODIES[bodyId],arm=body.arm,leg=body.leg,top=shoulderPreview(bodyId),torsoShape=top.torsoShape;
- const parts=[...top.parts];
+ const parts=[top.parts.find(p=>p.name==='torso')];
  const neck=buildHeadSet(CHOSEN_NECK,torsoShape);
  parts.push({name:'ball-neck',side:'centre',...ballAt(neck.ball.radius,[0,neck.ball.y,0])});
  parts.push({name:'head',side:'centre',positions:neck.head.positions.map((v,i)=>v+(i%3===1?neck.head.y:0)),index:neck.head.index,radius:neck.head.radius,centre:[0,neck.head.y,0]});
- // Arm, below the approved upper arm.
+ // Arm (approved size): shoulder ball and upper arm from the shoulder preview, then elbow ball, forearm, wrist ball, hand.
  const elbowBall=pairSizes(arm,ARM_PAIR).ball,up=top.upper,E=add(up.top,scale(up.direction,up.length+BALL_GAP+elbowBall));
  const w=endJoint({limb:arm.fore,limbName:'forearm',ballName:'ball-wrist',partName:'hand',limbLength:APPROVED_ARM_LENGTHS.fore,
   middle:E,end:add(E,unit(sub(WRIST,ELBOW))),middleBall:elbowBall,part:buildHandFoot(CHOSEN_HAND_FOOT).hand});
- // Hip ball clear of the torso, then the longer leg below it.
+ const armChain=[top.parts.find(p=>p.name==='ball-shoulder'&&p.side==='left'),up,{name:'ball-elbow',side:'left',...ballAt(elbowBall,E)},...w.parts];
+ // Leg (approved size, longer legs): hip ball clear of the torso, then the leg below it.
  const hipBall=hipBallRadius(leg),H=pushClear(torsoShape,[...HIP],hipBall,[0,-1,0],SHOULDER_TORSO_GAP);
  const l=legPreview(bodyId,{hip:H});
- // The two feet (8% bigger, chosen option 2) would overlap in the middle by a few millimetres:
- // each moves straight outward just enough to leave the usual gap between them (not reshaped).
- const foot=l.parts.find(p=>p.name==='foot');let inner=Infinity;for(let i=0;i<foot.positions.length;i+=3)inner=Math.min(inner,foot.positions[i]);
- const footOut=Math.max(0,BALL_GAP/2-inner);if(footOut)foot.positions=foot.positions.map((v,i)=>i%3===0?v+footOut:v);
- const left=[{name:'ball-elbow',side:'left',...ballAt(elbowBall,E)},...w.parts,{name:'ball-hip',side:'left',...ballAt(hipBall,H)},...l.parts];
+ const legChain=[{name:'ball-hip',side:'left',...ballAt(hipBall,H)},...l.parts];
+ // Bigger limbs (owner, 21 November 2026): each whole chain is scaled up about its top ball's centre
+ // (every piece keeps its shape, only bigger; the gaps grow with it), then moved so the bigger top
+ // ball is again 2 cm clear of the torso (shoulders straight out, hips straight down).
+ const S2=pushClear(torsoShape,[...SHOULDER],top.shoulderBall*limbScale,[1,0,0],SHOULDER_TORSO_GAP);
+ const H2=pushClear(torsoShape,[...HIP],hipBall*limbScale,[0,-1,0],SHOULDER_TORSO_GAP);
+ const grow=(chain,c,to)=>chain.map(p=>scaledPart(p,c,limbScale,to));
+ const left=[...grow(armChain,top.shoulder,S2),...grow(legChain,H,H2)];
+ // The two feet (8% bigger, chosen option 2) would overlap in the middle: each whole leg moves
+ // straight outward just enough to leave the usual gap between the feet (nothing reshaped; each
+ // foot stays under its own leg).
+ const foot=left.find(p=>p.name==='foot');let inner=Infinity;for(let i=0;i<foot.positions.length;i+=3)inner=Math.min(inner,foot.positions[i]);
+ const footOut=Math.max(0,BALL_GAP/2-inner),legOut=[footOut,0,0];
+ if(footOut)for(let i=armChain.length;i<left.length;i++)left[i]=scaledPart(left[i],[0,0,0],1,legOut);
  for(const p of left){parts.push(p);parts.push({...mirrored(p),name:p.name,side:'right',...(p.centre?{centre:mirror(p.centre)}:{})});}
- return {body:bodyId,torsoShape,parts,face:CHOSEN_FACE,headCentre:[0,neck.head.y,0],headRadius:neck.head.radius,
-  joints:{shoulder:top.shoulder,elbow:E,wrist:w.joint,hip:H,knee:l.knee,ankle:l.ankle},balls:{shoulder:top.shoulderBall,elbow:elbowBall,wrist:w.ball,hip:hipBall,knee:l.kneeBall,ankle:l.ankleBall},
-  arm:{forearm:w.lower,hand:w.moved},leg:l,footOut,
+ const get=n=>left.find(p=>p.name===n);let sole=Infinity;for(let i=1;i<foot.positions.length;i+=3)sole=Math.min(sole,foot.positions[i]);
+ return {body:bodyId,limbScale,torsoShape,parts,face:CHOSEN_FACE,headCentre:[0,neck.head.y,0],headRadius:neck.head.radius,
+  joints:Object.fromEntries(['shoulder','elbow','wrist','hip','knee','ankle'].map(j=>[j,get('ball-'+j).centre])),
+  balls:Object.fromEntries(['shoulder','elbow','wrist','hip','knee','ankle'].map(j=>[j,get('ball-'+j).radius])),
+  legOut:footOut,
   // Heights above the sole (the original avatar stands with its sole at 0).
-  height:Math.max(...neck.head.positions.filter((_,i)=>i%3===1))+neck.head.y-l.sole,sole:l.sole};
+  height:Math.max(...neck.head.positions.filter((_,i)=>i%3===1))+neck.head.y-sole,sole};
+}
+
+/** How much bigger every arm and leg piece is (owner, 21 November 2026: "our guy looks very skinny, at least the limbs and ball joints; increase the overall size of everything minus the torso, head and neck"). No amount given: 15% is Claude's pick, waiting for the owner's confirmation. */
+export const LIMB_SCALE=1.15;
+
+/** A part scaled by k about point c, then moved so c lands on `to` (shape kept; sizes, lengths and centres follow). */
+function scaledPart(p,c,k,to){
+ const T=v=>add(to,scale(sub(v,c),k)),out={...p,positions:p.positions.map((v,i)=>to[i%3]+(v-c[i%3])*k)};
+ if(p.centre)out.centre=T(p.centre);if(p.radius)out.radius=p.radius*k;if(p.top)out.top=T(p.top);if(p.length)out.length=p.length*k;if(p.pivot)out.pivot=T(p.pivot);
+ return out;
 }

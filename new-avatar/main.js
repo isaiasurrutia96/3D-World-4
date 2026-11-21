@@ -80,10 +80,11 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
  {id:'legs',label:'Legs',intro:'The chosen Strong legs (boy) and the girl\'s version, 8% slimmer.',
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
-const full=fullBodyPreview('boy');
-GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate: torso, neck ball and head, shoulders, arms with elbow and wrist balls and hands, hip balls, the longer legs with knee and ankle balls and feet. Nothing reshaped.',
- items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
-  parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+const fullBefore=fullBodyPreview('boy',{limbScale:1}),full=fullBodyPreview('boy');
+const fullItem=(f,id,label,tag,what)=>({id,label,tag,face:f.face,note:`${what} All ${f.parts.length} pieces, separate with small gaps. He stands ${(f.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
+ parts:f.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))});
+GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate. Left: as before. Right: every arm and leg piece (balls, limbs, hands and feet) 15% bigger; torso, neck and head unchanged.',
+ items:[fullItem(fullBefore,'full-before','Before','Before','As before.'),fullItem(full,'full-bigger','Bigger limbs','Bigger','Every arm and leg piece 15% bigger.')]});
 const legBefore=legPreview('boy',{lengthen:1,ankleBallScale:1}),legLonger=legPreview('boy');
 const legNote=(l,what)=>`${what} Thigh ${(l.thigh.length*100).toFixed(1)} cm, calf ${(l.calf.length*100).toFixed(1)} cm, knee ball ${(l.kneeBall*200).toFixed(1)} cm, ankle ball ${(l.ankleBall*200).toFixed(1)} cm. Hip to sole ${(l.hipToSole*100).toFixed(1)} cm (your original avatar: ${(l.originalHipToSole*100).toFixed(1)} cm, before sockets).`;
 GROUPS.push({id:'leg',label:'Leg',intro:'The whole leg, one side: thigh, knee ball, calf, ankle ball and your chosen foot. Left: as it was. Right: thigh and calf 10% longer and the ankle ball 10% bigger. Same shapes, only longer.',
