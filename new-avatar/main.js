@@ -1,9 +1,6 @@
-// New avatar (version 2): parts to choose from, in tabs.
-//  - Women's torsos: five athletic women's torsos (avatar-v2/torso-variants.js,
-//    WOMEN_OPTIONS);
-//  - Arms: the chosen Athletic arm and the girl's slightly slimmer version
-//    (avatar-v2/limb-options.js);
-//  - Legs: five thigh + knee ball + calf options.
+// New avatar (version 2): parts to choose from and the chosen parts, in tabs.
+//  - Head & neck: five options, each on the chosen torso (avatar-v2/head-options.js);
+//  - Torsos / Arms / Legs: the chosen boy's part and the girl's version.
 // Each tab has its own row; "Compare all" frames that row, and each item's
 // button moves the camera in on it and hides the rest. The approved avatar is
 // not used here.
@@ -11,8 +8,9 @@ import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import torso from '../avatar-v2/torso.json' with {type:'json'};
-import {CHOSEN_ARM,GIRL_ARM,LEG_OPTIONS,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
-import {WOMEN_OPTIONS,makeTorsoOption} from '../avatar-v2/torso-variants.js';
+import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '../avatar-v2/limb-options.js';
+import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
+import {HEAD_OPTIONS,buildHeadSet} from '../avatar-v2/head-options.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
 const GAP=.3;// metres of space between items, left to right
@@ -42,16 +40,22 @@ const partsOf=(set,keys,names,top)=>keys.map((key,i)=>({name:names[i],geometry:g
 const armItem=(option,id,label,tag)=>{const set=buildArmSet(option);
  return {id,label,tag,note:`${option.note} Ball ${(set.size.ball*200).toFixed(1)} cm wide; upper arm ${(set.size.upper*100).toFixed(1)} cm, forearm ${(set.size.fore*100).toFixed(1)} cm.`,
   parts:partsOf(set,['upper','ball','fore'],['upper-arm','ball-elbow','forearm'],ARM_TOP)};};
+const legItem=(option,id,label,tag)=>{const set=buildLegSet(option);
+ return {id,label,tag,note:`${option.note} Knee ball ${(set.size.ball*200).toFixed(1)} cm wide; thigh ${(set.size.thigh*100).toFixed(1)} cm, calf ${(set.size.calf*100).toFixed(1)} cm.`,
+  parts:partsOf(set,['thigh','ball','calf'],['thigh','ball-knee','calf'],LEG_TOP)};};
+const boyTorso=makeTorsoOption(torso.shape,CHOSEN_TORSO),girlTorso=makeTorsoOption(torso.shape,CHOSEN_GIRL_TORSO,WOMEN_OPTIONS);
+const torsoPart=shape=>({name:'torso',geometry:geometryOf(buildTorsoSurface(shape)),y:0});
 const GROUPS=[
- {id:'women',label:"Women's torsos",intro:'Five athletic women\'s torsos: slim waist, good hips, modest chest. Tap one to look at it closely.',
-  items:WOMEN_OPTIONS.map((option,i)=>({id:option.id,label:option.label,note:option.note,tag:'W'+(i+1),
-   parts:[{name:'torso',geometry:geometryOf(buildTorsoSurface(makeTorsoOption(torso.shape,option,WOMEN_OPTIONS))),y:0}]}))},
- {id:'arms',label:'Arms',intro:'The chosen Athletic arm (boy) and the girl\'s version, 8% slimmer. Tap one to look at it closely.',
+ {id:'head',label:'Head & neck',intro:'Five ways to add a neck ball, each on the chosen torso. The old head sat right on the shoulders, so a neck ball makes the avatar taller: 3.6 to 19.8 cm. Tap one to look at it closely.',
+  items:HEAD_OPTIONS.map((option,i)=>{const set=buildHeadSet(option,boyTorso);
+   return {id:option.id,label:option.label,tag:String(i+1),note:`${option.note} Neck ball ${(set.ball.radius*200).toFixed(1)} cm wide; ${(set.lift*100).toFixed(1)} cm taller than before.`,
+    parts:[torsoPart(boyTorso),{name:'ball-neck',geometry:geometryOf(set.ball),y:set.ball.y},{name:'head',geometry:geometryOf(set.head),y:set.head.y}]};})},
+ {id:'torsos',label:'Torsos',intro:'The chosen torsos: the boy\'s Athletic (light) and the girl\'s W5 Gymnast.',
+  items:[{id:'torso-boy',label:'Torso · Boy',tag:'Boy',note:CHOSEN_TORSO.note,parts:[torsoPart(boyTorso)]},{id:'torso-girl',label:'Torso · Girl',tag:'Girl',note:CHOSEN_GIRL_TORSO.note,parts:[torsoPart(girlTorso)]}]},
+ {id:'arms',label:'Arms',intro:'The chosen Athletic arm (boy) and the girl\'s version, 8% slimmer.',
   items:[armItem(CHOSEN_ARM,'arm-boy','Arm · Boy','Boy'),armItem(GIRL_ARM,'arm-girl','Arm · Girl','Girl')]},
- {id:'legs',label:'Legs',intro:'Five leg options: thigh, knee ball and calf. Tap one to look at it closely.',
-  items:LEG_OPTIONS.map((option,i)=>{const set=buildLegSet(option);
-   return {id:option.id,label:option.label,tag:String(i+1),note:`${option.note} Knee ball ${(set.size.ball*200).toFixed(1)} cm wide; thigh ${(set.size.thigh*100).toFixed(1)} cm, calf ${(set.size.calf*100).toFixed(1)} cm.`,
-    parts:partsOf(set,['thigh','ball','calf'],['thigh','ball-knee','calf'],LEG_TOP)};})},
+ {id:'legs',label:'Legs',intro:'The chosen Strong legs (boy) and the girl\'s version, 8% slimmer.',
+  items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
 let widest=0;

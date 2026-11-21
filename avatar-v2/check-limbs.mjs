@@ -5,7 +5,7 @@
 // with the joint centres unchanged; options in a group really differ.
 // Usage: node avatar-v2/check-limbs.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {ARM_OPTIONS,LEG_OPTIONS,CHOSEN_ARM,GIRL_ARM,ARM_PAIR,LEG_PAIR,GIRL_LIMB_SHARE,buildPair,pairSizes,buildLimbShape,limbRadius,thinnestAt,slimmerLimb,girlVersion,UPPER_ARM_SPAN,FOREARM_SPAN,THIGH_SPAN,CALF_SPAN,BALL_GAP,BALL_TO_LIMB,LIMB_DETAIL} from './limb-options.js';
+import {ARM_OPTIONS,LEG_OPTIONS,CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,ARM_PAIR,LEG_PAIR,GIRL_LIMB_SHARE,buildPair,pairSizes,buildLimbShape,limbRadius,thinnestAt,slimmerLimb,girlVersion,UPPER_ARM_SPAN,FOREARM_SPAN,THIGH_SPAN,CALF_SPAN,BALL_GAP,BALL_TO_LIMB,LIMB_DETAIL} from './limb-options.js';
 import {BALL_RADIUS,CHOSEN_BALL_TRIANGLES} from './ball-shape.js';
 import {smoothness} from './shape-checks.js';
 
@@ -26,6 +26,10 @@ check('the chosen arm\'s limbs are clearly longer than with the old 18 cm ball (
  const z=pairSizes(CHOSEN_ARM,ARM_PAIR),oldUpper=UPPER_ARM_SPAN-BALL_RADIUS-BALL_GAP,oldFore=FOREARM_SPAN-BALL_RADIUS-BALL_GAP;
  assert(z.upper>oldUpper*1.1&&z.fore>oldFore*1.1);
  return `upper arm ${(oldUpper*100).toFixed(1)} → ${(z.upper*100).toFixed(1)} cm, forearm ${(oldFore*100).toFixed(1)} → ${(z.fore*100).toFixed(1)} cm`;
+});
+check('the chosen leg is option 3, Strong; the girl\'s legs are it, 8% slimmer',()=>{
+ assert.equal(CHOSEN_LEG,LEG_OPTIONS[2]);assert.equal(CHOSEN_LEG.id,'leg-strong');assert.deepEqual(GIRL_LEG,girlVersion(CHOSEN_LEG,LEG_PAIR));
+ return `${CHOSEN_LEG.label}; girl knee ball ${(pairSizes(GIRL_LEG,LEG_PAIR).ball*200).toFixed(1)} cm wide`;
 });
 check('a limb too short for its rounded ends is refused; a bad slimming share is refused',()=>{
  assert.throws(()=>buildLimbShape({side:1,front:1,profile:[[0,.07],[1,.07]]},.1),/too short/);
@@ -54,8 +58,9 @@ check('the capsule-shape test catches a planted 5 mm dent and a 5 mm groove (tes
 // --- Every set in every group -------------------------------------------------
 const groups=[
  {tag:'Arm',options:ARM_OPTIONS,pair:ARM_PAIR,names:['upper arm','forearm'],chosen:CHOSEN_ARM},
- {tag:'Leg',options:LEG_OPTIONS,pair:LEG_PAIR,names:['thigh','calf'],chosen:null},
- {tag:'Girl',options:[GIRL_ARM],pair:ARM_PAIR,names:['upper arm','forearm'],chosen:GIRL_ARM},
+ {tag:'Leg',options:LEG_OPTIONS,pair:LEG_PAIR,names:['thigh','calf'],chosen:CHOSEN_LEG},
+ {tag:'Girl arm',options:[GIRL_ARM],pair:ARM_PAIR,names:['upper arm','forearm'],chosen:GIRL_ARM},
+ {tag:'Girl leg',options:[GIRL_LEG],pair:LEG_PAIR,names:['thigh','calf'],chosen:GIRL_LEG},
 ];
 for(const g of groups){
  check(`${g.tag} options: unique ids, labels, notes; capsule option (if any) is plain and round`,()=>{
@@ -84,9 +89,9 @@ for(const g of groups){
    });
    // Only for a chosen set: options kept for reference may fail it (flattened
    // limbs give a small ball, so their muscles look big next to it).
-   if(o===g.chosen)check(`${name}: muscles do not balloon (thickest point at most 1.5 times the ball's radius)`,()=>{
+   if(o===g.chosen)check(`${name}: muscles do not balloon (thickest point at most ${g.pair.maxBulge} times the ball's radius)`,()=>{
     let worst=0;for(let k=0;k<=100;k++)for(let s=0;s<72;s++)worst=Math.max(worst,limbRadius(spec,k/100,s/72*TAU));
-    assert(worst<=1.5*size.ball,'thickest '+(worst*1000).toFixed(1)+' mm');return `thickest ${(worst*1000).toFixed(1)} mm, ball ${(size.ball*1000).toFixed(1)} mm`;
+    assert(worst<=g.pair.maxBulge*size.ball,'thickest '+(worst*1000).toFixed(1)+' mm');return `thickest ${(worst*1000).toFixed(1)} mm = ${(worst/size.ball).toFixed(2)}x the ball`;
    });
   });
   check(`${g.tag} ${o.label}: ball as thick as the limbs but slightly thinner (${BALL_TO_LIMB*100}% of the thinner end)`,()=>{

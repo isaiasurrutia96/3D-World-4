@@ -39,8 +39,12 @@ const bone=name=>SIDE.find(b=>b.name===name).head;
 export const HIP=bone('thigh'),KNEE=bone('shin'),ANKLE=bone('foot');
 export const THIGH_SPAN=distance(HIP,KNEE),CALF_SPAN=distance(KNEE,ANKLE);
 /** The two kinds of limb pair: which option keys hold the limbs, and their spans. */
-export const ARM_PAIR={keys:['upper','fore'],spans:[UPPER_ARM_SPAN,FOREARM_SPAN],ball:'ball-elbow'};
-export const LEG_PAIR={keys:['thigh','calf'],spans:[THIGH_SPAN,CALF_SPAN],ball:'ball-knee'};
+// maxBulge: how much thicker than the middle ball a chosen limb may get (the
+// "not puffy" guard). Arms 1.5x. Legs 1.65x: a real thigh is far wider at the
+// hip than at the knee (about 1.5x around), and the owner chose Strong legs
+// (1.58x) by eye.
+export const ARM_PAIR={keys:['upper','fore'],spans:[UPPER_ARM_SPAN,FOREARM_SPAN],ball:'ball-elbow',maxBulge:1.5};
+export const LEG_PAIR={keys:['thigh','calf'],spans:[THIGH_SPAN,CALF_SPAN],ball:'ball-knee',maxBulge:1.65};
 /** The girl's limbs are the boy's, slightly slimmer: 92% of the thickness (owner: "not by a lot"). */
 export const GIRL_LIMB_SHARE=.92;
 /** How finely every limb is built: 504 triangles each. Most of a short limb is
@@ -160,3 +164,7 @@ export const LEG_OPTIONS=[
   thigh:{...ROUND,profile:[[0,.072],[.4,.074],[1,.06]],bumps:[{h:.45,hSpread:.22,angle:90,aSpread:45,amount:.006},{h:.4,hSpread:.22,angle:270,aSpread:48,amount:.005}]},
   calf:{...ROUND,profile:[[0,.06],[.3,.064],[1,.045]],bumps:[{h:.28,hSpread:.16,angle:270,aSpread:40,amount:.007}]}},
 ];
+
+/** Chosen by the owner (21 November 2026): leg option 3, Strong; the girl's legs are it, 8% slimmer. */
+export const CHOSEN_LEG=LEG_OPTIONS.find(o=>o.id==='leg-strong');
+export const GIRL_LEG=girlVersion(CHOSEN_LEG,LEG_PAIR);

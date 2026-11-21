@@ -210,3 +210,6 @@ export const WOMEN_OPTIONS=[
   bumps:CHEST(.019),shoulderRoll:{from:.8,neck:.105},detail:LIGHT},
 ];
 
+
+/** Chosen by the owner (21 November 2026): the girl's torso is W5, Gymnast. */
+export const CHOSEN_GIRL_TORSO=WOMEN_OPTIONS.find(o=>o.id==='women-gymnast');

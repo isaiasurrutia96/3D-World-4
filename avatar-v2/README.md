@@ -36,6 +36,17 @@ Assembly guideline: fingertips around the middle of the knee; the skeleton
 already puts them at knee height (47.1 cm at rest, knee joint 47.2 cm).
 The page shows these in three tabs.
 
+**Chosen: Strong legs (3) and the girl's torso W5 Gymnast** (`CHOSEN_LEG`,
+`GIRL_LEG`, `CHOSEN_GIRL_TORSO`). Legs may bulge up to 1.65x the knee ball (a
+real thigh is far wider at the hip than the knee); arms keep 1.5x.
+
+**Head and neck** (`head-options.js`, checks `check-head.mjs`): the old head sat
+right on the shoulders (5 mm gap), so a neck ball lifts the head. Five options
+from +3.6 cm to +19.8 cm (full or small ball, resting or half sunk into the
+torso top, or a slightly smaller head). Head: Fibonacci sphere, 800 triangles.
+Open for the joints discussion: with a neck ball, the head's natural pivot is
+the ball's centre, not the head's centre as in today's skeleton.
+
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
 sit separately, they would be about 12 cm and 9 cm.
@@ -72,6 +83,8 @@ the limbs will be redone one thing at a time after the torso is chosen.
 | `limb-options.js` | Arm and leg options and the girl's slimmer versions: capsule limbs from a thickness profile, cross-section and muscle bumps; one pair builder places the limb-sized ball between three skeleton joint centres. |
 | `check-limbs.mjs` | Checks every limb set (arms, legs, girl versions): sealed, exact lengths, capsule-shaped (with a test of that test), ball sized from the limbs and separate, joints unchanged, options distinct. |
 | `shape-checks.js` | Shared dent and groove measuring used by the torso and arm checks. |
+| `head-options.js` | Head and neck options: neck ball size and placement on the torso's neck seat, head size, and the height change each causes. |
+| `check-head.mjs` | Checks the head options: sizes, placement, sealed spheres, honest height change. |
 | `check-torso.mjs` | Checks the torso and every option: sealed, faces outward, no dents or grooves (with a test of that test), same height, left/right symmetric, distinct from each other, under 6,000 triangles. |
 
 Commands: `node avatar-v2/fit-torso.mjs` (rebuild the torso, same result every

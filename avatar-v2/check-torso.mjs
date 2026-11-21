@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {buildTorsoSurface} from './torso-shape.js';
 import {smoothness} from './shape-checks.js';
-import {FIRST_OPTIONS,ATHLETIC_OPTIONS,TORSO_OPTIONS,CHOSEN_TORSO,FEMALE_OPTIONS,WOMEN_OPTIONS,makeTorsoOption,curveAt,resolveOption,resampleShape,expandBumps,bumpAt,ringAt} from './torso-variants.js';
+import {FIRST_OPTIONS,ATHLETIC_OPTIONS,TORSO_OPTIONS,CHOSEN_TORSO,FEMALE_OPTIONS,WOMEN_OPTIONS,CHOSEN_GIRL_TORSO,makeTorsoOption,curveAt,resolveOption,resampleShape,expandBumps,bumpAt,ringAt} from './torso-variants.js';
 
 const torso=JSON.parse(await readFile('avatar-v2/torso.json','utf8'));
 const source=JSON.parse(await readFile('avatar-v2/torso-source.json','utf8'));
@@ -178,6 +178,7 @@ check('women\'s torsos: slim waist, hips wider than F1 but clearly narrower than
  }
  return `F1 hips ${(f1*100).toFixed(1)}, F2 ${(f2*100).toFixed(1)} cm; ${out.join('; ')}`;
 });
+check('the girl\'s torso is W5, Gymnast',()=>{assert.equal(CHOSEN_GIRL_TORSO,WOMEN_OPTIONS[4]);assert.equal(CHOSEN_GIRL_TORSO.id,'women-gymnast');return CHOSEN_GIRL_TORSO.label;});
 // Options in a round must really differ, except a light version and the option it is based on.
 // "Really differ" means a difference you can see somewhere: at least 1.5 cm.
 // (An average over the whole torso would wrongly reject a chest-only change.)
