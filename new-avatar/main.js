@@ -84,6 +84,19 @@ const full=fullBodyPreview('boy');
 GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate: every arm and leg piece 15% bigger (hands then 10% smaller), feet 3 inches longer than the head; torso, neck and head unchanged.',
  items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+// Hand, head and foot side by side, exactly as they are on the full body (not resized): each one
+// only moved so it stands on the floor in a row.
+// The foot is turned a quarter turn (toes to the right) so the front view shows its heel-to-toe length.
+const turned=part=>({...part,positions:part.positions.map((v,i,P)=>i%3===0?P[i+2]:i%3===2?-P[i-2]:v)});
+const standing=(part,name)=>{const P=part.positions;let lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
+ for(let i=0;i<P.length;i+=3)for(let k=0;k<3;k++){lo[k]=Math.min(lo[k],P[i+k]);hi[k]=Math.max(hi[k],P[i+k]);}
+ const c=[(lo[0]+hi[0])/2,lo[1],(lo[2]+hi[2])/2];
+ return {name,geometry:geometryOf({positions:P.map((v,i)=>v-c[i%3]),index:part.index}),y:0,size:hi.map((h,k)=>h-lo[k])};};
+const pick=(n,side)=>full.parts.find(p=>p.name===n&&p.side===side);
+const hhf=[['hand',standing(pick('hand','left'),'hand'),1],['head',standing(pick('head','centre'),'head'),1],['foot',standing(turned(pick('foot','left')),'foot'),0]];
+GROUPS.unshift({id:'hhf',label:'Hand · head · foot',intro:'The hand, head and foot side by side, exactly the sizes they are on the full body (nothing resized). The foot is turned sideways so you see its length from the front.',
+ items:hhf.map(([n,part,axis])=>({id:'hhf-'+n,label:n[0].toUpperCase()+n.slice(1),tag:n[0].toUpperCase()+n.slice(1),...(n==='head'?{face:full.face}:{}),
+  note:`${n[0].toUpperCase()+n.slice(1)}: ${(part.size[axis]*100).toFixed(1)} cm ${n==='foot'?'heel to toe':n==='hand'?'wrist end to fingertips':'tall'}.`,parts:[part]}))});
 const legBefore=legPreview('boy',{lengthen:1,ankleBallScale:1}),legLonger=legPreview('boy');
 const legNote=(l,what)=>`${what} Thigh ${(l.thigh.length*100).toFixed(1)} cm, calf ${(l.calf.length*100).toFixed(1)} cm, knee ball ${(l.kneeBall*200).toFixed(1)} cm, ankle ball ${(l.ankleBall*200).toFixed(1)} cm. Hip to sole ${(l.hipToSole*100).toFixed(1)} cm (your original avatar: ${(l.originalHipToSole*100).toFixed(1)} cm, before sockets).`;
 GROUPS.push({id:'leg',label:'Leg',intro:'The whole leg, one side: thigh, knee ball, calf, ankle ball and your chosen foot. Left: as it was. Right: thigh and calf 10% longer and the ankle ball 10% bigger. Same shapes, only longer.',
@@ -138,7 +151,7 @@ let active=GROUPS[0],options=active.options,focus=null,viewName='front',glide=nu
 function distance(){// close enough to fill the screen with one item (its width and its height), or with all of them
  const half=Math.tan(camera.fov*Math.PI/360),across=focus===null?active.width+.4:Math.max(options[focus].width*1.7,.75);
  const wide=(across/2)/(half*Math.min(1,camera.aspect)),tall=((focus===null?Math.max(...options.map(o=>o.height)):options[focus].height)*1.2/2)/half;// the tallest item fits too (leaves room for the view buttons)
- return Math.max(focus===null?1.7:.45,wide,tall)*1.05;
+ return Math.max(focus===null?.9:.45,wide,tall)*1.05;
 }
 function frame(){
  const centre=focus===null?active.centre:options[focus].centre,dir=new T.Vector3(...directions[viewName]).normalize();
