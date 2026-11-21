@@ -43,6 +43,18 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
 15. Tracks per mode: F1 tracks suit F1 GoKarts, GT tracks suit GT GoKarts,
     and **GoKart tracks are smaller with sharper turns**.
 
+16. (Later the same day) **Concepts by mode** (looks can be refined later):
+    1. **F1 GoKart:** 2 and 6 are the main karts; 3 (old-school F1) is a
+       super-expensive F1 kart.
+    2. **GT GoKart:** 4 (Le Mans look, super expensive), 7 and 9. **GT
+       wheels are covered**, including 4 and 7. GT karts look **compact,
+       "like F1 and regular GoKarts had a baby."**
+    3. **GoKart:** the original kart is the starter; 8 and 10 are the
+       higher-end GoKarts.
+17. **Off-road wheels and lights are parts players buy** (shown on kart 7).
+18. More super-expensive karts will come later, and every kart belongs to
+    one of the three modes.
+
 ## B. Proposed, not approved
 
 1. Build karts from swappable parts described as data (body, nose, wings,
@@ -53,7 +65,7 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
 
 ## C. Open questions
 
-1. Are karts 2 and 6 the main karts for the F1 mode, or the main karts
-   overall? (Not answered yet.)
-2. Which mode do the expensive karts 3, 4, 7 and 9 belong to?
-3. Off-road: Rally kart, off-road parts, or both (A8)?
+1. Answered in A16 and A17 (main karts, modes of 3/4/7/9, off-road parts).
+2. Karts 1 (Classic) and 5 (Brawler) have no mode yet; 5's shape guides the
+   GT base (A13).
+3. Kart 9 has huge open rear tyres; in GT, are they covered too?
