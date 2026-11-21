@@ -86,6 +86,14 @@ torso, and it is shoulder-sized (5% bigger than the upper arm's thickest point).
 `shoulderPreview` shows the torso with both shoulder balls and the approved upper
 arms unchanged. The page shows only this for now.
 
+**Hands and feet** (`hands-feet.js`, checks `check-hands-feet.mjs`): the
+owner's original hand and foot copied unchanged from the approved avatar's Light
+copy (`build-hands-feet.mjs`, hand 18,208 and foot 10,128 triangles), plus four
+gentle variations (slightly bigger, softer, sleeker, sturdier) that only adjust
+the original surface, anchored at the wrist and ankle, along directions from the
+skeleton. A phone-ready version of the chosen pair comes after the owner picks;
+then the wrist and ankle balls.
+
 Earlier open point for the joints discussion: with a separate 18 cm elbow ball the limbs
 are 21 cm (upper arm) and 19 cm (forearm); if the shoulder and wrist balls also
 sit separately, they would be about 12 cm and 9 cm.
@@ -129,6 +137,9 @@ the limbs will be redone one thing at a time after the torso is chosen.
 | `check-face.mjs` | Checks the faces: sizes from the concept, mirrored, same mouth, fits the front of the head, drawing. |
 | `assembly.js` | The chosen parts assembled from the skeleton's joints (boy/girl; shoulder and hip balls at the joints or resting on the torso), all in avatar space. |
 | `check-assembly.mjs` | Checks the assembly: joints, ball sizes, gaps, mirror, no limb inside the torso, sealed parts, triangle budget. |
+| `hands-feet.js` | The original hand and foot and gentle variations (size, length/width/thickness, puff), anchored at the wrist and ankle. |
+| `build-hands-feet.mjs` | Copies the original hand and foot from the approved avatar's Light copy into `hands-feet-source.json`. |
+| `check-hands-feet.mjs` | Checks the hands and feet: original exact, triangles kept, pivots fixed, sizes as stated, no cracks, options distinct. |
 | `check-torso.mjs` | Checks the torso and every option: sealed, faces outward, no dents or grooves (with a test of that test), same height, left/right symmetric, distinct from each other, under 6,000 triangles. |
 
 Commands: `node avatar-v2/fit-torso.mjs` (rebuild the torso, same result every

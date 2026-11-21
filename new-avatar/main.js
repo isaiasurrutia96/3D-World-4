@@ -1,4 +1,6 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
+//  - Hands & feet: the owner's original hand and foot and four gentle variations
+//    (avatar-v2/hands-feet.js);
 //  - Assembly: the chosen parts put together (avatar-v2/assembly.js), boy and
 //    girl, with the shoulder and hip balls at the joints or resting on the
 //    torso; the chosen base face is pressed onto the head (DecalGeometry);
@@ -15,6 +17,7 @@ import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '.
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
 import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,BODIES} from '../avatar-v2/assembly.js';
+import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
 const GAP=.3;// metres of space between items, left to right
@@ -74,6 +77,9 @@ const LATER_GROUPS=[// kept in code, not shown (owner: show only the shoulder fo
  {id:'legs',label:'Legs',intro:'The chosen Strong legs (boy) and the girl\'s version, 8% slimmer.',
   items:[legItem(CHOSEN_LEG,'leg-boy','Leg · Boy','Boy'),legItem(GIRL_LEG,'leg-girl','Leg · Girl','Girl')]},
 ];
+GROUPS.push({id:'handsfeet',label:'Hands & feet',intro:'Your original hand and foot (option 1) and four gentle variations of them. Each keeps every finger and toe detail; the wrist and ankle stay put. Tap one to look closely.',
+ items:HAND_FOOT_OPTIONS.map((option,i)=>{const r=buildHandFoot(option);
+  return {id:option.id,label:option.label,tag:String(i+1),note:option.note,parts:[{name:'hand',geometry:geometryOf(r.hand),y:0},{name:'foot',geometry:geometryOf(r.foot),y:0}]};})});
 const preview=shoulderPreview('boy');
 GROUPS.push({id:'shoulder',label:'Shoulders',intro:'The boy\'s torso with a shoulder ball and the upper arm on both sides (arms 10% thicker for the boy). The balls are separated from the torso by a clear gap, never touching it.',
  items:[{id:'shoulder-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Shoulder balls ${(preview.shoulderBall*200).toFixed(1)} cm wide, the size of a shoulder (5% bigger than the upper arm's thickest point), separated from the torso by a 2 cm gap. Upper arms 10% thicker than approved, same shape and the approved length (${(preview.upper.length*100).toFixed(1)} cm).`,
