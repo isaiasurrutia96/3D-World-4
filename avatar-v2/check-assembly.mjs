@@ -5,7 +5,7 @@
 // Usage: node avatar-v2/check-assembly.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
 import {assemble,insideTorso,shoulderPreview,thickestRadius,SHOULDER_TO_ARM,SHOULDER_TORSO_GAP,BODIES,PLACEMENTS} from './assembly.js';
-import {buildLimbShape,CHOSEN_ARM,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
+import {buildLimbShape,CHOSEN_ARM,BOY_ARM,GIRL_ARM,BOY_ARM_THICKER,APPROVED_ARM_LENGTHS,girlVersion,limbRadius,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 import {CHOSEN_FACE,faceShapes} from './face.js';
 
@@ -87,19 +87,22 @@ check('placements: "resting" widens the shoulders and lowers the hips; "joints" 
   out.push(`${b}: shoulders +${((r.joints.shoulder[0]-j.joints.shoulder[0])*100).toFixed(1)} cm each side, hips ${((j.joints.hip[1]-r.joints.hip[1])*100).toFixed(1)} cm lower`);}
  return out.join('; ');
 });
-check('shoulder preview: the approved upper arm is EXACTLY unchanged (same shape settings, same 24.5 cm length, same surface)',()=>{
- const p=shoulderPreview('boy'),approved=buildLimbShape(CHOSEN_ARM.upper,pairSizes(CHOSEN_ARM,ARM_PAIR).upper);
- assert(Math.abs(p.upper.length-pairSizes(CHOSEN_ARM,ARM_PAIR).upper)<1e-12,'length changed');
- assert.equal(p.upper.positions.length,approved.positions.length);assert.deepEqual(p.upper.index,approved.index);
- // Same surface: every distance between points matches the approved limb (only moved and turned, never reshaped).
+check('boy\'s arm: the approved arm made exactly 10% thicker, same shape; the girl\'s arm still comes from the approved arm',()=>{
+ let worst=0;for(const key of ['upper','fore'])for(let k=0;k<=50;k++)for(let a=0;a<36;a++){const t=k/50,ang=a/36*Math.PI*2;worst=Math.max(worst,Math.abs(limbRadius(BOY_ARM[key],t,ang)-BOY_ARM_THICKER*limbRadius(CHOSEN_ARM[key],t,ang)));}
+ assert(worst<1e-12,'not exactly 10% thicker');assert.equal(BOY_ARM_THICKER,1.1);assert.deepEqual(GIRL_ARM,girlVersion(CHOSEN_ARM,ARM_PAIR));
+ return 'boy ×1.10 everywhere; girl unchanged';
+});
+check('shoulder preview: the boy\'s upper arm keeps the approved length (24.5 cm) and is the thicker arm, only moved and turned',()=>{
+ const p=shoulderPreview('boy'),own=buildLimbShape(BOY_ARM.upper,APPROVED_ARM_LENGTHS.upper);
+ assert(Math.abs(p.upper.length-APPROVED_ARM_LENGTHS.upper)<1e-12,'length changed');assert(Math.abs(APPROVED_ARM_LENGTHS.upper-pairSizes(CHOSEN_ARM,ARM_PAIR).upper)<1e-12);
+ assert.deepEqual(p.upper.index,own.index);
  const P=(arr,i)=>arr.slice(3*i,3*i+3);let worst=0;
- for(let i=0;i<approved.positions.length/3;i+=7)for(let j=i+3;j<approved.positions.length/3;j+=11)worst=Math.max(worst,Math.abs(dist(P(p.upper.positions,i),P(p.upper.positions,j))-dist(P(approved.positions,i),P(approved.positions,j))));
- assert(worst<1e-9,'reshaped by '+worst);
- return `24.5 cm, ${approved.index.length/3} triangles, shape identical (largest difference ${worst.toExponential(0)} m)`;
+ for(let i=0;i<own.positions.length/3;i+=7)for(let j=i+3;j<own.positions.length/3;j+=11)worst=Math.max(worst,Math.abs(dist(P(p.upper.positions,i),P(p.upper.positions,j))-dist(P(own.positions,i),P(own.positions,j))));
+ assert(worst<1e-9,'reshaped by '+worst);return `${(p.upper.length*100).toFixed(1)} cm, shape identical to the boy's arm`;
 });
 check('shoulder preview: both sides; shoulder balls the size of a shoulder (5% bigger than the upper arm\'s thickest point)',()=>{
  const p=shoulderPreview('boy');assert.deepEqual(p.parts.map(x=>x.name+'.'+x.side),['torso.centre','ball-shoulder.left','ball-shoulder.right','upper-arm.left','upper-arm.right']);
- const arm=thickestRadius(CHOSEN_ARM.upper);assert(Math.abs(p.shoulderBall-SHOULDER_TO_ARM*arm)<1e-12);assert(p.shoulderBall>arm,'not bigger than the arm');
+ const arm=thickestRadius(BOY_ARM.upper);assert(Math.abs(p.shoulderBall-SHOULDER_TO_ARM*arm)<1e-12);assert(p.shoulderBall>arm,'not bigger than the arm');
  return `ball ${(p.shoulderBall*200).toFixed(1)} cm wide; upper arm at its thickest ${(arm*200).toFixed(1)} cm`;
 });
 check(`shoulder preview: the shoulder balls are separated from the torso by a visible gap (${SHOULDER_TORSO_GAP*100} cm), never touching it`,()=>{

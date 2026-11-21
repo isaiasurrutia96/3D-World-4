@@ -125,10 +125,15 @@ export const buildArmSet=option=>buildPair(option,ARM_PAIR);
 export const legSizes=option=>pairSizes(option,LEG_PAIR);
 export const buildLegSet=option=>buildPair(option,LEG_PAIR);
 
+/** A limb made thicker or thinner by `factor`: same shape and length, every radius and muscle scaled. */
+export function scaleLimb(limb,factor){
+ if(!(factor>0&&factor<=2))throw Error('factor must be between 0 and 2');
+ return {...limb,profile:limb.profile.map(([t,r])=>[t,r*factor]),...(limb.bumps?{bumps:limb.bumps.map(b=>({...b,amount:b.amount*factor}))}:{})};
+}
 /** A limb made thinner by `share` (0..1): same shape and length, every radius and muscle scaled. */
 export function slimmerLimb(limb,share){
  if(!(share>0&&share<=1))throw Error('share must be between 0 and 1');
- return {...limb,profile:limb.profile.map(([t,r])=>[t,r*share]),...(limb.bumps?{bumps:limb.bumps.map(b=>({...b,amount:b.amount*share}))}:{})};
+ return scaleLimb(limb,share);
 }
 /** The girl's version of a limb option: both limbs slimmer by GIRL_LIMB_SHARE. */
 export function girlVersion(option,pair,share=GIRL_LIMB_SHARE){
@@ -140,6 +145,16 @@ export function girlVersion(option,pair,share=GIRL_LIMB_SHARE){
 /** Chosen by the owner (21 November 2026): option 2, Athletic. */
 export const CHOSEN_ARM=ARM_OPTIONS.find(o=>o.id==='athletic');
 export const GIRL_ARM=girlVersion(CHOSEN_ARM,ARM_PAIR);
+/**
+ * The boy's arm (owner, 21 November 2026): the approved Athletic arm made 10%
+ * thicker ("slightly bigger so he doesn't look athletic with skinny arms"),
+ * same shape; lengths stay as approved. Only the boy: the girl's arm is still
+ * made from the approved arm.
+ */
+export const BOY_ARM_THICKER=1.1;
+export const BOY_ARM={...CHOSEN_ARM,id:'athletic-boy',label:'Athletic (boy, 10% thicker)',upper:scaleLimb(CHOSEN_ARM.upper,BOY_ARM_THICKER),fore:scaleLimb(CHOSEN_ARM.fore,BOY_ARM_THICKER)};
+/** The approved limb lengths, kept fixed whatever the thickness (tip to tip, metres). */
+export const APPROVED_ARM_LENGTHS={upper:pairSizes(CHOSEN_ARM,ARM_PAIR).upper,fore:pairSizes(CHOSEN_ARM,ARM_PAIR).fore};
 
 /**
  * Leg options (thigh and calf), 21 November 2026. Same five ideas as the arms.

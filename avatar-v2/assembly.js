@@ -17,7 +17,7 @@
 //    skeleton's joints would move with them.
 // The right side is the exact mirror of the left. All output is in avatar space.
 import {Quaternion,Vector3} from 'three';
-import {buildLimbShape,limbRadius,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,HIP,KNEE,ANKLE} from './limb-options.js';
+import {buildLimbShape,limbRadius,thinnestAt,pairSizes,ARM_PAIR,LEG_PAIR,BALL_GAP,BALL_TO_LIMB,CHOSEN_ARM,GIRL_ARM,BOY_ARM,APPROVED_ARM_LENGTHS,CHOSEN_LEG,GIRL_LEG,HIP,KNEE,ANKLE} from './limb-options.js';
 import {SHOULDER,ELBOW,WRIST} from './arm.js';
 import {buildBall,CHOSEN_BALL_TRIANGLES} from './ball-shape.js';
 import {makeTorsoOption,ringAt,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,WOMEN_OPTIONS} from './torso-variants.js';
@@ -28,7 +28,7 @@ import {CHOSEN_FACE} from './face.js';
 import torsoBase from './torso.json' with {type:'json'};
 
 export const BODIES={
- boy:{label:'Boy',torso:CHOSEN_TORSO,torsoList:undefined,arm:CHOSEN_ARM,leg:CHOSEN_LEG},
+ boy:{label:'Boy',torso:CHOSEN_TORSO,torsoList:undefined,arm:BOY_ARM,leg:CHOSEN_LEG},
  girl:{label:'Girl',torso:CHOSEN_GIRL_TORSO,torsoList:WOMEN_OPTIONS,arm:GIRL_ARM,leg:GIRL_LEG},
 };
 export const PLACEMENTS=['joints','resting'];
@@ -141,7 +141,8 @@ export const SHOULDER_TORSO_GAP=.02;
 
 /**
  * Owner's request (21 November 2026): the boy's torso with a shoulder ball and
- * the approved upper arm on BOTH sides. The ball must never sit inside the
+ * the upper arm on BOTH sides (the boy's: the approved arm 10% thicker, same
+ * shape, approved length). The ball must never sit inside the
  * torso: it starts at the skeleton's shoulder joint and moves straight out
  * sideways until it is separated from the torso by SHOULDER_TORSO_GAP (2 cm). The upper arm is EXACTLY as
  * approved (same shape, same 24.5 cm length) and hangs one gap below the ball,
@@ -150,7 +151,7 @@ export const SHOULDER_TORSO_GAP=.02;
  */
 export function shoulderPreview(bodyId='boy'){
  const body=BODIES[bodyId],torsoShape=makeTorsoOption(torsoBase.shape,body.torso,body.torsoList);
- const arm=body.arm,rS=SHOULDER_TO_ARM*thickestRadius(arm.upper),approvedLength=pairSizes(arm,ARM_PAIR).upper;
+ const arm=body.arm,rS=SHOULDER_TO_ARM*thickestRadius(arm.upper),approvedLength=APPROVED_ARM_LENGTHS.upper;// length stays as approved
  const S=pushClear(torsoShape,[...SHOULDER],rS,[1,0,0],SHOULDER_TORSO_GAP),dir=unit(sub(ELBOW,SHOULDER)),top=add(S,scale(dir,rS+BALL_GAP));
  const ball={name:'ball-shoulder',side:'left',...ballAt(rS,S)};
  const upper={name:'upper-arm',side:'left',...place(buildLimbShape(arm.upper,approvedLength),top,dir),length:approvedLength,top,direction:dir};
