@@ -26,7 +26,7 @@ import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
-import {separatedOriginalBody} from '../avatar-v2/original-body.js';
+import {separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS} from '../avatar-v2/original-body.js';
 import {elbowTest,ELBOW_TEST_POSES,CLOSER_DEPTHS,CLAY_LIP} from '../avatar-v2/elbow-test.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
@@ -92,6 +92,10 @@ const full=fullBodyPreview('boy');
 GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate: every arm and leg piece 15% bigger (hands then 10% smaller), feet 3 inches longer than the head; torso, neck and head unchanged.',
  items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+const together=pressedPreviewBody('boy');
+GROUPS.push({id:'together',label:'Put together',intro:`A preview of how he looks put together, using exactly his own pieces: every ball pressed ${Math.round(PREVIEW_PRESS*100)}% of its radius into the limbs, hands, feet and head (25% into the torso, the neck ball where it was approved). No sockets carved yet; where a ball sits inside a limb it is simply hidden, which is how it will look.`,
+ items:[{id:'together-boy',label:'Boy · put together',tag:'Boy',face:together.face,ground:true,note:`Exactly his pieces, pressed together. ${(together.height*100).toFixed(0)} cm tall.`,
+  parts:together.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const elbowItems=[];
 for(const share of CLOSER_DEPTHS){const e=elbowTest(share,'boy',{lip:CLAY_LIP}),name=`${Math.round(share*100)}% deep`;
  for(const deg of ELBOW_TEST_POSES)elbowItems.push({id:`elbow-${Math.round(share*100)}-${deg}`,label:`${name} · ${deg?deg+'°':'straight'}`,tag:`${Math.round(share*100)}% ${deg}°`,
@@ -143,6 +147,7 @@ GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='shoulder-sockets'),1
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='avatar'),1));
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='original'),1));
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='elbow-test'),1));
+GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='together'),1));
 
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
 let widest=0;

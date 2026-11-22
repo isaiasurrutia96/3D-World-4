@@ -197,7 +197,19 @@ export const BALL_SIZE={shoulder:1.1,neck:1.1,wrist:.9,ankle:.9};
  * piece only moved (not turned or reshaped); each leg then moves outward just
  * enough that the feet do not meet. The right side mirrors the left.
  */
-export function separatedOriginalBody(bodyId='boy'){
+/**
+ * A preview of the avatar put together (owner, 22 November 2026: "see how it would look put together", exactly
+ * our shapes): the same pieces and balls, only pressed closer. Each ball sinks `press` of its radius into the
+ * limbs, hands, feet and head it joins, and TORSO_PRESS into the torso (the approved shoulder sockets' 25%); the
+ * neck ball sits where it was approved, half in the torso. No sockets are carved: where a piece overlaps a ball
+ * the ball is simply hidden inside it, which is how it will look once the sockets are made.
+ */
+export const PREVIEW_PRESS=.8,TORSO_PRESS=.25;
+export function pressedPreviewBody(bodyId='boy',press=PREVIEW_PRESS){return separatedOriginalBody(bodyId,{press});}
+
+export function separatedOriginalBody(bodyId='boy',{press=0}={}){
+ // How far a piece's near end sits from its ball's centre: one gap past the ball when apart; inside it when pressed.
+ const offset=r=>press?r*(1-press):r+BALL_GAP;
  const whole=originalLimbBody(bodyId),get=(n,s='left')=>whole.parts.find(p=>p.name===n&&p.side===s),torsoShape=whole.torsoShape;
  const parts=[get('torso','centre')],balls={};
  const lineOf=p=>limbLine(p.positions);
@@ -210,16 +222,16 @@ export function separatedOriginalBody(bodyId='boy'){
    const piece=pieces[k];
    if(k<pieces.length-1){
     // A limb: moved (not turned) so its centre line runs through the ball's centre and its near end is one gap past the ball.
-    const L=lineOf(piece),dir=L.dir,nearEnd=add3(L.centre,scale3(dir,L.start)),moved=moveBy(piece,sub3(add3(ballCentre,scale3(dir,radius+BALL_GAP)),nearEnd));
+    const L=lineOf(piece),dir=L.dir,nearEnd=add3(L.centre,scale3(dir,L.start)),moved=moveBy(piece,sub3(add3(ballCentre,scale3(dir,offset(radius))),nearEnd));
     out.push(moved);
     // Next ball: on this limb's centre line, one gap past its far end, as thick as the joint's ends.
     const M=lineOf(moved),r=ends[k+1](moved,M,pieces[k+1]);
-    ballCentre=add3(M.centre,scale3(dir,M.end+BALL_GAP+r));radius=r;out.push(ballPart(names[k+1],'left',r,ballCentre));
+    ballCentre=add3(M.centre,scale3(dir,M.end+offset(r)));radius=r;out.push(ballPart(names[k+1],'left',r,ballCentre));
    }else{
     // The hand or foot: its joint point (wrist or ankle) moved onto the limb's centre line through the ball, then along
     // that line until its nearest point is one gap past the ball.
     const dir=lineOf(pieces[k-1]).dir,off=sub3(piece.pivot,ballCentre),along=dot3(off,dir),onLine=moveBy(piece,neg(sub3(off,scale3(dir,along))));
-    const back=reach(onLine.positions,ballCentre,neg(dir));out.push(moveBy(onLine,scale3(dir,back+radius+BALL_GAP)));
+    const back=reach(onLine.positions,ballCentre,neg(dir));out.push(moveBy(onLine,scale3(dir,back+offset(radius))));
    }
   }
   return out;
@@ -227,18 +239,20 @@ export function separatedOriginalBody(bodyId='boy'){
  const thinner=(a,b)=>Math.min(a,b);
  // Arm: shoulder ball as thick as the upper arm's top, pushed straight out until 2 cm clear of the torso.
  const upper=get('upper-arm'),fore=get('forearm'),hand=get('hand');
- const rS=BALL_SIZE.shoulder*endRadius(upper.positions,lineOf(upper),'top'),S=clearOfTorso(torsoShape,[...SHOULDER],rS,[1,0,0],SHOULDER_TORSO_GAP);
+ // Pressed: from 2 cm clear, back in until the ball sinks TORSO_PRESS of its radius past the torso's surface.
+ const intoTorso=(c,r,dir)=>press?c.map((v,k)=>v-dir[k]*(SHOULDER_TORSO_GAP+TORSO_PRESS*r)):c;
+ const rS=BALL_SIZE.shoulder*endRadius(upper.positions,lineOf(upper),'top'),S=intoTorso(clearOfTorso(torsoShape,[...SHOULDER],rS,[1,0,0],SHOULDER_TORSO_GAP),rS,[1,0,0]);
  const arm=chain({centre:S,radius:rS},[upper,fore,hand],[null,(m,L,next)=>thinner(endRadius(m.positions,L,'bottom'),endRadius(next.positions,lineOf(next),'top')),(m,L)=>BALL_SIZE.wrist*endRadius(m.positions,L,'bottom')],['ball-shoulder','ball-elbow','ball-wrist']);
  // Leg: hip ball as thick as the thigh's top, pushed straight down until 2 cm clear of the torso.
  const thigh=get('thigh'),calf=get('calf'),foot=get('foot');
- const rH=endRadius(thigh.positions,lineOf(thigh),'top'),H=clearOfTorso(torsoShape,[...HIP],rH,[0,-1,0],SHOULDER_TORSO_GAP);
+ const rH=endRadius(thigh.positions,lineOf(thigh),'top'),H=intoTorso(clearOfTorso(torsoShape,[...HIP],rH,[0,-1,0],SHOULDER_TORSO_GAP),rH,[0,-1,0]);
  const leg=chain({centre:H,radius:rH},[thigh,calf,foot],[null,(m,L,next)=>thinner(endRadius(m.positions,L,'bottom'),endRadius(next.positions,lineOf(next),'top')),(m,L)=>BALL_SIZE.ankle*endRadius(m.positions,L,'bottom')],['ball-hip','ball-knee','ball-ankle']);
  // The feet would meet in the middle: each whole leg moves straight outward just enough to leave the usual gap between them.
  const footNow=leg.at(-1);let inner=Infinity;for(let i=0;i<footNow.positions.length;i+=3)inner=Math.min(inner,footNow.positions[i]);
  const legOut=Math.max(0,BALL_GAP/2-inner);for(let k=0;k<leg.length;k++)leg[k]=moveBy(leg[k],[legOut,0,0]);
  // Neck: the approved neck ball's size, straight up until 2 cm clear of the torso's top; the head one gap above it.
- const neckOption=buildHeadSet(CHOSEN_NECK,torsoShape),rN=BALL_SIZE.neck*neckOption.ball.radius,N=clearOfTorso(torsoShape,[0,neckOption.ball.y,0],rN,[0,1,0],SHOULDER_TORSO_GAP);
- const head=get('head','centre'),headLow=-reach(head.positions,N,[0,-1,0]),headUp=rN+BALL_GAP-headLow;
+ const neckOption=buildHeadSet(CHOSEN_NECK,torsoShape),rN=BALL_SIZE.neck*neckOption.ball.radius,N=press?[0,neckOption.ball.y,0]:clearOfTorso(torsoShape,[0,neckOption.ball.y,0],rN,[0,1,0],SHOULDER_TORSO_GAP);
+ const head=get('head','centre'),headLow=-reach(head.positions,N,[0,-1,0]),headUp=offset(rN)-headLow;
  parts.push(ballPart('ball-neck','centre',rN,N),moveBy(head,[0,headUp,0]));
  for(const p of [...arm,...leg]){parts.push(p);parts.push({...mirrored(p),name:p.name,side:'right',...(p.centre?{centre:[-p.centre[0],p.centre[1],p.centre[2]]}:{})});}
  for(const p of parts)if(p.radius&&p.name.startsWith('ball-')&&p.side!=='right')balls[p.name]=p;
