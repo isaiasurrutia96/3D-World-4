@@ -10,26 +10,28 @@
   nav.views{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:13px;background:#ffffffdc}nav.views button{border:0;border-radius:9px;background:transparent;padding:0 12px;min-height:40px;font-size:12px}nav.views button[aria-pressed=true]{background:#dfdfd7}
   aside{padding:20px;overflow:auto;background:#fafaf6;border-left:1px solid #dddcd5}aside h2{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:#81867b;margin:0 0 10px}
   aside section{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:18px}aside button{min-height:42px;border:1px solid #dddfd5;border-radius:10px;background:#f0f1e9;font-size:12px}aside button[aria-pressed=true]{background:#525f4a;color:#fff;border-color:#525f4a}
-  aside p{font-size:11px;color:#7a7f75;line-height:1.5;margin:0 0 6px}
+  .swap{margin-bottom:12px}.swap p{margin:0 0 5px;font-weight:600;color:#525a50}.swap div{display:grid;grid-template-columns:1fr 1fr;gap:6px}aside p{font-size:11px;color:#7a7f75;line-height:1.5;margin:0 0 6px}
   #loading{position:fixed;inset:0;display:grid;place-items:center;background:#405363;color:#e8eef2;font-size:13px;z-index:5}[hidden]{display:none!important}
   @media(max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:64px minmax(0,1fr) auto}aside{border-left:0;border-top:1px solid #dddcd5;max-height:38vh}}
  </style>
 </head>
 <body>
  <main class="app">
-  <header><div><h1>Karts</h1><p class="sub">Chunk 1 · GoKart chassis and part places</p></div></header>
+  <header><div><h1>Karts</h1><p class="sub">Part places measured from the approved designs</p></div></header>
   <section id="stage" aria-label="Karts">
    <nav class="views" aria-label="Views"><button data-view="front">Front</button><button data-view="side">Side</button><button data-view="back">Back</button><button data-view="top">Top</button><button data-view="angled">Angled</button></nav>
   </section>
   <aside>
+   <h2>Kart</h2>
+   <section id="karts"></section>
    <h2>Look at</h2>
-   <section><button data-focus="both">Both karts</button><button data-focus="new">New GoKart</button><button data-focus="main">Main kart</button></section>
+   <section><button data-focus="both">Both karts</button><button data-focus="new">New kart</button><button data-focus="main">Main kart</button></section>
    <h2>Show</h2>
-   <section><button id="toggle-outlines" aria-pressed="true">Part boxes</button><button id="toggle-labels" aria-pressed="true">Labels</button></section>
-   <h2>Body parts (teal)</h2>
-   <section id="built-parts"></section>
-   <h2>Optional parts (amber)</h2>
-   <section id="optional-parts"></section>
+   <section><button id="toggle-outlines" aria-pressed="true">Part boxes</button><button id="toggle-labels" aria-pressed="true">Labels</button><button id="toggle-driver" aria-pressed="true">Driver zone</button></section>
+   <h2>Swap styles</h2>
+   <div id="swaps"></div>
+   <h2>Parts</h2>
+   <section id="parts"></section>
    <h2>About</h2>
    <p id="note"></p>
    <p id="info"></p>

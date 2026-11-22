@@ -1,4 +1,4 @@
-// Browser checks for the Karts section (chunk 1). Build first (npm run build:karts
+// Browser checks for the Karts section. Build first (npm run build:karts
 // and the Vite build), then run: node kart-parts/browser.mjs
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
@@ -24,15 +24,28 @@ try {
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(`${base}/karts/`); await page.waitForFunction(() => window.kartLabReady, undefined, {timeout: 60000});
     const state = await page.evaluate(() => ({
-      chassis: !!kartLab.chassis.getObjectByName('steering_wheel'),
-      wheels: kartLab.chassis.getObjectByName('wheels').children.length,
-      outlines: kartLab.outlines.children.length,
+      chassis: !!kartLab.base.getObjectByName('steering_wheel'),
+      wheels: kartLab.base.getObjectByName('wheels').children.length,
+      allFit: kartLab.outlines.children.every(b => b.userData.fits),
+      driverZone: kartLab.zone.children.length,
       main: !!kartLab.mainKart.getObjectByName('front_axle_left_wheel'),
       overflow: document.documentElement.scrollWidth > innerWidth,
     }));
-    assert.deepEqual(state, {chassis: true, wheels: 4, outlines: 16, main: true, overflow: false}, JSON.stringify(viewport));
+    assert.deepEqual(state, {chassis: true, wheels: 4, allFit: true, driverZone: 3, main: true, overflow: false}, JSON.stringify(viewport));
+    // Each kart loads with its own wheels, part boxes and driver zone, all fitting.
+    for (const name of ['GT GoKart', 'F1 GoKart', 'GoKart']) {
+      await page.getByRole('button', {name, exact: true}).click();
+      const k = await page.evaluate(() => ({label: kartLab.kart.label, wheels: kartLab.base.getObjectByName('wheels')?.children.length ?? kartLab.base.children.length, fit: kartLab.outlines.children.every(b => b.userData.fits), boxes: kartLab.outlines.children.length}));
+      assert.equal(k.label, name); assert.equal(k.wheels, 4); assert.ok(k.fit && k.boxes > 10, JSON.stringify(k));
+    }
+    // Swapping a wing style snaps the new wing onto the same mount.
+    const before = await page.evaluate(() => kartLab.outlines.getObjectByName('slot:wing').position.toArray());
+    await page.getByRole('button', {name: 'Tall extended wing'}).click();
+    const after = await page.evaluate(() => ({at: kartLab.outlines.getObjectByName('slot:wing').position.toArray(), style: kartLab.choices.wing}));
+    assert.equal(after.style, 'tall-wing'); assert.ok(after.at[2] < before[2] && after.at[1] > before[1], 'extended wing sits further back and higher');
+    assert.equal(await page.getByRole('button', {name: 'Tall extended wing'}).getAttribute('aria-pressed'), 'true');
     // Focus buttons hide the other kart; part buttons highlight; toggles work.
-    await page.getByRole('button', {name: 'New GoKart'}).click();
+    await page.getByRole('button', {name: 'New kart'}).click();
     assert.deepEqual(await page.evaluate(() => [kartLab.newKart.visible, kartLab.mainKart.visible]), [true, false]);
     await page.getByRole('button', {name: 'Main kart'}).click();
     assert.deepEqual(await page.evaluate(() => [kartLab.newKart.visible, kartLab.mainKart.visible]), [false, true]);
@@ -42,6 +55,8 @@ try {
     assert.match(await page.locator('#note').textContent(), /^Fenders:/);
     await page.getByRole('button', {name: 'Part boxes'}).click();
     assert.equal(await page.evaluate(() => kartLab.outlines.visible), false);
+    await page.getByRole('button', {name: 'Driver zone'}).click();
+    assert.equal(await page.evaluate(() => kartLab.zone.visible), false);
     for (const name of ['Front', 'Side', 'Back', 'Top', 'Angled']) {
       await page.getByRole('button', {name, exact: true}).click();
       assert.equal(await page.getByRole('button', {name, exact: true}).getAttribute('aria-pressed'), 'true');

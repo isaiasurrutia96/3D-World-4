@@ -1,8 +1,8 @@
-// Builds a kart's chassis (real geometry) and see-through outlines for its body
-// parts, from the data in spec.js. Looks only: nothing here drives the kart.
+// Builds a kart's chassis (real geometry), its wheels, see-through boxes for its
+// body parts and the driver zone, from the data in spec.js. Looks only: nothing here drives the kart.
 // Every mesh is named after its part so tests and later chunks can find it.
 import * as T from 'three';
-import {resolveKart, SLOTS} from './spec.js';
+import {SLOTS, STOCK, wheelsOf, layoutKart, driverZones} from './spec.js';
 
 const UP = new T.Vector3(0, 1, 0);
 const COLORS = {frame:'#9aa3ad', rubber:'#16191f', rim:'#c9d0d8', hub:'#3d4654', seat:'#22304a', seatTrim:'#5b6e8f', floor:'#2c333d'};
@@ -61,13 +61,20 @@ function seat(y, mats) {
   return g;
 }
 
+/** Four wheels on their own (for karts whose chassis is not built yet). */
+export function buildWheels(kart, setup = STOCK) {
+  const mats = makeMaterials(), group = new T.Group(); group.name = 'wheels';
+  for (const w of wheelsOf(kart, setup)) group.add(wheel(w.id, w, mats));
+  return group;
+}
+
 /** The real chassis: frame, floor, axles, wheels, seat and steering. */
-export function buildChassis(kart, setup = kart.upgrades) {
-  const mats = makeMaterials(), resolved = resolveKart(kart, setup), y = resolved.frameHeight;
+export function buildChassis(kart, setup = STOCK) {
+  const mats = makeMaterials(), wheels = wheelsOf(kart, setup), y = kart.frameHeight + (setup.rideHeight ?? 0);
   const root = new T.Group(); root.name = `${kart.id} chassis`;
   const frame = new T.Group(); frame.name = 'frame'; root.add(frame);
   loop(frame, [[-.62,y,-1.16],[.62,y,-1.16],[.66,y,.70],[.40,y,1.42],[-.40,y,1.42],[-.66,y,.70]], .032, mats.frame);
-  for (const z of [-.95, -.40, .25, .92]) { const half = z > .7 ? .58 : z < -1 ? .62 : .64; tube(frame, [-half,y,z], [half,y,z], .028, mats.frame); }
+  for (const z of [-.95, -.40, .25, .92]) { const half = z > .7 ? .58 : .64; tube(frame, [-half,y,z], [half,y,z], .028, mats.frame); }
   for (const side of [-1, 1]) {// raised side bars (nerf bars)
     tube(frame, [side*.62,y,-1.10], [side*.72,y+.15,-.86], .026, mats.frame);
     tube(frame, [side*.72,y+.15,-.86], [side*.72,y+.15,.34], .026, mats.frame);
@@ -76,14 +83,14 @@ export function buildChassis(kart, setup = kart.upgrades) {
   const floor = new T.Mesh(new T.BoxGeometry(1.12, .02, 1.9), mats.floor);
   floor.name = 'floor_tray'; floor.position.set(0, y - .02, .05); floor.receiveShadow = true; frame.add(floor);
   // Axles: a full rear axle, front stub axles. Raising the kart lengthens the uprights.
-  const wheels = new T.Group(); wheels.name = 'wheels'; root.add(wheels);
-  for (const w of resolved.wheels) {
-    wheels.add(wheel(w.id, w, mats));
-    const sign = Math.sign(w.at[0]), z = w.at[2], hubY = w.radius;
-    tube(frame, [sign*.62, y, z], [sign*(Math.abs(w.at[0]) - w.width*.45), hubY, z], .03, mats.frame, 'axle support');
+  const wheelGroup = new T.Group(); wheelGroup.name = 'wheels'; root.add(wheelGroup);
+  for (const w of wheels) {
+    wheelGroup.add(wheel(w.id, w, mats));
+    const sign = Math.sign(w.at[0]);
+    tube(frame, [sign*.62, y, w.at[2]], [sign*(Math.abs(w.at[0]) - w.width*.45), w.radius, w.at[2]], .03, mats.frame, 'axle support');
   }
-  const rearZ = kart.wheels.rearZ, rearX = Math.abs(resolved.wheels[2].at[0]) - kart.wheels.width*.4;
-  tube(frame, [-rearX, kart.wheels.radius, rearZ], [rearX, kart.wheels.radius, rearZ], .04, mats.frame, 'rear axle');
+  const rear = wheels.find(w => w.id === 'rear-right'), rearX = rear.at[0] - rear.width*.4;
+  tube(frame, [-rearX, rear.radius, rear.at[2]], [rearX, rear.radius, rear.at[2]], .04, mats.frame, 'rear axle');
   root.add(seat(y + .14, mats));
   // Steering: column, round wheel with three spokes, links to the front wheels.
   const steering = new T.Group(); steering.name = 'steering'; root.add(steering);
@@ -92,27 +99,43 @@ export function buildChassis(kart, setup = kart.upgrades) {
   const ring = new T.Mesh(new T.TorusGeometry(.2, .024, 8, 28), mats.rubber); ring.name = 'steering_wheel';
   ring.position.set(...top); ring.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), new T.Vector3(...top).sub(new T.Vector3(...base)).normalize()); steering.add(ring);
   for (let i = 0; i < 3; i++) { const a = Math.PI/2 + i*Math.PI*2/3; tube(ring, [0,0,0], [Math.cos(a)*.18, Math.sin(a)*.18, 0], .014, mats.rubber, 'steering spoke'); }
-  for (const w of resolved.wheels.slice(0, 2)) tube(steering, base, [Math.sign(w.at[0])*(Math.abs(w.at[0]) - w.width*.5), w.radius, w.at[2] - .06], .016, mats.frame, 'steering link');
-  root.userData = {kartId: kart.id, mode: kart.mode, resolved};
+  for (const w of wheels.filter(w => w.axle === 'front')) tube(steering, base, [Math.sign(w.at[0])*(Math.abs(w.at[0]) - w.width*.5), w.radius, w.at[2] - .06], .016, mats.frame, 'steering link');
+  root.userData = {kartId: kart.id, mode: kart.mode};
   return root;
 }
 
-/** See-through boxes showing where each body part will go. Built-in parts are
- *  teal; optional add-on places are amber. Each box is named `slot:<id>`. */
-export function buildOutlines(kart, setup = kart.upgrades) {
+const OUTLINE_COLORS = {design: '#5fe0d0', optional: '#ffbe4d', blocked: '#ff4d6d'};
+function outlineBox(name, centre, size, color, opacity = .16) {
+  const g = new T.Group(); g.name = name; g.position.set(...centre);
+  const geometry = new T.BoxGeometry(...size);
+  const fill = new T.Mesh(geometry, new T.MeshBasicMaterial({color, transparent: true, opacity, depthWrite: false}));
+  fill.name = 'outline fill'; g.add(fill);
+  const edges = new T.LineSegments(new T.EdgesGeometry(geometry), new T.LineBasicMaterial({color, transparent: true}));
+  edges.name = 'outline edges'; g.add(edges);
+  return g;
+}
+
+/** See-through boxes for the chosen part styles. Parts of the approved design
+ *  are teal, optional parts amber, and any part that does not fit is red.
+ *  Each box is named `slot:<part id>`. */
+export function buildOutlines(kart, choices, setup = STOCK) {
   const root = new T.Group(); root.name = `${kart.id} part outlines`;
-  const colors = {built: '#5fe0d0', optional: '#ffbe4d'};
-  for (const p of resolveKart(kart, setup).parts) {
-    const color = p.optional ? colors.optional : colors.built;
-    const g = new T.Group(); g.name = `slot:${p.id}`; g.position.set(...p.at);
-    g.userData = {slot: p.slot, optional: p.optional, label: SLOTS[p.slot].label};
-    const box = new T.BoxGeometry(...p.size);
-    const fill = new T.Mesh(box, new T.MeshBasicMaterial({color, transparent: true, opacity: .16, depthWrite: false}));
-    fill.name = 'outline fill'; g.add(fill);
-    const edges = new T.LineSegments(new T.EdgesGeometry(box), new T.LineBasicMaterial({color}));
-    edges.name = 'outline edges'; g.add(edges);
-    root.add(g);
+  for (const part of layoutKart(kart, choices, setup)) {
+    const color = part.problems.length ? OUTLINE_COLORS.blocked : part.optional ? OUTLINE_COLORS.optional : OUTLINE_COLORS.design;
+    for (const b of part.boxes) {
+      const g = outlineBox(`slot:${b.id}`, b.centre, b.size, color);
+      g.userData = {slot: part.slot, style: part.style, optional: part.optional, fits: !part.problems.length, label: SLOTS[part.slot].label};
+      root.add(g);
+    }
   }
+  return root;
+}
+
+/** The driver zone: red see-through boxes where no part may go. */
+export function buildDriverZone(kart, setup = STOCK) {
+  const root = new T.Group(); root.name = 'driver zone';
+  for (const [name, z] of Object.entries(driverZones(kart, setup)))
+    root.add(outlineBox(`driver:${name}`, z.min.map((m, i) => (m + z.max[i])/2), z.min.map((m, i) => z.max[i] - m), '#ff5d73', .10));
   return root;
 }
 

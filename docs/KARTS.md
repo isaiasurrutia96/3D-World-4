@@ -79,3 +79,10 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
    system (`kart-parts/`) and the GoKart's real chassis with see-through boxes
    where its body parts go, in the Test Lab section "Karts" beside the
    unchanged main kart. Next chunk: the GoKart body, after the owner's Go.
+2. (21 November) **Chunk 1b built, waiting for owner review:** the owner asked
+   how parts really snap on. Part places are now measured from side and top
+   views of the three approved designs (`docs/karts/blueprints/`). Parts snap
+   onto mounts; every part comes in styles (several wings and bumpers), and a
+   longer wing snaps onto the same spot. A driver zone keeps every part away
+   from the driver's body and head; parts that do not fit are rejected. The
+   Test Lab shows all three karts and lets the owner swap styles.
