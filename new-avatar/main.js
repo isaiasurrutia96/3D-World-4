@@ -1,5 +1,5 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
-//  - Elbow sockets: upper arm, elbow ball and forearm pressed together, with room to fold (avatar-v2/sockets.js);
+//  - Avatar: the complete avatar, every joint pressed into snug sockets (avatar-v2/body-sockets.js);
 //  - Shoulder sockets: torso, shoulder balls and upper arms pressed together (avatar-v2/sockets.js);
 //  - Full body: every approved piece put together, still separate (avatar-v2/assembly.js);
 //  - Leg: thigh, knee ball, calf, ankle ball and the chosen foot, before and longer (avatar-v2/assembly.js);
@@ -22,7 +22,8 @@ import {CHOSEN_ARM,GIRL_ARM,CHOSEN_LEG,GIRL_LEG,buildArmSet,buildLegSet} from '.
 import {WOMEN_OPTIONS,CHOSEN_TORSO,CHOSEN_GIRL_TORSO,makeTorsoOption} from '../avatar-v2/torso-variants.js';
 import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
-import {shoulderSocketPreview,elbowSocketPreview} from '../avatar-v2/sockets.js';
+import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
+import {socketedBody} from '../avatar-v2/body-sockets.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
@@ -87,10 +88,10 @@ const full=fullBodyPreview('boy');
 GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate: every arm and leg piece 15% bigger (hands then 10% smaller), feet 3 inches longer than the head; torso, neck and head unchanged.',
  items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
-const elbows=elbowSocketPreview('boy');
-GROUPS.push({id:'elbow-sockets',label:'Elbow sockets',intro:'The arms so far, now with the elbow: each elbow ball sits snug in sockets in the upper arm and forearm. The elbow bends only forward, so the inner side of both limbs is pressed flat just enough to fold to the deepest bend without touching.',
- items:[{id:'elbow-sockets-boy',label:'Arms · shoulders and elbows',tag:'Boy',note:`Each elbow ball (${(elbows.ball.radius*200).toFixed(1)} cm) sinks ${(elbows.depth*100).toFixed(1)} cm into the upper arm and the forearm, with a 6 mm gap. The inner side of the elbow is shaped so the forearm folds forward to ${elbows.bend}° without touching the upper arm.`,
-  parts:elbows.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+const avatar=socketedBody('boy');
+GROUPS.push({id:'avatar',label:'Avatar',intro:'The complete avatar: every joint pressed together the same way as the shoulders. Each ball sits snug in a socket on both sides, with soft edges, and every joint bends through its range without parts touching.',
+ items:[{id:'avatar-boy',label:'Boy · complete',tag:'Boy',face:avatar.face,note:`All ${avatar.parts.length} pieces in snug sockets (6 mm gap). Elbows fold to 120° and knees to 120°; wrists, ankles and neck through their full ranges; hips swing forward cleanly to about 80°. He stands ${(avatar.height*100).toFixed(0)} cm tall.`,
+  parts:avatar.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const sockets=shoulderSocketPreview('boy');
 GROUPS.unshift({id:'shoulder-sockets',label:'Shoulder sockets',intro:'The torso, both shoulder balls and both upper arms pressed together like clay around a hard ball: each ball sits snug in a socket in the torso and in the top of the upper arm, with soft edges. Nothing else changed.',
  items:[{id:'shoulder-sockets-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Each ball (${(sockets.ball.radius*200).toFixed(1)} cm) sinks ${(sockets.torsoDepth*100).toFixed(1)} cm into the torso and ${(sockets.depth*100).toFixed(1)} cm into the upper arm, with a ${(sockets.gap*1000).toFixed(0)} mm gap all round, so they never touch. The balls moved ${(sockets.inward*100).toFixed(1)} cm in and the upper arms ${(sockets.armUp*100).toFixed(1)} cm up. Where the ball rises above the torso's shoulder, a thin layer of the torso wraps over it.`,
@@ -123,9 +124,9 @@ GROUPS.push({id:'shoulder',label:'Shoulders',intro:'The boy\'s torso with a shou
  items:[{id:'shoulder-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Shoulder balls ${(preview.shoulderBall*200).toFixed(1)} cm wide, the size of a shoulder (5% bigger than the upper arm's thickest point), separated from the torso by a 2 cm gap. Upper arms 10% thicker than approved, same shape and the approved length (${(preview.upper.length*100).toFixed(1)} cm).`,
   parts:preview.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 
-// The newest work opens first: the elbow sockets, then the shoulder sockets.
+// The newest work opens first: the complete avatar, then the shoulder sockets.
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='shoulder-sockets'),1));
-GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='elbow-sockets'),1));
+GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='avatar'),1));
 
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
 let widest=0;

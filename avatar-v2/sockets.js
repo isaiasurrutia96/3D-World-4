@@ -20,12 +20,18 @@ const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
 
 /**
  * Splits triangles near `centre` (within `reach`) until their edges there are at
- * most `maxEdge` long. If the part carries smooth surface directions
- * (`normals`, one per point), each new point gets the blend of its edge's two
- * ends, so the directions stay smooth across the old flat triangles.
+ * most `maxEdge` long. Each new point goes on the smooth curved surface the
+ * old points describe (the PN-triangle midpoint, from the surface directions
+ * at both ends of its edge), and gets the blend of their directions. If the
+ * part carries directions (`normals`) they are used and carried along.
  */
-export function refineNear({positions,index,normals},centre,reach,maxEdge,maxRounds=6){
- let P=[...positions],I=[...index];const N=normals?[...normals]:null;
+export function refineNear(part,centre,reach,maxEdge,maxRounds=6,where=null){
+ // `where(point)`: how much to refine at a point, 0 (not at all) to 1 (fully curved); by default a ball of
+ // radius `reach` around `centre`, fading over its last six triangle lengths (measured: three left 61° where two refined areas overlap on the thigh; nine sharpened the wrist; six keeps every socket under 43°).
+ const weight=where??(m=>{const f=Math.min(1,Math.max(0,(reach-dist(m,centre))/(6*maxEdge)));return f>0?f*f*(3-2*f):(dist(m,centre)<reach?1e-9:0);});
+ const {positions,index}=part;let P=[...positions],I=[...index];
+ // Smooth surface directions guide where new points go; carried if the part has them, else measured now.
+ const N=[...(part.normals??pointNormals(part))];
  const pt=i=>[P[3*i],P[3*i+1],P[3*i+2]];
  for(let round=0;round<maxRounds;round++){
   // 1. Edges to split: long edges whose middle is near the ball.
@@ -33,8 +39,16 @@ export function refineNear({positions,index,normals},centre,reach,maxEdge,maxRou
   for(let t=0;t<I.length;t+=3)for(let e=0;e<3;e++){
    const a=I[t+e],b=I[t+(e+1)%3],k=key(a,b);if(split.has(k))continue;
    const A=pt(a),B=pt(b),mid=[(A[0]+B[0])/2,(A[1]+B[1])/2,(A[2]+B[2])/2];
-   if(dist(A,B)>maxEdge&&dist(mid,centre)<reach){split.set(k,P.length/3);P.push(...mid);
-    if(N){const n=[0,1,2].map(j=>N[3*a+j]+N[3*b+j]),l=Math.hypot(...n)||1;N.push(n[0]/l,n[1]/l,n[2]/l);}}
+   const w=dist(A,B)>maxEdge?weight(mid):0;
+   if(w>0){
+    // PN-triangle midpoint: on the smooth curve through both ends that follows their surface directions,
+    // not on the old flat triangle (flat midpoints keep the old facets, which show as stripes when shaded).
+    const na=[N[3*a],N[3*a+1],N[3*a+2]],nb=[N[3*b],N[3*b+1],N[3*b+2]],ab=sub(B,A),wa=ab[0]*na[0]+ab[1]*na[1]+ab[2]*na[2],wb=-(ab[0]*nb[0]+ab[1]*nb[1]+ab[2]*nb[2]);
+    // The curve is faded toward the border of the refined area (the weight), where unsplit flat triangles take
+    // over: a full curve right at that border would stand proud of its flat neighbours and leave a kink.
+    const f=Math.min(1,w);
+    split.set(k,P.length/3);P.push(...mid.map((v,j)=>v-f*(wa*na[j]+wb*nb[j])/8));
+    const n=[0,1,2].map(j=>na[j]+nb[j]),l=Math.hypot(...n)||1;N.push(n[0]/l,n[1]/l,n[2]/l);}
   }
   if(!split.size)break;
   // 2. Each triangle is replaced according to how many of its edges were split (same winding).
@@ -53,7 +67,7 @@ export function refineNear({positions,index,normals},centre,reach,maxEdge,maxRou
   }
   I=out;
  }
- return N?{positions:P,index:I,normals:N}:{positions:P,index:I};
+ return part.normals?{positions:P,index:I,normals:N}:{positions:P,index:I};
 }
 
 /** Smooth surface direction at every point (average of the triangles around it). */
@@ -94,6 +108,38 @@ export function press(part,centre,R,soft,skin=0){
 }
 
 /**
+ * The stamp: a ball pressed straight down `axis` into a part, for a ball whose
+ * centre lies on the part's surface (the neck ball, approved half sunk into the
+ * torso's top). The radial press would push such a surface along itself and
+ * bunch it into a ring; the stamp moves every point only along `axis`, so no
+ * two points can land in the same place.
+ * The cup's profile, at distance rho from the stamp's line (depth measured
+ * along `axis` from the surface through the centre):
+ *  - the ball plus the gap, sqrt(R^2 - rho^2), out to where it meets
+ *  - a fillet: a circle of radius `fillet` touching both the cup and the
+ *    surface, so the rim turns smoothly (no corner) from the cup to the top;
+ *  - then 0: untouched.
+ * Each point's depth becomes the larger of its own and the profile's, blended
+ * over a narrow band (the sockets' smooth formula) so even a slightly curved
+ * top joins without a crease. Points never move back toward the ball.
+ */
+export function stamp(part,centre,axis,R,fillet,level=0){
+ // `level`: how deep (along axis) the part's surface sits around the ball; 0 for a ball centred on the surface.
+ const P=[...part.positions],hc=level+fillet,rc=Math.sqrt(Math.max(0,(R+fillet)**2-hc**2)),rt=rc*R/(R+fillet),band=fillet/3;
+ // The fillet circle sits inside the material: centre `fillet` below the surface level, R + fillet from the ball's centre,
+ // so it touches the surface at rho = rc and the cup at rho = rt (on the sphere).
+ const profile=rho=>rho<=rt?Math.sqrt(Math.max(0,R*R-rho*rho)):rho<rc?hc-Math.sqrt(Math.max(0,fillet*fillet-(rho-rc)**2)):level;
+ for(let i=0;i<P.length;i+=3){
+  const v=[P[i]-centre[0],P[i+1]-centre[1],P[i+2]-centre[2]],h=v[0]*axis[0]+v[1]*axis[1]+v[2]*axis[2];
+  const rho=Math.hypot(v[0]-axis[0]*h,v[1]-axis[1]*h,v[2]-axis[2]*h);if(rho>=rc+band)continue;
+  const D=profile(rho),x=(h-D)/band;if(x>=1)continue;
+  const to=x<=-1?D:D+band*(x+1)*(x+1)/4;
+  for(let k=0;k<3;k++)P[i+k]+=axis[k]*(to-h);
+ }
+ return {...part,positions:P};
+}
+
+/**
  * Refine, then press: one socket in one part. With a layer kept over the ball
  * (`skin`), the part's smooth surface directions from BEFORE any press are
  * computed once and carried along (also into later sockets in the same part),
@@ -125,7 +171,7 @@ export const SOCKET_SKIN=.25;
 /** How gradually the surface turns from 'facing the ball' to 'facing away' (half-width of the blend, in the cosine of the angle): wider spreads the lip's turn over more of the surface. */
 export const SOCKET_LIP=.25;
 
-const mirrorPart=p=>{const positions=p.positions.map((v,i)=>i%3===0?-v:v),index=[];
+export const mirrorPart=p=>{const positions=p.positions.map((v,i)=>i%3===0?-v:v),index=[];
  for(let i=0;i<p.index.length;i+=3)index.push(p.index[i],p.index[i+2],p.index[i+1]);
  return {...p,positions,index,side:'right',...(p.centre?{centre:[-p.centre[0],p.centre[1],p.centre[2]]}:{})};};
 
@@ -138,7 +184,13 @@ const mirrorPart=p=>{const positions=p.positions.map((v,i)=>i%3===0?-v:v),index=
  * the gap) as sockets with soft edges (the torso keeps a thin layer over the
  * top of the ball, where the ball rises above its shoulder corner). Nothing else changes. Right side = mirror.
  */
+const shoulderCache=new Map();
+/** Built once per body and reused (the page and the complete avatar both need it; treat the result as read-only). */
 export function shoulderSocketPreview(bodyId='boy'){
+ if(!shoulderCache.has(bodyId))shoulderCache.set(bodyId,buildShoulderSockets(bodyId));
+ return shoulderCache.get(bodyId);
+}
+function buildShoulderSockets(bodyId){
  const f=fullBodyPreview(bodyId),get=(n,s)=>f.parts.find(p=>p.name===n&&p.side===s);
  const torso0=get('torso','centre'),ball0=get('ball-shoulder','left'),arm0=get('upper-arm','left');
  const r=ball0.radius,depth=SOCKET_DEPTH*r,torsoDepth=TORSO_SOCKET_DEPTH*r,R=r+SOCKET_GAP,soft=softEdge(r);
@@ -197,13 +249,17 @@ export function closestBetween(A,B,cell=.03){
  * At the deepest bend both limbs' planes coincide and the gap is left between
  * them; at any smaller bend they are further apart. Points well behind the
  * plane do not move; points in front land on it (gap/2 back); a band of width
- * `soft` rounds the edge with the same smooth formula as the sockets. Points
- * are never pushed closer to the ball than R (the socket stays snug), and the
- * corner where the flat side meets the socket is rounded the same way.
+ * `soft` rounds the edge with the same smooth formula as the sockets. With
+ * ballR > 0, points are never pushed closer to the ball than R and the corner
+ * where the flat side meets an existing socket is rounded the same way; with
+ * ballR = 0 (shaping before the socket is pressed) the press does that.
+ * `width`: how far along the hinge line the moving part reaches from the
+ * pivot; beyond it (fading over `soft`) nothing is flattened, so a wide part
+ * like the torso only gives way where the limb actually swings.
  *   line: unit direction along the limb, from the joint toward the limb;
  *   fold: unit direction the joint folds toward, square to the hinge line.
  */
-export function flattenForBend(part,pivot,axis,line,fold,half,gap,soft,ballR){
+export function flattenForBend(part,pivot,axis,line,fold,half,gap,soft,ballR,width=Infinity){
  const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
  // The plane holds the hinge line and the limb's line turned `half` toward the fold side; n points out of the limb, toward the fold.
  const inPlane=line.map((v,k)=>v*Math.cos(half)+fold[k]*Math.sin(half)),n0=[axis[1]*inPlane[2]-axis[2]*inPlane[1],axis[2]*inPlane[0]-axis[0]*inPlane[2],axis[0]*inPlane[1]-axis[1]*inPlane[0]];
@@ -211,63 +267,17 @@ export function flattenForBend(part,pivot,axis,line,fold,half,gap,soft,ballR){
  for(let i=0;i<P.length;i+=3){
   const p=[P[i],P[i+1],P[i+2]],h=dot(sub(p,pivot),N),y=-(h-c)/soft;
   if(y>=1)continue;
-  const g=y<=-1?0:(y+1)*(y+1)/4,to=c-soft*g;let q=p.map((v,k)=>v+N[k]*(to-h));
+  // Only as wide as the moving part sweeps: full within `width` of the pivot along the hinge line, fading out over `soft`.
+  const side=Math.abs(dot(sub(p,pivot),axis)),fade=side<=width?1:side>=width+soft?0:(t=>1-t*t*(3-2*t))((side-width)/soft);if(!fade)continue;
+  const g=y<=-1?0:(y+1)*(y+1)/4,to=c-soft*g;let q=p.map((v,k)=>v+N[k]*(to-h)*fade);
   // Keep clear of the ball: where the flat side meets the socket, round the corner with the socket's
   // own smooth formula, faded in by how far the flattening moved this point (untouched cup stays exact).
   const w=FOLD_CORNER*soft,d=sub(q,pivot),l=Math.hypot(...d),x=(l-ballR)/w,moved=Math.min(1,Math.abs(to-h)/w);
-  if(x<1){const hard=Math.max(l,ballR),smooth=x<=-1?ballR:ballR+w*(x+1)*(x+1)/4,want=hard+(smooth-hard)*moved;q=pivot.map((v,k)=>v+d[k]/l*want);}
+  if(ballR>0&&x<1){const hard=Math.max(l,ballR),smooth=x<=-1?ballR:ballR+w*(x+1)*(x+1)/4,want=hard+(smooth-hard)*moved;q=pivot.map((v,k)=>v+d[k]/l*want);}
   for(let k=0;k<3;k++)P[i+k]=q[k];
  }
  return {...part,positions:P};
 }
 
-/** The elbow bends only forward, about the body's side-to-side axis (skeleton: lowerArm bends about x, up to 150°). */
-export const ELBOW_AXIS=[1,0,0],ELBOW_LIMIT=150;
-
-/**
- * The shoulder-socket arms continued down: the elbow ball and forearm (moved
- * with the upper arm), pressed together like the shoulder: the elbow ball moves
- * up the upper arm's line until it sinks SOCKET_DEPTH of its radius into the
- * upper arm's lower end, and the forearm moves up its own line until the ball
- * sinks the same into its top end. Then the inner (front) side of both is
- * pressed flat for the deepest bend `bend` (see flattenForBend), so the forearm
- * folds forward cleanly. Returns the parts and a bend test.
- */
-export function elbowSocketPreview(bodyId='boy',{bend=ELBOW_BEND}={}){
- const sh=shoulderSocketPreview(bodyId),f=sh.full,get=(n)=>f.parts.find(p=>p.name===n&&p.side==='left');
- const upper=sh.parts.find(p=>p.name==='upper-arm'&&p.side==='left'),ball0=get('ball-elbow'),fore0=get('forearm');
- const move=(pos,v)=>pos.map((x,i)=>x+v[i%3]),S=sh.armShift;
- const r=ball0.radius,depth=SOCKET_DEPTH*r,R=r+SOCKET_GAP,soft=softEdge(r);
- const dU=upper.direction,bottom=upper.top.map((v,k)=>v+dU[k]*upper.length),E=bottom.map((v,k)=>v+dU[k]*(r-depth));
- const dF=fore0.direction,foreTop=E.map((v,k)=>v+dF[k]*(r-depth)),foreShift=sub(foreTop,fore0.top);
- const ball={...ball0,positions:move(ball0.positions,sub(E,ball0.centre)),centre:E};
- // Front: the way the forearm folds (forward), square to each limb's line.
- const frontOf=d=>{const z=[0,0,1],t=d[2],v=[z[0]-d[0]*t,z[1]-d[1]*t,z[2]-d[2]*t],l=Math.hypot(...v);return v.map(x=>x/l);};
- const foreMoved={positions:move(fore0.positions,foreShift),index:fore0.index};
- let upperArm=makeSocket({positions:upper.positions,index:upper.index},E,R,soft,SOCKET_EDGE),forearm=makeSocket(foreMoved,E,R,soft,SOCKET_EDGE);
- // Room to fold forward: each limb's inner side pressed flat onto its plane for the deepest bend (finely sampled there first).
- // The forearm already rests a little bent forward: measured in the bend's own plane (square to the hinge), it adds to the bend.
- const flat=d=>{const t=d[0]*ELBOW_AXIS[0]+d[1]*ELBOW_AXIS[1]+d[2]*ELBOW_AXIS[2],v=d.map((x,k)=>x-ELBOW_AXIS[k]*t),l=Math.hypot(...v);return v.map(x=>x/l);};
- const fu=flat(dU),ff=flat(dF),restBend=Math.acos(Math.min(1,fu[0]*ff[0]+fu[1]*ff[1]+fu[2]*ff[2]))*180/Math.PI;
- // Fine sampling only as far as the flat side reaches: where a limb as thick as the ball's
- // widest neighbour (FOLD_THICK of the ball radius) still crosses the plane, plus the soft band.
- if(bend){const half=(180-restBend-bend)/2*Math.PI/180,reach=FOLD_THICK*r/Math.tan(half)+soft,fine=m=>refineNear(m,E,reach,FOLD_EDGE);
-  upperArm=flattenForBend(fine(upperArm),E,ELBOW_AXIS,dU.map(v=>-v),frontOf(dU),half,SOCKET_GAP,soft,R);
-  forearm=flattenForBend(fine(forearm),E,ELBOW_AXIS,dF,frontOf(dF),half,SOCKET_GAP,soft,R);}
- // Bend test: both limbs sampled densely near the elbow (1 cm), so a touch between their points can't be missed.
- const dense=m=>refineNear(m,E,.3,.01).positions,upD=dense(upperArm),foreD=dense(forearm);
- const bendClearance=deg=>closestBetween(rotateAbout(foreD,E,ELBOW_AXIS,-deg*Math.PI/180),upD);
- const left=[{name:'upper-arm',side:'left',...upperArm,top:upper.top,direction:dU,length:upper.length},{name:'ball-elbow',side:'left',...ball},
-  {name:'forearm',side:'left',...forearm,top:foreTop,direction:dF,length:fore0.length}];
- const parts=sh.parts.filter(p=>p.name!=='upper-arm');
- for(const p of left){parts.push(p);parts.push({...mirrorPart(p),name:p.name});}
- return {body:bodyId,parts,ball:{centre:E,radius:r},depth,bend,restBend,bendClearance,shoulder:sh,upperArm,forearm,foreMoved,upperBefore:upper,
-  ballUp:length3(sub(ball0.centre.map((v,k)=>v+S[k]),E)),foreUp:length3(sub(fore0.top.map((v,k)=>v+S[k]),foreTop))};
-}
-const length3=v=>Math.hypot(v[0],v[1],v[2]);
-/** How far the elbow must bend cleanly (degrees; the skeleton allows 150). Claude's pick, for the owner to judge. */
-export const ELBOW_BEND=120;
-/** Limb thickness used to size the finely sampled area, as a share of the ball's radius (the limbs are up to about 1.2 times the ball's radius thick), and the triangle size there (metres). */
-export const FOLD_THICK=1.25,FOLD_EDGE=.016;
-/** Width of the rounding where the flat side meets the socket, as a multiple of the soft edge (without it, that corner measured 65°). */
+/** Width of the rounding where a flat inner face meets its socket, as a multiple of the soft edge (without it, that corner measured 65° at the elbow). */
 export const FOLD_CORNER=1;
