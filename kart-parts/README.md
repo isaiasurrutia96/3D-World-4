@@ -1,72 +1,69 @@
-# Kart parts system (Claude, look only)
+# Kart parts system and the three kart models (Claude, look only)
 
-The foundation every new kart is built on. Owner's decisions: `docs/KARTS.md`.
-Codex owns driving; nothing here moves a kart.
+Owner's decisions: `docs/KARTS.md`. Codex owns driving; nothing here moves a kart.
+A fresh set of three karts (owner, 22 Nov 2026): GoKart (small), GT GoKart
+(medium) and F1 GoKart (large), all close in size, sized around the avatar.
+The old test kart is only for driving tests and is not part of this set.
 
 ## A. How parts snap on
 
 1. **Mounts.** Each kart has the points where a kind of part bolts on: a
    point (optionally mirrored left/right), the top of every tire (fenders) or
    the back of each rear tire (mud flaps).
-2. **Styles.** Each style of a part (tube bumper, airflow bumper, low spoiler,
-   tall extended wing...) carries its own size and its offset from the mount,
-   and says which modes it is made for. Every style of a part snaps onto the
-   same mount; a longer wing simply reaches further. New styles are one line
-   in `STYLES`.
-3. **Checks.** Every placed part must stay out of the driver zone (body, legs,
-   head), out of the wheels, above the ground and inside the kart's space, for
-   every set-up (stock, raised, wheels out, full off-road). A `shell` nose may
-   wrap over the legs, never the body or head. A part that does not fit is
-   rejected with the reason and drawn red.
-4. **Set-ups.** Raising lifts the body, the mounts and the driver zone; wheels
-   stay on the ground and move out; fenders and mud flaps follow the wheels.
+2. **Styles.** Each style of a part carries its own size, its offset from
+   the mount and the modes it is made for. Every style of a part snaps onto
+   the same mount; a longer wing simply reaches further. A new style is one
+   line in `STYLES`.
+3. **Checks.** Every placed part must stay out of the driver zone, out of the
+   wheels (tested exactly, as cylinders), above the ground and inside the
+   kart's space, for every set-up. A `shell` nose or hood may cover the legs,
+   never the hips, body or head; a `wrapsWheel` arch may wrap its own wheel
+   (the model checks prove it clears the tire).
+4. **Set-ups.** Raising lifts the body, mounts and driver; wheels stay on the
+   ground and move out; fenders and mud flaps follow the wheels.
 
-## B. Where the numbers come from
+## B. Sizes and the driver
 
-Part places were measured from side and top views of the three approved
-designs (`docs/karts/blueprints/`), using the wheels as the ruler (0.76 m
-across). The GoKart's measured wheelbase was 2.02 m against the main kart's
-2.03 m, so it keeps the main kart's wheels exactly. The GT GoKart measured
-compact (wheelbase 1.55 m); the F1 GoKart longer (1.89 m) with smaller front
-wheels. These are measurements of concept pictures, so they are close, not
-exact; refine by eye in the Test Lab. The driver zone sizes are estimates
-until the avatar sits in the karts.
+1. Part places were measured from side and top views of the approved designs
+   (`docs/karts/blueprints/`) with the wheels as the ruler ("design units").
+2. Each kart has a `scale` that turns design units into real metres, chosen
+   from the owner's size picture with a driver in each kart: GoKart small, GT
+   a little bigger, F1 a little bigger again. The F1's wheels are the same
+   real size as the GT's (owner).
+3. The **driver zone comes from the avatar** (`AVATAR`, checked against
+   `motion-core/skeleton/bones.js`) seated in each kart's seat: hips, a
+   leaning torso with shoulders, legs forward with bent knees, and the head.
+   The cockpits are wide enough for the avatar's shoulders, the roll bars sit
+   just above its head and the steering wheels are within its reach.
 
-## C. Files and checks
+## C. How the models are built (every method is a standard, proven one)
 
-1. `spec.js`: data and checks, no three.js.
-2. `build.js`: the GoKart chassis, wheels, part boxes and the driver zone.
-3. `f1-kart.js` and `shapes.js`: the whole F1 GoKart (see D).
-4. `npm run test:karts`: 28 checks (`check.mjs` and `f1-check.mjs`), including every style on every kart of
-   its mode for four set-ups (150+ combinations).
-5. After building: `node kart-parts/browser.mjs` (page at three sizes, kart
-   switching, style swaps, inside the Test Lab).
-6. Page: `karts/` (Test Lab section "Karts"), built by `npm run build:karts`.
+1. **Lofting superellipse cross-sections** for tubs, noses, pods, hoods and
+   covers (the hull/fuselage method), joined with **PCHIP** (monotone cubic,
+   Fritsch-Carlson as in SciPy's PchipInterpolator): smooth and never
+   overshooting, so surfaces have no ripples. Cockpits are opened by lowering
+   the top of the rings between the side walls.
+2. **NACA 4-digit airfoils** (published equations) for wings, upside down
+   like real race-car wings.
+3. **Double-wishbone suspension** on the GT and F1; stub axles and a solid
+   rear axle on the GoKart (real karts have no suspension).
+4. **Lathe-turned** tires and GT wheel arches (smooth along the curve, crisp
+   edges), **earcut** to close loft ends, **RoundedBoxGeometry** for blocks.
+5. **Per-face colour by place around the ring**, so stripes run cleanly
+   along the body; **one shared vertex-colour material and merged geometry**
+   per part (about 14,000 to 18,000 triangles and under 20 meshes per kart).
+6. Every body part is its own `part:<slot>` group and is checked to sit
+   inside its part box; wing struts start exactly at the wing mount.
 
-Chunk plan (owner approved the order, 21 Nov 2026): 1 foundation and GoKart
-chassis, 1b part places from the approved designs with mounts, styles and the
-driver zone (this), 2 GoKart body, 3 GT GoKart, 4 F1 GoKart, 5 paint and the
-five variations, 6 swapping parts in the Test Lab.
+## D. Files and checks
 
-## D. The F1 GoKart model (owner: "design the whole F1 kart, best methods")
-
-Built in `f1-kart.js` with standard, proven techniques (`shapes.js`):
-
-1. **Lofting superellipse cross-sections** for the tub, nose, side pods and
-   engine cover (the fuselage and hull method; the superellipse moves between
-   oval and boxy). The cockpit is opened by lowering the top of the rings
-   between the side walls, blended in and out so the shape stays smooth.
-2. **NACA 4-digit airfoils** (the published equations) for the front and rear
-   wings and their flaps, mounted upside down like real race-car wings.
-3. **Double-wishbone suspension**: upper and lower A-arms, push rods and
-   steering links, as on real formula cars.
-4. **Earcut triangulation** (three.js ShapeUtils) to close the loft ends, and
-   **per-face colour by place around the ring**, so stripes run cleanly along
-   the body.
-5. **One shared material with vertex colours and merged geometry**: about
-   12,600 triangles in 15 meshes for the whole kart.
-
-Every body part is its own `part:<slot>` group and is checked to sit inside
-its measured part box; the rear wing's struts start exactly at the wing mount.
-No part enters the driver's head or body space. Colours come from the approved
-design (teal, orange, dark carbon).
+1. `spec.js`: data and checks (no three.js). `shapes.js`: shape methods.
+   `kart-model.js`: shared pieces (wheels, suspension, seats, steering,
+   driver dummy). `gokart-kart.js`, `gt-kart.js`, `f1-kart.js`: the models;
+   `models.js`: `buildKart(kart)`. `build.js`: part boxes and driver zone.
+2. `npm run test:karts`: 41 checks (`check.mjs`, `models-check.mjs`).
+3. After building: `node kart-parts/browser.mjs` (page at three sizes and
+   inside the Test Lab, including the copied side panel).
+4. Page: `karts/` (Test Lab section "Karts"), built by `npm run build:karts`.
+   Never rebuild its side panel; hide and show buttons instead (the Test Lab
+   copies the panel once).

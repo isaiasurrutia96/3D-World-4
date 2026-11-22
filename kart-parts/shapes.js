@@ -168,3 +168,49 @@ export function merge(geometries) {
   if (!merged) throw new Error('merge: geometries could not be merged');
   return merged;
 }
+
+/** Monotone cubic interpolation (PCHIP, Fritsch–Carlson with the
+ *  Fritsch–Butland weighted harmonic-mean slopes, as in SciPy's
+ *  PchipInterpolator). The curve passes through every point, is smooth, and
+ *  never overshoots: between two measured values it stays between them, so
+ *  lofted surfaces have no ripples. Returns a function of x. */
+export function pchip(xs, ys) {
+  const n = xs.length;
+  if (n !== ys.length || n < 2) throw new Error('pchip: needs matching x and y lists of 2 or more');
+  for (let i = 1; i < n; i++) if (!(xs[i] > xs[i - 1])) throw new Error('pchip: x values must increase');
+  const h = [], d = [], m = new Array(n);
+  for (let i = 0; i < n - 1; i++) { h.push(xs[i + 1] - xs[i]); d.push((ys[i + 1] - ys[i])/h[i]); }
+  if (n === 2) m[0] = m[1] = d[0];
+  else {
+    for (let i = 1; i < n - 1; i++) {
+      if (d[i - 1]*d[i] <= 0) { m[i] = 0; continue; }
+      const w1 = 2*h[i] + h[i - 1], w2 = h[i] + 2*h[i - 1];
+      m[i] = (w1 + w2)/(w1/d[i - 1] + w2/d[i]);
+    }
+    const end = (h0, h1, d0, d1) => {// one-sided three-point slope, kept shape-preserving
+      let s = ((2*h0 + h1)*d0 - h0*d1)/(h0 + h1);
+      if (Math.sign(s) !== Math.sign(d0)) s = 0;
+      else if (Math.sign(d0) !== Math.sign(d1) && Math.abs(s) > Math.abs(3*d0)) s = 3*d0;
+      return s;
+    };
+    m[0] = end(h[0], h[1], d[0], d[1]);
+    m[n - 1] = end(h[n - 2], h[n - 3], d[n - 2], d[n - 3]);
+  }
+  return x => {
+    let i = 0;
+    if (x <= xs[0]) i = 0; else if (x >= xs[n - 1]) i = n - 2; else while (x > xs[i + 1]) i++;
+    const t = Math.min(1, Math.max(0, (x - xs[i])/h[i])), t2 = t*t, t3 = t2*t;
+    return (2*t3 - 3*t2 + 1)*ys[i] + (t3 - 2*t2 + t)*h[i]*m[i] + (-2*t3 + 3*t2)*ys[i + 1] + (t3 - t2)*h[i]*m[i + 1];
+  };
+}
+
+/** Smooth stations: from a list of measured cross-sections ({z, ...values}),
+ *  returns a function giving every value at any z, using PCHIP per value. */
+export function stationCurve(list) {
+  const zs = list.map(s => s.z), keys = Object.keys(list[0]).filter(k => k !== 'z');
+  const curves = Object.fromEntries(keys.map(k => [k, pchip(zs, list.map(s => s[k]))]));
+  return z => Object.fromEntries([['z', z], ...keys.map(k => [k, curves[k](z)])]);
+}
+
+/** `steps + 1` evenly spaced values from `from` to `to`. */
+export const range = (from, to, steps) => Array.from({length: steps + 1}, (_, i) => from + (to - from)*i/steps);

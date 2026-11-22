@@ -2,10 +2,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import {SLOTS, UPGRADES, STYLES, KARTS, GOKART, GT_GOKART, F1_GOKART, MAIN_KART_WHEELS, LIMITS, STOCK, MAX_OFFROAD,
-  stylesFor, defaultChoices, wheelsOf, placePart, fitProblems, layoutKart, checkKart, driverZones, overlaps} from './spec.js';
-import {buildChassis, buildWheels, buildOutlines, buildDriverZone, countTriangles} from './build.js';
-import {createKartFrame} from '../racing-lab/src/reference-kart.js';
+import {SLOTS, UPGRADES, STYLES, KARTS, GOKART, GT_GOKART, F1_GOKART, LIMITS, STOCK, MAX_OFFROAD, AVATAR,
+  stylesFor, defaultChoices, wheelsOf, placePart, fitProblems, layoutKart, checkKart, driverZones, driverPose, overlaps, hitsWheel} from './spec.js';
+import {buildOutlines, buildDriverZone, countTriangles} from './build.js';
+import {CENTRE, SIDE} from '../motion-core/skeleton/bones.js';
 
 const close = (a, b, tolerance = 1e-6) => Math.abs(a - b) <= tolerance;
 const MAX_CHASSIS_TRIANGLES = 8000;// light enough for phones with many karts on track
@@ -52,7 +52,7 @@ test('wings never come near the driver\'s head, on any kart', () => {
 });
 
 test('a part that does not fit is rejected with the reason', () => {
-  const shoved = {...GOKART, mounts: {...GOKART.mounts, wing: {kind: 'point', at: [0, .42, -.6], mirrored: false}}};
+  const shoved = {...GOKART, mounts: {...GOKART.mounts, wing: {kind: 'point', at: [0, .42, -.3], mirrored: false}}};
   assert.match(fitProblems(shoved, 'wing', 'tall-wing').join('\n'), /driver's (head|body)/);
   const inWheel = {...GT_GOKART, mounts: {...GT_GOKART.mounts, frontBumper: {kind: 'point', at: [0, .25, .8], mirrored: false}}};
   assert.match(fitProblems(inWheel, 'frontBumper', 'gt-front-bumper').join('\n'), /would hit the front-(left|right) wheel/);
@@ -77,25 +77,44 @@ test('bad data is caught, not silently accepted', () => {
   assert.match(checkKart(noMount).join('\n'), /no mount/);
 });
 
-test('the GoKart\'s wheels match the main test kart exactly, so the same driving code can move it', () => {
-  const main = createKartFrame(); main.updateMatrixWorld(true);
-  for (const w of wheelsOf(GOKART)) {
-    const p = main.getObjectByName(`${w.axle}_axle_${w.side}_wheel`).getWorldPosition(new T.Vector3());
-    assert.ok(close(p.x, w.at[0]) && close(p.y, w.at[1]) && close(p.z, w.at[2]), `${w.id}: ${p.toArray()} vs ${w.at}`);
-    assert.equal(w.radius, MAIN_KART_WHEELS.radius);
-  }
-});
-
-test('the measured designs keep their character: GT is compact, F1 is long with smaller front wheels', () => {
-  const wheelbase = k => k.wheels.frontZ - k.wheels.rearZ;
-  assert.ok(wheelbase(GT_GOKART) < wheelbase(GOKART) && wheelbase(GT_GOKART) < wheelbase(F1_GOKART));
-  assert.ok(F1_GOKART.wheels.front.radius < F1_GOKART.wheels.rear.radius);
+test('the measured designs keep their character: GT compact with arches, F1 long, GoKart without a wing', () => {
+  const wheelbase = k => (k.wheels.frontZ - k.wheels.rearZ)*k.scale;
+  assert.ok(wheelbase(GT_GOKART) < wheelbase(F1_GOKART), 'GT shorter between the wheels than F1');
   const nose = k => { const b = placePart(k, 'nose', k.design.nose)[0]; return b.centre[2] + b.size[2]/2; };
   assert.ok(nose(F1_GOKART) > nose(GT_GOKART), 'F1 nose reaches further forward than GT');
   assert.equal(GT_GOKART.design.fenders, 'arch', 'GT wheels are covered by arches');
   assert.equal(GOKART.design.wing, undefined, 'the approved GoKart has no wing');
+  assert.deepEqual(KARTS.map(k => k.size), ['small', 'medium', 'large']);
+  assert.ok(GOKART.scale < GT_GOKART.scale && GT_GOKART.scale < F1_GOKART.scale);
 });
 
+test('the avatar sizes match the avatar\'s skeleton', () => {
+  const joint = name => [...CENTRE, ...SIDE].find(b => b.name === name);
+  const hipY = joint('pelvis').head[1];
+  assert.ok(Math.abs(joint('chest').tail[1] - hipY - AVATAR.hipToShoulder) < .002, 'hip to shoulder');
+  assert.ok(Math.abs(joint('head').head[1] - hipY - AVATAR.hipToHead) < .002, 'hip to head centre');
+  assert.ok(Math.abs(joint('head').tail[1] - joint('head').head[1] - AVATAR.headRadius) < .002, 'head radius');
+  assert.ok(AVATAR.shoulderHalf > joint('clavicle').tail[0], 'shoulders include the arm');
+  const thigh = joint('thigh'), calf = joint('shin');
+  assert.ok(AVATAR.legReach < (thigh.head[1] - thigh.tail[1]) + (calf.head[1] - calf.tail[1]) + .25, 'bent legs and feet reach less than straight legs and feet');
+});
+
+test('the driver zone comes from the seat: hips, a leaning torso, legs forward and the head on top', () => {
+  for (const kart of KARTS) {
+    const {hip, shoulder, head} = driverPose(kart), z = driverZones(kart);
+    assert.ok(shoulder[2] < hip[2] && head[2] < shoulder[2], `${kart.label} leans back`);
+    assert.ok(Math.abs(Math.hypot(head[1] - hip[1], head[2] - hip[2]) - AVATAR.hipToHead) < 1e-9);
+    assert.ok(z.legs.max[2] > hip[2] + .5 && z.head.max[1] > z.body.max[1]);
+  }
+});
+
+test('wheel hits are exact (a cylinder, not a box): an arch above the tire is clear, one touching it is not', () => {
+  const w = {at: [0, .3, 0], radius: .3, width: .25};
+  assert.equal(hitsWheel({min: [-.1, .61, -.2], max: [.1, .7, .2]}, w), false, 'just above the tire');
+  assert.equal(hitsWheel({min: [-.1, .55, .26], max: [.1, .7, .4]}, w), false, 'beside the tire\'s curve, inside its square');
+  assert.equal(hitsWheel({min: [-.1, .55, -.1], max: [.1, .7, .1]}, w), true);
+  assert.equal(hitsWheel({min: [.2, 0, -.1], max: [.3, .7, .1]}, w), false, 'past the tire\'s side');
+});
 test('off-road set-up: body and driver rise, wheels stay on the ground and move out, fenders and flaps follow', () => {
   for (const kart of KARTS) {
     const setup = {...STOCK, rideHeight: .12, wheelOffset: .08};
@@ -134,38 +153,6 @@ test('overlap test: touching boxes do not count, real overlaps do', () => {
   assert.equal(overlaps({min: [0, 0, 0], max: [1, 1, 1]}, {min: [.9, .5, .5], max: [2, 2, 2]}), true);
 });
 
-test('the GoKart chassis has every chassis part, sits on the ground and is light enough', () => {
-  const chassis = buildChassis(GOKART); chassis.updateMatrixWorld(true);
-  for (const name of ['frame', 'seat', 'steering', 'wheels', 'steering_wheel', 'rear axle']) assert.ok(chassis.getObjectByName(name), `missing ${name}`);
-  assert.equal(chassis.getObjectByName('wheels').children.length, 4);
-  const b = new T.Box3().setFromObject(chassis);
-  assert.ok(close(b.min.y, 0, 1e-3), `lowest point ${b.min.y}`);
-  assert.ok(Math.max(-b.min.x, b.max.x) <= LIMITS.halfWidth && b.max.y <= LIMITS.maxY && Math.max(-b.min.z, b.max.z) <= LIMITS.halfLength);
-  const triangles = countTriangles(chassis);
-  assert.ok(triangles <= MAX_CHASSIS_TRIANGLES, `${triangles} triangles`);
-  const raised = buildChassis(GOKART, MAX_OFFROAD); raised.updateMatrixWorld(true);
-  const rb = new T.Box3().setFromObject(raised);
-  assert.ok(close(rb.min.y, 0, 1e-3) && Math.max(-rb.min.x, rb.max.x) <= LIMITS.halfWidth, 'raised chassis keeps wheels on the ground');
-});
-
-test('the GoKart seat sits inside the driver zone and the steering wheel is in front of it', () => {
-  const chassis = buildChassis(GOKART); chassis.updateMatrixWorld(true);
-  const seat = new T.Box3().setFromObject(chassis.getObjectByName('seat_shell'));
-  const wheel = chassis.getObjectByName('steering_wheel').getWorldPosition(new T.Vector3());
-  const body = driverZones(GOKART).body;
-  assert.ok(seat.max.z < wheel.z, 'steering wheel ahead of the seat');
-  assert.ok(seat.min.z >= body.min[2] - .1 && seat.max.z <= .1, `seat from ${seat.min.z.toFixed(2)} to ${seat.max.z.toFixed(2)}`);
-});
-
-test('GT and F1 wheels are built with their own sizes', () => {
-  for (const kart of [GT_GOKART, F1_GOKART]) {
-    const wheels = buildWheels(kart); wheels.updateMatrixWorld(true);
-    assert.equal(wheels.children.length, 4);
-    const front = new T.Box3().setFromObject(wheels.getObjectByName('wheel-front-left'));
-    assert.ok(close(front.max.y - front.min.y, 2*kart.wheels.front.radius, 1e-3), `${kart.label} front wheel size`);
-  }
-});
-
 test('outlines: one named box per part, coloured by design, optional or blocked', () => {
   for (const kart of KARTS) {
     const choices = defaultChoices(kart), outlines = buildOutlines(kart, choices), layout = layoutKart(kart, choices);
@@ -176,6 +163,6 @@ test('outlines: one named box per part, coloured by design, optional or blocked'
       assert.deepEqual(g.position.toArray(), b.centre);
     }
     assert.equal(countTriangles(outlines), 0, 'outlines are not counted as kart geometry');
-    assert.equal(buildDriverZone(kart).children.length, 3);
+    assert.equal(buildDriverZone(kart).children.length, 4);
   }
 });
