@@ -17,7 +17,7 @@
 // giving way where the bent limbs would meet), keeping each limb's round,
 // cylinder shape everywhere else.
 import {separatedOriginalBody,limbLine} from './original-body.js';
-import {makeSocket,refineNear,softEdge,SOCKET_GAP,SOCKET_EDGE} from './sockets.js';
+import {makeSocket,refineNear,pointNormals,softEdge,SOCKET_GAP,SOCKET_EDGE} from './sockets.js';
 import {shapeForBend,clearanceAt,HINGE,LIMB_SOFT} from './body-sockets.js';
 
 export const GOLDEN=(1+Math.sqrt(5))/2;
@@ -36,13 +36,21 @@ function turned(positions,pivot,axis,degrees){
  return out;
 }
 
-/** One elbow, made one way ('touch' or 'golden'). */
-export function elbowTest(mode,bodyId='boy',{softWidth=null,shape=true}={}){
+/**
+ * Pressed closer with thick clay (owner, 22 November 2026: keep the original's chunky clay look; heavy, strong
+ * arms; the ball mostly tucked in): the depths to compare (share of the ball's radius in each limb), and the
+ * clay lip: where a limb faces away from the ball but wraps around it, this much clay (share of the radius) is
+ * kept over the ball, so the rim stays thick and bulges a little like pushed clay instead of thinning to an edge.
+ */
+export const CLOSER_DEPTHS=[.7,.8,.9],CLAY_LIP=.25;
+
+/** One elbow, made one way: 'touch', 'golden', or a depth (share of the ball's radius in each limb). `lip`: clay kept over the ball (share of its radius). */
+export function elbowTest(mode,bodyId='boy',{softWidth=null,shape=true,lip=0}={}){
  const body=separatedOriginalBody(bodyId),get=n=>body.parts.find(p=>p.name===n&&p.side==='left');
  const upper0=get('upper-arm'),ball0=get('ball-elbow'),fore0=get('forearm'),r=ball0.radius,R=r+SOCKET_GAP,soft=softWidth??Math.max(softEdge(r),LIMB_SOFT);
  const U=limbLine(upper0.positions),F=limbLine(fore0.positions);
  // How deep the ball sits in each limb: its whole radius when the tips touch at its centre; r / golden ratio otherwise.
- const depth=mode==='touch'?r:r/GOLDEN;
+ const depth=typeof mode==='number'?mode*r:mode==='touch'?r:r/GOLDEN;
  // The upper arm stays put: the ball's centre sits on its line, `depth` back inside it from its bottom tip.
  // The ball's top (C - dir*r) is `depth` inside the upper arm from its tip, so the centre is (r - depth) past the tip.
  const upperTip=add(U.centre,scale(U.dir,U.end)),C=add(upperTip,scale(U.dir,r-depth));
@@ -51,13 +59,16 @@ export function elbowTest(mode,bodyId='boy',{softWidth=null,shape=true}={}){
  const ball=moved(ball0,sub(C,ball0.centre));
  // Room to fold forward first (the clay giving way where the bent limbs would meet), then the sockets, so their soft
  // edges round off where they meet the shaped faces.
- const plain={near:{positions:upper0.positions,index:upper0.index},far:{positions:fore.positions,index:fore.index},restBend:NaN};
+ // With a clay lip, 'facing the ball or away' is read from the limbs as they were before any shaping (carried through it).
+ const withFacing=m=>lip?{...m,normals:pointNormals(m)}:m;
+ const plain={near:withFacing({positions:upper0.positions,index:upper0.index}),far:withFacing({positions:fore.positions,index:fore.index}),restBend:NaN};
  const shaped=shape?shapeForBend(plain.near,plain.far,C,HINGE,scale(U.dir,-1),F.dir,FRONT,ELBOW_TEST_BEND,soft,R):plain;
- const upper=makeSocket(shaped.near,C,R,soft,SOCKET_EDGE),forearm=makeSocket(shaped.far,C,R,soft,SOCKET_EDGE);
+ const strip=m=>({positions:m.positions,index:m.index});
+ const upper=strip(makeSocket(shaped.near,C,R,soft,SOCKET_EDGE,lip*r)),forearm=strip(makeSocket(shaped.far,C,R,soft,SOCKET_EDGE,lip*r));
  // Bend test: both limbs sampled densely near the elbow.
  const dense=m=>refineNear(m,C,.35,.012).positions,uD=dense(upper),fD=dense(forearm);
  const clearance=deg=>clearanceAt(uD,fD,C,HINGE,-deg);
  /** The three pieces with the forearm folded forward by `degrees`. */
  const pose=degrees=>[{name:'upper-arm',...upper},{name:'ball-elbow',...ball},{name:'forearm',positions:turned(forearm.positions,C,HINGE,-degrees),index:forearm.index}];
- return {mode,depth,radius:r,centre:C,restBend:shaped.restBend,upper,forearm,ball,pose,clearance,before:{upper:upper0,forearm:fore0,forearmPlaced:fore},soft,forearmMoved:Math.hypot(...sub(wantTip,foreTip))};
+ return {mode,lip,depth,radius:r,centre:C,restBend:shaped.restBend,upper,forearm,ball,pose,clearance,before:{upper:upper0,forearm:fore0,forearmPlaced:fore},soft,forearmMoved:Math.hypot(...sub(wantTip,foreTip))};
 }

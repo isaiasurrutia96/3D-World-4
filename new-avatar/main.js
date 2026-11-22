@@ -27,7 +27,7 @@ import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES}
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
 import {separatedOriginalBody} from '../avatar-v2/original-body.js';
-import {elbowTest,ELBOW_TEST_POSES} from '../avatar-v2/elbow-test.js';
+import {elbowTest,ELBOW_TEST_POSES,CLOSER_DEPTHS,CLAY_LIP} from '../avatar-v2/elbow-test.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
@@ -93,11 +93,11 @@ GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put togethe
  items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const elbowItems=[];
-for(const mode of ['touch','golden']){const e=elbowTest(mode),name=mode==='touch'?'Tips touch':'Golden ratio';
- for(const deg of ELBOW_TEST_POSES)elbowItems.push({id:`elbow-${mode}-${deg}`,label:`${name} · ${deg?deg+'°':'straight'}`,tag:`${mode==='touch'?'Touch':'Golden'} ${deg}°`,
-  note:`${name}: the ball sits ${(e.depth*100).toFixed(1)} cm deep in each limb (its radius is ${(e.radius*100).toFixed(1)} cm). ${deg?'Forearm folded forward '+deg+'°.':'Straight.'} Sockets snug (6 mm), the inner side shaped so it folds to 120° without touching.`,
+for(const share of CLOSER_DEPTHS){const e=elbowTest(share,'boy',{lip:CLAY_LIP}),name=`${Math.round(share*100)}% deep`;
+ for(const deg of ELBOW_TEST_POSES)elbowItems.push({id:`elbow-${Math.round(share*100)}-${deg}`,label:`${name} · ${deg?deg+'°':'straight'}`,tag:`${Math.round(share*100)}% ${deg}°`,
+  note:`${name}: the ball sits ${(e.depth*100).toFixed(1)} cm into each limb (its radius is ${(e.radius*100).toFixed(1)} cm), with thick clay wrapped around it. ${deg?'Forearm folded forward '+deg+'°.':'Straight.'} Sockets snug (6 mm); folds to 120° without touching.`,
   parts:e.pose(deg).map(p=>({name:p.name,geometry:geometryOf(p),y:0}))});}
-GROUPS.push({id:'elbow-test',label:'Elbow test',intro:'One elbow (his left), pressed together like clay around the hard ball, two ways. Tips touch: the limbs\' rounded ends meet and the ball carves its sockets right there (half the ball inside each limb). Golden ratio: the ball sinks 61.8% of its radius into each limb. Each shown straight, bent 90° and bent 120°.',items:elbowItems});
+GROUPS.push({id:'elbow-test',label:'Elbow test',intro:'One elbow (his left), the limbs pressed closer with thick clay around the hard ball, three depths: the ball sits 70%, 80% or 90% of its radius into each limb, the clay staying thick around it like pushed clay. Each shown straight, bent 90° and bent 120°.',items:elbowItems});
 const mix=separatedOriginalBody('boy');
 GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet with the original avatar\'s limbs (each 10% longer, calves 50 cm), every piece separated and the original neck removed, with a ball at every joint: as thick as the ends it joins (shoulders and neck 10% bigger, wrists and ankles 10% smaller), 300 triangles each.',
  items:[{id:'original-boy',label:'Boy · pieces and joint balls',tag:'Boy',face:mix.face,ground:true,note:`Balls: neck ${(mix.balls['ball-neck'].radius*200).toFixed(1)} cm (approved size), shoulders ${(mix.balls['ball-shoulder'].radius*200).toFixed(1)}, elbows ${(mix.balls['ball-elbow'].radius*200).toFixed(1)}, wrists ${(mix.balls['ball-wrist'].radius*200).toFixed(1)}, hips ${(mix.balls['ball-hip'].radius*200).toFixed(1)}, knees ${(mix.balls['ball-knee'].radius*200).toFixed(1)}, ankles ${(mix.balls['ball-ankle'].radius*200).toFixed(1)} cm. Balls 2 cm from the torso, every other piece 6 mm from its ball. ${(mix.height*100).toFixed(0)} cm tall with everything apart.`,
