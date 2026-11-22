@@ -140,3 +140,25 @@ favourites are 11, 13, 14, 15, 16, 17, 18 and 19.
 4. Style 13 (chunky tub) is also a favourite; its tier is not set yet.
 5. Every style keeps the locked GoKart size (section G). The pictures came
    out a little small; the exact size is set in the 3D build.
+
+## I. GT GoKart and F1 GoKart styles (22 November 2026, waiting for owner picks)
+
+Picture sheets in `docs/karts/styles/`, numbered on each picture. Same paint
+within each mode so only the shapes differ, with the grey avatar for scale.
+
+1. **GT GoKart, 20 styles** (`gt-styles-01-06.jpg` to `gt-styles-19-20.jpg`):
+   1 widebody street tuner and 2 aero muscle (both from the owner's street-car
+   pictures), 3 classic GT3, 4 endurance, 5 retro 70s, 6 rally, 7 drift,
+   8 time attack, 9 jelly bean, 10 stealth, 11 hypercar, 12 muscle, 13 mini,
+   14 long tail, 15 touring car, 16 tunnel aero, 17 cyber, 18 brawler,
+   19 halo, 20 track day. The owner: "These all looked cool."
+2. **F1 GoKart, 20 styles** (`f1-styles-01-06.jpg` to `f1-styles-19-20.jpg`):
+   each picture also lays out the kart's swappable parts separately (front
+   wing and nose, side pods, engine cover, rear wing, rear bumper, diffuser,
+   rims, tires, seat, steering wheel, roll hoop, exhaust, lights), useful for
+   the 3D build. 1 classic, 2 shark, 3 bulldog, 4 retro cigar, 5 stealth,
+   6 future, 7 twin deck, 8 low rider, 9 muscle, 10 endurance, 11 off-road,
+   12 hyper aero, 13 rounded, 14 split wing, 15 speedster, 16 brawler,
+   17 halo, 18 turbo, 19 open frame, 20 light show.
+3. Open: the owner's tier picks for GT and F1, the tier for GoKart style 13,
+   and the planned part-variation pictures (proposed, not started).
