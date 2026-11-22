@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,BALL_SIZE,endRadius,limbLine,stretchLimb,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_LIMB_LENGTHEN,ORIGINAL_HAND_SHRINK,ORIGINAL_CALF_LENGTH,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_LIMB_LENGTHEN,ORIGINAL_HAND_SHRINK,ORIGINAL_CALF_LENGTH,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
 import {CHOSEN_BALL_TRIANGLES} from './ball-shape.js';
@@ -36,7 +36,7 @@ check('the original neck is exactly as copied',()=>{assert.deepEqual(g('neck','c
 const along=(p,L)=>(p[0]-L.centre[0])*L.dir[0]+(p[1]-L.centre[1])*L.dir[1]+(p[2]-L.centre[2])*L.dir[2];
 const thick=(pos,L,from,to)=>{let r=0;for(let i=0;i<pos.length;i+=3){const p=P(pos,i/3),s=along(p,L),t=(s-L.start)/L.length;if(t<from||t>to)continue;const side=[0,1,2].map(k=>p[k]-L.centre[k]-L.dir[k]*s);r=Math.max(r,Math.hypot(...side));}return r;};
 for(const [n,above] of [['upper-arm',null],['forearm','upper-arm'],['thigh',null],['calf','thigh']])check(`${n}: ${n==='calf'?'lengthened to '+ORIGINAL_CALF_LENGTH*100+' cm':Math.round((ORIGINAL_LIMB_LENGTHEN-1)*100)+'% longer'}, same thickness, ends unchanged in shape`,()=>{
- const before=src.parts.left[n].positions,L0=limbLine(before),now=g(n,'left').positions;
+ const before=n==='forearm'?b.roundedForearm.positions:src.parts.left[n].positions,L0=limbLine(before),now=g(n,'left').positions;
  const prior=above?b.stretched['left:'+above].shift:[0,0,0],base=before.map((x,i)=>x+prior[i%3]),L=limbLine(base),extra=n==='calf'?ORIGINAL_CALF_LENGTH-L.length:(ORIGINAL_LIMB_LENGTHEN-1)*L.length;
  // Length measured along the limb's line before stretching (the forearm's hand socket makes it lopsided, so a fresh fit would tilt slightly).
  const span=pos=>{let lo=Infinity,hi=-Infinity;for(let i=0;i<pos.length;i+=3){const v=along(P(pos,i/3),L);lo=Math.min(lo,v);hi=Math.max(hi,v);}return hi-lo;};
@@ -46,6 +46,19 @@ for(const [n,above] of [['upper-arm',null],['forearm','upper-arm'],['thigh',null
  // Thickness: the widest the limb gets around its line (these capsules have no points in the stretched middle, so measure the whole limb).
  const t0=thick(base,L,0,1),t1=thick(now,L,-.1,1.2);assert(Math.abs(t0-t1)<1e-6,'thickness changed');
  return `${(span(base)*100).toFixed(1)} → ${(span(now)*100).toFixed(1)} cm; thickness ${(t0*200).toFixed(1)} cm unchanged`;});
+check('forearm: its wrist end is rounded like the other limbs (upper half the original shape; no bulge below; closes to a rounded tip)',()=>{
+ const orig=src.parts.left.forearm.positions,r=b.roundedForearm,L=limbLine(orig),Lr=limbLine(r.positions);
+ assert(Math.abs(Lr.length-L.length)<.002,'length changed: '+Lr.length);
+ // Radius around the line in slices: the original's and the rounded one's.
+ const radius=(pos,line,t0,t1)=>{let m=0;for(let i=0;i<pos.length;i+=3){const v=[pos[i]-line.centre[0],pos[i+1]-line.centre[1],pos[i+2]-line.centre[2]],s=v[0]*line.dir[0]+v[1]*line.dir[1]+v[2]*line.dir[2],t=(s-line.start)/line.length;if(t<t0||t>t1)continue;m=Math.max(m,Math.hypot(v[0]-line.dir[0]*s,v[1]-line.dir[1]*s,v[2]-line.dir[2]*s));}return m;};
+ const mid=radius(r.positions,Lr,FOREARM_ROUND_FROM-.03,FOREARM_ROUND_FROM+.03);
+ assert(Math.abs(radius(r.positions,Lr,.15,.45)-radius(orig,L,.15,.45))<.003,'upper half changed');
+ assert(radius(r.positions,Lr,FOREARM_ROUND_FROM,1)<=mid+1e-3,'bulges below the middle');
+ const near=radius(r.positions,Lr,.95,1),origEnd=radius(orig,L,.95,1);assert(near<.5*mid,'the end does not close: '+near);
+ return `widest ${(mid*200).toFixed(1)} cm, last 5% ${(near*200).toFixed(1)} cm (the original's open end: ${(origEnd*200).toFixed(1)} cm); ${r.index.length/3} triangles (was ${src.parts.left.forearm.index.length/3})`;});
+check('test of the test: the rounding check would catch the original open end',()=>{const orig=src.parts.left.forearm.positions,L=limbLine(orig);
+ let m=0,end=0;for(let i=0;i<orig.length;i+=3){const v=[orig[i]-L.centre[0],orig[i+1]-L.centre[1],orig[i+2]-L.centre[2]],s=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2],t=(s-L.start)/L.length,rr=Math.hypot(v[0]-L.dir[0]*s,v[1]-L.dir[1]*s,v[2]-L.dir[2]*s);if(Math.abs(t-.5)<.03)m=Math.max(m,rr);if(t>.95)end=Math.max(end,rr);}
+ assert(end>=.5*m,'not caught');return `original end ${(end*200).toFixed(1)} cm, over half its middle`;});
 check('test of the test: stretching a limb by zero changes nothing; by 10% moves its bottom end exactly that far',()=>{
  const pos=src.parts.left.calf.positions,z=stretchLimb(pos,0);assert.deepEqual(z.positions,pos);const L=limbLine(pos),o=stretchLimb(pos,.1*L.length);
  assert(Math.abs(Math.hypot(...o.shift)-.1*L.length)<1e-12);return 'checked';});

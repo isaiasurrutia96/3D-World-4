@@ -18,7 +18,8 @@
 //    longer than the head.
 import source from './original-limbs.json' with {type:'json'};
 import {makeTorsoOption} from './torso-variants.js';
-import {buildTorsoSurface} from './torso-shape.js';
+import {buildTorsoSurface,buildRingSurface,direction} from './torso-shape.js';
+import {rayHit} from './body-sockets.js';
 import {buildHeadSet,CHOSEN_NECK} from './head-options.js';
 import {CHOSEN_FACE} from './face.js';
 import {HAND_FEET_SOURCE,adjustPart,CHOSEN_HAND_FOOT} from './hands-feet.js';
@@ -45,6 +46,35 @@ function mirrored(p){
  const positions=p.positions.map((v,i)=>i%3===0?-v:v),index=[];
  for(let i=0;i<p.index.length;i+=3)index.push(p.index[i],p.index[i+2],p.index[i+1]);
  return {...p,positions,index,...(p.pivot?{pivot:mirrorPoint(p.pivot)}:{})};
+}
+
+/**
+ * The forearm's wrist end rounded like every other limb (owner, 22 November 2026: the original forearm flares
+ * out toward the wrist and ends in an open cup, its old hand socket; "round it out like almost every other
+ * limb"). The forearm is rebuilt as one smooth ring surface along its own line, the same way the limbs here are
+ * built:
+ *  - its upper half keeps the original shape exactly: each ring's radius in each direction is where a ray from
+ *    the centre line first meets the original surface;
+ *  - from the middle down it keeps the middle's width (no bulge), then closes in a rounded cap as long as it is
+ *    wide, like the other limbs' ends, at the original bottom tip, so the length is unchanged.
+ */
+export const FOREARM_ROUND_FROM=.5,FOREARM_SEGMENTS=28;
+export function roundForearmEnd(positions){
+ const L=limbLine(positions),Y=L.dir.map(v=>-v),ref=Math.abs(Y[0])<.9?[1,0,0]:[0,0,1],d=ref[0]*Y[0]+ref[1]*Y[1]+ref[2]*Y[2];
+ const u0=ref.map((v,k)=>v-Y[k]*d),lu=Math.hypot(...u0),u=u0.map(v=>v/lu),w=[u[1]*Y[2]-u[2]*Y[1],u[2]*Y[0]-u[0]*Y[2],u[0]*Y[1]-u[1]*Y[0]];// u × Y = w: same handedness, so triangles still face out
+ const mesh={positions,index:ORIGINAL_LIMBS.parts.left.forearm.index},n=FOREARM_SEGMENTS,at=t=>L.start+t*L.length;
+ const ringAt=t=>{const s0=at(t),axis=L.centre.map((c,k)=>c+L.dir[k]*s0);
+  return Array.from({length:n},(_,k)=>{const [dx,dz]=direction(k,n),ray=u.map((v,j)=>v*dx+w[j]*dz),hit=rayHit(mesh,axis,ray);if(!isFinite(hit))throw Error('forearm ray found no surface');return hit;});};
+ const upper=[];for(let t=.04;t<=FOREARM_ROUND_FROM+1e-9;t+=.04)upper.push({t,r:ringAt(t)});
+ const middle=ringAt(FOREARM_ROUND_FROM),capLength=middle.reduce((a,b)=>a+b,0)/n,tCap=1-capLength/L.length;
+ if(!(tCap>FOREARM_ROUND_FROM))throw Error('forearm too short for a rounded end');
+ const lower=[{t:(FOREARM_ROUND_FROM+tCap)/2,r:middle},{t:tCap,r:middle}];
+ // Local frame: y up the limb (y = -s), x along u, z along w; rings listed bottom first.
+ const rings=[...upper,...lower].map(g=>({y:-at(g.t),r:g.r})).sort((a,b)=>a.y-b.y);
+ const shape={center:[0,0],segments:n,capRings:4,bottom:{y:-L.end},top:{y:-L.start},rings};
+ const surf=buildRingSurface(shape),out=new Array(surf.positions.length);
+ for(let i=0;i<surf.positions.length;i+=3){const x=surf.positions[i],y=surf.positions[i+1],z=surf.positions[i+2];for(let k=0;k<3;k++)out[i+k]=L.centre[k]+u[k]*x+Y[k]*y+w[k]*z;}
+ return {positions:out,index:surf.index,capLength,from:FOREARM_ROUND_FROM,tCap};
 }
 
 /** Owner (22 November 2026): "lengthen all the limbs" slightly, and "shrink the hands by a bit" (10% each: Claude's pick). */
@@ -91,12 +121,15 @@ export function originalLimbBody(bodyId='boy'){
  parts.push({name:'neck',side:'centre',...source.parts.neck});
  // Original limbs, each 10% longer in its middle; everything below a limb moves down with it (a chain).
  const chainShift={},stretched={};
+ // The forearms with rounded wrist ends (built for his left, mirrored for his right).
+ const roundLeft=roundForearmEnd(source.parts.left.forearm.positions),roundRight=mirrored(roundLeft);
+ const piece=(side,name)=>name==='forearm'?(side==='left'?roundLeft:roundRight):source.parts[side][name];
  for(const side of ['left','right'])for(const [upperName,lowerName] of [['upper-arm','forearm'],['thigh','calf']]){
   const up=stretchLimb(source.parts[side][upperName].positions,(ORIGINAL_LIMB_LENGTHEN-1)*limbLine(source.parts[side][upperName].positions).length);
-  const loMoved=source.parts[side][lowerName].positions.map((x,i)=>x+up.shift[i%3]);
+  const loMoved=piece(side,lowerName).positions.map((x,i)=>x+up.shift[i%3]);
   const loLine=limbLine(loMoved),lo=stretchLimb(loMoved,lowerName==='calf'?ORIGINAL_CALF_LENGTH-loLine.length:(ORIGINAL_LIMB_LENGTHEN-1)*loLine.length);
   parts.push({name:upperName,side,positions:up.positions,index:source.parts[side][upperName].index});
-  parts.push({name:lowerName,side,positions:lo.positions,index:source.parts[side][lowerName].index});
+  parts.push({name:lowerName,side,positions:lo.positions,index:piece(side,lowerName).index});
   chainShift[side+':'+lowerName]=up.shift.map((v,k)=>v+lo.shift[k]);stretched[side+':'+upperName]=up;stretched[side+':'+lowerName]=lo;}
  // Hands and feet: approved shapes and sizes, at the original joints; the right side mirrors the left.
  const handSize=CHOSEN_HAND_FOOT.size*LIMB_SCALE*HAND_SCALE*ORIGINAL_HAND_SHRINK;
@@ -107,7 +140,7 @@ export function originalLimbBody(bodyId='boy'){
  for(const [name,p,limb] of [['hand',hand,'forearm'],['foot',foot,'calf']]){const left=shifted(p,chainShift['left:'+limb]);
   parts.push({name,side:'left',...left});parts.push({name,side:'right',...mirrored(left)});}
  let lo=Infinity,hi=-Infinity;for(const p of parts)for(let i=1;i<p.positions.length;i+=3){lo=Math.min(lo,p.positions[i]);hi=Math.max(hi,p.positions[i]);}
- return {body:bodyId,torsoShape,parts,face:CHOSEN_FACE,height:hi-lo,sole:lo,handSize,footSize,footLength:headHeight+FOOT_OVER_HEAD,headHeight,chainShift,stretched};
+ return {body:bodyId,torsoShape,parts,face:CHOSEN_FACE,height:hi-lo,sole:lo,handSize,footSize,footLength:headHeight+FOOT_OVER_HEAD,headHeight,chainShift,stretched,roundedForearm:roundLeft};
 }
 
 // --- Separated, with a ball at every joint (owner, 22 November 2026) ---------------
