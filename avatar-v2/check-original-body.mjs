@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,HIP_BALL_GROW,straightLowerSides,LOWER_SIDES_FROM,LOWER_SIDES_BLEND,cupLimbEnd,KNEE_CUPS,limbsOnlyBody,LIMBS_ONLY,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,HIP_BALL_GROW,straightLowerSides,LOWER_SIDES_FROM,LOWER_SIDES_BLEND,cupLimbEnd,KNEE_CUPS,limbsOnlyBody,LIMBS_ONLY,torsoShoulderBalls,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
@@ -235,6 +235,24 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
   assert.notDeepEqual(names(pv),want,'the whole avatar passed as limbs only');
   const t=lo.parts[0],moved={...t,positions:Array.from(t.positions)};moved.positions[0]+=1e-4;assert(!same(moved,twin(t)),'a moved point was not caught');
   return `${lo.parts.length} pieces (${want.join(', ')}), every point identical; ${(lo.height*100).toFixed(1)} cm from the bottom of the calves to the top of the upper arms; the whole avatar (${pv.parts.length} pieces) and a limb with one point moved 0.1 mm are both caught`;});
+ check('torso and shoulder balls side by side, not together (owner: "get the torso and the ball next to each other but not together, u can do both sides"): the put-together torso unchanged, both shoulder balls at their put-together size, height and depth, 2 cm clear of the torso, mirrored',()=>{
+  const pv=pressedPreviewBody('boy'),ts=torsoShoulderBalls('boy',{pressed:pv,apart:sep}),out=[];
+  assert.deepEqual(ts.parts.map(p=>p.name+'.'+p.side).sort(),['ball-shoulder.left','ball-shoulder.right','torso.centre']);
+  const torso=pv.parts.find(p=>p.name==='torso'),same=(a,c)=>a.length===c.length&&Array.from(a).every((v,i)=>v===c[i]);
+  assert(same(ts.torso.positions,torso.positions)&&same(ts.torso.index,torso.index),'the torso changed');
+  // Space between the torso's surface and a ball: from the closest torso point to the ball's centre, minus its radius.
+  const T=torso.positions,space=b=>{let near=Infinity;for(let i=0;i<T.length;i+=3)near=Math.min(near,Math.hypot(T[i]-b.centre[0],T[i+1]-b.centre[1],T[i+2]-b.centre[2]));return near-b.radius;};
+  for(const side of ['left','right']){
+   const b=ts.balls.find(p=>p.side===side),was=pv.parts.find(p=>p.name==='ball-shoulder'&&p.side===side);
+   assert.equal(b.radius,was.radius,`${side}: ball size changed`);assert(Math.abs(b.centre[1]-was.centre[1])<1e-12&&Math.abs(b.centre[2]-was.centre[2])<1e-12,`${side}: height or depth changed`);
+   assert(Math.abs(b.centre[0])>Math.abs(was.centre[0]),`${side}: not moved outward`);
+   const c=space(b);assert(c>=SHOULDER_TORSO_GAP-.001,`${side}: only ${(c*100).toFixed(2)} cm from the torso`);assert(c<.04,`${side}: ${(c*100).toFixed(1)} cm away, not next to it`);
+   // Test of the test: put together, the same ball overlaps the torso (negative space), so this check can fail.
+   const before=space(was);assert(before<0,`${side}: the put-together ball did not overlap the torso`);
+   out.push(`${side}: ${(c*100).toFixed(1)} cm clear (put together it was ${(-before*100).toFixed(1)} cm inside)`);}
+  const L=ts.balls.find(p=>p.side==='left').centre,R=ts.balls.find(p=>p.side==='right').centre;assert(Math.abs(L[0]+R[0])<1e-12&&L[1]===R[1]&&L[2]===R[2],'not mirrored');
+  assert(Math.abs(ts.clear-space(ts.balls.find(p=>p.side==='left')))<1e-12,'clear reported wrongly');
+  return `torso unchanged; balls ${(ts.balls[0].radius*200).toFixed(1)} cm, same height and depth; `+out.join('; ');});
  check(`put together: the torso's hip socket rims are rounded out (no sharp edges): on the outer sides every bend by the sockets rounds over at least 12 mm, and only the rims change`,()=>{
   const pv=pressedPreviewBody('boy'),{centre:C,radius:r,R,soft}=pv.hipSocket,Cr=[-C[0],C[1],C[2]],base=pv.whole.parts.find(p=>p.name==='torso');
   // Tightest rounding by the sockets on their outer sides: each edge's length over the angle its two triangles bend by.

@@ -1,6 +1,7 @@
 // Browser check of the New avatar page's "Put together" tab: only the boy's upper arms, forearms, thighs and calves
 // (owner, 22 November 2026: "take away every part minus the upper arm, forearm, thighs and calves"), each in its place,
-// with nothing else on the tab (no Our avatar).
+// and next to them his torso with both shoulder balls apart ("next to each other but not together"); nothing else
+// on the tab (no Our avatar).
 // Usage: npm run build:new-avatar, then node avatar-v2/check-new-avatar-page.mjs
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';import {createServer} from 'node:http';import {extname,join} from 'node:path';import {chromium} from 'playwright';
@@ -25,15 +26,17 @@ try{
    item.group.traverse(o=>{if(!o.isMesh)return;const P=o.geometry.attributes.position;for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(o.matrixWorld);[v.x,v.y,v.z].forEach((x,k)=>{b.min[k]=Math.min(b.min[k],x);b.max[k]=Math.max(b.max[k],x);});}});
    // Test of the test: the same group with one more shape in it (a torso) gives a different list.
    const extra=item.group.children.find(o=>o.isMesh).clone();extra.name='torso';item.group.add(extra);const withExtra=names(item.group);item.group.remove(extra);
-   return {group:L.getGroup(),ids:L.options.map(o=>o.id),names:names(item.group),withExtra,box:b,ourAvatar:'ourAvatarLoaded' in window};});
+   const pair=L.options.find(o=>o.id==='torso-shoulders');
+   return {group:L.getGroup(),ids:L.options.map(o=>o.id),names:names(item.group),withExtra,box:b,pairNames:pair?names(pair.group):null,ourAvatar:'ourAvatarLoaded' in window};});
   assert.deepEqual(errors,[],'page errors');
   assert.equal(m.group,'together','the Put together tab opens first');
-  assert.deepEqual(m.ids,['together-boy'],'only the boy on the tab (no Our avatar)');assert.equal(m.ourAvatar,false,'Our avatar is still loaded');
+  assert.deepEqual(m.ids,['together-boy','torso-shoulders'],'the limbs, then the torso with its shoulder balls (no Our avatar)');
+  assert.deepEqual(m.pairNames,['ball-shoulder.left','ball-shoulder.right','torso'],'the torso and both shoulder balls only');assert.equal(m.ourAvatar,false,'Our avatar is still loaded');
   assert.deepEqual(m.names,want,'only the eight limb pieces');assert.notDeepEqual(m.withExtra,want,'test of the test: an extra piece was not caught');
   // In their places: as high off the floor as in the put-together avatar (not dropped to the floor), and the same size.
   assert(Math.abs(m.box.min[1]-limbs.lowest)<1e-4,`the calves' bottoms are at ${m.box.min[1]} m, wanted ${limbs.lowest}`);
   for(let k=0;k<3;k++)assert(Math.abs(m.box.max[k]-m.box.min[k]-size[k])<1e-4,`size along ${'xyz'[k]} is ${m.box.max[k]-m.box.min[k]}, wanted ${size[k]}`);
-  results.push(`${w}px: ${m.names.length} pieces (${m.names.join(', ')}), the calves' bottoms ${(m.box.min[1]*100).toFixed(1)} cm off the floor, ${(size[0]*100).toFixed(1)} × ${(size[1]*100).toFixed(1)} × ${(size[2]*100).toFixed(1)} cm, no Our avatar, no errors; an extra piece is caught`);
+  results.push(`${w}px: ${m.names.length} pieces (${m.names.join(', ')}), the calves' bottoms ${(m.box.min[1]*100).toFixed(1)} cm off the floor, ${(size[0]*100).toFixed(1)} × ${(size[1]*100).toFixed(1)} × ${(size[2]*100).toFixed(1)} cm, then the torso and both shoulder balls; no Our avatar, no errors; an extra piece is caught`);
   await page.close();}
 }finally{await browser.close();server.close();}
-console.log(results.join('\n'));console.log('PASS: the Put together tab shows only the eight limb pieces, in their places.');
+console.log(results.join('\n'));console.log('PASS: the Put together tab shows only the eight limb pieces, in their places, and the torso with both shoulder balls.');

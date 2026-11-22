@@ -26,7 +26,7 @@ import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
-import {separatedOriginalBody,limbsOnlyBody} from '../avatar-v2/original-body.js';
+import {separatedOriginalBody,pressedPreviewBody,limbsOnlyBody,torsoShoulderBalls} from '../avatar-v2/original-body.js';
 import {elbowTest,ELBOW_TEST_POSES,CLOSER_DEPTHS,CLAY_LIP} from '../avatar-v2/elbow-test.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
@@ -94,17 +94,20 @@ GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put togethe
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 // Only the upper arms, forearms, thighs and calves (owner, 22 November 2026: "take away every part minus the upper
 // arm, forearm, thighs and calves"), each exactly where and how it is when he is put together.
-const together=limbsOnlyBody('boy');
-GROUPS.push({id:'together',label:'Put together',intro:'Only his upper arms, forearms, thighs and calves, each exactly where and how it is when he is put together. Everything else is taken away.',
+// Next to them, his torso and both shoulder balls side by side, not pressed together (owner, 22 November 2026: "get
+// the torso and the ball next to each other but not together, u can do both sides").
+const pressed=pressedPreviewBody('boy'),together=limbsOnlyBody('boy',pressed),mix=separatedOriginalBody('boy'),shoulderPair=torsoShoulderBalls('boy',{pressed,apart:mix});
+GROUPS.push({id:'together',label:'Put together',intro:'Only his upper arms, forearms, thighs and calves, each exactly where and how it is when he is put together. Next to them, his torso and both shoulder balls, side by side but not pressed together.',
  items:[{id:'together-boy',label:'Boy · limbs only',tag:'Boy',note:`His ${together.parts.length} limb pieces, in their places. ${(together.height*100).toFixed(0)} cm from the bottom of the calves to the top of the upper arms.`,
-  parts:together.parts.map(p=>({name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+  parts:together.parts.map(p=>({name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
+  {id:'torso-shoulders',label:'Torso · shoulder balls',tag:'Torso',note:`His torso, exactly as when he is put together, and both shoulder balls (${(shoulderPair.balls[0].radius*200).toFixed(1)} cm, their usual size and height) beside it, not pressed in: each ${(shoulderPair.clear*100).toFixed(1)} cm clear of the torso.`,
+  parts:shoulderPair.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const elbowItems=[];
 for(const share of CLOSER_DEPTHS){const e=elbowTest(share,'boy',{lip:CLAY_LIP}),name=`${Math.round(share*100)}% deep`;
  for(const deg of ELBOW_TEST_POSES)elbowItems.push({id:`elbow-${Math.round(share*100)}-${deg}`,label:`${name} · ${deg?deg+'°':'straight'}`,tag:`${Math.round(share*100)}% ${deg}°`,
   note:`${name}: the ball sits ${(e.depth*100).toFixed(1)} cm into each limb (its radius is ${(e.radius*100).toFixed(1)} cm), with thick clay wrapped around it. ${deg?'Forearm folded forward '+deg+'°.':'Straight.'} Sockets snug (6 mm); folds to 120° without touching.`,
   parts:e.pose(deg).map(p=>({name:p.name,geometry:geometryOf(p),y:0}))});}
 GROUPS.push({id:'elbow-test',label:'Elbow test',intro:'One elbow (his left), the limbs pressed closer with thick clay around the hard ball, three depths: the ball sits 70%, 80% or 90% of its radius into each limb, the clay staying thick around it like pushed clay. Each shown straight, bent 90° and bent 120°.',items:elbowItems});
-const mix=separatedOriginalBody('boy');
 GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet with the original avatar\'s limbs (each 10% longer, calves 50 cm), every piece separated and the original neck removed, with a ball at every joint: as thick as the ends it joins (shoulders, neck and hips 10% bigger, wrists and ankles 10% smaller), 300 triangles each.',
  items:[{id:'original-boy',label:'Boy · pieces and joint balls',tag:'Boy',face:mix.face,ground:true,note:`Balls: neck ${(mix.balls['ball-neck'].radius*200).toFixed(1)} cm (approved size), shoulders ${(mix.balls['ball-shoulder'].radius*200).toFixed(1)}, elbows ${(mix.balls['ball-elbow'].radius*200).toFixed(1)}, wrists ${(mix.balls['ball-wrist'].radius*200).toFixed(1)}, hips ${(mix.balls['ball-hip'].radius*200).toFixed(1)}, knees ${(mix.balls['ball-knee'].radius*200).toFixed(1)}, ankles ${(mix.balls['ball-ankle'].radius*200).toFixed(1)} cm. Balls 2 cm from the torso, every other piece 6 mm from its ball. ${(mix.height*100).toFixed(0)} cm tall with everything apart.`,
   parts:mix.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});

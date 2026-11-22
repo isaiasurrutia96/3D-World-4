@@ -403,10 +403,21 @@ export function pressedPreviewBody(bodyId='boy',press=PREVIEW_PRESS){return sepa
 // arm, forearm, thighs and calves"): the put-together avatar is built as before and everything else is left out,
 // so each limb keeps exactly its place and shape (the limbs' places are worked out from the torso and the balls).
 export const LIMBS_ONLY=['upper-arm','forearm','thigh','calf'];
-export function limbsOnlyBody(bodyId='boy'){
- const whole=pressedPreviewBody(bodyId),parts=whole.parts.filter(p=>LIMBS_ONLY.includes(p.name));
+export function limbsOnlyBody(bodyId='boy',whole=pressedPreviewBody(bodyId)){
+ const parts=whole.parts.filter(p=>LIMBS_ONLY.includes(p.name));
  let lo=Infinity,hi=-Infinity;for(const p of parts)for(let i=1;i<p.positions.length;i+=3){lo=Math.min(lo,p.positions[i]);hi=Math.max(hi,p.positions[i]);}
  return {body:bodyId,parts,height:hi-lo,lowest:lo,whole};
+}
+// The torso and both shoulder balls side by side, not pressed together (owner, 22 November 2026: "get the torso and
+// the ball next to each other but not together, u can do both sides"): the put-together torso exactly as it is, and
+// each shoulder ball (its put-together size, height and depth) where the separated avatar has it: pushed straight
+// out until it clears the torso by the approved 2 cm (SHOULDER_TORSO_GAP). `clear`: the measured space between the
+// torso's surface and each ball.
+export function torsoShoulderBalls(bodyId='boy',{pressed=pressedPreviewBody(bodyId),apart=separatedOriginalBody(bodyId)}={}){
+ const torso=pressed.parts.find(p=>p.name==='torso'),balls=apart.parts.filter(p=>p.name==='ball-shoulder');
+ const b=balls.find(p=>p.side==='left'),T=torso.positions;let near=Infinity;
+ for(let i=0;i<T.length;i+=3)near=Math.min(near,Math.hypot(T[i]-b.centre[0],T[i+1]-b.centre[1],T[i+2]-b.centre[2]));
+ return {body:bodyId,parts:[torso,...balls],torso,balls,clear:near-b.radius};
 }
 
 /**
