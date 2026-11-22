@@ -134,8 +134,8 @@ weapon parts, Codex builds how they work.
    as the stock body. The concept takes its cues from the 2026 Porsche 911 GT3 R.
    [GT Kart stock lineup](styles/gt-kart-stock-lineup-review.png) ·
    [Porsche Motorsport reference](https://racing.porsche.com/en-US/cars/911-gt3-r-2026)
-6. The F1 stock-body review has twelve numbered concepts on the current
-   prototype proportions. Option 01 is Classic Formula, based on style 1.
+6. On 22 November 2026, the owner selected **F1 option 01, Classic Formula
+   (style 1)**, as the stock body.
    [F1 Kart stock lineup](styles/f1-kart-stock-lineup-review.png)
 7. More models can be added later without changing anything already built,
    because they use the same class base.
