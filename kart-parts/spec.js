@@ -12,7 +12,11 @@
 //  3. Every placed part is checked: it must stay out of the DRIVER ZONE, out
 //     of the wheels and inside the kart's space, for every set-up.
 // Part places were measured from side and top views of the three approved
-// designs (docs/karts/blueprints/), using the wheels as the ruler.
+// designs (docs/karts/blueprints/), using the wheels as the ruler. Those
+// "design units" are scaled per kart (`scale`) to the approved sizes: GoKart
+// small, GT medium, F1 large, all close (owner, 22 Nov 2026, from the size
+// picture with a driver in each kart). Everything returned by the functions
+// below is in real metres.
 
 /** Every kind of part a kart can have. */
 export const SLOTS = Object.freeze({
@@ -53,9 +57,19 @@ const ALL = MODES;
 /** The space every kart must fit in (metres). */
 export const LIMITS = Object.freeze({halfWidth:1.6, maxY:1.7, halfLength:2.3});
 
-/** The main test kart's wheels (racing-lab/src/reference-kart.js). The GoKart
- *  keeps them exactly, so the same driving code can move it. */
-export const MAIN_KART_WHEELS = Object.freeze({radius:.38, width:.29, halfTrack:1.04, frontZ:1.03, rearZ:-1.0});
+/** The avatar's body sizes in metres, measured from its skeleton
+ *  (motion-core/skeleton/bones.js; a test re-reads them from there). Used to
+ *  work out the space a seated driver takes up in each kart. */
+export const AVATAR = Object.freeze({
+  hipToShoulder: .457,   // pelvis joint to the base of the neck
+  hipToHead: .835,       // pelvis joint to the centre of the head
+  headRadius: .22,
+  shoulderHalf: .34,     // shoulder joint plus the upper arm's thickness
+  hipHalf: .24,          // hip joint plus the thigh's thickness
+  legReach: .72,         // thigh, calf and foot, knees bent, forward from the hip
+  kneeRise: .32,         // how far bent knees rise above the hip
+});
+
 
 // Short helpers for writing the data below.
 const box = (min, max) => ({min, max});
@@ -64,8 +78,8 @@ const v = (x, y, z) => [x, y, z];
 /** Part styles. `offset` is from the mount to the centre of the part; `size`
  *  is the part's full width, height and length. For mirrored parts the
  *  offset is for the right side and is flipped for the left. A `shell` part
- *  wraps around the driver's legs (like an F1 nose) and may cover the legs
- *  zone, never the body or head. */
+ *  wraps over the driver's legs (a nose or hood) and may cover the legs
+ *  zone, never the hips, body or head. */
 export const STYLES = Object.freeze({
   nose: {
     'gokart-nose':   {label:'GoKart nose', modes:['gokart'], size:v(.83,.47,1.33), offset:v(0,.225,.335), shell:true},
@@ -73,8 +87,8 @@ export const STYLES = Object.freeze({
     'f1-nose':       {label:'F1 nose', modes:['f1'], size:v(.55,.60,1.35), offset:v(0,.25,.675), shell:true},
   },
   hood: {
-    'gokart-hood':   {label:'GoKart hood', modes:['gokart'], size:v(.75,.12,.60), offset:v(0,.37,0)},
-    'gt-hood':       {label:'GT hood', modes:['gt'], size:v(.99,.38,.70), offset:v(0,.35,0)},
+    'gokart-hood':   {label:'GoKart hood', modes:['gokart'], size:v(.75,.12,.60), offset:v(0,.37,0), shell:true},
+    'gt-hood':       {label:'GT hood', modes:['gt'], size:v(.99,.38,.70), offset:v(0,.35,0), shell:true},
   },
   frontBumper: {
     'tube-bumper':   {label:'Tube bumper', modes:['gokart'], size:v(1.09,.10,.55), offset:v(0,-.04,.205)},
@@ -86,7 +100,7 @@ export const STYLES = Object.freeze({
     'slim-front-wing':{label:'Slim front wing', modes:['gt','f1'], size:v(1.30,.08,.30), offset:v(0,.04,.20)},
   },
   sidePanels: {
-    'gokart-pods':   {label:'GoKart side panels', modes:['gokart'], size:v(.31,.41,1.30), offset:v(-.065,.125,0)},
+    'gokart-pods':   {label:'GoKart side panels', modes:['gokart'], size:v(.31,.41,1.16), offset:v(-.065,.125,0)},
     'gt-skirts':     {label:'GT side skirts', modes:['gt'], size:v(.19,.45,.75), offset:v(-.015,.185,0)},
     'f1-pods':       {label:'F1 side pods', modes:['f1'], size:v(.45,.64,1.03), offset:v(.135,.32,0)},
   },
@@ -96,7 +110,8 @@ export const STYLES = Object.freeze({
     'slim-rear':     {label:'Slim rear bumper', modes:ALL, size:v(.60,.20,.18), offset:v(0,.10,-.10)},
   },
   fenders: {
-    'arch':          {label:'Wheel arch', modes:ALL, size:v(.40,.10,.84), offset:v(0,.07,0)},
+    // Wraps over its own wheel (the model's checks prove it clears the tire).
+    'arch':          {label:'Wheel arch', modes:ALL, size:v(.44,.40,1.0), offset:v(0,-.10,0), wrapsWheel:true},
   },
   diffuser: {
     'diffuser':      {label:'Diffuser', modes:ALL, size:v(.80,.12,.30), offset:v(0,0,-.15)},
@@ -105,7 +120,7 @@ export const STYLES = Object.freeze({
     'low-spoiler':   {label:'Low spoiler', modes:ALL, size:v(1.20,.08,.28), offset:v(0,.33,-.18)},
     'ducktail':      {label:'Ducktail spoiler', modes:ALL, size:v(1.00,.10,.20), offset:v(0,.18,-.22)},
     'tall-wing':     {label:'Tall extended wing', modes:ALL, size:v(1.40,.08,.36), offset:v(0,.62,-.42)},
-    'gt-wing':       {label:'GT wing', modes:['gt'], size:v(1.22,.10,.34), offset:v(0,.72,-.12)},
+    'gt-wing':       {label:'GT wing', modes:['gt'], size:v(1.30,.30,.38), offset:v(0,.66,-.12)},
     'f1-wing':       {label:'F1 wing', modes:['f1'], size:v(1.40,.40,.40), offset:v(0,.45,-.25)},
   },
   mudFlaps: {
@@ -126,30 +141,29 @@ const point = (x, y, z, mirrored = false) => ({kind:'point', at:v(x, y, z), mirr
 const EACH_WHEEL = Object.freeze({kind:'eachWheel'});
 const REAR_WHEELS = Object.freeze({kind:'rearWheels'});
 
-/** The three approved base karts. `design` is which style the approved design
- *  uses for each part; every other mount is a place for optional parts.
- *  `driver` is the space the driver's body takes up (boxes). */
+/** The three approved base karts (a fresh set; the old test kart is only for
+ *  driving tests). Numbers are design units, multiplied by `scale`. `design`
+ *  is which style the approved design uses for each part; every other mount
+ *  is a place for optional parts. `seat` is where the driver's hips sit and
+ *  how far the back leans (radians); the driver zone is worked out from it
+ *  and the avatar's body sizes. */
 export const GOKART = Object.freeze({
-  id:'gokart-base', label:'GoKart', mode:'gokart', hasChassis:true,
-  wheels:{front:{radius:.38, width:.29}, rear:{radius:.38, width:.29}, halfTrack:1.04, frontZ:1.03, rearZ:-1.0},
+  id:'gokart-base', label:'GoKart', mode:'gokart', size:'small', scale:.64,
+  wheels:{front:{radius:.38, width:.30}, rear:{radius:.38, width:.34}, halfTrack:.81, frontZ:1.03, rearZ:-1.0},
   frameHeight:.24,
   mounts:{
     nose:point(0,.24,1.0), hood:point(0,.24,.5), frontBumper:point(0,.24,1.42),
     sidePanels:point(.62,.24,.05,true), rearBumper:point(0,.24,-1.16),
-    fenders:EACH_WHEEL, diffuser:point(0,.22,-1.17), wing:point(0,.42,-1.12),
+    fenders:EACH_WHEEL, diffuser:point(0,.22,-1.17), wing:point(0,.42,-1.28),
     mudFlaps:REAR_WHEELS, exhaust:point(0,.42,-1.24), lights:point(0,.40,1.90),
   },
   design:{nose:'gokart-nose', frontBumper:'tube-bumper', sidePanels:'gokart-pods', rearBumper:'gokart-rear'},
-  driver:{
-    body:box(v(-.30,.30,-.92), v(.30,1.05,-.20)),
-    legs:box(v(-.28,.28,-.20), v(.28,.52,1.00)),
-    head:box(v(-.20,1.00,-1.00), v(.20,1.45,-.55)),
-  },
+  seat:{hip:v(0,.64,-.38), recline:.26},
   upgrades:STOCK,
 });
 
 export const GT_GOKART = Object.freeze({
-  id:'gt-base', label:'GT GoKart', mode:'gt', hasChassis:false,
+  id:'gt-base', label:'GT GoKart', mode:'gt', size:'medium', scale:.78,
   wheels:{front:{radius:.38, width:.30}, rear:{radius:.38, width:.30}, halfTrack:.745, frontZ:.79, rearZ:-.76},
   frameHeight:.15,
   mounts:{
@@ -159,30 +173,23 @@ export const GT_GOKART = Object.freeze({
     mudFlaps:REAR_WHEELS, exhaust:point(0,.35,-1.20), lights:point(0,.45,1.78),
   },
   design:{nose:'gt-nose', hood:'gt-hood', frontBumper:'gt-front-bumper', sidePanels:'gt-skirts', rearBumper:'gt-rear', fenders:'arch', wing:'gt-wing'},
-  driver:{
-    body:box(v(-.30,.20,-.40), v(.30,1.00,.10)),
-    legs:box(v(-.28,.18,.10), v(.28,.55,1.00)),
-    head:box(v(-.20,1.00,-.38), v(.20,1.42,.05)),
-  },
+  seat:{hip:v(0,.26,.26), recline:.44},
   upgrades:STOCK,
 });
 
 export const F1_GOKART = Object.freeze({
-  id:'f1-base', label:'F1 GoKart', mode:'f1', hasChassis:false,
-  wheels:{front:{radius:.32, width:.28}, rear:{radius:.38, width:.34}, halfTrack:.755, frontZ:.96, rearZ:-.93},
+  id:'f1-base', label:'F1 GoKart', mode:'f1', size:'large', scale:.84,
+  // Same real wheel size as the GT GoKart (owner): .38 x .78 / .84 design units.
+  wheels:{front:{radius:.38*.78/.84, width:.30}, rear:{radius:.38*.78/.84, width:.36}, halfTrack:.82, frontZ:.96, rearZ:-.93},
   frameHeight:.12,
   mounts:{
     nose:point(0,.30,.70), frontWing:point(0,.10,1.32),
-    sidePanels:point(.45,.15,-.005,true), rearBumper:point(0,.15,-1.35),
+    sidePanels:point(.50,.15,-.005,true), rearBumper:point(0,.15,-1.35),
     fenders:EACH_WHEEL, diffuser:point(0,.15,-1.20), wing:point(0,.75,-1.0),
     mudFlaps:REAR_WHEELS, exhaust:point(0,.40,-1.30), lights:point(0,.50,1.90),
   },
   design:{nose:'f1-nose', frontWing:'f1-front-wing', sidePanels:'f1-pods', wing:'f1-wing'},
-  driver:{
-    body:box(v(-.28,.12,-.32), v(.28,.95,.15)),
-    legs:box(v(-.25,.12,.15), v(.25,.50,1.05)),
-    head:box(v(-.18,.95,-.25), v(.18,1.35,.15)),
-  },
+  seat:{hip:v(0,.26,.35), recline:.61, feetY:.36},// feet rest inside the nose
   upgrades:STOCK,
 });
 
@@ -203,10 +210,10 @@ export function defaultChoices(kart) {
 /** The kart's wheels for a set-up: they stay on the ground and move outward
  *  by the wheel offset. */
 export function wheelsOf(kart, setup = STOCK) {
-  const half = kart.wheels.halfTrack + (setup.wheelOffset ?? 0), out = [];
+  const k = kart.scale, half = kart.wheels.halfTrack*k + (setup.wheelOffset ?? 0), out = [];
   for (const axle of ['front', 'rear']) for (const [side, sign] of [['left', -1], ['right', 1]]) {
-    const {radius, width} = kart.wheels[axle];
-    out.push({id:`${axle}-${side}`, axle, side, radius, width, at:v(sign*half, radius, kart.wheels[`${axle}Z`])});
+    const radius = kart.wheels[axle].radius*k, width = kart.wheels[axle].width*k;
+    out.push({id:`${axle}-${side}`, axle, side, radius, width, at:v(sign*half, radius, kart.wheels[`${axle}Z`]*k)});
   }
   return out;
 }
@@ -219,7 +226,7 @@ function anchorsOf(kart, slot, setup) {
     return wheelsOf(kart, setup).map(w => ({id:w.id, sign:Math.sign(w.at[0]), at:v(w.at[0], 2*w.radius + lift, w.at[2])}));
   if (mount.kind === 'rearWheels')
     return wheelsOf(kart, setup).filter(w => w.axle === 'rear').map(w => ({id:w.side, sign:Math.sign(w.at[0]), at:v(w.at[0], w.radius + lift, w.at[2] - w.radius)}));
-  const [x, y, z] = mount.at;
+  const [x, y, z] = mount.at.map(c => c*kart.scale);
   return mount.mirrored
     ? [{id:'left', sign:-1, at:v(-x, y + lift, z)}, {id:'right', sign:1, at:v(x, y + lift, z)}]
     : [{id:null, sign:1, at:v(x, y + lift, z)}];
@@ -231,9 +238,9 @@ export function placePart(kart, slot, styleId, setup = STOCK) {
   if (!style) throw new Error(`Unknown ${slot} style "${styleId}"`);
   return anchorsOf(kart, slot, setup).map(a => {
     const mirrored = kart.mounts[slot].kind !== 'point' || kart.mounts[slot].mirrored;
-    const dx = mirrored ? a.sign*style.offset[0] : style.offset[0];
+    const k = kart.scale, off = style.offset.map(c => c*k), dx = mirrored ? a.sign*off[0] : off[0];
     return {id:[slot, a.id].filter(Boolean).join('-'), slot, style:styleId, anchor:a.at,
-      centre:v(a.at[0] + dx, a.at[1] + style.offset[1], a.at[2] + style.offset[2]), size:[...style.size]};
+      centre:v(a.at[0] + dx, a.at[1] + off[1], a.at[2] + off[2]), size:style.size.map(c => c*k)};
   });
 }
 
@@ -241,12 +248,37 @@ const boundsOf = ({centre, size}) => ({min:centre.map((c, i) => c - size[i]/2), 
 const EPS = 1e-9;
 /** True when two boxes overlap (touching faces do not count). */
 export const overlaps = (a, b) => a.min.every((m, i) => m < b.max[i] - EPS && b.min[i] < a.max[i] - EPS);
+/** True when a box overlaps a wheel, treated exactly as a cylinder lying
+ *  along X: the X ranges overlap and the box's side view (Y-Z rectangle)
+ *  comes closer to the wheel's centre than its radius. */
+export function hitsWheel(b, w) {
+  const half = w.width/2;
+  if (!(b.min[0] < w.at[0] + half - EPS && w.at[0] - half < b.max[0] - EPS)) return false;
+  const dy = Math.max(b.min[1] - w.at[1], 0, w.at[1] - b.max[1]), dz = Math.max(b.min[2] - w.at[2], 0, w.at[2] - b.max[2]);
+  return dy*dy + dz*dz < w.radius*w.radius - EPS;
+}
 
-/** The driver zone for a set-up (it rises with the body). */
+/** Where the seated driver's joints are (real metres): hips, shoulders and
+ *  head centre, leaning back by the seat's recline. Rises with the body. */
+export function driverPose(kart, setup = STOCK) {
+  const [hx, hy, hz] = kart.seat.hip.map(c => c*kart.scale), r = kart.seat.recline, lift = setup.rideHeight ?? 0;
+  const along = d => v(hx, hy + lift + d*Math.cos(r), hz - d*Math.sin(r));// up and back along the spine
+  return {hip:v(hx, hy + lift, hz), shoulder:along(AVATAR.hipToShoulder), head:along(AVATAR.hipToHead), recline:r};
+}
+
+/** The space the seated driver takes up (boxes, real metres): hips, torso
+ *  with shoulders, legs reaching forward with bent knees, and the head.
+ *  (Arms reaching the steering wheel are not included.) */
 export function driverZones(kart, setup = STOCK) {
-  const lift = setup.rideHeight ?? 0;
-  return Object.fromEntries(Object.entries(kart.driver).map(([name, b]) =>
-    [name, {min:[b.min[0], b.min[1] + lift, b.min[2]], max:[b.max[0], b.max[1] + lift, b.max[2]]}]));
+  const {hip, shoulder, head} = driverPose(kart, setup), A = AVATAR, back = .14, chest = .14;
+  const span = (a, b, pad) => [Math.min(a, b) - pad, Math.max(a, b) + pad];
+  const [tz0, tz1] = span(hip[2], shoulder[2], 0), [ty0] = [hip[1] + .15];
+  return {
+    hips: box(v(-A.hipHalf, hip[1] - .1, hip[2] - back), v(A.hipHalf, hip[1] + .15, hip[2] + chest)),
+    body: box(v(-A.shoulderHalf, ty0, tz0 - back), v(A.shoulderHalf, shoulder[1] + .12, tz1 + chest)),
+    legs: box(v(-A.hipHalf + .02, hip[1] - .08, hip[2]), v(A.hipHalf - .02, hip[1] + A.kneeRise, hip[2] + A.legReach)),
+    head: box(v(-A.headRadius, head[1] - A.headRadius, head[2] - A.headRadius), v(A.headRadius, head[1] + A.headRadius, head[2] + A.headRadius)),
+  };
 }
 
 /** Every reason a part style cannot go on a kart (empty list = it fits). */
@@ -256,12 +288,12 @@ export function fitProblems(kart, slot, styleId, setup = STOCK) {
   if (!style.modes.includes(kart.mode)) return [`${who}: not made for ${kart.mode} karts`];
   if (!kart.mounts[slot]) return [`${who}: this kart has no mount for it`];
   const problems = [], zones = driverZones(kart, setup);
-  const wheels = wheelsOf(kart, setup).map(w => ({id:w.id, ...boundsOf({centre:w.at, size:v(w.width, 2*w.radius, 2*w.radius)})}));
+  const wheels = wheelsOf(kart, setup);
   for (const part of placePart(kart, slot, styleId, setup)) {
     const b = boundsOf(part);
     for (const [zone, z] of Object.entries(zones))
       if (overlaps(b, z) && !(style.shell && zone === 'legs')) problems.push(`${who}: ${part.id} would sit in the driver's ${zone}`);
-    for (const w of wheels) if (overlaps(b, w)) problems.push(`${who}: ${part.id} would hit the ${w.id} wheel`);
+    for (const w of wheels) if (!(style.wrapsWheel && part.id.endsWith(w.id)) && hitsWheel(b, w)) problems.push(`${who}: ${part.id} would hit the ${w.id} wheel`);
     if (b.min[1] < -EPS) problems.push(`${who}: ${part.id} goes below the ground`);
     if (Math.max(Math.abs(b.min[0]), Math.abs(b.max[0])) > LIMITS.halfWidth || b.max[1] > LIMITS.maxY + (setup.rideHeight ?? 0) ||
         Math.max(Math.abs(b.min[2]), Math.abs(b.max[2])) > LIMITS.halfLength) problems.push(`${who}: ${part.id} reaches outside the kart's space`);
@@ -281,6 +313,8 @@ export function layoutKart(kart, choices = defaultChoices(kart), setup = STOCK) 
 export function checkKart(kart, setup = kart.upgrades) {
   const problems = [], fail = text => problems.push(`${kart.id ?? 'kart'}: ${text}`);
   if (!MODES.includes(kart.mode)) fail(`unknown mode "${kart.mode}"`);
+  if (!(kart.scale > 0)) fail('scale must be a positive number');
+  if (!kart.seat?.hip?.every(Number.isFinite) || !Number.isFinite(kart.seat?.recline)) fail('seat needs a hip position and a recline');
   for (const [slot, mount] of Object.entries(kart.mounts ?? {})) {
     if (!SLOTS[slot]) { fail(`unknown part "${slot}"`); continue; }
     if (SLOTS[slot].group !== 'body') fail(`"${slot}" is built with the chassis, not mounted`);

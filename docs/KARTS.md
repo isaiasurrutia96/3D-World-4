@@ -91,3 +91,12 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
    the approved design with lofted bodywork, NACA airfoil wings and
    double-wishbone suspension (`kart-parts/README.md`, D). Shown in the Test
    Lab's Karts section; the body parts stay swappable.
+4. (22 November) **A fresh set of three karts, sized around the avatar.**
+   Owner: the old test kart is only for driving tests; the new set follows
+   the approved pictures. Sizes from the owner's size picture with a driver in
+   each kart: **GoKart small, GT medium, F1 large, all close in size**; the
+   F1 a tiny bit bigger, and **F1 wheels the same size as the GT's**. All
+   three built with the F1's methods (lofting with smooth PCHIP curves, NACA
+   wings, lathe-turned arches and tires). The wavy nose top is fixed. The
+   Test Lab shows all three side by side with a grey driver of the avatar's
+   size in each seat. Waiting for owner review.

@@ -1,21 +1,21 @@
-// Karts (Test Lab): new karts built on the kart parts system (kart-parts/).
-// Shows the three approved karts' part places, measured from their designs:
-// the GoKart with its real chassis, the GT and F1 GoKarts with their wheels
-// (their chassis come later). Part styles can be swapped to see them snap onto
-// the same mount, and the red driver zone shows where no part may go. The main
-// test kart stands beside, unchanged.
+// Karts (Test Lab): the fresh set of three karts (kart-parts/), side by side:
+// GoKart (small), GT GoKart (medium) and F1 GoKart (large). Pick a kart to
+// look closer, swap its part styles, show its part boxes and driver zone, and
+// show a grey driver dummy of the avatar's size in every seat to judge scale.
+//
+// The side panel holds every kart's buttons, built once; other karts' buttons
+// are hidden. (The Test Lab copies this panel once when the page loads and
+// then follows each button's pressed and hidden state, so it must not be
+// rebuilt.)
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import {KARTS, SLOTS, STYLES, stylesFor, defaultChoices, layoutKart} from '../kart-parts/spec.js';
-import {buildChassis, buildWheels, buildOutlines, buildDriverZone, countTriangles} from '../kart-parts/build.js';
-import {buildF1Kart} from '../kart-parts/f1-kart.js';
+import {buildOutlines, buildDriverZone, countTriangles} from '../kart-parts/build.js';
+import {buildKart} from '../kart-parts/models.js';
+import {driverDummy} from '../kart-parts/kart-model.js';
 
-/** Karts whose whole model is built (the others show their chassis or wheels). */
-const MODELS = {f1: buildF1Kart};
-import {createKartFrame} from '../racing-lab/src/reference-kart.js';
-
-const SPACING = 3.8;// metres between the new kart's centre and the main kart's
+const GAP = .9;// metres between neighbouring karts
 const $ = selector => document.querySelector(selector);
 const stage = $('#stage');
 const renderer = new T.WebGLRenderer({antialias: true}); renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
@@ -34,147 +34,141 @@ function tag(text, scale = .16) {
 }
 const dispose = object => object.traverse(o => { o.geometry?.dispose(); if (o.material) [o.material].flat().forEach(m => { m.map?.dispose(); m.dispose(); }); });
 
-// The new kart (rebuilt when the kart or a style changes) and the main kart.
-const newKart = new T.Group(); newKart.name = 'new kart'; newKart.position.x = -SPACING/2; scene.add(newKart);
-const mainKart = createKartFrame(); mainKart.position.x = SPACING/2; scene.add(mainKart);
-mainKart.traverse(o => { if (o.isMesh) o.castShadow = true; });
-const mainTag = tag('Main kart (unchanged)', .13); mainTag.position.set(0, .02, 2.1); mainKart.add(mainTag);
-
-let kart = KARTS[0], choices = defaultChoices(kart), base = null, outlines = null, labels = null, zone = null, kartTag = null;
-let showOutlines = true, showLabels = true, showDriver = true, highlighted = null;
-
-// Each kart's model, driver zone and name tag are built once and kept, so
-// switching karts is instant (a model can take a moment to build on a phone).
-const built = new Map();
-function showBase() {
-  if (!built.has(kart.id)) {
-    const model = MODELS[kart.mode];
-    const b = model ? model(kart) : kart.hasChassis ? buildChassis(kart) : buildWheels(kart); b.traverse(o => { if (o.isMesh) o.castShadow = true; });
-    const t = tag(model ? `New ${kart.label}` : kart.hasChassis ? `New ${kart.label} · chassis` : `New ${kart.label} · wheels and part places`, .13); t.position.set(0, .02, 2.1);
-    const item = {base: b, zone: buildDriverZone(kart), tag: t};
-    newKart.add(item.base, item.zone, item.tag); built.set(kart.id, item);
-  }
-  for (const [id, item] of built) for (const o of [item.base, item.zone, item.tag]) o.visible = id === kart.id;
-  ({base, zone, tag: kartTag} = built.get(kart.id));
+// Build every kart once, side by side, each with its driver dummy and zone.
+const karts = [];
+let cursor = 0;
+for (const kart of KARTS) {
+  const model = buildKart(kart); model.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  const size = new T.Box3().setFromObject(model), width = size.max.x - size.min.x;
+  const group = new T.Group(); group.name = `kart ${kart.id}`;
+  cursor += (karts.length ? GAP : 0) + width/2; group.position.x = cursor; cursor += width/2;
+  const dummy = driverDummy(kart, model.userData.steering), zone = buildDriverZone(kart);
+  const label = tag(kart.label, .13); label.position.set(0, .02, size.max.z + .25);
+  group.add(model, dummy, zone, label); scene.add(group);
+  karts.push({kart, model, dummy, zone, group, size, choices: defaultChoices(kart), outlines: null, labels: null});
 }
-function rebuildOutlines() {// part boxes and one label per kind of part
-  for (const o of [outlines, labels]) if (o) { newKart.remove(o); dispose(o); }
-  outlines = buildOutlines(kart, choices); newKart.add(outlines);
-  labels = new T.Group(); labels.name = 'part labels'; newKart.add(labels);
+for (const k of karts) k.group.position.x -= cursor/2;
+const totalWidth = cursor;
+
+let current = karts[0], showOutlines = false, showLabels = true, showDriver = true, showZone = false, highlighted = null;
+function rebuildOutlines(k) {// part boxes and one label per kind of part, for one kart
+  for (const o of [k.outlines, k.labels]) if (o) { k.group.remove(o); dispose(o); }
+  k.outlines = buildOutlines(k.kart, k.choices); k.group.add(k.outlines);
+  k.labels = new T.Group(); k.labels.name = 'part labels'; k.group.add(k.labels);
   const done = new Set();
-  for (const box of outlines.children) {
+  for (const box of k.outlines.children) {
     const slot = box.userData.slot; if (done.has(slot)) continue; done.add(slot);
-    const size = box.children[0].geometry.parameters, t = tag(SLOTS[slot].label, .085);
-    t.position.copy(box.position).add(new T.Vector3(0, size.height/2 + .08, 0)); t.userData.slot = slot; labels.add(t);
+    const t = tag(SLOTS[slot].label, .07); t.position.copy(box.position).add(new T.Vector3(0, box.children[0].geometry.parameters.height/2 + .06, 0));
+    t.userData.slot = slot; k.labels.add(t);
   }
-  applyVisibility();
 }
 function applyVisibility() {
-  outlines.visible = showOutlines; labels.visible = showOutlines && showLabels; zone.visible = showDriver;
-  for (const box of outlines.children) {
-    const on = highlighted === null || box.userData.slot === highlighted;
-    box.children[0].material.opacity = highlighted === null ? .16 : on ? .45 : .04;
-    box.children[1].material.opacity = on ? 1 : .25;
+  for (const k of karts) {
+    const mine = k === current;
+    k.dummy.visible = showDriver; k.zone.visible = showZone && mine;
+    k.outlines.visible = showOutlines && mine; k.labels.visible = showOutlines && showLabels && mine;
+    for (const box of k.outlines.children) {
+      const on = highlighted === null || box.userData.slot === highlighted;
+      box.children[0].material.opacity = highlighted === null ? .16 : on ? .45 : .04;
+      box.children[1].material.opacity = on ? 1 : .25;
+    }
+    for (const t of k.labels.children) t.visible = highlighted === null || t.userData.slot === highlighted;
   }
-  for (const t of labels.children) t.visible = highlighted === null || t.userData.slot === highlighted;
 }
+for (const k of karts) rebuildOutlines(k);
 
-const slab = new T.Mesh(new T.BoxGeometry(SPACING*2 + 2, .6, 5.6), new T.MeshStandardMaterial({color: '#8f9295', roughness: 1}));
+const slab = new T.Mesh(new T.BoxGeometry(totalWidth + 2.4, .6, 5), new T.MeshStandardMaterial({color: '#8f9295', roughness: 1}));
 slab.position.y = -.3; slab.receiveShadow = true; scene.add(slab);
 scene.add(new T.HemisphereLight(0xffffff, 0xb6b2aa, 2));
 const key = new T.DirectionalLight(0xffffff, 2.4); key.position.set(-4, 7, 5); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
-Object.assign(key.shadow.camera, {left: -5.5, right: 5.5, top: 4, bottom: -4, near: .5, far: 20}); key.shadow.bias = -.0003;
+Object.assign(key.shadow.camera, {left: -5, right: 5, top: 4, bottom: -4, near: .5, far: 20}); key.shadow.bias = -.0003;
 scene.add(key, key.target);
 const fill = new T.DirectionalLight(0xffffff, .9); fill.position.set(5, 3, -4); scene.add(fill);
 
-// Camera: both karts, the new one or the main one. Moves glide.
+// Camera: all three, or the chosen kart. Moves glide.
 const camera = new T.PerspectiveCamera(36, 1, .05, 80), controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.enablePan = false; controls.minDistance = .8; controls.maxDistance = 24;
+controls.enableDamping = true; controls.enablePan = false; controls.minDistance = .6; controls.maxDistance = 20;
 const directions = {front: [0, .25, 1], side: [1, .2, 0], back: [0, .25, -1], top: [0, 1, .0004], angled: [.75, .45, .9]};
-const FOCI = {both: {x: 0, across: SPACING + 3.8}, new: {x: -SPACING/2, across: 4.2}, main: {x: SPACING/2, across: 3.7}};
-let focus = 'both', viewName = 'angled', glide = null;
+let focus = 'all', viewName = 'angled', glide = null;
 function frame() {
-  const f = FOCI[focus], target = new T.Vector3(f.x, .5, 0), half = Math.tan(camera.fov*Math.PI/360);
-  const distance = Math.max(2.4, (f.across/2)/(half*Math.min(1, camera.aspect))*1.05);
-  const dir = new T.Vector3(...directions[viewName]).normalize();
-  glide = {fromPos: camera.position.clone(), fromTarget: controls.target.clone(), toTarget: target, toPos: target.clone().add(dir.multiplyScalar(distance)), t: 0};
+  const one = focus === 'kart', x = one ? current.group.position.x : 0, across = one ? (current.size.max.z - current.size.min.z) + .6 : totalWidth + .8;
+  const target = new T.Vector3(x, .45, 0), half = Math.tan(camera.fov*Math.PI/360);
+  const distance = Math.max(1.6, (across/2)/(half*Math.min(1, camera.aspect))*1.05);
+  glide = {fromPos: camera.position.clone(), fromTarget: controls.target.clone(), toTarget: target, toPos: target.clone().add(new T.Vector3(...directions[viewName]).normalize().multiplyScalar(distance)), t: 0};
 }
 const pressed = (selector, test) => { for (const b of document.querySelectorAll(selector)) b.setAttribute('aria-pressed', String(test(b))); };
-function setFocus(name) { focus = name; newKart.visible = name !== 'main'; mainKart.visible = name !== 'new'; frame(); pressed('[data-focus]', b => b.dataset.focus === name); }
+function setFocus(name) {// looking at one kart hides its neighbours so they never block the view
+  focus = name; for (const k of karts) k.group.visible = name === 'all' || k === current;
+  frame(); pressed('[data-focus]', b => b.dataset.focus === name);
+}
 function view(name) { viewName = name; frame(); pressed('[data-view]', b => b.dataset.view === name); }
 
-// Side panel: kart picker, style swaps and the parts list.
+// Side panel.
 const button = (host, text, data, onclick) => {
   const b = document.createElement('button'); b.textContent = text; b.setAttribute('aria-pressed', 'false');
   Object.assign(b.dataset, data); b.onclick = onclick; host.append(b); return b;
 };
-const intro = () => `${kart.label}: part places measured from the approved design. Teal = parts of the design, amber = optional parts, red = would not fit. The red see-through boxes are the driver zone, where no part may go. Swap a style below to see it snap onto the same spot.`;
+const mine = selector => `[data-for="${current.kart.id}"]${selector}`;
+const intro = () => `${current.kart.label} (${current.kart.size}): built from the approved design, sized around the avatar (grey driver). Swap a part style below to see it snap onto the same spot. Part boxes: teal = the design's parts, amber = optional parts.`;
 function info() {
-  const parts = layoutKart(kart, choices), boxes = parts.reduce((n, p) => n + p.boxes.length, 0);
-  const tris = MODELS[kart.mode] ? ` · whole kart ${Math.round(countTriangles(base)).toLocaleString()} triangles` : kart.hasChassis ? ` · chassis ${Math.round(countTriangles(base)).toLocaleString()} triangles` : '';
-  const wb = (kart.wheels.frontZ - kart.wheels.rearZ).toFixed(2);
-  $('#info').textContent = `${parts.length} kinds of parts, ${boxes} boxes · wheelbase ${wb} m${tris}${kart.hasChassis ? ' · wheels in the same places as the main kart' : ''}.`;
+  const b = current.size;
+  $('#info').textContent = `${Math.round(countTriangles(current.model)).toLocaleString()} triangles · ${(b.max.z - b.min.z).toFixed(2)} m long, ${(b.max.x - b.min.x).toFixed(2)} m wide.`;
 }
-// The side panel holds every kart's buttons, built once; buttons of other
-// karts are hidden. (The Test Lab copies this panel once when the page loads
-// and then follows each button's pressed and hidden state, so the panel must
-// not be rebuilt.)
-const mine = selector => `[data-for="${kart.id}"]${selector}`;
 function selectStyle(slot, id) {
-  choices = {...choices, [slot]: id}; rebuildOutlines(); info();
+  current.choices = {...current.choices, [slot]: id}; rebuildOutlines(current);
+  showOutlines = true; pressed('#toggle-outlines', () => showOutlines); applyVisibility();
   pressed(mine(`[data-swap="${slot}"]`), b => b.dataset.style === id);
-  const problems = layoutKart(kart, choices).find(p => p.slot === slot).problems;
-  $('#note').textContent = problems.length ? problems.join(' ') : `${SLOTS[slot].label}: ${STYLES[slot][id].label} snapped onto the ${SLOTS[slot].label.toLowerCase()} mount.`;
+  const problems = layoutKart(current.kart, current.choices).find(p => p.slot === slot).problems;
+  $('#note').textContent = problems.length ? problems.join(' ') : `${SLOTS[slot].label}: ${STYLES[slot][id].label} snapped onto the ${SLOTS[slot].label.toLowerCase()} mount (its box is shown).`;
 }
 function highlight(slot) {
-  highlighted = highlighted === slot ? null : slot; applyVisibility();
+  highlighted = highlighted === slot ? null : slot; if (highlighted) showOutlines = true; pressed('#toggle-outlines', () => showOutlines); applyVisibility();
   pressed(mine('[data-part]'), b => b.dataset.part === highlighted);
   $('#note').textContent = highlighted ? `${SLOTS[highlighted].label}: ${SLOTS[highlighted].note}` : intro();
 }
-function setKart(id) {
-  kart = KARTS.find(k => k.id === id) ?? KARTS[0]; choices = defaultChoices(kart); highlighted = null;
-  // A finished model starts with its boxes and driver zone hidden, so the kart itself shows.
-  showOutlines = showDriver = !MODELS[kart.mode];
-  pressed('#toggle-outlines', () => showOutlines); pressed('#toggle-driver', () => showDriver);
-  showBase(); rebuildOutlines(); info();
-  pressed('[data-kart]', b => b.dataset.kart === kart.id);
-  for (const el of document.querySelectorAll('[data-for]')) el.hidden = el.dataset.for !== kart.id;
-  for (const slot of Object.keys(kart.mounts)) pressed(mine(`[data-swap="${slot}"]`), b => b.dataset.style === choices[slot]);
+function setKart(id, look = true) {
+  current = karts.find(k => k.kart.id === id) ?? karts[0]; highlighted = null;
+  pressed('[data-kart]', b => b.dataset.kart === current.kart.id);
+  for (const el of document.querySelectorAll('[data-for]')) el.hidden = el.dataset.for !== current.kart.id;
+  for (const slot of Object.keys(current.kart.mounts)) pressed(mine(`[data-swap="${slot}"]`), b => b.dataset.style === current.choices[slot]);
   pressed(mine('[data-part]'), () => false);
-  $('#note').textContent = intro();
+  applyVisibility(); info(); $('#note').textContent = intro();
+  if (look) setFocus('kart'); else if (focus === 'kart') setFocus('kart');
 }
-for (const k of KARTS) {
-  button($('#karts'), k.label, {kart: k.id}, () => setKart(k.id));
-  for (const slot of Object.keys(k.mounts)) {
-    const ids = stylesFor(k, slot); if (ids.length < 2) continue;
-    const row = document.createElement('section'); row.className = 'swap'; row.dataset.for = k.id;
+for (const k of karts) {
+  const kart = k.kart;
+  button($('#karts'), kart.label, {kart: kart.id}, () => setKart(kart.id));
+  for (const slot of Object.keys(kart.mounts)) {
+    const ids = stylesFor(kart, slot); if (ids.length < 2) continue;
+    const row = document.createElement('section'); row.className = 'swap'; row.dataset.for = kart.id;
     const name = document.createElement('p'); name.textContent = SLOTS[slot].label; row.append(name);
-    for (const styleId of ids) button(row, STYLES[slot][styleId].label, {for: k.id, swap: slot, style: styleId}, () => selectStyle(slot, styleId));
+    for (const styleId of ids) button(row, STYLES[slot][styleId].label, {for: kart.id, swap: slot, style: styleId}, () => selectStyle(slot, styleId));
     $('#swaps').append(row);
   }
-  for (const slot of Object.keys(k.mounts)) button($('#parts'), SLOTS[slot].label + (k.design[slot] ? '' : ' (optional)'), {for: k.id, part: slot}, () => highlight(slot));
+  for (const slot of Object.keys(kart.mounts)) button($('#parts'), SLOTS[slot].label + (kart.design[slot] ? '' : ' (optional)'), {for: kart.id, part: slot}, () => highlight(slot));
 }
-const toggle = (id, get, set) => { const b = $(id); b.onclick = () => { set(!get()); b.setAttribute('aria-pressed', String(get())); applyVisibility(); }; };
+const toggle = (id, get, set) => { const b = $(id); b.setAttribute('aria-pressed', String(get())); b.onclick = () => { set(!get()); b.setAttribute('aria-pressed', String(get())); applyVisibility(); }; };
+toggle('#toggle-driver', () => showDriver, v => { showDriver = v; });
 toggle('#toggle-outlines', () => showOutlines, v => { showOutlines = v; });
 toggle('#toggle-labels', () => showLabels, v => { showLabels = v; });
-toggle('#toggle-driver', () => showDriver, v => { showDriver = v; });
+toggle('#toggle-zone', () => showZone, v => { showZone = v; });
 for (const b of document.querySelectorAll('[data-focus]')) b.onclick = () => setFocus(b.dataset.focus);
 for (const b of document.querySelectorAll('[data-view]')) b.onclick = () => view(b.dataset.view);
 controls.addEventListener('start', () => { glide = null; pressed('[data-view]', () => false); });
 
 function resize() { const {width, height} = stage.getBoundingClientRect(); if (!width || !height) return; camera.aspect = width/height; camera.fov = camera.aspect < .7 ? 50 : 36; camera.updateProjectionMatrix(); renderer.setSize(width, height); }
 new ResizeObserver(resize).observe(stage); resize();
-setKart(KARTS[0].id); setFocus('both'); view('angled');
+setKart(karts[0].kart.id, false); setFocus('all'); view('angled');
 camera.position.copy(glide.toPos); controls.target.copy(glide.toTarget); glide = null; controls.update();
 installTestLabScene({scene, camera, renderer, floors: [slab], getTarget: () => controls.target, updateControls: () => controls.update()});
 
 let last = 0;
 renderer.setAnimationLoop(ms => {
   const dt = Math.min(1/30, last ? (ms - last)/1000 : 0); last = ms;
-  if (glide) { glide.t = Math.min(1, glide.t + dt/.35); const k = glide.t*glide.t*(3 - 2*glide.t);
-    camera.position.lerpVectors(glide.fromPos, glide.toPos, k); controls.target.lerpVectors(glide.fromTarget, glide.toTarget, k); if (glide.t >= 1) glide = null; }
+  if (glide) { glide.t = Math.min(1, glide.t + dt/.35); const e = glide.t*glide.t*(3 - 2*glide.t);
+    camera.position.lerpVectors(glide.fromPos, glide.toPos, e); controls.target.lerpVectors(glide.fromTarget, glide.toTarget, e); if (glide.t >= 1) glide = null; }
   controls.update(); renderer.render(scene, camera);
 });
-window.kartLab = {scene, camera, controls, renderer, mainKart, newKart, setKart, selectStyle, setFocus, view, highlight,
-  get kart() { return kart; }, get choices() { return choices; }, built, get base() { return base; }, get outlines() { return outlines; }, get zone() { return zone; }, getFocus: () => focus};
+window.kartLab = {scene, camera, controls, renderer, karts, setKart, selectStyle, setFocus, view, highlight,
+  get kart() { return current.kart; }, get current() { return current; }, get choices() { return current.choices; }, getFocus: () => focus};
 $('#loading').hidden = true; window.kartLabReady = true;
