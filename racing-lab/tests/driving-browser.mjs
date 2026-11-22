@@ -264,6 +264,98 @@ try {
     await pressOption(mobile, '#reset');
     await mobile.screenshot({path:'/tmp/driving-landscape.png'});
     results.push('Landscape phone: simultaneous Right + Gas and touch cancellation still work after rotation.');
+
+    await mobile.addInitScript(() => {
+        const Audio = window.AudioContext;
+        window.engineAudioProbe = { created: 0 };
+        if (!Audio) return;
+        window.AudioContext = class extends Audio {
+            constructor(options) {
+                super(options);
+                engineAudioProbe.created++;
+                engineAudioProbe.context = this;
+            }
+            createGain() {
+                const node = super.createGain();
+                engineAudioProbe.gain = node.gain;
+                return node;
+            }
+            createOscillator() {
+                const node = super.createOscillator();
+                engineAudioProbe.frequency = node.frequency;
+                return node;
+            }
+        };
+    });
+    await mobile.goto(base + '&track=suzuka&kart=f1');
+    await mobile.waitForFunction(() => window.drivingLabReady && window.motionLabReady);
+    const kartMenu = mobile.locator('#driving-kart');
+    assert.equal(await kartMenu.inputValue(), 'f1');
+    assert.equal(await mobile.evaluate(() => drivingLab.getState().f1Tune), 'early');
+    assert.equal(await mobile.evaluate(() => drivingLab.getState().fingerprint), 'kart-v1-a86c3ae8d1936d52');
+    assert(await mobile.locator('#drive-f1-revs').isHidden());
+    await mobile.evaluate(() => { window.comparisonKart = drivingLab.kart.root; });
+    await kartMenu.selectOption('f1-2026');
+    await mobile.waitForFunction(() => drivingLab.getState().f1Tune === '2026');
+    assert(await mobile.evaluate(() => drivingLab.kart.root === comparisonKart && drivingLab.getState().trackId === 'suzuka' && drivingLab.getState().prototype === 'f1'));
+    assert.match(await mobile.locator('#drive-f1-revs').textContent(), /^Gear [N1-8] · \d+ rpm$/);
+    assert.equal(await mobile.locator('#drive-f1-systems').textContent(), 'Corner aero · 100% charge');
+    assert.equal(await mobile.locator('#race-boost').textContent(), 'Overtake');
+    assert.equal(await mobile.evaluate(() => engineAudioProbe.created), 0);
+
+    for (const viewport of [{width: 320, height: 568}, {width: 390, height: 844}, {width: 568, height: 320}, {width: 844, height: 390}]) {
+        await mobile.setViewportSize(viewport);
+        await mobile.evaluate(() => scrollTo(0, 0));
+        await settle(mobile);
+        assert(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        assert((await mobile.locator('#stage').boundingBox()).y <= 120, 'F1 controls fit into the compact header');
+        for (const selector of ['#race-track', '#driving-kart', '#race-sound', '#reset', '#race-gas', '#race-boost']) {
+            const target = mobile.locator(selector);
+            const box = await target.boundingBox();
+            assert(box.width >= 44 && box.height >= 44 && box.x >= 0 && box.x + box.width <= viewport.width && box.y + box.height <= viewport.height, JSON.stringify({selector, viewport, box}));
+            assert(await target.evaluate(button => {
+                const b = button.getBoundingClientRect();
+                return button.contains(document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2));
+            }), `${selector} must stay reachable`);
+        }
+    }
+    await mobile.setViewportSize({width: 390, height: 844});
+    await settle(mobile);
+    const sound = mobile.getByRole('button', {name: 'Engine sound'});
+    await sound.tap();
+    await mobile.waitForFunction(() => engineAudioProbe.context?.state === 'running');
+    assert.equal(await sound.getAttribute('aria-pressed'), 'true');
+    assert.equal(await mobile.evaluate(() => engineAudioProbe.gain.value), 0);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[await touch('gas', 35), await touch('boost', 36)]});
+    await mobile.waitForFunction(() => drivingLab.getState().physics.speed > 5 && engineAudioProbe.gain.value > .02 && engineAudioProbe.frequency.value > 60);
+    await mobile.waitForFunction(() => drivingLab.getState().physics.handling.formula.energyJ < 3_980_000);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+    await mobile.evaluate(() => window.dispatchEvent(new Event('blur')));
+    await mobile.waitForFunction(() => engineAudioProbe.gain.value < .001);
+    await mobile.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await pressOption(mobile, '#reset');
+    assert.equal(await mobile.locator('#drive-speed').textContent(), '0 mph');
+    assert.equal(await mobile.locator('#drive-f1-systems').textContent(), 'Corner aero · 100% charge');
+    await sound.tap();
+    await mobile.waitForFunction(() => engineAudioProbe.context.state === 'closed');
+
+    await mobile.locator('#race-track').selectOption('parked-karts');
+    assert(await kartMenu.isDisabled());
+    assert(await sound.isHidden());
+    assert(await mobile.locator('#drive-f1-revs').isHidden());
+    await mobile.locator('#race-track').selectOption('suzuka');
+    assert.equal(await kartMenu.inputValue(), 'f1-2026');
+    await kartMenu.selectOption('f1');
+    assert.equal(await mobile.evaluate(() => drivingLab.getState().f1Tune), 'early');
+    assert(await mobile.evaluate(() => drivingLab.kart.root === comparisonKart && drivingLab.getState().trackId === 'suzuka'));
+    assert(await sound.isHidden());
+    assert.equal(await mobile.locator('#race-boost').textContent(), 'Boost');
+    await mobile.goto(base + '&track=suzuka&kart=f1&f1Tune=2026');
+    await mobile.waitForFunction(() => window.drivingLabReady && window.motionLabReady);
+    assert.equal(await kartMenu.inputValue(), 'f1-2026');
+    assert.equal(await mobile.evaluate(() => drivingLab.getState().f1Tune), '2026');
+    assert.equal(await mobile.evaluate(() => engineAudioProbe.created), 0);
+    results.push('F1 phone comparison: both tunes share the kart and circuit, compact controls stay reachable, gear and charge are visible, and sound is opt-in and stops on blur.');
     await mkdir('/tmp/driving-test-shots', { recursive: true });
     await p.screenshot({ path: '/tmp/driving-test-shots/desktop.png' });
     assert.deepEqual(errors, []);

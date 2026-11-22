@@ -6,6 +6,7 @@ import { KART_PROTOTYPES, PROTOTYPE_HANDLING, isKartPrototype } from '../kart/pr
 import type { PrototypeId } from '../kart/prototypes.ts';
 import { createPrototypeLapClock } from './prototype-laps.ts';
 import { resolveKartProfile } from '../kart/profiles.ts';
+import { F1_2026_PROFILE } from '../kart/f1-2026-profile.ts';
 import type { KartProfile, ProfileId } from '../kart/profiles.ts';
 import type { KartInput, InputScript } from '../kart/index.ts';
 import { trackBarriers } from '../contacts/index.ts';
@@ -13,6 +14,7 @@ import { createKartContactResolver } from '../contacts/karts.ts';
 import { createParkedKartController, PARKED_KARTS } from './parked-karts.ts';
 export { TRACK_IDS, PARKED_KARTS };
 export type DrivingSelection = TrackId | typeof PARKED_KARTS;
+export type F1Tune = 'early' | '2026';
 export type DrivingSample = Readonly<{
     moveX?: number;
     moveZ?: number;
@@ -56,17 +58,21 @@ export function readDrivingInput(sample: DrivingSample, cameraYaw: number): Kart
 export function createDrivingTest(initialSelection: DrivingSelection = 'original', options: Readonly<{
     profile?: ProfileId | KartProfile;
     prototype?: PrototypeId;
+    f1Tune?: F1Tune;
 }> = {}) {
     const originalProfile = resolveKartProfile(options.profile);
     const kart = options.prototype;
+    const f1Tune = options.f1Tune ?? 'early';
     if (kart !== undefined && !isKartPrototype(kart)) throw new RangeError('Unknown kart prototype');
+    if (f1Tune !== 'early' && f1Tune !== '2026') throw new RangeError('Unknown F1 tune');
     const empty = Object.freeze([]);
     function createScenario(selection: DrivingSelection) {
         const isParked = selection === PARKED_KARTS;
         const track = createTrack(isParked ? 'original' : selection);
         const prototype = isParked ? undefined : kart;
         const geometry = prototype ? KART_PROTOTYPES[prototype] : undefined;
-        const profile = prototype ? PROTOTYPE_HANDLING[prototype] : originalProfile;
+        const profile = prototype === 'f1' && f1Tune === '2026' ? F1_2026_PROFILE
+            : prototype ? PROTOTYPE_HANDLING[prototype] : originalProfile;
         const parked = isParked ? createParkedKartController(track, profile) : null;
         const footprint = geometry && Object.freeze({
             radius: geometry.width / 2,
@@ -114,6 +120,7 @@ export function createDrivingTest(initialSelection: DrivingSelection = 'original
                 selection, trackId: track.id, profile: profile.id, fingerprint: profile.fingerprint,
                 karts: 1 + parkedKarts.length, avatars: 0, opponents: 0, parkedKarts,
                 ...(prototype ? { prototype, lap: clock?.read(controller.clock.seconds) } : {}),
+                ...(prototype === 'f1' ? { f1Tune } : {}),
                 physics: controller.state, clock: controller.clock, pose: controller.sample(),
             });
         },

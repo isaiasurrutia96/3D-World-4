@@ -1,4 +1,5 @@
 import { sampleDrivingPedals } from './driving-pedals.js';
+import { F1_2026_SYSTEMS } from '../../racing-core/kart/f1-2026-systems.ts';
 import { DRIVING_PROFILES } from '../../racing-core/kart/profiles.ts';
 import { KART_PROTOTYPES, isKartPrototype } from '../../racing-core/kart/prototypes.ts';
 import { createDrivingTest, TRACK_IDS, PARKED_KARTS, readDrivingInput } from '../../racing-core/testing/drive.ts';
@@ -7,7 +8,10 @@ import { createOriginalKartView } from './kart-view.js';
 import { createPrototypeKartView } from './prototype-kart-view.js';
 import { bindDrivingButtons } from './driving-controls.js';
 import { FPV, createDrivingCameraRig } from './driving-camera.js';
+import { createF1EngineAudio } from './f1-engine-audio.js';
 const $ = s => document.querySelector(s);
+const F1_2026_OPTION = 'f1-2026';
+const showText = (element, text) => { if (element.textContent !== text) element.textContent = text; };
 export function createDrivingSimulation({ scene, stage, floor }) {
     document.body.classList.add('driving-test-page');
     floor.visible = false;
@@ -16,7 +20,8 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     const selection = TRACK_IDS.includes(requested) || requested === PARKED_KARTS ? requested : 'original';
     const requestedKart = params.get('kart');
     let prototype = isKartPrototype(requestedKart) ? requestedKart : undefined;
-    let test = createDrivingTest(selection, { profile, prototype });
+    let f1Tune = params.get('f1Tune') === '2026' ? '2026' : 'early';
+    let test = createDrivingTest(selection, { profile, prototype, f1Tune });
     const original = createOriginalKartView();
     const views = new Map();
     let kart = original;
@@ -38,16 +43,45 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     kartPicker.innerHTML = 'Kart <select id="driving-kart" aria-label="Choose kart"></select>';
     const kartSelect = kartPicker.querySelector('select');
     kartSelect.append(new Option('Original Kart', 'original'));
-    for (const [id, dimensions] of Object.entries(KART_PROTOTYPES))
-        kartSelect.append(new Option(dimensions.label, id));
+    for (const [id, dimensions] of Object.entries(KART_PROTOTYPES)) {
+        if (id === 'f1') {
+            const f1Options = document.createElement('optgroup');
+            f1Options.label = dimensions.label;
+            f1Options.append(new Option('Early F1', id), new Option('2026 F1', F1_2026_OPTION));
+            kartSelect.append(f1Options);
+        } else kartSelect.append(new Option(dimensions.label, id));
+    }
     picker.after(kartPicker);
+
+    const engineAudio = createF1EngineAudio();
+    const sound = document.createElement('button');
+    sound.id = 'race-sound';
+    sound.type = 'button';
+    sound.textContent = 'Sound';
+    sound.setAttribute('aria-label', 'Engine sound');
+    sound.setAttribute('aria-pressed', 'false');
+    sound.hidden = true;
+    sound.onclick = () => {
+        if (engineAudio.enabled) engineAudio.disable();
+        else engineAudio.enable(test.controller.state.handling?.formula?.rpm ?? 0);
+        sync();
+    };
+    $('#reset').before(sound);
 
     function showKart() {
         kart.root.visible = false;
         const isParked = test.selection === PARKED_KARTS;
         const id = isParked ? undefined : prototype;
+        const is2026 = id === 'f1' && f1Tune === '2026';
         kartSelect.disabled = isParked;
-        kartSelect.value = id ?? 'original';
+        kartSelect.value = is2026 ? F1_2026_OPTION : id ?? 'original';
+        sound.hidden = !is2026 || !engineAudio.available;
+        $('#topbar').classList.toggle('with-f1-sound', !sound.hidden);
+        stage.classList.toggle('with-formula-hud', is2026);
+        if (is2026) hud.setAttribute('aria-live', 'off');
+        else hud.removeAttribute('aria-live');
+        revsDisplay.hidden = systemsDisplay.hidden = !is2026;
+        boost.textContent = is2026 ? 'Overtake' : 'Boost';
         if (id && !views.has(id)) {
             const made = createPrototypeKartView(id);
             scene.add(made.root);
@@ -61,7 +95,11 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     const hud = document.createElement('output');
     hud.className = 'race-hud';
     hud.setAttribute('aria-label', 'Driving information');
-    hud.innerHTML = '<strong id="drive-speed">0 mph</strong><span id="drive-state">Ready</span>';
+    hud.innerHTML = '<strong id="drive-speed">0 mph</strong><span id="drive-state">Ready</span><span id="drive-f1-revs" hidden></span><span id="drive-f1-systems" hidden></span>';
+    const speedDisplay = hud.querySelector('#drive-speed');
+    const stateDisplay = hud.querySelector('#drive-state');
+    const revsDisplay = hud.querySelector('#drive-f1-revs');
+    const systemsDisplay = hud.querySelector('#drive-f1-systems');
     const lapDisplay = document.createElement('span');
     lapDisplay.hidden = true;
     hud.append(lapDisplay);
@@ -96,12 +134,27 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     } drawn = test.track; view = createCheckedTrackView(drawn); line = createStartLine(drawn); scene.add(view.root, line); api.cameraObstacles = view.root.children.slice(0, 3); }
     function reset() {
         holds?.clear();
+        engineAudio.mute();
         test.reset();
         pose = test.sample();
         draw();
         showKart();
         picker.querySelector('select').value = test.selection;
         sync();
+    }
+    function showFormulaSystems(formula, speed, throttle) {
+        const enabled = String(engineAudio.enabled);
+        if (sound.getAttribute('aria-pressed') !== enabled) sound.setAttribute('aria-pressed', enabled);
+        if (!formula) { engineAudio.mute(); return; }
+
+        const gear = formula.gear < 0 ? 'R' : formula.gear === 0 ? 'N' : formula.gear;
+        const aero = formula.aeroOpening === 0 ? 'Corner' : formula.aeroOpening === 1 ? 'Straight' : 'Moving';
+        const charge = Math.round(formula.energyJ / F1_2026_SYSTEMS.energyCapacityJ * 100);
+        showText(revsDisplay, `Gear ${gear} · ${Math.round(formula.rpm / 100) * 100} rpm`);
+        showText(systemsDisplay, `${aero} aero · ${charge}% charge`);
+        if (bindings?.input.focused && bindings.input.enabled && !document.hidden && pose.y >= -10)
+            engineAudio.update({ rpm: formula.rpm, throttle, speed });
+        else engineAudio.mute();
     }
     function sync() {
         const lap = test.lap;
@@ -112,7 +165,25 @@ export function createDrivingSimulation({ scene, stage, floor }) {
             const lapText = current + best;
             if (lapDisplay.textContent !== lapText) lapDisplay.textContent = lapText;
         }
-        const h = test.controller.state.handling; if (debug) debug.textContent = h ? `${test.controller.profile.label} · ${Math.hypot(pose.speed,pose.lateralSpeed).toFixed(1)} m/s\nAcceleration ${h.acceleration.toFixed(2)} m/s² · braking ${h.brakingG.toFixed(2)} G\nSideways ${h.lateralG.toFixed(2)} G · wheels ${(pose.steering*180/Math.PI).toFixed(2)}°\nSlip indicator ${h.tireSlip.toFixed(3)} · slip angle ${(h.slipAngle*180/Math.PI).toFixed(1)}°` : 'Original handling'; kart.update(pose); syncParked(); holds?.sync(); $('#drive-speed').textContent = `${Math.round(Math.hypot(test.controller.state.speed,test.controller.state.lateralSpeed) / .44704)} mph`; $('#drive-state').textContent = pose.y < -10 ? 'Use Reset to return to the track' : test.controller.state.boostTime > 0 ? 'Boosting' : Math.abs(pose.speed) < .05 ? 'Ready' : pose.speed < 0 ? 'Reversing' : 'Driving'; }
+        const state = test.controller.state;
+        const h = state.handling;
+        const formula = h?.formula;
+        const speed = Math.hypot(state.speed, state.lateralSpeed);
+        if (debug) {
+            const diagnostics = h ? `${test.controller.profile.label} · ${speed.toFixed(1)} m/s\nAcceleration ${h.acceleration.toFixed(2)} m/s² · braking ${h.brakingG.toFixed(2)} G\nSideways ${h.lateralG.toFixed(2)} G · wheels ${(pose.steering * 180 / Math.PI).toFixed(2)}°\nSlip indicator ${h.tireSlip.toFixed(3)} · slip angle ${(h.slipAngle * 180 / Math.PI).toFixed(1)}°` : 'Original handling';
+            debug.textContent = formula ? `${diagnostics}\nElectrical drive ${(formula.deploymentPowerW / 1000).toFixed(0)} kW · recovery ${(formula.recoveryPowerW / 1000).toFixed(0)} kW\nFront axle load ${(formula.frontWeightFraction * 100).toFixed(1)}%` : diagnostics;
+        }
+        kart.update(pose);
+        syncParked();
+        holds?.sync();
+        showFormulaSystems(formula, speed, h?.throttle ?? 0);
+        showText(speedDisplay, `${Math.round(speed / .44704)} mph`);
+        const status = pose.y < -10 ? 'Use Reset to return to the track'
+            : state.boostTime > 0 && !formula ? 'Boosting'
+            : state.boostTime > 0 && formula?.deploymentPowerW > 0 ? 'Overtake'
+            : Math.abs(pose.speed) < .05 ? 'Ready' : pose.speed < 0 ? 'Reversing' : 'Driving';
+        showText(stateDisplay, status);
+    }
     function syncParked() {
         const states = test.sampleParked();
         if (states.length && !parkedKarts.length) {
@@ -129,7 +200,8 @@ export function createDrivingSimulation({ scene, stage, floor }) {
         }
     }
     const cameraRig=createDrivingCameraRig(() => pose, () => kart.eye ?? FPV);
-    const api = { zoomEnabled: false, cameraRig,marker: original.root, recenterOnView: true, onPause: () => { holds?.clear(); test.cancelInput(); }, chase: true, chaseRate: 5, chasePitch: Math.atan2(3.5, 10), fov: 45, distance: Math.hypot(10, 3.5), minDistance: 4, maxDistance: 100, maxFrameSeconds: .25, targetHeight: 1, cameraObstacles: [], controller: { get state() { return { ...pose, facing: pose.yaw, mode: 'Driving test' }; }, place: reset }, advance(seconds, sample, cameraYaw) { if (!bindings.input.focused)
+    function pause() { holds?.clear(); test.cancelInput(); engineAudio.mute(); }
+    const api = { zoomEnabled: false, cameraRig,marker: original.root, recenterOnView: true, onPause: pause, chase: true, chaseRate: 5, chasePitch: Math.atan2(3.5, 10), fov: 45, distance: Math.hypot(10, 3.5), minDistance: 4, maxDistance: 100, maxFrameSeconds: .25, targetHeight: 1, cameraObstacles: [], controller: { get state() { return { ...pose, facing: pose.yaw, mode: 'Driving test' }; }, place: reset }, advance(seconds, sample, cameraYaw) { if (!bindings.input.focused)
             return; test.advance(seconds, readDrivingInput(sampleDrivingPedals(sample, bindings.input), cameraYaw)); pose = test.sample(); }, afterFrame() { sync(); }, bind(value) { bindings = value; value.canvas.tabIndex = 0; value.input.setTouchStick(false); holds = bindDrivingButtons(value.input, value.canvas, buttons);for(const button of document.querySelectorAll('#topbar button'))button.addEventListener('click',()=>value.canvas.focus({preventScroll:true})); } };
     function refresh() {
         if (bindings) {
@@ -144,11 +216,16 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     picker.querySelector('select').onchange = event => selectTrack(event.currentTarget.value);
     kartSelect.onchange = () => {
         const id = kartSelect.value;
-        prototype = isKartPrototype(id) ? id : undefined;
-        test = createDrivingTest(test.selection, { profile, prototype });
+        f1Tune = id === F1_2026_OPTION ? '2026' : 'early';
+        prototype = id === F1_2026_OPTION ? 'f1' : isKartPrototype(id) ? id : undefined;
+        test = createDrivingTest(test.selection, { profile, prototype, f1Tune });
         refresh();
     };
-    window.addEventListener('blur', () => test.cancelInput());
+    window.addEventListener('blur', pause);
+    window.addEventListener('pagehide', event => {
+        if (event.persisted) engineAudio.mute();
+        else engineAudio.disable();
+    });
     reset();
     window.drivingLab = { get test() { return test; }, get kart() { return kart; }, profiles: DRIVING_PROFILES,
         get trackView() { return view; }, getState: () => test.getState(), getCameraState: () => cameraRig.getState(), selectTrack };

@@ -15,6 +15,7 @@ export type ProgressiveSteering = Readonly<{
 export type HandlingSettings = {
     id: string;
     label: string;
+    formula?: '2026';
     topSpeed: number;
     boostSpeed: number;
     reverseSpeed: number;
@@ -91,7 +92,7 @@ const curveKeys = ['acceleration', 'boostAcceleration', 'braking', 'cornering', 
 const unitKeys = ['liftStrength', 'tractionAssistance', 'brakeStrength'] as const;
 const nonnegativeKeys = ['coastConstant', 'coastQuadratic', 'boostRecoveryDeceleration', 'steeringBlendStart'] as const;
 const numericKeys = Object.keys(defaults).filter(key => typeof defaults[key as keyof HandlingSettings] === 'number') as (keyof HandlingSettings)[];
-const fields = new Set(Object.keys(defaults));
+const fields = new Set([...Object.keys(defaults), 'formula']);
 
 function finite(value: unknown, field: string): asserts value is number {
     if (typeof value !== 'number' || !Number.isFinite(value)) throw new TypeError(field + ' must be finite');
@@ -136,6 +137,7 @@ export function createHandlingProfile(changes: Partial<HandlingSettings> = {}): 
     const data = { ...defaults, ...changes };
     if (typeof data.id !== 'string' || !/^[a-z][a-z0-9-]{0,63}$/.test(data.id) || data.id === 'original') throw new TypeError('Invalid tuning profile id');
     if (typeof data.label !== 'string' || !data.label.trim() || data.label.length > 80) throw new TypeError('Invalid tuning profile label');
+    if (data.formula !== undefined && data.formula !== '2026') throw new RangeError('Unknown formula systems version');
     for (const key of numericKeys) finite(data[key], key);
     for (const key of curveKeys) data[key] = copyCurve(data[key], key);
     data.steeringResponse = copySteeringResponse(data.steeringResponse, data.steeringRiseSeconds);

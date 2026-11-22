@@ -179,3 +179,69 @@ The first candidate is a corner-entry A/B test in the standalone Driving
 Test, using the current early tune as the control. The owner can judge how
 clearly the kart distinguishes lifting, braking, and easing off the brake as
 it settles into the turn.
+
+## F. 2026 F1 driving preset
+
+1. The owner authorized the full research-based driving pass. Pick
+   **2026 F1** or **Early F1** in the standalone Driving Test Kart menu.
+   Both run Classic Formula with its 3.04 m wheelbase and 4.60 m body.
+   The early setup keeps its physics fingerprint `kart-v1-a86c3ae8d1936d52`.
+   Switching presets starts a fresh timed run on the selected track.
+   [Open 2026 F1](https://isaiasurrutia96.github.io/3D-World-4/racing-lab/?drive=1&kart=f1&f1Tune=2026&track=original)
+2. The current fixed-step controller fits the sampled speed gates and
+   the braking windows through smooth acceleration and force curves.
+   Adding a separate tire or suspension solver would need tire-force and
+   suspension measurements for this chassis. The fitted curves and the
+   existing shared tire force budget give repeatable results on the same
+   track through the same control inputs. [Profile](../../racing-core/kart/f1-2026-profile.ts) ·
+   [Controller](../../racing-core/kart/dynamics.ts)
+
+   | Flat-road benchmark | Early F1 | 2026 F1 | Sampled F1 reference |
+   | --- | ---: | ---: | ---: |
+   | 0–100 km/h | 2.65 s | 2.33 s | 2.37 s |
+   | 0–200 km/h | 5.22 s | 4.60 s | 4.50 s |
+   | 0–250 km/h | 7.88 s | 6.42 s | 6.54 s |
+   | 0–280 km/h | 9.51 s | 7.68 s | 7.60 s |
+   | 0–300 km/h | Normal cap 289.7 km/h | 8.95 s | 8.96 s |
+   | Speed one second after lifting at 250 km/h | 195.7 km/h | 228.6 km/h | Full-lift reference unavailable |
+   | 305→92 km/h full brake | 2.40 s, 121 m | 2.77 s, 137 m | 2.72 s, about 123 m |
+
+   The five Brembo comparisons' mean relative error in time and distance
+   improved from **20.1% to 10.6%**, with equal weight on those metrics.
+   Gasly's Monza braking trace contains brake activity and speed but has
+   no pressure measurement. The prototype fit prioritizes consistent time
+   and distance over several braking zones. The lift target is about **0.75 g**
+   at 250 km/h, informed by nearby low-throttle samples and subject to
+   driving review. A full-steer 50 km/h fixture follows about a **13.8 m**
+   radius with the new tire-limited steering. The same steering budget widens
+   the viable turn at higher speeds, including **4.65 g** at 250 km/h.
+   [Calibration checks](../../racing-core/kart/f1-2026-profile.test.mjs)
+3. The power model uses **772 kg** as the W17 reference mass and **45:55**
+   static balance from the FIA qualifying axle range. A **0.29 m** center
+   of mass height estimate uses the prototype's hip point. Acceleration
+   and braking shift the estimated axle loads, affecting rear traction
+   and the work available for rear-axle regeneration. The combined tire
+   force limit leaves less steering grip under hard braking. [Load transfer reference](https://www.mathworks.com/help/sdl/ref/vehiclebody.html)
+4. A **4 MJ** battery supplies routine electrical power and the **Overtake**
+   button's stronger, two-second request. The implementation uses the FIA
+   **350 kW** electrical ceiling, **500 N·m** torque ceiling, and the normal
+   and Overtake power taper curves. The **250 kW** routine strategy uses the
+   FIA power-limited-sector figure on the test tracks. The **50 km/h**
+   standing-start rule serves as the prototype's minimum deployment speed.
+   The measured normal acceleration curve already includes routine assist.
+   The solver applies the difference as charge or request changes and
+   charges the battery from applied brake or lift work. The **338.1 km/h**
+   normal speed cap uses the measured Monza trap, and **220 mph** is the
+   test's Overtake cap. The motor's **355 km/h** cutoff is applied through
+   the power curve. [FIA technical regulations](https://www.fia.com/system/files/documents/fia_2026_f1_regulations_-_section_c_technical_-_iss_21_-_2026-10-19.pdf)
+5. The aero forces transition between corner and straight settings over
+   **0.40 s**. The test uses forward speed, throttle, braking, and steering
+   to detect a straight request. The effective corner-minus-straight areas
+   are **0.50 m²** for downforce and **0.20 m²** for drag. These are
+   prototype coefficients.
+   The current dry tire setup uses the logged speed-dependent force limits
+   to represent the braking and tire hardware's effect on the kart. The
+   eight gears use the sampled shift cadence, with **15,000 rpm** as the
+   ceiling. The Sound switch uses those revs to drive a synthesized V6 note.
+   [Electrical, aero, and gear model](../../racing-core/kart/f1-2026-systems.ts) ·
+   [Systems checks](../../racing-core/kart/f1-2026-systems.test.mjs)

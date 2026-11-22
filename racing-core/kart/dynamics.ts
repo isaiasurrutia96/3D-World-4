@@ -2,6 +2,8 @@
 import type { KartState, KartInput, KartMotion, SurfaceWorld } from './index.ts';
 import { sampleCurve, steeringLimit, steeringResponse, STANDARD_GRAVITY } from './profiles.ts';
 import type { HandlingProfile } from './profiles.ts';
+import { F1_2026_SYSTEMS, initialF12026Systems, prepareF12026Systems, finishF12026Systems } from './f1-2026-systems.ts';
+import type { F12026SystemState } from './f1-2026-systems.ts';
 export type SurfaceSample = Readonly<{ grip?: number; speed?: number; resistance?: number }>;
 export type HandlingState = Readonly<{
     fingerprint: string;
@@ -11,11 +13,17 @@ export type HandlingState = Readonly<{
     longitudinalLimit: number; lateralLimit: number;
     acceleration: number; brakingG: number; lateralG: number; tireSlip: number;
     slipAngle: number; tireUtilization: number; steeringLimit: number;
+    formula?: F12026SystemState & Readonly<{ frontWeightFraction: number }>;
 }>;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 const approach = (n: number, target: number, amount: number) => n < target ? Math.min(target, n + amount) : Math.max(target, n - amount);
+// The Classic Formula hip height is a proxy for the prototype's CG height.
+// The full-size car's actual CG height and suspension settings are team data.
+const FORMULA_CG_HEIGHT = .29;
 export function initialHandling(profile: HandlingProfile): HandlingState {
-    return Object.freeze({ fingerprint: profile.fingerprint, throttle: 0, brake: 0, lift: 0, steerInput: 0, yawRate: 0, driveAcceleration: 0, recoveryDeceleration: 0, gripMultiplier: 1, surfaceSpeedMultiplier: 1, surfaceResistanceMultiplier: 1, longitudinalLimit: 0, lateralLimit: 0, acceleration: 0, brakingG: 0, lateralG: 0, tireSlip: 0, slipAngle: 0, tireUtilization: 0, steeringLimit: profile.steeringLock });
+    return Object.freeze({ fingerprint: profile.fingerprint, throttle: 0, brake: 0, lift: 0, steerInput: 0, yawRate: 0, driveAcceleration: 0, recoveryDeceleration: 0, gripMultiplier: 1, surfaceSpeedMultiplier: 1, surfaceResistanceMultiplier: 1, longitudinalLimit: 0, lateralLimit: 0, acceleration: 0, brakingG: 0, lateralG: 0, tireSlip: 0, slipAngle: 0, tireUtilization: 0, steeringLimit: profile.steeringLock,
+        ...(profile.formula === '2026' ? { formula: Object.freeze({ ...initialF12026Systems(), frontWeightFraction: F1_2026_SYSTEMS.frontWeightFraction }) } : {}),
+    });
 }
 function surface(world: SurfaceWorld | undefined, state: KartState): Required<SurfaceSample> {
     const raw = world?.surfaceAt ? world.surfaceAt(state.x, state.z, state.y) : {};
@@ -56,11 +64,28 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     const v = Math.hypot(vx0, vz0), direction = source.speed < -.001 ? -1 : source.speed > .001 ? 1 : Math.sign(h.throttle) || 1;
     const response = steeringResponse(profile, v);
     const steer = input.steer ?? 0;
+    const opposing = h.throttle * direction < -.001;
+    const formula = previous.formula;
+    const cap = (direction < 0 ? profile.reverseSpeed : boosting ? profile.boostSpeed : profile.topSpeed) * h.surfaceSpeedMultiplier;
+    // The Formula powertrain can sustain road speed at the governor. Its
+    // electrical work there pays for aerodynamic drag even at zero net acceleration.
+    const atFormulaCap = Boolean(formula && direction > 0 && Math.abs(v - cap) <= 1e-8);
+    const powered = !opposing && (v < cap || atFormulaCap) && s.impactRecovery <= 0 && brake === 0;
+    const driveDemand = direction < 0 ? profile.reverseAcceleration
+        : sampleCurve(boosting && !formula ? profile.boostAcceleration : profile.acceleration, v);
+    const systemsGrounded = source.grounded && s.impactRecovery <= 0;
+    const systems = formula && prepareF12026Systems(formula, {
+        dt, speed: v, throttle: Math.max(0, h.throttle), brake: Math.max(brake, h.brake),
+        steer, overtake: boosting, grounded: systemsGrounded, reverse: direction < 0,
+        coasting: requested === 0, driveEnabled: powered,
+        baselineDriveAcceleration: driveDemand,
+    });
+    const effectiveGrip = h.gripMultiplier * (systems?.gripMultiplier ?? 1);
     const steeringTime = steer * h.steerInput >= 0 && Math.abs(steer) > Math.abs(h.steerInput) ? response.riseSeconds : profile.steeringReleaseSeconds;
     // Countersteering first returns through centre, then builds the other way.
     if (steer * h.steerInput < 0) h.steerInput = approach(h.steerInput, 0, dt / profile.steeringReleaseSeconds);
     else h.steerInput = approach(h.steerInput, steer, dt / steeringTime);
-    h.steeringLimit = steeringLimit(profile, v, geometry.wheelbase, h.gripMultiplier);
+    h.steeringLimit = steeringLimit(profile, v, geometry.wheelbase, effectiveGrip);
     // Shape small corrections gently at low speed. A sustained full input
     // still reaches the existing limit, including the approved high-speed grip.
     const demand = response.exponent===1 ? h.steerInput : Math.sign(h.steerInput)*Math.pow(Math.abs(h.steerInput),response.exponent);
@@ -74,12 +99,12 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     s.yaw += yawDelta;
     let heading = v > 1e-8 ? Math.atan2(vx0, vz0) : midYaw + (direction < 0 ? Math.PI : 0);
     const alignment = Math.cos(heading - midYaw), sideways = v * Math.sin(heading - midYaw);
-    const lateralLimit = Math.max(1e-9, sampleCurve(profile.cornering, v) * h.gripMultiplier);
-    const longitudinalLimit = Math.max(1e-9, sampleCurve(profile.braking, v) * h.gripMultiplier);
-    const cap = (direction < 0 ? profile.reverseSpeed : boosting ? profile.boostSpeed : profile.topSpeed) * h.surfaceSpeedMultiplier;
-    const opposing = h.throttle * direction < -.001;
-    let engine = Math.abs(h.throttle) * (direction < 0 ? profile.reverseAcceleration : sampleCurve(boosting ? profile.boostAcceleration : profile.acceleration, v));
-    if (opposing || v >= cap || s.impactRecovery > 0 || brake > 0) engine = 0;
+    const lateralLimit = Math.max(1e-9, sampleCurve(profile.cornering, v) * effectiveGrip);
+    const longitudinalLimit = Math.max(1e-9, sampleCurve(profile.braking, v) * effectiveGrip);
+    let engine = powered ? Math.abs(h.throttle) * driveDemand : 0;
+    if (systems && powered && direction > 0) {
+        engine += systems.deploymentAccelerationDelta - systems.dragAcceleration * Math.max(0, h.throttle);
+    }
     h.driveAcceleration = approach(h.driveAcceleration, engine, profile.driveJerk * dt);
     if (engine === 0 && (v >= cap || brake > 0 || opposing || s.impactRecovery > 0)) h.driveAcceleration = 0;
     const service = longitudinalLimit * profile.brakeStrength * Math.max(h.brake, opposing ? Math.abs(h.throttle) : 0);
@@ -90,11 +115,17 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     const recovery = Math.min(h.recoveryDeceleration, Math.max(0, v - cap) / dt);
     let normal = v * h.yawRate - sideways * direction / profile.slipResponseSeconds;
     const slipDrag = Math.min(lateralLimit, Math.abs(sideways) / profile.slipResponseSeconds) * Math.abs(Math.sin(heading - midYaw));
-    let drive = h.driveAcceleration * Math.max(0, direction * alignment);
+    let drive = Math.max(0, h.driveAcceleration) * Math.max(0, direction * alignment);
     const sidewaysUse = Math.min(1, Math.abs(normal) / lateralLimit);
-    const availableDrive = longitudinalLimit * Math.sqrt(Math.max(0, 1 - sidewaysUse * sidewaysUse));
-    drive -= Math.max(0, drive - availableDrive) * profile.tractionAssistance;
-    let tangential = drive - Math.max(service, lift + coast, recovery) - slipDrag;
+    // Longitudinal load transfer changes the rear-driven axle's traction
+    // relative to the static load used to fit the acceleration curve.
+    const staticFront = F1_2026_SYSTEMS.frontWeightFraction;
+    const rearTraction = formula ? (1 - formula.frontWeightFraction) / (1 - staticFront) : 1;
+    const availableDrive = longitudinalLimit * rearTraction * Math.sqrt(Math.max(0, 1 - sidewaysUse * sidewaysUse));
+    const excessDrive = Math.max(0, drive - availableDrive);
+    drive -= excessDrive * (formula ? 1 : profile.tractionAssistance);
+    const powerShortfall = Math.max(0, -h.driveAcceleration);
+    let tangential = drive - Math.max(service, lift + coast, recovery, powerShortfall) - slipDrag;
     if (s.impactRecovery > 0) tangential = Math.min(tangential, -6 * v);
     const requestedUtilization = Math.hypot(tangential / longitudinalLimit, normal / lateralLimit);
     const scale = 1 / Math.max(1, requestedUtilization);
@@ -102,8 +133,9 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     if (!source.grounded) { tangential = normal = 0; }
     // Integrate speed and travel direction separately: a perpendicular tire
     // force changes direction without inventing kinetic energy on each tick.
-    let nextSpeed = Math.max(0, v + tangential * dt);
-    if (engine > 0 && v <= cap) nextSpeed = Math.min(cap, nextSpeed);
+    const unrestrictedSpeed = Math.max(0, v + tangential * dt);
+    let nextSpeed = unrestrictedSpeed;
+    if (engine > 0 && (v <= cap || atFormulaCap)) nextSpeed = Math.min(cap, nextSpeed);
     const midSpeed = (v + nextSpeed) / 2;
     if (midSpeed > .01) heading += normal / midSpeed * dt;
     if (nextSpeed < 1e-10) nextSpeed = 0;
@@ -113,9 +145,21 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     h.brakingG = Math.max(0, -h.acceleration) / STANDARD_GRAVITY;
     h.lateralG = Math.abs(normal) / STANDARD_GRAVITY;
     h.slipAngle = nextSpeed > .1 ? Math.atan2(Math.sin(heading - s.yaw) * direction, Math.cos(heading - s.yaw) * direction) : 0;
-    const slipTarget = clamp(Math.max(0, requestedUtilization - 1) + Math.abs(h.slipAngle), 0, 10);
+    const driveSlip = formula && source.grounded ? excessDrive / longitudinalLimit : 0;
+    const slipTarget = clamp(Math.max(0, requestedUtilization - 1) + Math.abs(h.slipAngle) + driveSlip, 0, 10);
     h.tireSlip += (slipTarget - h.tireSlip) * (1 - Math.exp(-dt / profile.slipResponseSeconds));
     h.tireUtilization = source.grounded ? Math.min(1, requestedUtilization) : 0;
+    if (formula && systems) {
+        const frontWeightFraction = clamp(staticFront - direction * h.acceleration * FORMULA_CG_HEIGHT / (STANDARD_GRAVITY * geometry.wheelbase), 0, 1);
+        const next = finishF12026Systems(formula, systems, {
+            dt, speed: v, nextSpeed, grounded: systemsGrounded,
+            rearLoadFraction: 1 - frontWeightFraction,
+            poweredAcceleration: powered ? Math.max(0, drive * scale - (unrestrictedSpeed - nextSpeed) / dt) : 0,
+            maintainingSpeed: powered && drive > 0 && nextSpeed === cap,
+            recoverableDeceleration: Math.max(service, lift) * scale,
+        });
+        h.formula = Object.freeze({ ...next, frontWeightFraction });
+    }
     for (const [key, value] of Object.entries(h)) if (typeof value === 'number' && !Number.isFinite(value)) throw new RangeError('Nonfinite handling ' + key);
     s.handling = Object.freeze(h);
     return Object.freeze({ state: Object.freeze(s), vx, vz });
