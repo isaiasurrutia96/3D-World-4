@@ -144,6 +144,12 @@ const moveBy=(p,v)=>({...p,positions:p.positions.map((x,i)=>x+v[i%3]),...(p.pivo
 const add3=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],scale3=(a,s)=>[a[0]*s,a[1]*s,a[2]*s],neg=a=>[-a[0],-a[1],-a[2]],dot3=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 
 /**
+ * Size adjustments to the joint balls (owner, 22 November 2026): wrists and ankles "a bit smaller", shoulders
+ * and neck "slightly bigger". 10% each way is Claude's pick; 1 leaves a ball at its end's thickness.
+ */
+export const BALL_SIZE={shoulder:1.1,neck:1.1,wrist:.9,ankle:.9};
+
+/**
  * The owner's mix taken apart: every piece separate, the original neck removed,
  * and a ball (the approved 300-triangle ball, the fewest of the three tried)
  * between every two pieces that join. Each ball is as thick as the end it
@@ -188,17 +194,17 @@ export function separatedOriginalBody(bodyId='boy'){
  const thinner=(a,b)=>Math.min(a,b);
  // Arm: shoulder ball as thick as the upper arm's top, pushed straight out until 2 cm clear of the torso.
  const upper=get('upper-arm'),fore=get('forearm'),hand=get('hand');
- const rS=endRadius(upper.positions,lineOf(upper),'top'),S=clearOfTorso(torsoShape,[...SHOULDER],rS,[1,0,0],SHOULDER_TORSO_GAP);
- const arm=chain({centre:S,radius:rS},[upper,fore,hand],[null,(m,L,next)=>thinner(endRadius(m.positions,L,'bottom'),endRadius(next.positions,lineOf(next),'top')),(m,L)=>endRadius(m.positions,L,'bottom')],['ball-shoulder','ball-elbow','ball-wrist']);
+ const rS=BALL_SIZE.shoulder*endRadius(upper.positions,lineOf(upper),'top'),S=clearOfTorso(torsoShape,[...SHOULDER],rS,[1,0,0],SHOULDER_TORSO_GAP);
+ const arm=chain({centre:S,radius:rS},[upper,fore,hand],[null,(m,L,next)=>thinner(endRadius(m.positions,L,'bottom'),endRadius(next.positions,lineOf(next),'top')),(m,L)=>BALL_SIZE.wrist*endRadius(m.positions,L,'bottom')],['ball-shoulder','ball-elbow','ball-wrist']);
  // Leg: hip ball as thick as the thigh's top, pushed straight down until 2 cm clear of the torso.
  const thigh=get('thigh'),calf=get('calf'),foot=get('foot');
  const rH=endRadius(thigh.positions,lineOf(thigh),'top'),H=clearOfTorso(torsoShape,[...HIP],rH,[0,-1,0],SHOULDER_TORSO_GAP);
- const leg=chain({centre:H,radius:rH},[thigh,calf,foot],[null,(m,L,next)=>thinner(endRadius(m.positions,L,'bottom'),endRadius(next.positions,lineOf(next),'top')),(m,L)=>endRadius(m.positions,L,'bottom')],['ball-hip','ball-knee','ball-ankle']);
+ const leg=chain({centre:H,radius:rH},[thigh,calf,foot],[null,(m,L,next)=>thinner(endRadius(m.positions,L,'bottom'),endRadius(next.positions,lineOf(next),'top')),(m,L)=>BALL_SIZE.ankle*endRadius(m.positions,L,'bottom')],['ball-hip','ball-knee','ball-ankle']);
  // The feet would meet in the middle: each whole leg moves straight outward just enough to leave the usual gap between them.
  const footNow=leg.at(-1);let inner=Infinity;for(let i=0;i<footNow.positions.length;i+=3)inner=Math.min(inner,footNow.positions[i]);
  const legOut=Math.max(0,BALL_GAP/2-inner);for(let k=0;k<leg.length;k++)leg[k]=moveBy(leg[k],[legOut,0,0]);
  // Neck: the approved neck ball's size, straight up until 2 cm clear of the torso's top; the head one gap above it.
- const neckOption=buildHeadSet(CHOSEN_NECK,torsoShape),rN=neckOption.ball.radius,N=clearOfTorso(torsoShape,[0,neckOption.ball.y,0],rN,[0,1,0],SHOULDER_TORSO_GAP);
+ const neckOption=buildHeadSet(CHOSEN_NECK,torsoShape),rN=BALL_SIZE.neck*neckOption.ball.radius,N=clearOfTorso(torsoShape,[0,neckOption.ball.y,0],rN,[0,1,0],SHOULDER_TORSO_GAP);
  const head=get('head','centre'),headLow=-reach(head.positions,N,[0,-1,0]),headUp=rN+BALL_GAP-headLow;
  parts.push(ballPart('ball-neck','centre',rN,N),moveBy(head,[0,headUp,0]));
  for(const p of [...arm,...leg]){parts.push(p);parts.push({...mirrored(p),name:p.name,side:'right',...(p.centre?{centre:[-p.centre[0],p.centre[1],p.centre[2]]}:{})});}

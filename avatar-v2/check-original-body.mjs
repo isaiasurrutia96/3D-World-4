@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,endRadius,limbLine,stretchLimb,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_LIMB_LENGTHEN,ORIGINAL_HAND_SHRINK,ORIGINAL_CALF_LENGTH,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,BALL_SIZE,endRadius,limbLine,stretchLimb,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_LIMB_LENGTHEN,ORIGINAL_HAND_SHRINK,ORIGINAL_CALF_LENGTH,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
 import {CHOSEN_BALL_TRIANGLES} from './ball-shape.js';
@@ -87,10 +87,11 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
  check(`separated: every ball is the approved ${CHOSEN_BALL_TRIANGLES}-triangle ball (the fewest of the three tried), perfectly round`,()=>{
   for(const n of balls)for(const s2 of n==='ball-neck'?['centre']:['left','right']){const m=sg(n,s2);assert.equal(m.index.length/3,CHOSEN_BALL_TRIANGLES,n);for(let i=0;i<m.positions.length;i+=3)assert(Math.abs(dist(P(m.positions,i/3),m.centre)-m.radius)<1e-9,n);}
   return '13 balls × 300 triangles';});
- check('separated: each ball is as thick as the ends it joins (elbows and knees: the thinner end); the neck ball keeps the approved size',()=>{
+ check('separated: each ball is as thick as the ends it joins (elbows and knees: the thinner end; neck: the approved size), then adjusted: shoulders and neck 10% bigger, wrists and ankles 10% smaller',()=>{
+  assert.deepEqual(BALL_SIZE,{shoulder:1.1,neck:1.1,wrist:.9,ankle:.9});
   const W=sep.whole,wg=n=>W.parts.find(p=>p.name===n&&p.side==='left'),end=(n,e)=>endRadius(wg(n).positions,limbLine(wg(n).positions),e);
-  const want={'ball-shoulder':end('upper-arm','top'),'ball-elbow':Math.min(end('upper-arm','bottom'),end('forearm','top')),'ball-wrist':end('forearm','bottom'),
-   'ball-hip':end('thigh','top'),'ball-knee':Math.min(end('thigh','bottom'),end('calf','top')),'ball-ankle':end('calf','bottom'),'ball-neck':buildHeadSet(CHOSEN_NECK,makeTorsoOption(torsoBase.shape,CHOSEN_TORSO)).ball.radius};
+  const want={'ball-shoulder':BALL_SIZE.shoulder*end('upper-arm','top'),'ball-elbow':Math.min(end('upper-arm','bottom'),end('forearm','top')),'ball-wrist':BALL_SIZE.wrist*end('forearm','bottom'),
+   'ball-hip':end('thigh','top'),'ball-knee':Math.min(end('thigh','bottom'),end('calf','top')),'ball-ankle':BALL_SIZE.ankle*end('calf','bottom'),'ball-neck':BALL_SIZE.neck*buildHeadSet(CHOSEN_NECK,makeTorsoOption(torsoBase.shape,CHOSEN_TORSO)).ball.radius};
   const out=[];for(const [n,r] of Object.entries(want)){const m=sg(n,n==='ball-neck'?'centre':'left');assert(Math.abs(m.radius-r)<1e-9,n);out.push(`${n.slice(5)} ${(r*200).toFixed(1)} cm`);}
   return out.join(', ');});
  check('separated: every piece is only moved (same shape as in the joined avatar), never turned or reshaped',()=>{
