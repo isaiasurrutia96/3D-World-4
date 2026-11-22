@@ -5,7 +5,7 @@
 // triangles; only the parts near the ball change; the right side mirrors the left.
 // Usage: node avatar-v2/check-sockets.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {shoulderSocketPreview,refineNear,press,pointNormals,SOCKET_GAP,SOCKET_DEPTH,TORSO_SOCKET_DEPTH,SOCKET_SOFT,SOCKET_SKIN} from './sockets.js';
+import {shoulderSocketPreview,elbowSocketPreview,closestBetween,rotateAbout,ELBOW_AXIS,ELBOW_BEND,refineNear,press,pointNormals,SOCKET_GAP,SOCKET_DEPTH,TORSO_SOCKET_DEPTH,SOCKET_SOFT,SOCKET_SKIN,softEdge} from './sockets.js';
 import {insideTorso} from './assembly.js';
 
 const results=[];
@@ -70,10 +70,42 @@ check('refining carries smooth surface directions: every new point gets a unit d
  assert.equal(m.normals.length,m.positions.length);for(let i=0;i<m.normals.length;i+=3)assert(Math.abs(Math.hypot(m.normals[i],m.normals[i+1],m.normals[i+2])-1)<1e-9);
  assert.deepEqual(m.normals.slice(0,base.normals.length),base.normals);return `${m.normals.length/3} points, all unit length; old points unchanged`;});
 check('press never moves a point closer to the ball than it was, or closer than the gap',()=>{
- const pts=[];for(let q=0.001;q<.3;q+=.001)pts.push(C[0]+q,C[1],C[2]);const m=press({positions:pts,index:[]},C,R,SOCKET_SOFT*r);/* no skin: plain points */
+ const pts=[];for(let q=0.001;q<.3;q+=.001)pts.push(C[0]+q,C[1],C[2]);const m=press({positions:pts,index:[]},C,R,softEdge(r));/* no skin: plain points */
  for(let i=0;i<pts.length;i+=3){const before=pts[i]-C[0],after=m.positions[i]-C[0];assert(after>=before-1e-12&&after>=R-1e-12);}return 'checked along a line from the centre';});
 check('reports the triangle cost of the sockets',()=>`torso ${s.triangles.torso[0]} → ${s.triangles.torso[1]}, each upper arm ${s.triangles.arm[0]} → ${s.triangles.arm[1]}`);
+// --- The elbows ---------------------------------------------------------------
+{
+ const e=elbowSocketPreview('boy'),eg=(n,side)=>e.parts.find(p=>p.name===n&&p.side===side),E=e.ball.centre,re=e.ball.radius,Re=re+SOCKET_GAP;
+ const up=eg('upper-arm','left'),fo=eg('forearm','left'),eb=eg('ball-elbow','left');
+ check('elbow: nine parts (the shoulder parts plus both elbow balls and forearms)',()=>{assert.deepEqual(e.parts.map(p=>p.name+'.'+p.side).sort(),['ball-elbow.left','ball-elbow.right','ball-shoulder.left','ball-shoulder.right','forearm.left','forearm.right','torso.centre','upper-arm.left','upper-arm.right']);return e.parts.length+' parts';});
+ check('elbow: torso and shoulder balls are exactly the shoulder-socket ones; the upper arm changes only near the elbow',()=>{
+  for(const n of ['torso','ball-shoulder'])for(const side of n==='torso'?['centre']:['left','right'])assert.deepEqual(eg(n,side).positions,s.parts.find(p=>p.name===n&&p.side===side).positions,n);
+  const before=e.upperBefore.positions;for(let i=0;i<before.length/3;i++){const p=P(before,i);if(dist(p,E)<.45)continue;assert.deepEqual(P(up.positions,i),p,'upper arm moved far from the elbow');}
+  return 'unchanged';});
+ check(`elbow: the ball (same size) sinks ${Math.round(SOCKET_DEPTH*100)}% of its radius into the upper arm and into the forearm`,()=>{
+  for(let i=0;i<eb.positions.length;i+=3)assert(Math.abs(dist(P(eb.positions,i/3),E)-re)<1e-9);
+  const upTip=up.top.map((v,k)=>v+up.direction[k]*up.length);assert(Math.abs((re-dist(upTip,E))-e.depth)<1e-9,'upper arm');assert(Math.abs((re-dist(fo.top,E))-e.depth)<1e-9,'forearm');
+  return `${(e.depth*100).toFixed(1)} cm into each; ball ${(re*200).toFixed(1)} cm`;});
+ check('elbow: snug sockets, the gap from the ball within 0.5 mm, never closer (triangle middles within 0.5 mm)',()=>{
+  const out=[];for(const [name,m] of [['upper arm',up],['forearm',fo]]){const g=closest(m,E)-re,gm=closestMiddle(m,E)-re;
+   assert(g>=SOCKET_GAP-1e-9&&g<=SOCKET_GAP+5e-4,`${name}: ${(g*1000).toFixed(2)} mm`);assert(gm>=SOCKET_GAP-5e-4,`${name}: a triangle ${(gm*1000).toFixed(2)} mm`);out.push(`${name} ${(g*1000).toFixed(1)} mm`);}
+  return out.join(', ');});
+ check(`elbow: the forearm folds forward cleanly at every degree up to ${ELBOW_BEND}° (at least 4 mm from the upper arm, densely sampled)`,()=>{
+  let worst=Infinity,at=0;for(let b=0;b<=ELBOW_BEND;b++){const c=e.bendClearance(b);if(c<worst){worst=c;at=b;}}
+  assert(worst>=.004,`touches at ${at}°: ${(worst*1000).toFixed(1)} mm`);return `closest ${(worst*1000).toFixed(1)} mm, at ${at}°`;});
+ check('elbow: test of the test: without the shaped inner side, the bend test catches the limbs touching well before that',()=>{
+  const plain=elbowSocketPreview('boy',{bend:0});let first=null;for(let b=0;b<=ELBOW_BEND;b+=5)if(plain.bendClearance(b)<.004){first=b;break;}
+  assert(first!==null&&first<ELBOW_BEND,'not caught');return `plain sockets touch at ${first}°`;});
+ check('elbow: the shaping is no more than needed (10° past the deepest bend, the limbs do meet)',()=>{const c=e.bendClearance(ELBOW_BEND+10);assert(c<.004,'still clear: shaped more than needed');return `at ${ELBOW_BEND+10}°: ${(c*1000).toFixed(1)} mm`;});
+ check('elbow: upper arm and forearm still sealed surfaces',()=>`upper arm ${sealed(up)} edges, forearm ${sealed(fo)} edges`);
+ check('elbow: smooth: no fold and no crease sharper than the limbs already had (+5°)',()=>{
+  const out=[];for(const [name,m,before] of [['upper arm',up,e.upperBefore],['forearm',fo,e.foreMoved]]){const a=sharpest(m,E,.3),was=sharpest(before,E,.35);
+   assert(a<Math.max(was,30)+5,`${name}: ${a.toFixed(1)}° (had ${was.toFixed(1)}°)`);out.push(`${name} ${a.toFixed(1)}° (had ${was.toFixed(1)}°)`);}
+  return out.join(', ');});
+ check('elbow: the right side is the exact mirror of the left',()=>{for(const n of ['ball-elbow','forearm','upper-arm']){const a=eg(n,'left'),b=eg(n,'right');for(let i=0;i<a.positions.length;i+=3)assert(a.positions[i]===-b.positions[i]&&a.positions[i+1]===b.positions[i+1]&&a.positions[i+2]===b.positions[i+2],n);}return 'mirrored';});
+ check('elbow: reports the triangle cost',()=>`upper arm ${up.index.length/3} (with its shoulder socket), forearm ${fo.index.length/3}`);
+}
 console.table(results);
 const failed=results.filter(r=>r.result!=='PASS').length;
-console.log(failed?`FAIL: ${failed} check(s) failed.`:'PASS: the shoulder sockets are snug, smooth, sealed and mirrored.');
+console.log(failed?`FAIL: ${failed} check(s) failed.`:'PASS: the shoulder and elbow sockets are snug, smooth, sealed and mirrored; the elbow folds cleanly.');
 process.exitCode=failed?1:0;
