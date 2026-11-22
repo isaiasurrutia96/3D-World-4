@@ -86,3 +86,8 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
    longer wing snaps onto the same spot. A driver zone keeps every part away
    from the driver's body and head; parts that do not fit are rejected. The
    Test Lab shows all three karts and lets the owner swap styles.
+3. (22 November) **The whole F1 GoKart built, waiting for owner review:** the
+   owner asked for the full F1 kart using the best proven methods. Built from
+   the approved design with lofted bodywork, NACA airfoil wings and
+   double-wishbone suspension (`kart-parts/README.md`, D). Shown in the Test
+   Lab's Karts section; the body parts stay swappable.
