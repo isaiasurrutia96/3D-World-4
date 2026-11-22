@@ -100,3 +100,22 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
    wings, lathe-turned arches and tires). The wavy nose top is fixed. The
    Test Lab shows all three side by side with a grey driver of the avatar's
    size in each seat. Waiting for owner review.
+
+## G. Locked size target (owner, 22 November 2026)
+
+The owner locked the sizes shown in `docs/karts/sizes/size-target-front.jpg`
+(front view, the main reference) and `size-target-side.jpg` (side view), measured
+against the avatar standing beside the karts:
+
+1. **GoKart (small):** the top of the seat reaches the avatar's belly button;
+   narrow, a little narrower than the avatar is tall; small wheels.
+2. **GT GoKart (medium):** the top of the rear wing and roll bar reaches the
+   avatar's neck; the widest of the three, wide and planted.
+3. **F1 GoKart (large):** the top of the rear wing reaches the avatar's neck;
+   a little narrower than the GT; clearly the longest, long and low with a
+   long nose (make it long in the 3D build; the side picture came out a bit
+   short).
+4. **Every variation of a kind keeps that kind's size** (owner: "make sure
+   each variation of the gokarts are the same size").
+5. The pictures are AI images, so exact numbers are measured and locked when
+   the 3D test karts are built with the real avatar.
