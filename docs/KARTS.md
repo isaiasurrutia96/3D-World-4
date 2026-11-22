@@ -119,3 +119,24 @@ against the avatar standing beside the karts:
    each variation of the gokarts are the same size").
 5. The pictures are AI images, so exact numbers are measured and locked when
    the 3D test karts are built with the real avatar.
+
+## H. GoKart styles and tiers (owner, 22 November 2026)
+
+Twenty shape styles of the regular GoKart are in `docs/karts/styles/`
+(`gokart-styles-01-05.jpg` to `gokart-styles-16-20.jpg`, numbered on each
+picture). Styles 11 to 20 follow the owner's example pictures: chunky toy
+karts, a black neon high-end kart and a colourful winged kart. The owner's
+favourites are 11, 13, 14, 15, 16, 17, 18 and 19.
+
+1. **Low tier:** 11 (chunky toy: wrap-around bumper with a grille, striped
+   raised hood, small rear wing) and 19 (sport tub: rounded body, roll bar,
+   rear wing, sharp side vents).
+2. **Mid tier:** 16 and 18 (winged karts: wide front wing, boxy side pods,
+   tall rear wing, visible shocks). The owner sees 14, 16 and 18 as the same
+   overall look, which suits the mid tier.
+3. **High tier:** 17 (neon toy: smooth rounded body with glowing light
+   strips) and 15 (high-end aero: sharp bodywork, roll bar, rear wing,
+   glowing light strips and underglow).
+4. Style 13 (chunky tub) is also a favourite; its tier is not set yet.
+5. Every style keeps the locked GoKart size (section G). The pictures came
+   out a little small; the exact size is set in the 3D build.
