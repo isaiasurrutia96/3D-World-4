@@ -141,10 +141,71 @@ export function widenTop(positions,factor,until=THIGH_WIDEN_UNTIL){
  }
  return out;
 }
+/**
+ * The lower torso with straight sides (owner, 22 November 2026: keep the athletic V down to the waist, then
+ * "straightening the lower sides", the bottom still round): below LOWER_SIDES_FROM every ring keeps the waist's
+ * width at the sides, blended in over LOWER_SIDES_BLEND so there is no corner, and only at the sides (the front
+ * and back keep their shape; the weight is cos² of the angle round the torso). The round bottom cap follows the
+ * new bottom ring, so it keeps its roundness.
+ */
+export const LOWER_SIDES_FROM=1.10,LOWER_SIDES_BLEND=.05;
+export function straightLowerSides(shape){
+ const rings=shape.rings,n=shape.segments,at=y=>{let k=0;while(k<rings.length-2&&rings[k+1].y<y)k++;const a=rings[k],b=rings[k+1],t=(y-a.y)/(b.y-a.y);return a.r.map((r,i)=>r+(b.r[i]-r)*t);};
+ const waist=at(LOWER_SIDES_FROM),top=LOWER_SIDES_FROM+LOWER_SIDES_BLEND,bottom=LOWER_SIDES_FROM-LOWER_SIDES_BLEND;
+ const out=rings.map(ring=>{if(ring.y>=top)return ring;const x=Math.min(1,(top-ring.y)/(top-bottom)),t=x*x*(3-2*x);
+  return {...ring,r:ring.r.map((r,i)=>{const [dx]=direction(i,n),side=dx*dx;return r+side*t*Math.max(0,waist[i]-r);})};});
+ return {...shape,rings:out};
+}
+/**
+ * A limb's end remade as a cup around its ball, in the style of the accepted Wrist and Feet studies (owner,
+ * 22 November 2026): the limb is rebuilt as a smooth surface of revolution round its own line, from its own rings
+ * (as round circles, `segments` round), and at `end` ('top' or 'bottom') it now ends in a cup: the ball's shape plus
+ * the gap (R), captured `capture` of the ball's diameter deep, then a rolled round rim (a circle of radius `bead`
+ * touching the cup and the limb's side), the side straight at `wall` times the ball's radius (flush, a little
+ * wider), then a smooth curve back into the limb's own shape.
+ */
+export function cupLimbEnd(part,ball,{end,capture=1/3,bead=.007,wall=1.144,segments=48,blend=.03}){
+ const L=limbLine(part.positions,part.axis),P=part.positions,r=ball.radius,R=r+SOCKET_GAP;
+ const sC=[0,1,2].reduce((a,k)=>a+(ball.centre[k]-L.centre[k])*L.dir[k],0),sgn=end==='bottom'?-1:1;
+ // The limb's own profile: each ring's place along the line and its radius (poles left out).
+ const rings=new Map();for(let i=0;i<P.length;i+=3){const v=[0,1,2].map(k=>P[i+k]-L.centre[k]),s=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2],rho=Math.hypot(...v.map((x,k)=>x-L.dir[k]*s)),key=Math.round(s*1e5);const e=rings.get(key)??{s,sum:0,n:0};e.sum+=rho;e.n++;rings.set(key,e);}
+ const profile=[...rings.values()].filter(e=>e.sum/e.n>1e-4).map(e=>({h:sgn*(e.s-sC),r:e.sum/e.n})).sort((a,b)=>a.h-b.h);
+ const farPole=sgn>0?L.end:L.start,farH=sgn*(farPole-sC);
+ // The cup: captured depth = r - (rim plane's height above the centre).
+ const cosA=(r-2*r*capture)/R,A=Math.acos(Math.max(-1,Math.min(1,cosA))),sinA=Math.sin(A);
+ const W=wall*r,f=bead,bc=[(R+f)*sinA,(R+f)*cosA];if(Math.abs(bc[0]+f-W)>.02*r)throw Error(`cupLimbEnd: the rim does not fit (side ${(W*100).toFixed(1)} cm, rim ${((bc[0]+f)*100).toFixed(1)} cm)`);
+ const pts=[];
+ for(let k=0;k<=24;k++){const a=A*k/24;pts.push([R*Math.sin(a),R*Math.cos(a)]);}// the cup, from its middle to the rim
+ const a0=Math.atan2(-cosA,-sinA);for(let k=1;k<=16;k++){const a=a0+(0-a0)*k/16;pts.push([bc[0]+f*Math.cos(a),bc[1]+f*Math.sin(a)]);}// the round rim
+ const wallTop=bc[1]+blend,side=pts.at(-1)[0];pts.push([side,wallTop*0.5+bc[1]*0.5]);
+ // Back into the limb: a smooth curve from the side (going straight along the limb) to its first own ring past the
+ // blend that is at least as wide as the side (or its widest), so the limb never narrows behind its cup like a cuff.
+ const past=profile.filter(q=>q.h>=wallTop+blend);if(!past.length)throw Error('cupLimbEnd: the limb is too short for its cup');
+ const join=past.find(q=>q.r>=side)??past.reduce((a,b)=>b.r>a.r?b:a);
+ const next=profile[profile.indexOf(join)+1]??{h:join.h+.01,r:join.r},slope=(next.r-join.r)/(next.h-join.h);
+ const p0=[side,wallTop],p3=[join.r,join.h],len=(join.h-wallTop)/3,p1=[side,wallTop+len],p2=[join.r-slope*len,join.h-len];
+ for(let k=0;k<=12;k++){const t=k/12,u=1-t;pts.push([0,1].map(j=>u*u*u*p0[j]+3*u*u*t*p1[j]+3*u*t*t*p2[j]+t*t*t*p3[j]));}
+ for(const q of profile)if(q.h>join.h)pts.push([q.r,q.h]);
+ // A surface of revolution round the limb's line: the cup's middle point, the rings, then the far pole.
+ const u=Math.abs(L.dir[1])<.9?[0,1,0]:[1,0,0],e1=[L.dir[1]*u[2]-L.dir[2]*u[1],L.dir[2]*u[0]-L.dir[0]*u[2],L.dir[0]*u[1]-L.dir[1]*u[0]],l1=Math.hypot(...e1),a1=e1.map(v=>v/l1),
+  a2=[L.dir[1]*a1[2]-L.dir[2]*a1[1],L.dir[2]*a1[0]-L.dir[0]*a1[2],L.dir[0]*a1[1]-L.dir[1]*a1[0]];
+ const at=(rad,h,j)=>{const t=j/segments*2*Math.PI,c=Math.cos(t),sn=Math.sin(t),s=sC+sgn*h;return [0,1,2].map(k=>L.centre[k]+L.dir[k]*s+rad*(a1[k]*c+a2[k]*sn));};
+ const positions=[...at(0,pts[0][1],0)],index=[];
+ for(let i=1;i<pts.length;i++)for(let j=0;j<segments;j++)positions.push(...at(pts[i][0],pts[i][1],j));
+ const pole=positions.length/3;positions.push(...at(0,farH,0));
+ const ring=(i,j)=>1+(i-1)*segments+(j%segments),last=pts.length-1;
+ for(let j=0;j<segments;j++)index.push(0,ring(1,j),ring(1,j+1));
+ for(let i=1;i<last;i++)for(let j=0;j<segments;j++){const a=ring(i,j),b=ring(i,j+1),c=ring(i+1,j),d=ring(i+1,j+1);index.push(a,c,d,a,d,b);}
+ for(let j=0;j<segments;j++)index.push(pole,ring(last,j+1),ring(last,j));
+ // Facing out: the enclosed volume must be positive; otherwise flip every triangle.
+ let vol=0;for(let t=0;t<index.length;t+=3){const p=k=>positions.slice(3*index[t+k],3*index[t+k]+3),A0=p(0),B=p(1),C0=p(2);vol+=(A0[0]*(B[1]*C0[2]-B[2]*C0[1])-A0[1]*(B[0]*C0[2]-B[2]*C0[0])+A0[2]*(B[0]*C0[1]-B[1]*C0[0]))/6;}
+ if(vol<0)for(let t=0;t<index.length;t+=3){const x=index[t+1];index[t+1]=index[t+2];index[t+2]=x;}
+ return {...part,positions,index,cup:{end,capture,bead:f,wall:W,R,angle:A}};
+}
 const shifted=(p,v)=>({...p,positions:p.positions.map((x,i)=>x+v[i%3]),...(p.pivot?{pivot:p.pivot.map((x,k)=>x+v[k])}:{})});
 
 export function originalLimbBody(bodyId='boy'){
- const body=BODIES[bodyId],torsoShape=makeTorsoOption(torsoBase.shape,body.torso,body.torsoList);
+ const body=BODIES[bodyId],torsoShape=straightLowerSides(makeTorsoOption(torsoBase.shape,body.torso,body.torsoList));
  const parts=[{name:'torso',side:'centre',...buildTorsoSurface(torsoShape)}];
  // Head: the approved shape, only moved so its centre is where the original head's centre was.
  const head=buildHeadSet(CHOSEN_NECK,torsoShape).head,headPositions=head.positions.map((v,i)=>v+ORIGINAL_HEAD_CENTRE[i%3]);
@@ -251,6 +312,8 @@ export const BALL_SIZE={shoulder:1.1,neck:1.1,wrist:.9,ankle:.9,hip:1.1};
  * 4.6 cm wider across the balls), and the thigh keeps its width.
  */
 export const HIP_BALL_GROW=1.1;
+/** The new socket style tried on the knees first (template; owner, 22 November 2026). */
+export const KNEE_CUPS=true;
 /**
  * Hips (owner, 22 November 2026: hip balls "slightly bigger and closer together", the thigh's top "a little bit
  * wider"): hip balls 10% bigger (BALL_SIZE.hip); the gap between their inner edges Our avatar's divided by the
@@ -315,7 +378,7 @@ export const HIP_SOCKET_SKIN=.25;
  * 2 cm where the thin wedge of torso at the front of each cup rounds off. (Fewer rounds left a sharper turn; more
  * rounds or a wider band moved more of the torso, slimmed it around the hips and folded the strip between the balls.)
  */
-export const HIP_RIM_ROUNDS=100,HIP_RIM_BAND=.01;
+export const HIP_RIM_ROUNDS=100,HIP_RIM_BAND=.015;
 /**
  * Once pressed together, how far a limb's near end sits past its ball's centre, along the limb: 1 - press of the
  * ball's radius (the hip: 1 - press - HIP_THIGH_EXTRA, so the thigh's top is just above the centre).
@@ -462,6 +525,8 @@ export function separatedOriginalBody(bodyId='boy',{press=0}={}){
  // edges, and a layer of clay kept over the ball where the torso faces away from it. The thigh keeps its own
  // rounded top around the ball (owner: no cup shape; "keep the edge of the socket soft").
  let hipSocket=null;
+ // The knee as the template for the new socket style: the thigh's foot and the calf's top become cups round the knee ball.
+ if(press&&KNEE_CUPS){const knee=leg[2];leg[1]=cupLimbEnd(leg[1],knee,{end:'bottom'});leg[3]=cupLimbEnd(leg[3],knee,{end:'top'});}
  if(press){
   const Hc=leg[0].centre,R=rH+SOCKET_GAP,soft=softEdge(rH),strip=m=>({positions:m.positions,index:m.index});
   // The full soft edge (mouldSockets narrows it only in the strip between the two balls), a clay layer
