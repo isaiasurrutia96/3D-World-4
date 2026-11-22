@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
@@ -37,9 +37,13 @@ check('the original neck is exactly as copied',()=>{assert.deepEqual(g('neck','c
 const along=(p,L)=>(p[0]-L.centre[0])*L.dir[0]+(p[1]-L.centre[1])*L.dir[1]+(p[2]-L.centre[2])*L.dir[2];
 const thick=(pos,L,from,to)=>{let r=0;for(let i=0;i<pos.length;i+=3){const p=P(pos,i/3),s=along(p,L),t=(s-L.start)/L.length;if(t<from||t>to)continue;const side=[0,1,2].map(k=>p[k]-L.centre[k]-L.dir[k]*s);r=Math.max(r,Math.hypot(...side));}return r;};
 // Each limb matched to Our avatar's overall size: its thickness, and its joint-to-joint length once pressed together.
-for(const n of ['upper-arm','forearm','thigh','calf'])check(`${n}: as thick as Our avatar's (${(ourAvatar.limbs[n].thickness*100).toFixed(1)} cm), ends unchanged in shape, only the middle resized`,()=>{
- const now=g(n,'left').positions,L=limbLine(now);let r=0;for(let i=0;i<now.length;i+=3){const v=[now[i]-L.centre[0],now[i+1]-L.centre[1],now[i+2]-L.centre[2]],sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];r=Math.max(r,Math.hypot(v[0]-L.dir[0]*sa,v[1]-L.dir[1]*sa,v[2]-L.dir[2]*sa));}
- assert(Math.abs(2*r-ourAvatar.limbs[n].thickness)<.003,'thickness '+(2*r));return `thickness ${(2*r*100).toFixed(1)} cm, length ${(L.length*100).toFixed(1)} cm`;});
+// Each limb's thickness: the upper arm as thick as Our avatar's; the forearm, thigh and calf slimmed to SLIM_OVER_BALL times the bigger of their two balls.
+const neighbours={'upper-arm':['shoulder','elbow'],forearm:['elbow','wrist'],thigh:['hip','knee'],calf:['knee','ankle']};
+for(const n of ['upper-arm','forearm','thigh','calf']){const slim=SLIM_LIMBS.includes(n);
+ check(`${n}: ${slim?`slimmed to ${Math.round((SLIM_OVER_BALL-1)*100)}% wider than its bigger ball`:"as thick as Our avatar's"}, ends unchanged in shape`,()=>{
+  const want=slim?SLIM_OVER_BALL*2*Math.max(...neighbours[n].map(k=>b.ballR[k])):ourAvatar.limbs[n].thickness;
+  const now=g(n,'left').positions,L=limbLine(now);let r=0;for(let i=0;i<now.length;i+=3){const v=[now[i]-L.centre[0],now[i+1]-L.centre[1],now[i+2]-L.centre[2]],sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];r=Math.max(r,Math.hypot(v[0]-L.dir[0]*sa,v[1]-L.dir[1]*sa,v[2]-L.dir[2]*sa));}
+  assert(Math.abs(2*r-want)<.003,`thickness ${(2*r*100).toFixed(1)} cm, wanted ${(want*100).toFixed(1)}`);return `thickness ${(2*r*100).toFixed(1)} cm, length ${(L.length*100).toFixed(1)} cm`;});}
 check('test of the test: thickening to a size and back returns the same limb',()=>{const p=src.parts.left.thigh.positions,L=limbLine(p),t=thickenTo(thickenTo(p,.4),.2961);let w=0;for(let i=0;i<p.length;i++)w=Math.max(w,Math.abs(t[i]-thickenTo(p,.2961)[i]));assert(w<1e-9);return 'checked';});
 check(`put together (balls ${Math.round(PREVIEW_PRESS*100)}% in): every joint-to-joint distance matches Our avatar's within 5 mm`,()=>{
  const pv=pressedPreviewBody('boy'),c=n=>pv.balls[n].centre,d=(a,b2)=>dist(c(a),c(b2)),out=[];
@@ -88,9 +92,9 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
   return '13 balls × 300 triangles';});
  check('separated: each ball is as thick as the ends it joins (elbows and knees: the thinner end; neck: the approved size), then adjusted: shoulders and neck 10% bigger, wrists and ankles 10% smaller',()=>{
   assert.deepEqual(BALL_SIZE,{shoulder:1.1,neck:1.1,wrist:.9,ankle:.9});
-  const W=sep.whole,wg=n=>W.parts.find(p=>p.name===n&&p.side==='left'),end=(n,e)=>endRadius(wg(n).positions,limbLine(wg(n).positions),e);
-  const want={'ball-shoulder':BALL_SIZE.shoulder*end('upper-arm','top'),'ball-elbow':Math.min(end('upper-arm','bottom'),end('forearm','top')),'ball-wrist':BALL_SIZE.wrist*end('forearm','bottom'),
-   'ball-hip':end('thigh','top'),'ball-knee':Math.min(end('thigh','bottom'),end('calf','top')),'ball-ankle':BALL_SIZE.ankle*end('calf','bottom'),'ball-neck':BALL_SIZE.neck*buildHeadSet(CHOSEN_NECK,makeTorsoOption(torsoBase.shape,CHOSEN_TORSO)).ball.radius};
+  // The balls are sized from the limbs before slimming (recorded as ballR), so the slimmer limbs keep the same balls.
+  const W=sep.whole,R=W.ballR;
+  const want={'ball-shoulder':R.shoulder,'ball-elbow':R.elbow,'ball-wrist':R.wrist,'ball-hip':R.hip,'ball-knee':R.knee,'ball-ankle':R.ankle,'ball-neck':BALL_SIZE.neck*buildHeadSet(CHOSEN_NECK,makeTorsoOption(torsoBase.shape,CHOSEN_TORSO)).ball.radius};
   const out=[];for(const [n,r] of Object.entries(want)){const m=sg(n,n==='ball-neck'?'centre':'left');assert(Math.abs(m.radius-r)<1e-9,n);out.push(`${n.slice(5)} ${(r*200).toFixed(1)} cm`);}
   return out.join(', ');});
  check('separated: every piece is only moved (same shape as in the joined avatar), never turned or reshaped',()=>{
@@ -125,6 +129,9 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
     const axial=[0,1,2].reduce((t,k)=>t+(c[k]-B.centre[k])*B.dir[k],0);const gap=B.start-axial-m.radius;assert(Math.abs(gap-BALL_GAP)<1e-6,`${bn}: gap above the ${below} ${(gap*1000).toFixed(2)} mm`);}
    out.push(bn.slice(5));}
   return 'centred: '+out.join(', ');});
+ check('separated: the hip balls are as close together as Our avatar\'s (the same gap between their inner edges)',()=>{
+  const l=sg('ball-hip','left'),r2=sg('ball-hip','right'),gap=(l.centre[0]-l.radius)-(r2.centre[0]+r2.radius);
+  assert(Math.abs(gap-ourAvatar.hipBallGap)<.001,`gap ${(gap*100).toFixed(2)} cm, Our avatar ${(ourAvatar.hipBallGap*100).toFixed(2)} cm`);return `${(gap*100).toFixed(1)} cm apart (Our avatar ${(ourAvatar.hipBallGap*100).toFixed(1)} cm)`;});
  check('separated: the right side is the exact mirror of the left',()=>{for(const p of sep.parts.filter(p=>p.side==='left')){const q=sg(p.name,'right');for(let i=0;i<p.positions.length;i+=3)assert(p.positions[i]===-q.positions[i]&&p.positions[i+1]===q.positions[i+1]&&p.positions[i+2]===q.positions[i+2],p.name);}return 'mirrored';});
  check('separated: reports his height apart',()=>`${(sep.height*100).toFixed(1)} cm with every piece apart (shorter once pressed together); ${sep.parts.reduce((n,p)=>n+p.index.length/3,0).toLocaleString()} triangles`);
 }
