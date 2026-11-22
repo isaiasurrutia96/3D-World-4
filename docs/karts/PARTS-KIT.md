@@ -128,5 +128,11 @@ weapon parts, Codex builds how they work.
    their own body shape. Starting models: S Kart style 11, GT style 3, F1
    style 1 (`docs/karts/styles/`), unless the owner picks others. Three
    styles per body part per model to start.
-4. More models can be added later without changing anything already built,
+4. On 22 November 2026, the owner selected **S Kart option 01, Wraparound
+   Bumper (style 11)**, as the stock body. [S Kart stock lineup](styles/s-kart-stock-lineup-review.png)
+5. The GT stock-body review has twelve numbered concepts. Option 01 is the
+   existing style 3, and option 05 draws on the 2026 Porsche 911 GT3 R.
+   [GT Kart stock lineup](styles/gt-kart-stock-lineup-review.png) ·
+   [Porsche Motorsport reference](https://racing.porsche.com/en-US/cars/911-gt3-r-2026)
+6. More models can be added later without changing anything already built,
    because they use the same class base.
