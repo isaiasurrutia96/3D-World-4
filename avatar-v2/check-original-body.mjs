@@ -5,10 +5,11 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,HIP_EXTRA_PRESS,pressAt,sinkIntoTorso,TORSO_PRESS,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,sinkIntoTorso,HIP_TORSO_PRESS,THIGH_VISIBLE_TOP,HIP_THIGH_TOP,nearOffset,squareTop,THIGH_TOP_ROUND,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
+import {SOCKET_GAP} from './sockets.js';
 import {CHOSEN_BALL_TRIANGLES} from './ball-shape.js';
 import {HAND_FEET_SOURCE,CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS} from './hands-feet.js';
 import {buildHeadSet,CHOSEN_NECK} from './head-options.js';
@@ -42,25 +43,25 @@ const neighbours={'upper-arm':['shoulder','elbow'],forearm:['elbow','wrist'],thi
 for(const n of ['upper-arm','forearm','thigh','calf']){const slim=SLIM_LIMBS.includes(n);
  check(`${n}: ${slim?`slimmed to ${Math.round((SLIM_OVER[n]-1)*100)}% wider than its bigger ball`:"as thick as Our avatar's"}, ends unchanged in shape`,()=>{
   const want=slim?SLIM_OVER[n]*2*Math.max(...neighbours[n].map(k=>b.ballR[k])):ourAvatar.limbs[n].thickness;
-  const now=g(n,'left').positions,L=limbLine(now);let r=0;for(let i=0;i<now.length;i+=3){const v=[now[i]-L.centre[0],now[i+1]-L.centre[1],now[i+2]-L.centre[2]],sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];r=Math.max(r,Math.hypot(v[0]-L.dir[0]*sa,v[1]-L.dir[1]*sa,v[2]-L.dir[2]*sa));}
+  const now=g(n,'left').positions,L=limbLine(now,g(n,'left').axis);let r=0;for(let i=0;i<now.length;i+=3){const v=[now[i]-L.centre[0],now[i+1]-L.centre[1],now[i+2]-L.centre[2]],sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];r=Math.max(r,Math.hypot(v[0]-L.dir[0]*sa,v[1]-L.dir[1]*sa,v[2]-L.dir[2]*sa));}
   assert(Math.abs(2*r-want)<.003,`thickness ${(2*r*100).toFixed(1)} cm, wanted ${(want*100).toFixed(1)}`);return `thickness ${(2*r*100).toFixed(1)} cm, length ${(L.length*100).toFixed(1)} cm`;});}
-check(`thigh: its top ${Math.round((THIGH_TOP_WIDER-1)*100)}% wider at the end, fading smoothly to unchanged by its middle; length unchanged`,()=>{
-  // Rebuild the thigh without the widening (its own unwidened shape is the slim thigh), then compare point by point.
-  const now=g('thigh','left').positions,L=limbLine(now);
-  // Widening is undone exactly by the inverse factor at each point's place along the line (the line is the same: checked below).
-  const plain=new Array(now.length);let worstTop=0,worstBelow=0;
-  for(let i=0;i<now.length;i+=3){const v=[0,1,2].map(k=>now[i+k]-L.centre[k]),sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2],t=Math.min(1,Math.max(0,((sa-L.start)/L.length)/THIGH_WIDEN_UNTIL)),k=1+(THIGH_TOP_WIDER-1)*(1-t*t*(3-2*t));
-   for(let j=0;j<3;j++)plain[i+j]=L.centre[j]+L.dir[j]*sa+(v[j]-L.dir[j]*sa)/k;}
-  const again=widenTop(plain,THIGH_TOP_WIDER);for(let i=0;i<now.length;i++)worstTop=Math.max(worstTop,Math.abs(again[i]-now[i]));
-  assert(worstTop<1e-6,`round trip ${worstTop}`);
-  // Below the middle nothing moves; the top end moves out by the full factor; the length is the same.
-  const Lp=limbLine(plain),w=widenTop(plain,THIGH_TOP_WIDER);
-  for(let i=0;i<plain.length;i+=3){const sa=[0,1,2].reduce((a,k)=>a+(plain[i+k]-Lp.centre[k])*Lp.dir[k],0),t=(sa-Lp.start)/Lp.length;if(t>=THIGH_WIDEN_UNTIL)for(let j=0;j<3;j++)worstBelow=Math.max(worstBelow,Math.abs(w[i+j]-plain[i+j]));}
-  assert(worstBelow<1e-9,`below the middle moved ${worstBelow}`);assert(Math.abs(limbLine(w).length-Lp.length)<1e-6,'length changed');
-  const topNow=endRadius(now,L,'top'),topPlain=endRadius(plain,Lp,'top');assert(topNow>topPlain*1.05,`top ${topNow} vs ${topPlain}`);
-  // Test of the test: a factor of 1 changes nothing.
-  const same=widenTop(plain,1);assert(same.every((x,i)=>Math.abs(x-plain[i])<1e-12),'factor 1 moved points');
-  return `top end ${(2*topPlain*100).toFixed(1)} → ${(2*topNow*100).toFixed(1)} cm across; below the middle unchanged`;});
+check(`thigh: its upper part straight and full (squareTop): every ring from the top to the widest as wide as the widest, the top edge rounded over ${Math.round(THIGH_TOP_ROUND*100)}% of that width`,()=>{
+  // On a test limb (the original thigh made thinner), point by point: rings only move straight out from the line.
+  const before=thickenTo(src.parts.left.thigh.positions,.22),after=squareTop(before,THIGH_TOP_ROUND),L=limbLine(before);
+  const side=(P,i)=>{const v=[0,1,2].map(k=>P[i+k]-L.centre[k]),s=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];return {s,rho:Math.hypot(...v.map((x,k)=>x-L.dir[k]*s)),off:v.map((x,k)=>x-L.dir[k]*s)};};
+  let W=0,sW=0;for(let i=0;i<before.length;i+=3){const q=side(before,i);if(q.rho>W){W=q.rho;sW=q.s;}}
+  const Rc=THIGH_TOP_ROUND*W,want=d=>d<Rc?W-Rc+Math.sqrt(Rc*Rc-(Rc-d)**2):W;let checked=0;
+  for(let i=0;i<before.length;i+=3){const a=side(before,i),z=side(after,i);
+   assert(Math.abs(a.s-z.s)<1e-12,'moved along the line');
+   const cross=a.off[0]*z.off[1]-a.off[1]*z.off[0];assert(a.rho<1e-9||Math.abs(cross)<1e-9*(1+a.rho*z.rho),'turned around the line');
+   if(a.s>=sW||a.rho<.01*W){assert(after.slice(i,i+3).every((x,k)=>x===before[i+k]),'moved below the widest ring or the tip');continue;}
+   assert(Math.abs(z.rho-Math.max(a.rho,want(a.s-L.start)))<1e-9,`ring at ${((a.s-L.start)*100).toFixed(1)} cm: ${(z.rho*100).toFixed(2)} cm`);checked++;}
+  // Test of the test: doing it twice changes nothing more (the straight top is already as full as it gets).
+  const twice=squareTop(after,THIGH_TOP_ROUND);assert(twice.every((x,i)=>Math.abs(x-after[i])<1e-9),'not settled');
+  // His thigh: as wide as the widest all the way up (each side by its own direction, from before the shaping).
+  const T=g('thigh','left'),LT=limbLine(T.positions,T.axis);let top=0;for(let i=0;i<T.positions.length;i+=3){const v=[0,1,2].map(k=>T.positions[i+k]-LT.centre[k]),s=v[0]*LT.dir[0]+v[1]*LT.dir[1]+v[2]*LT.dir[2];if((s-LT.start)/LT.length<.25)top=Math.max(top,Math.hypot(...v.map((x,k)=>x-LT.dir[k]*s)));}
+  assert(Math.abs(2*top-SLIM_OVER.thigh*2*b.ballR.hip)<1e-6,`top quarter ${(2*top*100).toFixed(2)} cm`);
+  return `${checked} points moved out only; his thigh's top quarter ${(2*top*100).toFixed(1)} cm across, as wide as its widest`;});
 check('test of the test: thickening to a size and back returns the same limb',()=>{const p=src.parts.left.thigh.positions,L=limbLine(p),t=thickenTo(thickenTo(p,.4),.2961);let w=0;for(let i=0;i<p.length;i++)w=Math.max(w,Math.abs(t[i]-thickenTo(p,.2961)[i]));assert(w<1e-9);return 'checked';});
 check(`put together (balls ${Math.round(PREVIEW_PRESS*100)}% in): every joint-to-joint distance matches Our avatar's within 5 mm`,()=>{
  const pv=pressedPreviewBody('boy'),c=n=>pv.balls[n].centre,d=(a,b2)=>dist(c(a),c(b2)),out=[];
@@ -138,35 +139,60 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
  check('separated: every ball is exactly between its two pieces: on both pieces\' centre lines (within 0.5 mm), 6 mm from each along the line',()=>{
   const out=[];for(const [bn,above,below] of [['ball-elbow','upper-arm','forearm'],['ball-wrist','forearm','hand'],['ball-knee','thigh','calf'],['ball-ankle','calf','foot'],['ball-shoulder',null,'upper-arm'],['ball-hip',null,'thigh']]){
    const m=sg(bn),c=m.centre;const offLine=(pos,L)=>{const v=[0,1,2].map(k=>c[k]-L.centre[k]),s2=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];return Math.hypot(...[0,1,2].map(k=>v[k]-L.dir[k]*s2));};
-   if(above){const A=limbLine(sg(above).positions);assert(offLine(null,A)<5e-4,`${bn} off the ${above}'s line by ${(offLine(null,A)*1000).toFixed(2)} mm`);
+   if(above){const A=limbLine(sg(above).positions,sg(above).axis);assert(offLine(null,A)<5e-4,`${bn} off the ${above}'s line by ${(offLine(null,A)*1000).toFixed(2)} mm`);
     const axial=[0,1,2].reduce((t,k)=>t+(c[k]-A.centre[k])*A.dir[k],0)-A.end-m.radius;assert(Math.abs(axial-BALL_GAP)<1e-6,`${bn}: gap below the ${above} ${(axial*1000).toFixed(2)} mm`);}
-   const under=sg(below);if(below==='hand'||below==='foot'){const A=limbLine(sg(above).positions),p=under.pivot,v=[0,1,2].map(k=>p[k]-c[k]),s2=v[0]*A.dir[0]+v[1]*A.dir[1]+v[2]*A.dir[2];
+   const under=sg(below);if(below==='hand'||below==='foot'){const A=limbLine(sg(above).positions,sg(above).axis),p=under.pivot,v=[0,1,2].map(k=>p[k]-c[k]),s2=v[0]*A.dir[0]+v[1]*A.dir[1]+v[2]*A.dir[2];
     const off=Math.hypot(...[0,1,2].map(k=>v[k]-A.dir[k]*s2));assert(off<5e-4,`${below}'s joint off the line by ${(off*1000).toFixed(2)} mm`);}
-   else{const B=limbLine(under.positions);assert(offLine(null,B)<5e-4,`${bn} off the ${below}'s line by ${(offLine(null,B)*1000).toFixed(2)} mm`);
+   else{const B=limbLine(under.positions,under.axis);assert(offLine(null,B)<5e-4,`${bn} off the ${below}'s line by ${(offLine(null,B)*1000).toFixed(2)} mm`);
     const axial=[0,1,2].reduce((t,k)=>t+(c[k]-B.centre[k])*B.dir[k],0);const gap=B.start-axial-m.radius;assert(Math.abs(gap-BALL_GAP)<1e-6,`${bn}: gap above the ${below} ${(gap*1000).toFixed(2)} mm`);}
    out.push(bn.slice(5));}
   return 'centred: '+out.join(', ');});
- check('the thigh 10% wider than the hip ball and the calf a hair more (13%) than its bigger ball; the forearm unchanged at 10%',()=>{
-  assert.deepEqual(SLIM_OVER,{forearm:1.1,thigh:1.1,calf:1.1+.03});return 'forearm 10%, thigh 10% (of the bigger hip ball), calf 13%';});
+ check('the thigh 15% wider than the hip ball and the calf a hair more (13%) than its bigger ball; the forearm unchanged at 10%',()=>{
+  assert.deepEqual(SLIM_OVER,{forearm:1.1,thigh:1.1+.05,calf:1.1+.03});return 'forearm 10%, thigh 15% (of the bigger hip ball), calf 13%';});
  check('the deeper hip press and the thicker limbs leave every ball its size (measured with every joint pressed alike)',()=>{
   // The sizes before this change (22 November 2026), in cm across: the deeper hip press shortens the thigh 1.2 cm and must not change them.
   const was={shoulder:21.1808,elbow:18.0171,wrist:15.5476,hip:23.1053,knee:19.8728,ankle:19.9069};
   for(const [k,v] of Object.entries(was))assert(Math.abs(b.ballR[k]*200-v)<1e-3,`${k}: ${(b.ballR[k]*200).toFixed(4)} vs ${v}`);return 'unchanged';});
- check(`put together: the hip ball sinks ${Math.round(TORSO_PRESS*100)}% of its radius into the torso and ${Math.round(pressAt('hip')*100)}% into the thigh (the other joints ${Math.round(PREVIEW_PRESS*100)}%)`,()=>{
+ check(`put together: the hip ball sinks ${Math.round(HIP_TORSO_PRESS*100)}% of its radius into the torso, and the thigh's top comes up to ${(THIGH_VISIBLE_TOP*100).toFixed(1)} cm below its centre (the other joints ${Math.round(PREVIEW_PRESS*100)}% in)`,()=>{
   const pv=pressedPreviewBody('boy'),pg=(n,s='left')=>pv.parts.find(p=>p.name===n&&p.side===s),H=pg('ball-hip'),shape=pv.whole.torsoShape;
   // How deep a ball sits past the torso's surface, measured on its own: the smallest d for which a ball d smaller touches nothing inside (4,000 test points).
   const probes=Array.from({length:4000},(_,i)=>{const y=1-2*(i+.5)/4000,q=Math.sqrt(1-y*y),a=i*Math.PI*(3-Math.sqrt(5));return [Math.cos(a)*q,y,Math.sin(a)*q];});
   const sunk=m=>{let lo=-.3,hi=m.radius;for(let k=0;k<40;k++){const d=(lo+hi)/2;if(probes.every(p=>insideTorso(shape,m.centre.map((v,j)=>v+p[j]*(m.radius-d)))<=0))hi=d;else lo=d;}return hi;};
-  const into=sunk(H);assert(Math.abs(into-TORSO_PRESS*H.radius)<.001,`hip ball ${(into*100).toFixed(2)} cm into the torso, wanted ${(TORSO_PRESS*H.radius*100).toFixed(2)}`);
+  const into=sunk(H);assert(Math.abs(into-HIP_TORSO_PRESS*H.radius)<.001,`hip ball ${(into*100).toFixed(2)} cm into the torso, wanted ${(HIP_TORSO_PRESS*H.radius*100).toFixed(2)}`);
   // Test of the test: the separated hip ball (clear of the torso) measures as not in it at all.
   assert(sunk(sg('ball-hip','left'))<0,'the separated ball measured as inside');
-  // Into the thigh: the thigh's top tip (on its line) sits (1 - press) of the radius from the ball's centre, on the ball's far side.
-  const tipGap=(ball,limb,end)=>{const L=limbLine(limb.positions),tip=[0,1,2].map(k=>L.centre[k]+L.dir[k]*(end==='top'?L.start:L.end)),toward=end==='top'?1:-1;return toward*[0,1,2].reduce((a,k)=>a+(tip[k]-ball.centre[k])*L.dir[k],0);};
-  const hipTip=tipGap(H,pg('thigh'),'top'),kneeTip=tipGap(pg('ball-knee'),pg('calf'),'top');
-  assert(Math.abs(hipTip-(1-pressAt('hip'))*H.radius)<1e-6,`thigh tip ${(hipTip*100).toFixed(2)} cm from the hip ball's centre`);
-  assert(Math.abs(kneeTip-(1-PREVIEW_PRESS)*pg('ball-knee').radius)<1e-6,`calf tip ${(kneeTip*100).toFixed(2)} cm from the knee ball's centre`);
-  assert.equal(pressAt('hip'),PREVIEW_PRESS+HIP_EXTRA_PRESS);assert.equal(pressAt('knee'),PREVIEW_PRESS);
-  return `into the torso ${(into*100).toFixed(2)} cm (radius ${(H.radius*100).toFixed(2)}); thigh's tip at ${(hipTip*100).toFixed(2)} cm from its centre; calf's ${(kneeTip*100).toFixed(2)} cm`;});
+  // Into the thigh: the highest point of the moulded thigh, against the ball's centre.
+  const T=pg('thigh').positions;let top=-Infinity;for(let i=1;i<T.length;i+=3)top=Math.max(top,T[i]-H.centre[1]);
+  assert(Math.abs(top+THIGH_VISIBLE_TOP)<.001,`thigh's top ${(top*100).toFixed(2)} cm from the hip ball's centre, wanted ${(-THIGH_VISIBLE_TOP*100).toFixed(2)}`);
+  // The other joints as before: the calf's top tip (1 - press) of the knee ball's radius past its centre.
+  const C=pg('calf'),L=limbLine(C.positions,C.axis),K=pg('ball-knee'),tip=[0,1,2].reduce((a,k)=>a+(L.centre[k]+L.dir[k]*L.start-K.centre[k])*L.dir[k],0);
+  assert(Math.abs(tip-nearOffset('knee',K.radius))<1e-6&&Math.abs(nearOffset('knee',K.radius)-(1-PREVIEW_PRESS)*K.radius)<1e-12,`calf tip ${(tip*100).toFixed(2)} cm past the knee ball's centre`);
+  assert.equal(nearOffset('hip',H.radius),HIP_THIGH_TOP);
+  return `into the torso ${(into*100).toFixed(2)} cm (radius ${(H.radius*100).toFixed(2)}); thigh's top ${(-top*100).toFixed(2)} cm below its centre (was 5.28); calf's tip ${(tip*100).toFixed(2)} cm past the knee's`;});
+ check('put together: real hip sockets in the torso and the thighs: the ball\'s shape plus the 6 mm gap, sealed, smooth, mirrored',()=>{
+  const pv=pressedPreviewBody('boy'),pg=(n,s='left')=>pv.parts.find(p=>p.name===n&&p.side===s),{centre:C,radius:r,R}=pv.hipSocket,Cr=[-C[0],C[1],C[2]];
+  assert(Math.abs(R-r-SOCKET_GAP)<1e-12&&Math.abs(pg('ball-hip').radius-r)<1e-12);
+  const out=[];
+  for(const [name,part,centres] of [['torso',pg('torso','centre'),[C,Cr]],['thigh',pg('thigh'),[C]]]){
+   const P=part.positions,I=part.index;
+   // Nothing inside the gap: every point, and every triangle's middle, at least R from the ball's centre (a flat triangle's middle sits a little inside its round corners: under 1 mm).
+   let near=Infinity,mid=Infinity;for(let i=0;i<P.length;i+=3)for(const c of centres)near=Math.min(near,Math.hypot(P[i]-c[0],P[i+1]-c[1],P[i+2]-c[2]));
+   for(let t=0;t<I.length;t+=3){const m=[0,1,2].map(k=>(P[3*I[t]+k]+P[3*I[t+1]+k]+P[3*I[t+2]+k])/3);for(const c of centres)mid=Math.min(mid,Math.hypot(m[0]-c[0],m[1]-c[1],m[2]-c[2]));}
+   assert(near>=R-1e-9,`${name}: a point ${((R-near)*1000).toFixed(2)} mm inside the gap`);assert(mid>=R-.001,`${name}: a triangle ${((R-mid)*1000).toFixed(2)} mm inside the gap`);
+   // Sealed (every edge in exactly two triangles), facing out (positive volume), no flat-pressed triangles, and smooth near the socket.
+   const e=new Map(),fn=t=>{const q=k=>[P[3*I[t+k]],P[3*I[t+k]+1],P[3*I[t+k]+2]],a=q(0),u=q(1).map((v,j)=>v-a[j]),w=q(2).map((v,j)=>v-a[j]);return [u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];};
+   let vol=0,small=Infinity;for(let t=0;t<I.length;t+=3){const n=fn(t);small=Math.min(small,Math.hypot(...n)/2);vol+=(P[3*I[t]]*n[0]+P[3*I[t]+1]*n[1]+P[3*I[t]+2]*n[2])/6;for(let k=0;k<3;k++){const a=I[t+k],c=I[t+(k+1)%3],key=a<c?a+','+c:c+','+a;(e.get(key)??e.set(key,[]).get(key)).push(t);}}
+   assert([...e.values()].every(ts=>ts.length===2),`${name}: not sealed`);assert(vol>0,`${name}: faces in`);assert(small>1e-9,`${name}: a triangle pressed flat`);
+   let worst=0;for(const [key,ts] of e){const x=+key.split(',')[0];if(!centres.some(c=>Math.hypot(P[3*x]-c[0],P[3*x+1]-c[1],P[3*x+2]-c[2])<.2))continue;const a=fn(ts[0]),c=fn(ts[1]);worst=Math.max(worst,Math.acos(Math.max(-1,Math.min(1,(a[0]*c[0]+a[1]*c[1]+a[2]*c[2])/(Math.hypot(...a)*Math.hypot(...c)))))*180/Math.PI);}
+   assert(worst<43,`${name}: a ${worst.toFixed(0)}° crease by the socket`);
+   out.push(`${name} ${((near-r)*1000).toFixed(1)} mm from the ball, sharpest turn ${worst.toFixed(0)}°`);}
+  // The right thigh is the exact mirror of the left.
+  const L=pg('thigh'),Rt=pg('thigh','right');for(let i=0;i<L.positions.length;i+=3)assert(L.positions[i]===-Rt.positions[i]&&L.positions[i+1]===Rt.positions[i+1]&&L.positions[i+2]===Rt.positions[i+2],'thighs not mirrored');
+  // Test of the test: the thigh before its mould, at the same place, does reach into the gap (so these checks can fail).
+  const plain=sg('thigh','left'),Lp=limbLine(plain.positions,plain.axis),Ln=limbLine(L.positions,L.axis),to=[0,1,2].map(k=>C[k]+Lp.dir[k]*HIP_THIGH_TOP-(Lp.centre[k]+Lp.dir[k]*Lp.start));
+  let inside=0;for(let i=0;i<plain.positions.length;i+=3)if(Math.hypot(...[0,1,2].map(k=>plain.positions[i+k]+to[k]-C[k]))<R)inside++;
+  assert(inside>0,'the unmoulded thigh did not reach the gap');assert(Math.abs(Ln.dir[1]+1)<1e-9);
+  return out.join('; ')+`; without the mould ${inside} thigh points would be inside the gap`;});
  check('test of the test: sinkIntoTorso to depth 0 just touches, and refuses a start inside the torso',()=>{
   const shape=sep.whole.torsoShape,H=sg('ball-hip','left'),c=sinkIntoTorso(shape,H.centre,H.radius,[0,-1,0],0);
   const probes=Array.from({length:2000},(_,i)=>{const y=1-2*(i+.5)/2000,q=Math.sqrt(1-y*y),a=i*Math.PI*(3-Math.sqrt(5));return [Math.cos(a)*q,y,Math.sin(a)*q];});
