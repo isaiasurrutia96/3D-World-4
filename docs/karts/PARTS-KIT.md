@@ -3,8 +3,7 @@
 Written 22 November 2026 for the owner, Claude and Codex. It lists every part
 each kart class has, numbered so anyone can point to one ("GT-07"). Sections
 A to G were **approved by the owner on 22 November 2026** with the changes
-they asked for. Section H (models per class) is a recommendation waiting for
-the owner's answer. Sizes and mount positions are not in this file: they are
+they asked for. Section H covers models per class. Sizes and mount positions are not in this file: they are
 measured after the owner approves the kart sizes (`docs/KARTS.md`, G).
 Weapons are part of racing, which Codex owns: Claude builds the look of the
 weapon parts, Codex builds how they work.
@@ -113,7 +112,7 @@ weapon parts, Codex builds how they work.
 5. **U-05 Off-road kit** ⚡: raised kart, wheels pushed out a little.
 6. No transmission upgrade: it would overlap with engine and turbo.
 
-## H. Models per class (recommendation, waiting for the owner)
+## H. Models per class
 
 1. **Each class shares one base** (developers call it a *platform*): the
    same length, width, wheel spacing, wheels, seat, roll bar and the mounts
@@ -124,8 +123,10 @@ weapon parts, Codex builds how they work.
    style 1 gets several bumpers of its own, which will not fit style 5 or
    16. Racing games with body kits work the same way: each car has its own
    kit.
-3. **Suggested number of models to start:** S Karts 3, GT Karts 4, F1 Karts 2
-   (F1 bodies look alike; F1 variety comes mostly from wings and noses).
-   Three styles per body part per model to start.
+3. **Owner decision (22 November 2026): start with one model per class** to
+   get the driving fundamentals right first. Later models are fine-tuned to
+   their own body shape. Starting models: S Kart style 11, GT style 3, F1
+   style 1 (`docs/karts/styles/`), unless the owner picks others. Three
+   styles per body part per model to start.
 4. More models can be added later without changing anything already built,
    because they use the same class base.
