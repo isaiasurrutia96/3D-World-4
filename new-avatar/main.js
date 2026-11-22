@@ -26,7 +26,7 @@ import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
-import {separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,HIP_TORSO_PRESS,THIGH_VISIBLE_TOP} from '../avatar-v2/original-body.js';
+import {separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,HIP_TORSO_PRESS,HIP_THIGH_EXTRA} from '../avatar-v2/original-body.js';
 import {elbowTest,ELBOW_TEST_POSES,CLOSER_DEPTHS,CLAY_LIP} from '../avatar-v2/elbow-test.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
@@ -96,7 +96,7 @@ GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put togethe
 const together=pressedPreviewBody('boy');
 // Room kept for Our avatar while it loads (about its width and height, metres); it is placed in it once loaded.
 const OUR_AVATAR_SPACE={width:1,height:1.9};
-GROUPS.push({id:'together',label:'Put together',intro:`A preview of how he looks put together, using exactly his own pieces: every ball pressed ${Math.round(PREVIEW_PRESS*100)}% of its radius into the limbs, hands, feet and head, the neck ball where it was approved. The hips have real sockets: each hip ball sits ${Math.round(HIP_TORSO_PRESS*100)}% of its radius into the torso and in a cup moulded into the top of the thigh (the thigh's top ${(THIGH_VISIBLE_TOP*100).toFixed(1)} cm below the ball's centre), with a 6 mm gap and soft edges. Elsewhere no sockets are carved yet; where a ball sits inside a limb it is simply hidden, which is how it will look. Our avatar stands on the left to compare.`,
+GROUPS.push({id:'together',label:'Put together',intro:`A preview of how he looks put together, using exactly his own pieces: every ball pressed ${Math.round(PREVIEW_PRESS*100)}% of its radius into the limbs, hands, feet and head (the hips ${Math.round((PREVIEW_PRESS+HIP_THIGH_EXTRA)*100)}% into the thighs), the neck ball where it was approved. The hip balls sit ${Math.round(HIP_TORSO_PRESS*100)}% of their radius into the torso, in real sockets moulded into it with a 6 mm gap and soft edges. Elsewhere no sockets are carved yet; where a ball sits inside a limb it is simply hidden, which is how it will look. Our avatar stands on the left to compare.`,
  items:[{id:'our-avatar',label:'Our avatar',tag:'Our avatar',parts:[],reserve:OUR_AVATAR_SPACE,note:`Our avatar (the approved avatar in its phone-ready copy, ${GAME_AVATAR.triangles.toLocaleString()} triangles: same shapes, fewer triangles), exactly as it stands in the Our avatar section, for comparing.`},
   {id:'together-boy',label:'Boy · put together',tag:'Boy',face:together.face,ground:true,note:`Exactly his pieces, pressed together. ${(together.height*100).toFixed(0)} cm tall.`,
   parts:together.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});

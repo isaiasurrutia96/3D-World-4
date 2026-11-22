@@ -129,23 +129,15 @@ export function thickenTo(positions,thickness){
  return out;
 }
 /**
- * A limb's top made straight and full, like Our avatar's thigh (owner, 22 November 2026: "make the upper leg
- * slightly thicker", with the ball's mould pressed into its top): every point from the top down to the limb's
- * widest ring moves straight out from the limb's line until it is as far out as that widest ring, except near the
- * top, where the edge is rounded over `round` (a share of that width): a quarter circle from the flat top to the
- * side. Nothing moves along the line (same length; the top stays at the same place, now flat), nothing moves in,
- * and everything below the widest ring is unchanged. For a limb hanging down (its top is its highest end).
+ * A limb's top end made wider: each point moved out from the limb's line by `factor` at the top end, fading
+ * smoothly (smoothstep) to no change at `until` (share of its length from the top) and below. Length unchanged.
  */
-export function squareTop(positions,round){
- const L=limbLine(positions);if(L.dir[1]>=0)throw Error('squareTop: the limb must hang down');
- const side=i=>{const v=[0,1,2].map(k=>positions[i+k]-L.centre[k]),s=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];return {s,off:v.map((x,k)=>x-L.dir[k]*s)};};
- let W=0,sW=0;for(let i=0;i<positions.length;i+=3){const {s,off}=side(i),rho=Math.hypot(...off);if(rho>W){W=rho;sW=s;}}
- const Rc=round*W,want=d=>d<Rc?W-Rc+Math.sqrt(Math.max(0,Rc*Rc-(Rc-d)**2)):W,out=[...positions];
+export function widenTop(positions,factor,until=THIGH_WIDEN_UNTIL){
+ const L=limbLine(positions),out=new Array(positions.length);
  for(let i=0;i<positions.length;i+=3){
-  // The top's tip stays on the line (within a hundredth of the width counts as on it: the line is fitted, not exact).
-  const {s,off}=side(i),rho=Math.hypot(...off);if(s>=sW||rho<.01*W)continue;
-  const k=want(s-L.start)/rho;if(k<=1)continue;
-  for(let j=0;j<3;j++)out[i+j]=L.centre[j]+L.dir[j]*s+off[j]*k;
+  const v=[positions[i]-L.centre[0],positions[i+1]-L.centre[1],positions[i+2]-L.centre[2]],sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];
+  const t=Math.min(1,Math.max(0,((sa-L.start)/L.length)/until)),k=1+(factor-1)*(1-t*t*(3-2*t));
+  for(let j=0;j<3;j++)out[i+j]=L.centre[j]+L.dir[j]*sa+(v[j]-L.dir[j]*sa)*k;
  }
  return out;
 }
@@ -193,10 +185,11 @@ export function originalLimbBody(bodyId='boy'){
  // Then thicker again (owner, 22 November 2026): the thigh "the same overall size as the hip ball but slightly bigger"
  // (SLIM_OVER widths from the bigger hip ball itself), the calf a hair wider still (SLIM_OVER.calf).
  const slimTo=n=>{const [a,b]=between[n];return SLIM_OVER[n]*2*Math.max(balls[a],balls[b]);};
- // The thigh's upper part straight and full (squareTop), so the hip ball's mould has clay around it, like Our
- // avatar's thigh. (It replaces the earlier top widening, 20% at the end, which it covers.)
+ // The thigh's top a little wider (owner, 22 November 2026): THIGH_TOP_WIDER at its top end, fading smoothly to
+ // the slim width by the thigh's middle. Thicker otherwise only overall (owner: keep the real, athletic shape,
+ // thickest at the quads and calves; a straight cup-like top was tried and rejected).
  // Each limb keeps its own direction (`axis`, from before this shaping) for laying it out later.
- const shaped=(name,pos)=>name==='thigh'?squareTop(pos,THIGH_TOP_ROUND):pos;
+ const shaped=(name,pos)=>name==='thigh'?widenTop(pos,THIGH_TOP_WIDER):pos;
  for(const side of ['left','right'])for(const name of ['upper-arm','forearm','thigh','calf']){
   const pos=built[side+':'+name],slim=SLIM_LIMBS.includes(name)?thickenTo(pos,slimTo(name)):pos;
   parts.push({name,side,positions:shaped(name,slim),index:raw(side,name).index,axis:limbLine(slim).dir});}
@@ -251,12 +244,11 @@ const add3=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sub3=(a,b)=>[a[0]-b[0],a[1]-b[
  */
 export const BALL_SIZE={shoulder:1.1,neck:1.1,wrist:.9,ankle:.9,hip:1.1};
 /**
- * Hips (owner, 22 November 2026: hip balls "slightly bigger and closer together"): hip balls 10% bigger
- * (BALL_SIZE.hip); the gap between their inner edges Our avatar's divided by the golden ratio. Claude's picks.
- * The thigh's top edge is rounded over THIGH_TOP_ROUND of its width (squareTop; Claude's pick, a soft edge like
- * Our avatar's thigh).
+ * Hips (owner, 22 November 2026: hip balls "slightly bigger and closer together", the thigh's top "a little bit
+ * wider"): hip balls 10% bigger (BALL_SIZE.hip); the gap between their inner edges Our avatar's divided by the
+ * golden ratio; the thigh's top 20% wider at its end, fading out by the thigh's middle. Claude's picks.
  */
-export const GOLDEN=(1+Math.sqrt(5))/2,HIP_BALL_GAP=ourAvatar.hipBallGap/GOLDEN,THIGH_TOP_ROUND=.35;
+export const GOLDEN=(1+Math.sqrt(5))/2,HIP_BALL_GAP=ourAvatar.hipBallGap/GOLDEN,THIGH_TOP_WIDER=1.2,THIGH_WIDEN_UNTIL=.5;
 
 /**
  * The owner's mix taken apart: every piece separate, the original neck removed,
@@ -276,35 +268,32 @@ export const GOLDEN=(1+Math.sqrt(5))/2,HIP_BALL_GAP=ourAvatar.hipBallGap/GOLDEN,
 /**
  * A preview of the avatar put together (owner, 22 November 2026: "see how it would look put together", exactly
  * our shapes): the same pieces and balls, only pressed closer. Each ball sinks `press` of its radius into the
- * limbs, hands, feet and head it joins, and TORSO_PRESS into the torso (owner: "some of the balls can be deeper": 90% and 40%, was 80% and 25%); the
+ * limbs, hands, feet and head it joins, and the hip balls HIP_TORSO_PRESS into the torso (owner: "some of the balls can be deeper": 90% and 40%, was 80% and 25%); the
  * neck ball sits where it was approved, half in the torso. No sockets are carved: where a piece overlaps a ball
  * the ball is simply hidden inside it, which is how it will look once the sockets are made.
  */
 /**
  * Slimmer forearms, thighs and calves: this many times the bigger of their two balls across (Claude's pick for
  * "slightly bigger"); the calf a hair more (owner: "just slightly slightly bigger ... barely noticeable": 3% more);
- * the thigh 5% more (owner, 22 November 2026: "make the upper leg slightly thicker": 15% wider than the hip ball).
+ * the thigh 5% more (owner, 22 November 2026: "make the upper leg slightly thicker": 15% wider than the hip ball);
+ * then the calf 5% more again (owner: "make the calves slightly thicker overall": 18%). Scaled evenly around
+ * each limb's line, so the shape stays.
  */
-export const SLIM_OVER_BALL=1.1,SLIM_LIMBS=['forearm','thigh','calf'],SLIM_OVER={forearm:SLIM_OVER_BALL,thigh:SLIM_OVER_BALL+.05,calf:SLIM_OVER_BALL+.03};
-export const PREVIEW_PRESS=.9,TORSO_PRESS=.4;
+export const SLIM_OVER_BALL=1.1,SLIM_LIMBS=['forearm','thigh','calf'],SLIM_OVER={forearm:SLIM_OVER_BALL,thigh:SLIM_OVER_BALL+.05,calf:SLIM_OVER_BALL+.08};
+export const PREVIEW_PRESS=.9;
 /**
- * The hip balls slightly deeper (owner, 22 November 2026: "push the ball slightly deeper into the torso and upper
- * leg"), HIP_DEEPER of the radius (5%, 0.58 cm) more into each; together about the 1.1 cm by which the gap between
- * the torso's bottom and the thigh's top was wider than Our avatar's.
- *  - Into the torso: HIP_TORSO_PRESS of the radius (40% before), measured on the torso's surface.
- *  - Into the thigh: now that the thigh's top is a flat cup around the ball (its mould), the depth is how high the
- *    thigh's visible top comes: THIGH_VISIBLE_TOP below the ball's centre. It was 5.28 cm below it (measured,
- *    22 November 2026), so 4.70 cm is 0.58 cm higher (Our avatar's: about 4.1 cm). For that, the thigh's flat top
- *    sits HIP_THIGH_TOP below the centre before the mould; the mould's soft edge rounds the rim about 1 cm
- *    lower (measured; the visible top is checked).
+ * How deep the hip balls sit, put together (owner, 22 November 2026):
+ *  - into the thigh, HIP_THIGH_EXTRA more of the ball's radius than the other joints (90% + 15% = 105%: the
+ *    thigh's rounded top just past the ball's centre; "push the ball slightly deeper into the ... upper leg");
+ *  - into the torso, HIP_TORSO_PRESS of the radius, measured on the torso's surface: 40%, then 45%, then about 1 cm
+ *    deeper again ("the hip balls need to be deeper in the torso ... the torso only, not the upper leg"): 54%.
  */
-export const HIP_DEEPER=.05,HIP_TORSO_PRESS=TORSO_PRESS+HIP_DEEPER,THIGH_VISIBLE_TOP=.047,HIP_THIGH_TOP=.0369;
+export const HIP_THIGH_EXTRA=.15,HIP_TORSO_PRESS=.54;
 /**
- * Once pressed together, how far a limb's near end sits from its ball's centre, along the limb: `press` of the
- * ball's radius inside it (1 - press of the radius past the centre), or for the hip, the thigh's top HIP_THIGH_TOP
- * below the centre.
+ * Once pressed together, how far a limb's near end sits past its ball's centre, along the limb: 1 - press of the
+ * ball's radius (the hip: 1 - press - HIP_THIGH_EXTRA, so the thigh's top is just above the centre).
  */
-export const nearOffset=(joint,radius,press=PREVIEW_PRESS)=>joint==='hip'?HIP_THIGH_TOP:radius*(1-press);
+export const nearOffset=(joint,radius,press=PREVIEW_PRESS)=>radius*(1-press-(joint==='hip'?HIP_THIGH_EXTRA:0));
 /**
  * A ball moved from `clear` (where it is clear of the torso) straight against `dir` until it sinks exactly `depth`
  * past the torso's surface: the furthest point along the way where a ball `depth` smaller still touches nothing
@@ -320,18 +309,45 @@ export function sinkIntoTorso(shape,clear,radius,dir,depth){
 }
 export function pressedPreviewBody(bodyId='boy',press=PREVIEW_PRESS){return separatedOriginalBody(bodyId,{press});}
 
+/** Surface directions, each point's the average of its triangles' directions weighted by the angle they make there. */
+export function angleNormals({positions:P,index:I}){
+ const N=new Array(P.length).fill(0),pt=i=>[P[3*i],P[3*i+1],P[3*i+2]],sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+ for(let t=0;t<I.length;t+=3){
+  const v=[I[t],I[t+1],I[t+2]],p=v.map(pt),u=sub(p[1],p[0]),w=sub(p[2],p[0]),n=[u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]],l=Math.hypot(...n);if(!l)continue;
+  for(let k=0;k<3;k++){const a=sub(p[(k+1)%3],p[k]),b=sub(p[(k+2)%3],p[k]),c=(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])/(Math.hypot(...a)*Math.hypot(...b)),ang=Math.acos(Math.max(-1,Math.min(1,c)));
+   for(let j=0;j<3;j++)N[3*v[k]+j]+=n[j]/l*ang;}
+ }
+ for(let i=0;i<N.length;i+=3){const l=Math.hypot(N[i],N[i+1],N[i+2])||1;N[i]/=l;N[i+1]/=l;N[i+2]/=l;}
+ return N;
+}
 /**
- * One socket, made like makeSocket (sockets.js: refine near the ball, then press), but refined over everything the
- * press can move plus the refinement's fade (six triangle lengths): makeSocket refines only to R + soft + one
- * triangle, so a kept clay layer (skin) is pressed on coarse triangles past that, which showed as a jagged ring.
+ * Sockets for several balls of one size in one part, made like makeSocket (sockets.js: refine near the ball, then
+ * press), but refined once for all of them, over everything the presses can move plus the refinement's fade (six
+ * triangle lengths), and only then pressed one ball after another. (makeSocket refines only to R + soft + one
+ * triangle, so a kept clay layer is pressed on coarse triangles past that: a jagged ring; and refining for a second
+ * ball after the first was pressed bent the surface between them: a 57° fold at the torso's back.) Points the
+ * later presses nudge back into an earlier socket are put back out onto it.
  */
-export function mouldSocket(part,centre,R,soft,skin){
- const withNormals=skin&&!part.normals?{...part,normals:pointNormals(part)}:part;
- return pressBall(refineNear(withNormals,centre,R+skin+soft+6*SOCKET_EDGE,SOCKET_EDGE),centre,R,soft,skin);
+export function mouldSockets(part,centres,R,soft,skin){
+ const reach=R+skin+soft+6*SOCKET_EDGE,fade=6*SOCKET_EDGE,dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ const weight=m=>Math.max(...centres.map(c=>{const d=dist(m,c),f=Math.min(1,Math.max(0,(reach-d)/fade));return f>0?f*f*(3-2*f):(d<reach?1e-9:0);}));
+ // The part's smooth surface directions, carried through the splitting (they also tell the clay layer which way the
+ // surface faced before the press).
+ const refined=refineNear(part.normals?part:{...part,normals:pointNormals(part)},centres[0],reach,SOCKET_EDGE,6,weight);
+ let out=refined;for(const c of centres)out=pressBall(out,c,R,soft,skin);
+ for(const c of centres)out=keepOutside(out,c,R);
+ // Shading directions: where the press left the surface in place, the carried directions, so the split area shades
+ // exactly like the rest of the part (directions measured on the split triangles showed faint patches and a seam
+ // line where they meet the coarser triangles); where the press moved it (the socket and its soft edge), the
+ // directions of the new surface, blended in over the first 5 mm of movement.
+ const P=out.positions,C=refined.normals,A=angleNormals(out),N=new Array(P.length);
+ for(let i=0;i<P.length;i+=3){const m=Math.hypot(P[i]-refined.positions[i],P[i+1]-refined.positions[i+1],P[i+2]-refined.positions[i+2]),x=Math.min(1,m/.005),t=x*x*(3-2*x);
+  const n=[0,1,2].map(k=>C[i+k]*(1-t)+A[i+k]*t),l=Math.hypot(...n)||1;for(let k=0;k<3;k++)N[i+k]=n[k]/l;}
+ return {positions:P,index:out.index,normals:N};
 }
 export function separatedOriginalBody(bodyId='boy',{press=0}={}){
  // How far a piece's near end sits from its ball's centre: one gap past the ball when apart; inside it when pressed.
- // Per ball when pressed: nearOffset (the hip: the thigh's top at HIP_THIGH_TOP below the ball's centre).
+ // Per ball when pressed: nearOffset (the hip a little deeper into the thigh).
  const offset=(r,ball)=>press?nearOffset(ball.replace('ball-',''),r,press):r+BALL_GAP;
  const whole=originalLimbBody(bodyId),get=(n,s='left')=>whole.parts.find(p=>p.name===n&&p.side===s),torsoShape=whole.torsoShape;
  const parts=[get('torso','centre')],balls={};
@@ -379,19 +395,15 @@ export function separatedOriginalBody(bodyId='boy',{press=0}={}){
  // The feet would meet in the middle: each whole leg moves straight outward just enough to leave the usual gap between them.
  const footNow=leg.at(-1);let inner=Infinity;for(let i=0;i<footNow.positions.length;i+=3)inner=Math.min(inner,footNow.positions[i]);
  const legOut=Math.max(0,BALL_GAP/2-inner);for(let k=0;k<leg.length;k++)leg[k]=moveBy(leg[k],[legOut,0,0]);
- // Put together, the hips get real sockets (owner, 22 November 2026: "have that mould of the ball for the socket"),
- // made like the shoulder sockets (sockets.js makeSocket): the torso and the thigh take the ball's shape plus the
- // usual 6 mm gap, with soft edges; the torso keeps a layer of clay over the ball where it faces away from it.
+ // Put together, the torso gets real hip sockets (owner, 22 November 2026: "have that mould of the ball for the
+ // socket", with soft edges), made like the shoulder sockets: the ball's shape plus the usual 6 mm gap, soft
+ // edges, and a layer of clay kept over the ball where the torso faces away from it. The thigh keeps its own
+ // rounded top around the ball (owner: no cup shape; "keep the edge of the socket soft").
  let hipSocket=null;
  if(press){
   const Hc=leg[0].centre,R=rH+SOCKET_GAP,soft=softEdge(rH),strip=m=>({positions:m.positions,index:m.index});
-  let torso={positions:parts[0].positions,index:parts[0].index};
-  const Hr=[-Hc[0],Hc[1],Hc[2]];
-  for(const c of [Hc,Hr])torso=mouldSocket(torso,c,R,soft,SOCKET_SKIN*rH);
-  // Refining for the second socket splits edges inside the first, a fraction of a millimetre inside its cup: put back.
-  torso=keepOutside(keepOutside(torso,Hc,R),Hr,R);
-  parts[0]={...parts[0],...strip(torso)};
-  leg[1]={...leg[1],...strip(mouldSocket(leg[1],Hc,R,soft,0))};
+  const torso=mouldSockets({positions:parts[0].positions,index:parts[0].index},[Hc,[-Hc[0],Hc[1],Hc[2]]],R,soft,SOCKET_SKIN*rH);
+  parts[0]={...parts[0],positions:torso.positions,index:torso.index,normals:torso.normals};
   hipSocket={centre:Hc,radius:rH,R,soft};
  }
  // Neck: the approved neck ball's size, straight up until 2 cm clear of the torso's top; the head one gap above it.
