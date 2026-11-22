@@ -74,13 +74,19 @@ export const AVATAR = Object.freeze({
 // Short helpers for writing the data below.
 const box = (min, max) => ({min, max});
 const v = (x, y, z) => [x, y, z];
+/** Freezes an object and everything inside it, so shared kart data cannot be
+ *  changed by accident (make a copy to try other numbers). */
+function deepFreeze(o) {
+  if (o && typeof o === 'object' && !Object.isFrozen(o)) { Object.freeze(o); for (const value of Object.values(o)) deepFreeze(value); }
+  return o;
+}
 
 /** Part styles. `offset` is from the mount to the centre of the part; `size`
  *  is the part's full width, height and length. For mirrored parts the
  *  offset is for the right side and is flipped for the left. A `shell` part
  *  wraps over the driver's legs (a nose or hood) and may cover the legs
  *  zone, never the hips, body or head. */
-export const STYLES = Object.freeze({
+export const STYLES = deepFreeze({
   nose: {
     'gokart-nose':   {label:'GoKart nose', modes:['gokart'], size:v(.83,.47,1.33), offset:v(0,.225,.335), shell:true},
     'gt-nose':       {label:'GT nose', modes:['gt'], size:v(1.10,.44,.50), offset:v(0,.18,.25)},
@@ -147,7 +153,7 @@ const REAR_WHEELS = Object.freeze({kind:'rearWheels'});
  *  is a place for optional parts. `seat` is where the driver's hips sit and
  *  how far the back leans (radians); the driver zone is worked out from it
  *  and the avatar's body sizes. */
-export const GOKART = Object.freeze({
+export const GOKART = deepFreeze({
   id:'gokart-base', label:'GoKart', mode:'gokart', size:'small', scale:.64,
   wheels:{front:{radius:.38, width:.30}, rear:{radius:.38, width:.34}, halfTrack:.81, frontZ:1.03, rearZ:-1.0},
   frameHeight:.24,
@@ -162,7 +168,7 @@ export const GOKART = Object.freeze({
   upgrades:STOCK,
 });
 
-export const GT_GOKART = Object.freeze({
+export const GT_GOKART = deepFreeze({
   id:'gt-base', label:'GT GoKart', mode:'gt', size:'medium', scale:.78,
   wheels:{front:{radius:.38, width:.30}, rear:{radius:.38, width:.30}, halfTrack:.745, frontZ:.79, rearZ:-.76},
   frameHeight:.15,
@@ -177,7 +183,7 @@ export const GT_GOKART = Object.freeze({
   upgrades:STOCK,
 });
 
-export const F1_GOKART = Object.freeze({
+export const F1_GOKART = deepFreeze({
   id:'f1-base', label:'F1 GoKart', mode:'f1', size:'large', scale:.84,
   // Same real wheel size as the GT GoKart (owner): .38 x .78 / .84 design units.
   wheels:{front:{radius:.38*.78/.84, width:.30}, rear:{radius:.38*.78/.84, width:.36}, halfTrack:.82, frontZ:.96, rearZ:-.93},
@@ -223,9 +229,9 @@ function anchorsOf(kart, slot, setup) {
   const mount = kart.mounts[slot], lift = setup.rideHeight ?? 0;
   if (!mount) return [];
   if (mount.kind === 'eachWheel')
-    return wheelsOf(kart, setup).map(w => ({id:w.id, sign:Math.sign(w.at[0]), at:v(w.at[0], 2*w.radius + lift, w.at[2])}));
+    return wheelsOf(kart, setup).map(w => ({id:w.id, wheel:w.id, sign:Math.sign(w.at[0]), at:v(w.at[0], 2*w.radius + lift, w.at[2])}));
   if (mount.kind === 'rearWheels')
-    return wheelsOf(kart, setup).filter(w => w.axle === 'rear').map(w => ({id:w.side, sign:Math.sign(w.at[0]), at:v(w.at[0], w.radius + lift, w.at[2] - w.radius)}));
+    return wheelsOf(kart, setup).filter(w => w.axle === 'rear').map(w => ({id:w.side, wheel:w.id, sign:Math.sign(w.at[0]), at:v(w.at[0], w.radius + lift, w.at[2] - w.radius)}));
   const [x, y, z] = mount.at.map(c => c*kart.scale);
   return mount.mirrored
     ? [{id:'left', sign:-1, at:v(-x, y + lift, z)}, {id:'right', sign:1, at:v(x, y + lift, z)}]
@@ -239,7 +245,7 @@ export function placePart(kart, slot, styleId, setup = STOCK) {
   return anchorsOf(kart, slot, setup).map(a => {
     const mirrored = kart.mounts[slot].kind !== 'point' || kart.mounts[slot].mirrored;
     const k = kart.scale, off = style.offset.map(c => c*k), dx = mirrored ? a.sign*off[0] : off[0];
-    return {id:[slot, a.id].filter(Boolean).join('-'), slot, style:styleId, anchor:a.at,
+    return {id:[slot, a.id].filter(Boolean).join('-'), slot, style:styleId, anchor:a.at, wheel:a.wheel ?? null,
       centre:v(a.at[0] + dx, a.at[1] + off[1], a.at[2] + off[2]), size:style.size.map(c => c*k)};
   });
 }
@@ -270,12 +276,11 @@ export function driverPose(kart, setup = STOCK) {
  *  with shoulders, legs reaching forward with bent knees, and the head.
  *  (Arms reaching the steering wheel are not included.) */
 export function driverZones(kart, setup = STOCK) {
-  const {hip, shoulder, head} = driverPose(kart, setup), A = AVATAR, back = .14, chest = .14;
-  const span = (a, b, pad) => [Math.min(a, b) - pad, Math.max(a, b) + pad];
-  const [tz0, tz1] = span(hip[2], shoulder[2], 0), [ty0] = [hip[1] + .15];
+  const {hip, shoulder, head} = driverPose(kart, setup), A = AVATAR, back = .14, chest = .14, waist = hip[1] + .15;
+  const torsoBack = Math.min(hip[2], shoulder[2]) - back, torsoFront = Math.max(hip[2], shoulder[2]) + chest;
   return {
-    hips: box(v(-A.hipHalf, hip[1] - .1, hip[2] - back), v(A.hipHalf, hip[1] + .15, hip[2] + chest)),
-    body: box(v(-A.shoulderHalf, ty0, tz0 - back), v(A.shoulderHalf, shoulder[1] + .12, tz1 + chest)),
+    hips: box(v(-A.hipHalf, hip[1] - .1, hip[2] - back), v(A.hipHalf, waist, hip[2] + chest)),
+    body: box(v(-A.shoulderHalf, waist, torsoBack), v(A.shoulderHalf, shoulder[1] + .12, torsoFront)),
     legs: box(v(-A.hipHalf + .02, hip[1] - .08, hip[2]), v(A.hipHalf - .02, hip[1] + A.kneeRise, hip[2] + A.legReach)),
     head: box(v(-A.headRadius, head[1] - A.headRadius, head[2] - A.headRadius), v(A.headRadius, head[1] + A.headRadius, head[2] + A.headRadius)),
   };
@@ -293,7 +298,7 @@ export function fitProblems(kart, slot, styleId, setup = STOCK) {
     const b = boundsOf(part);
     for (const [zone, z] of Object.entries(zones))
       if (overlaps(b, z) && !(style.shell && zone === 'legs')) problems.push(`${who}: ${part.id} would sit in the driver's ${zone}`);
-    for (const w of wheels) if (!(style.wrapsWheel && part.id.endsWith(w.id)) && hitsWheel(b, w)) problems.push(`${who}: ${part.id} would hit the ${w.id} wheel`);
+    for (const w of wheels) if (!(style.wrapsWheel && part.wheel === w.id) && hitsWheel(b, w)) problems.push(`${who}: ${part.id} would hit the ${w.id} wheel`);
     if (b.min[1] < -EPS) problems.push(`${who}: ${part.id} goes below the ground`);
     if (Math.max(Math.abs(b.min[0]), Math.abs(b.max[0])) > LIMITS.halfWidth || b.max[1] > LIMITS.maxY + (setup.rideHeight ?? 0) ||
         Math.max(Math.abs(b.min[2]), Math.abs(b.max[2])) > LIMITS.halfLength) problems.push(`${who}: ${part.id} reaches outside the kart's space`);
@@ -301,12 +306,27 @@ export function fitProblems(kart, slot, styleId, setup = STOCK) {
   return problems;
 }
 
-/** All the parts of a kart for a set of style choices, each with its boxes. */
+/** All the parts of a kart for a set of style choices, each with its boxes.
+ *  A choice that cannot be placed (unknown style, no mount) has no boxes and
+ *  says why in `problems`, instead of stopping everything. */
 export function layoutKart(kart, choices = defaultChoices(kart), setup = STOCK) {
-  return Object.entries(choices).filter(([, id]) => id).map(([slot, styleId]) => ({
-    slot, style:styleId, optional:kart.design[slot] !== styleId,
-    boxes:placePart(kart, slot, styleId, setup), problems:fitProblems(kart, slot, styleId, setup),
-  }));
+  return Object.entries(choices).filter(([, id]) => id).map(([slot, styleId]) => {
+    const problems = fitProblems(kart, slot, styleId, setup), placeable = STYLES[slot]?.[styleId] && kart.mounts[slot];
+    return {slot, style:styleId, optional:kart.design[slot] !== styleId, boxes:placeable ? placePart(kart, slot, styleId, setup) : [], problems};
+  });
+}
+
+/** Every reason an upgrade set is not valid (empty list = valid). Missing
+ *  values count as stock, so a partial set such as {rideHeight: .1} is fine. */
+export function setupProblems(setup) {
+  const problems = [], full = {...STOCK, ...setup};
+  for (const name of Object.keys(setup ?? {})) if (!UPGRADES[name]) problems.push(`unknown upgrade "${name}"`);
+  for (const [name, rule] of Object.entries(UPGRADES)) {
+    const value = full[name];
+    if (rule.choices ? !rule.choices.includes(value) : !(Number.isFinite(value) && value >= rule.min && value <= rule.max))
+      problems.push(`upgrade "${name}" has an invalid value ${JSON.stringify(value)}`);
+  }
+  return problems;
 }
 
 /** Checks a kart's data and an upgrade set. Returns a list of problems. */
@@ -314,7 +334,12 @@ export function checkKart(kart, setup = kart.upgrades) {
   const problems = [], fail = text => problems.push(`${kart.id ?? 'kart'}: ${text}`);
   if (!MODES.includes(kart.mode)) fail(`unknown mode "${kart.mode}"`);
   if (!(kart.scale > 0)) fail('scale must be a positive number');
-  if (!kart.seat?.hip?.every(Number.isFinite) || !Number.isFinite(kart.seat?.recline)) fail('seat needs a hip position and a recline');
+  if (!kart.seat?.hip?.every(Number.isFinite) || !(kart.seat?.recline >= 0 && kart.seat.recline < Math.PI/2)) fail('seat needs a hip position and a recline between 0 and 90 degrees');
+  if (kart.seat?.feetY !== undefined && !(kart.seat.feetY > 0)) fail('seat feetY must be above the ground');
+  const w = kart.wheels ?? {};
+  for (const axle of ['front', 'rear']) if (!(w[axle]?.radius > 0 && w[axle]?.width > 0)) fail(`${axle} wheels need a positive radius and width`);
+  if (!(w.frontZ > w.rearZ)) fail('front wheels must be ahead of the rear wheels');
+  if (!(w.halfTrack > Math.max(w.front?.width ?? 0, w.rear?.width ?? 0)/2)) fail('the wheels on each side must not overlap in the middle');
   for (const [slot, mount] of Object.entries(kart.mounts ?? {})) {
     if (!SLOTS[slot]) { fail(`unknown part "${slot}"`); continue; }
     if (SLOTS[slot].group !== 'body') fail(`"${slot}" is built with the chassis, not mounted`);
@@ -326,10 +351,6 @@ export function checkKart(kart, setup = kart.upgrades) {
     if (!kart.mounts?.[slot]) fail(`design uses "${slot}" but there is no mount for it`);
     else problems.push(...fitProblems(kart, slot, styleId, setup));
   }
-  for (const [name, rule] of Object.entries(UPGRADES)) {
-    const value = setup[name];
-    if (rule.choices ? !rule.choices.includes(value) : !(Number.isFinite(value) && value >= rule.min && value <= rule.max))
-      fail(`upgrade "${name}" has an invalid value ${JSON.stringify(value)}`);
-  }
+  for (const problem of setupProblems(setup)) fail(problem);
   return problems;
 }

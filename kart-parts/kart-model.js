@@ -14,15 +14,17 @@
 //   └─ suspension (real metres, joins the body to the wheels)
 import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
-import {STOCK, AVATAR, wheelsOf, driverPose} from './spec.js';
+import {STOCK, AVATAR, wheelsOf, driverPose, checkKart, setupProblems} from './spec.js';
 import {tube, curvedTube, paint, merge} from './shapes.js';
+
+/** Surface finish, easy to tune: paint is slightly glossy, rubber is matte. */
+export const FINISH = Object.freeze({paint: {roughness: .42, metalness: .08}, rubber: {roughness: .9, metalness: 0}, dummy: {roughness: .6, metalness: 0}});
 
 /** One standard material with vertex colours for paint, one for rubber. */
 export function kartMaterials() {
   return {
-    body: new T.MeshStandardMaterial({vertexColors: true, roughness: .42, metalness: .08}),
-    rubber: new T.MeshStandardMaterial({vertexColors: true, roughness: .9, metalness: 0}),
-    dummy: new T.MeshStandardMaterial({color: '#b9bfc6', roughness: .6, metalness: 0}),
+    body: new T.MeshStandardMaterial({vertexColors: true, ...FINISH.paint}),
+    rubber: new T.MeshStandardMaterial({vertexColors: true, ...FINISH.rubber}),
   };
 }
 
@@ -44,8 +46,12 @@ export function roundedBlock(centre, size, radius, color, segments = 2) {
   g.translate(...centre); return paint(g, color);
 }
 
-/** The skeleton of a model (see the layout at the top of this file). */
+/** The skeleton of a model (see the layout at the top of this file). The
+ *  kart's data and the set-up are checked first: a wrongly tuned number stops
+ *  the build with a clear message instead of making a broken kart. */
 export function modelSkeleton(kart, setup = STOCK) {
+  const problems = [...checkKart(kart, {...STOCK, ...setup}), ...setupProblems(setup)];
+  if (problems.length) throw new Error(`Cannot build ${kart.label ?? 'kart'}: ${problems.join('; ')}`);
   const root = new T.Group(); root.name = `${kart.id} model`;
   const body = new T.Group(); body.name = 'body'; body.position.y = setup.rideHeight ?? 0; root.add(body);
   const design = new T.Group(); design.name = 'design space'; design.scale.setScalar(kart.scale); body.add(design);
@@ -137,9 +143,13 @@ export function roundWheel(centre, radius, columnBase, rimColor, columnColor, sp
 }
 
 /** A grey driver dummy (real metres) from the avatar's body sizes, sitting in
- *  the kart's seat with hands on the wheel: to judge each kart's scale. */
-export function driverDummy(kart, hands, setup = STOCK) {
-  const {hip, shoulder, head, recline} = driverPose(kart, setup), parts = [];
+ *  the kart's seat with hands on the wheel (`hands`, the model's
+ *  userData.steering): to judge each kart's scale. Built in the stock pose;
+ *  add it to the model's `body` group so it rises with an off-road set-up. */
+export function driverDummy(kart, hands) {
+  const {hip, shoulder, head, recline} = driverPose(kart), parts = [];
+  // Feet rest low on the pedals, below the hips (inside the nose).
+  const feetY = kart.seat.feetY !== undefined ? kart.seat.feetY*kart.scale : Math.max(.09, hip[1] - .25);
   const cap = (a, b, r) => {
     const A = new T.Vector3(...a), B = new T.Vector3(...b), d = B.clone().sub(A), g = new T.CapsuleGeometry(r, Math.max(.001, d.length()), 4, 10);
     g.applyQuaternion(new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), d.normalize())); g.translate(...A.add(B).multiplyScalar(.5).toArray());
@@ -153,12 +163,10 @@ export function driverDummy(kart, hands, setup = STOCK) {
     const sh = [s*.26, shoulder[1] - .04, shoulder[2]], grip = [s*.15, hand[1], hand[2] - .02];
     const elbow = [s*.3, (sh[1] + grip[1])/2 - .12, (sh[2] + grip[2])/2];
     parts.push(cap(sh, elbow, .055), cap(elbow, grip, .045), new T.SphereGeometry(.05, 10, 8).translate(...grip));
-    // Feet rest low on the pedals, below the hips (inside the nose).
-    const feetY = kart.seat.feetY !== undefined ? kart.seat.feetY*kart.scale + (setup.rideHeight ?? 0) : Math.max(.09, hip[1] - .25);
     const hp = [s*.12, hip[1], hip[2]], ankle = [s*.08, feetY, hip[2] + .64], knee = [s*.095, Math.max(hip[1], ankle[1]) + .16, hip[2] + .34];// knees close together, as in a race car
     parts.push(cap(hp, knee, .075), cap(knee, ankle, .06), new T.BoxGeometry(.08, .13, .22).translate(s*.08, ankle[1] + .03, ankle[2] + .06));
   }
-  const m = new T.Mesh(merge(parts.map(g => paint(g, '#b9bfc6'))), new T.MeshStandardMaterial({vertexColors: true, roughness: .6}));
+  const m = new T.Mesh(merge(parts.map(g => paint(g, '#b9bfc6'))), new T.MeshStandardMaterial({vertexColors: true, ...FINISH.dummy}));
   m.name = 'driver dummy'; m.castShadow = true; m.userData.recline = recline;
   return m;
 }

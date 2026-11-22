@@ -6,7 +6,7 @@
 // stub axles and a solid rear axle, as here. Same methods as the F1 GoKart.
 import * as T from 'three';
 import {GOKART, STOCK, wheelsOf} from './spec.js';
-import {superellipse, loft, tube, curvedTube, paint, mirrorX, stationCurve, range} from './shapes.js';
+import {superellipse, loft, tube, curvedTube, mirrorX, stationCurve, range} from './shapes.js';
 import {kartMaterials, meshOf, partGroup, modelSkeleton, addWheels, seat, steeringPoint, roundWheel, roundedBlock, RIMS} from './kart-model.js';
 
 export const GOKART_COLORS = Object.freeze({red: '#e1342c', white: '#f4f4f2', silver: '#c3cad2', navy: '#22304a', dark: '#2a3038'});
@@ -49,17 +49,18 @@ export function buildGoKart(kart = GOKART, setup = STOCK) {
   }
   chassis.push(roundedBlock([0, y - .02, -.1], [.86, .025, 1.7], .01, C.dark));// floor pan
   const front = wheelsOf(kart, setup).filter(w => w.axle === 'front');
-  for (const w of front) {// kingpin carriers out to the front stub axles
-    const s = Math.sign(w.at[0]), inner = (Math.abs(w.at[0]) - w.width/2)/k - .03;
-    chassis.push(tube([s*.42, y, w.at[2]/k], [s*inner, w.radius/k, w.at[2]/k], .03, C.silver), roundedBlock([s*(inner + .015), w.radius/k, w.at[2]/k], [.05, .16, .07], .015, C.dark));
+  for (const w of front) {// kingpin carriers from the frame out to the front stub axles, at hub height even when raised
+    const s = Math.sign(w.at[0]), inner = (Math.abs(w.at[0]) - w.width/2)/k - .03, hubY = (w.radius - lift)/k;
+    chassis.push(tube([s*.42, y, w.at[2]/k], [s*inner, hubY, w.at[2]/k], .03, C.silver), roundedBlock([s*(inner + .015), hubY, w.at[2]/k], [.05, .16, .07], .015, C.dark));
   }
   const chassisGroup = new T.Group(); chassisGroup.name = 'chassis'; chassisGroup.add(meshOf('chassis body', chassis, materials.body)); design.add(chassisGroup);
 
-  // Rear axle (real metres): one solid axle between the rear wheels.
-  const rear = wheelsOf(kart, setup).filter(w => w.axle === 'rear');
+  // Rear axle (real metres): one solid axle between the rear wheels, held by
+  // bearing hangers that reach the frame at any ride height.
+  const rear = wheelsOf(kart, setup).filter(w => w.axle === 'rear'), hub = rear[0].radius, rz = rear[0].at[2], frameY = y*k + lift;
   const axleX = Math.abs(rear[0].at[0]) - rear[0].width*.4;
-  root.add(meshOf('rear axle', [tube([-axleX, rear[0].radius, rear[0].at[2]], [axleX, rear[0].radius, rear[0].at[2]], .022, C.silver),
-    ...[-1, 1].map(s => roundedBlock([s*.25, rear[0].radius + lift*0, rear[0].at[2]], [.06, .08, .08], .015, C.dark))], materials.body));
+  root.add(meshOf('rear axle', [tube([-axleX, hub, rz], [axleX, hub, rz], .022, C.silver),
+    ...[-1, 1].flatMap(s => [roundedBlock([s*.25, hub, rz], [.06, .08, .08], .015, C.dark), tube([s*.25, hub, rz], [s*.25, frameY, rz - .001], .018, C.silver)])], materials.body));
 
   // Cockpit (real metres): the design's tall navy bucket seat with a silver
   // trim, and a round three-spoke wheel within the driver's reach.
