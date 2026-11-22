@@ -198,7 +198,7 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
   const plain=pv.whole.torsoShape?pv.whole.parts.find(p=>p.name==='torso').positions:null;let inside=0;for(let i=0;i<plain.length;i+=3)for(const c of [C,Cr])if(Math.hypot(plain[i]-c[0],plain[i+1]-c[1],plain[i+2]-c[2])<R)inside++;
   assert(inside>0,'the torso before its sockets did not reach the gap');
   return out.join('; ')+`; thighs unchanged in shape; without the sockets ${inside} torso points would be inside the gap`;});
- check(`put together: the torso's hip socket rims are rounded out (no sharp edges): on the outer sides every bend by the sockets rounds over at least 8 mm, and only the rims change`,()=>{
+ check(`put together: the torso's hip socket rims are rounded out (no sharp edges): on the outer sides every bend by the sockets rounds over at least 12 mm, and only the rims change`,()=>{
   const pv=pressedPreviewBody('boy'),{centre:C,radius:r,R,soft}=pv.hipSocket,Cr=[-C[0],C[1],C[2]],base=pv.whole.parts.find(p=>p.name==='torso');
   // Tightest rounding by the sockets on their outer sides: each edge's length over the angle its two triangles bend by.
   const tightest=part=>{const P=part.positions,I=part.index,fn=t=>{const q=k=>[P[3*I[t+k]],P[3*I[t+k]+1],P[3*I[t+k]+2]],a=q(0),u=q(1).map((v,j)=>v-a[j]),w=q(2).map((v,j)=>v-a[j]);return [u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];};
@@ -209,8 +209,8 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
     min=Math.min(min,Math.hypot(P[3*x]-P[3*y],P[3*x+1]-P[3*y+1],P[3*x+2]-P[3*y+2])/ang);}return min;};
   const done=pv.parts.find(p=>p.name==='torso'),now=tightest(done);
   // The same sockets without the rounding: a tighter edge (test of the test: the check sees the difference).
-  const plain=mouldSockets({positions:base.positions,index:base.index},[C,Cr],R,Math.min(soft,C[0]-R),HIP_SOCKET_SKIN*r,0),before=tightest(plain);
-  assert(now>=.008,`a rim rounds over only ${(now*1000).toFixed(1)} mm`);assert(before<.008,`unrounded already ${(before*1000).toFixed(1)} mm`);
+  const plain=mouldSockets({positions:base.positions,index:base.index},[C,Cr],R,soft,HIP_SOCKET_SKIN*r,0),before=tightest(plain);
+  assert(now>=.012,`a rim rounds over only ${(now*1000).toFixed(1)} mm`);assert(before<.012,`unrounded already ${(before*1000).toFixed(1)} mm`);
   // Only the rims moved: nothing beyond the band (plus its fade), and nothing more than 1 cm.
   assert.equal(plain.positions.length,done.positions.length);let moved=0,far=0;const reach=R+HIP_RIM_BAND+2*.012;
   for(let i=0;i<done.positions.length;i+=3){const m=Math.hypot(...[0,1,2].map(k=>done.positions[i+k]-plain.positions[i+k]));moved=Math.max(moved,m);

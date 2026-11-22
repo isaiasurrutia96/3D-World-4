@@ -292,11 +292,13 @@ export const PREVIEW_PRESS=.9;
  */
 export const HIP_THIGH_EXTRA=.15,HIP_TORSO_PRESS=.803;
 /**
- * The clay layer kept over the hip ball where the torso faces away from it, as a share of the ball's radius: 12%
- * (the shoulders keep 25%, SOCKET_SKIN). With the ball this deep it pokes out past the torso's sides, and 25% left
- * a thin shelf of clay sticking out at both hip corners; 12% keeps a small rounded lip. Claude's pick.
+ * The clay layer folded over the hip ball where the torso faces away from it, as a share of the ball's radius: 25%,
+ * like the shoulders (SOCKET_SKIN). With the ball this deep it pokes out past the torso's sides, so the clay folds
+ * over it. (Owner, 22 November 2026: "if you have to fold the edges more to achieve the soft edges" do it. With the
+ * narrow soft edge, 25% left a thin shelf at the hip corners and 12% a sharp lip; with the full soft edge and the
+ * rims rounded out, 25% folds into the roundest rim measured: tightest rounding 1.5 cm, sharpest turn 28°.)
  */
-export const HIP_SOCKET_SKIN=.12;
+export const HIP_SOCKET_SKIN=.25;
 /**
  * The torso's hip socket rims rounded out (owner, 22 November 2026: "the sockets in the torso has sharp rounded
  * edges ... round out the edges"): HIP_RIM_ROUNDS rounds of smoothing (roundOut) on the surface within HIP_RIM_BAND
@@ -364,12 +366,16 @@ export function angleNormals({positions:P,index:I}){
  * later presses nudge back into an earlier socket are put back out onto it.
  */
 export function mouldSockets(part,centres,R,soft,skin,roundRims=0,rimBand=HIP_RIM_BAND){
- const reach=R+skin+soft+6*SOCKET_EDGE,fade=6*SOCKET_EDGE,dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ // Each ball's soft edge is as wide as `soft`, but never wider than the room left before another ball's socket
+ // (two soft edges overlapping in the thin strip of torso between two deep sockets folded it).
+ const softFor=c=>p=>Math.max(SOCKET_EDGE,Math.min(soft,...centres.filter(o=>o!==c).map(o=>dist(p,o)-R)));
+ const reach=R+skin+soft+6*SOCKET_EDGE,fade=6*SOCKET_EDGE;
  const weight=m=>Math.max(...centres.map(c=>{const d=dist(m,c),f=Math.min(1,Math.max(0,(reach-d)/fade));return f>0?f*f*(3-2*f):(d<reach?1e-9:0);}));
  // The part's smooth surface directions, carried through the splitting (they also tell the clay layer which way the
  // surface faced before the press).
  const refined=refineNear(part.normals?part:{...part,normals:pointNormals(part)},centres[0],reach,SOCKET_EDGE,6,weight);
- let out=refined;for(const c of centres)out=pressBall(out,c,R,soft,skin);
+ let out=refined;for(const c of centres)out=pressBall(out,c,R,softFor(c),skin);
  for(const c of centres)out=keepOutside(out,c,R);
  // A deep press stretches the triangles it pushes into the cup (at 80% deep, a flat triangle's middle sat 3 mm
  // inside the gap): split them again, now following the pressed surface, and put the new points out onto the cup.
@@ -445,10 +451,9 @@ export function separatedOriginalBody(bodyId='boy',{press=0}={}){
  let hipSocket=null;
  if(press){
   const Hc=leg[0].centre,R=rH+SOCKET_GAP,soft=softEdge(rH),strip=m=>({positions:m.positions,index:m.index});
-  // The two sockets' soft edges stop halfway between the balls (soft edges overlapping in the thin strip of torso
-  // between two deep sockets folded it), and the clay layer is HIP_SOCKET_SKIN thick.
-  const torsoSoft=Math.min(soft,Hc[0]-R);
-  const torso=mouldSockets({positions:parts[0].positions,index:parts[0].index},[Hc,[-Hc[0],Hc[1],Hc[2]]],R,torsoSoft,HIP_SOCKET_SKIN*rH,HIP_RIM_ROUNDS);
+  // The full soft edge (mouldSockets narrows it only in the strip between the two balls), a clay layer
+  // HIP_SOCKET_SKIN thick folded over the ball, and the rims rounded out.
+  const torso=mouldSockets({positions:parts[0].positions,index:parts[0].index},[Hc,[-Hc[0],Hc[1],Hc[2]]],R,soft,HIP_SOCKET_SKIN*rH,HIP_RIM_ROUNDS);
   parts[0]={...parts[0],positions:torso.positions,index:torso.index,normals:torso.normals};
   hipSocket={centre:Hc,radius:rH,R,soft};
  }

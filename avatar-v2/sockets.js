@@ -92,11 +92,13 @@ export function pointNormals({positions:P,index:I}){
  * The middle formula joins both sides with the same slope (a rounded edge,
  * no crease), and no point ever ends closer to the centre than R or than it was.
  */
-export function press(part,centre,R,soft,skin=0){
+export function press(part,centre,R,softness,skin=0){
  // Which way the clay faced before the press: carried smooth directions if the part has them.
  const P=[...part.positions],N=skin?(part.normals??pointNormals(part)):null;
+ // `softness`: the soft edge's width, or a function giving it at each point (wider where there is room).
+ const softAt=typeof softness==='function'?softness:()=>softness;
  for(let i=0;i<P.length;i+=3){
-  const d=sub([P[i],P[i+1],P[i+2]],centre),q=Math.hypot(...d);
+  const d=sub([P[i],P[i+1],P[i+2]],centre),q=Math.hypot(...d),soft=softAt([P[i],P[i+1],P[i+2]]);
   if(q>=R+skin+soft||q===0)continue;
   // How much this point faces away from the ball: 0 facing it, 1 facing away (smooth in between).
   let away=0;if(skin){const f=(N[i]*d[0]+N[i+1]*d[1]+N[i+2]*d[2])/q,x=Math.min(1,Math.max(0,(f+SOCKET_LIP)/(2*SOCKET_LIP)));away=x*x*(3-2*x);}
