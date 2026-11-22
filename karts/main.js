@@ -9,6 +9,10 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
 import {KARTS, SLOTS, STYLES, stylesFor, defaultChoices, layoutKart} from '../kart-parts/spec.js';
 import {buildChassis, buildWheels, buildOutlines, buildDriverZone, countTriangles} from '../kart-parts/build.js';
+import {buildF1Kart} from '../kart-parts/f1-kart.js';
+
+/** Karts whose whole model is built (the others show their chassis or wheels). */
+const MODELS = {f1: buildF1Kart};
 import {createKartFrame} from '../racing-lab/src/reference-kart.js';
 
 const SPACING = 3.8;// metres between the new kart's centre and the main kart's
@@ -41,9 +45,10 @@ let showOutlines = true, showLabels = true, showDriver = true, highlighted = nul
 
 function rebuildBase() {// chassis or wheels, the driver zone and the name tag
   for (const o of [base, zone, kartTag]) if (o) { newKart.remove(o); dispose(o); }
-  base = kart.hasChassis ? buildChassis(kart) : buildWheels(kart); base.traverse(o => { if (o.isMesh) o.castShadow = true; }); newKart.add(base);
+  const model = MODELS[kart.mode];
+  base = model ? model(kart) : kart.hasChassis ? buildChassis(kart) : buildWheels(kart); base.traverse(o => { if (o.isMesh) o.castShadow = true; }); newKart.add(base);
   zone = buildDriverZone(kart); zone.visible = showDriver; newKart.add(zone);
-  kartTag = tag(kart.hasChassis ? `New ${kart.label} · chassis` : `New ${kart.label} · wheels and part places`, .13); kartTag.position.set(0, .02, 2.1); newKart.add(kartTag);
+  kartTag = tag(model ? `New ${kart.label}` : kart.hasChassis ? `New ${kart.label} · chassis` : `New ${kart.label} · wheels and part places`, .13); kartTag.position.set(0, .02, 2.1); newKart.add(kartTag);
 }
 function rebuildOutlines() {// part boxes and one label per kind of part
   for (const o of [outlines, labels]) if (o) { newKart.remove(o); dispose(o); }
@@ -99,7 +104,7 @@ const button = (host, text, data, onclick) => {
 const intro = () => `${kart.label}: part places measured from the approved design. Teal = parts of the design, amber = optional parts, red = would not fit. The red see-through boxes are the driver zone, where no part may go. Swap a style below to see it snap onto the same spot.`;
 function info() {
   const parts = layoutKart(kart, choices), boxes = parts.reduce((n, p) => n + p.boxes.length, 0);
-  const tris = kart.hasChassis ? ` · chassis ${Math.round(countTriangles(base)).toLocaleString()} triangles` : '';
+  const tris = MODELS[kart.mode] ? ` · whole kart ${Math.round(countTriangles(base)).toLocaleString()} triangles` : kart.hasChassis ? ` · chassis ${Math.round(countTriangles(base)).toLocaleString()} triangles` : '';
   const wb = (kart.wheels.frontZ - kart.wheels.rearZ).toFixed(2);
   $('#info').textContent = `${parts.length} kinds of parts, ${boxes} boxes · wheelbase ${wb} m${tris}${kart.hasChassis ? ' · wheels in the same places as the main kart' : ''}.`;
 }
@@ -116,6 +121,9 @@ function highlight(slot) {
 }
 function setKart(id) {
   kart = KARTS.find(k => k.id === id) ?? KARTS[0]; choices = defaultChoices(kart); highlighted = null;
+  // A finished model starts with its boxes and driver zone hidden, so the kart itself shows.
+  showOutlines = showDriver = !MODELS[kart.mode];
+  pressed('#toggle-outlines', () => showOutlines); pressed('#toggle-driver', () => showDriver);
   rebuildBase(); rebuildOutlines(); info();
   pressed('[data-kart]', b => b.dataset.kart === kart.id);
   const swaps = $('#swaps'); swaps.replaceChildren();

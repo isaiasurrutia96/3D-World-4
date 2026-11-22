@@ -38,6 +38,10 @@ try {
       const k = await page.evaluate(() => ({label: kartLab.kart.label, wheels: kartLab.base.getObjectByName('wheels')?.children.length ?? kartLab.base.children.length, fit: kartLab.outlines.children.every(b => b.userData.fits), boxes: kartLab.outlines.children.length}));
       assert.equal(k.label, name); assert.equal(k.wheels, 4); assert.ok(k.fit && k.boxes > 10, JSON.stringify(k));
     }
+    // The F1 GoKart shows its whole model, with every design part.
+    await page.getByRole('button', {name: 'F1 GoKart', exact: true}).click();
+    assert.deepEqual(await page.evaluate(() => ['nose', 'frontWing', 'sidePanels', 'wing'].map(s => !!kartLab.base.getObjectByName('part:' + s))), [true, true, true, true]);
+    await page.getByRole('button', {name: 'GoKart', exact: true}).click();
     // Swapping a wing style snaps the new wing onto the same mount.
     const before = await page.evaluate(() => kartLab.outlines.getObjectByName('slot:wing').position.toArray());
     await page.getByRole('button', {name: 'Tall extended wing'}).click();

@@ -36,13 +36,37 @@ until the avatar sits in the karts.
 
 1. `spec.js`: data and checks, no three.js.
 2. `build.js`: the GoKart chassis, wheels, part boxes and the driver zone.
-3. `npm run test:karts`: 17 checks, including every style on every kart of
+3. `f1-kart.js` and `shapes.js`: the whole F1 GoKart (see D).
+4. `npm run test:karts`: 28 checks (`check.mjs` and `f1-check.mjs`), including every style on every kart of
    its mode for four set-ups (150+ combinations).
-4. After building: `node kart-parts/browser.mjs` (page at three sizes, kart
+5. After building: `node kart-parts/browser.mjs` (page at three sizes, kart
    switching, style swaps, inside the Test Lab).
-5. Page: `karts/` (Test Lab section "Karts"), built by `npm run build:karts`.
+6. Page: `karts/` (Test Lab section "Karts"), built by `npm run build:karts`.
 
 Chunk plan (owner approved the order, 21 Nov 2026): 1 foundation and GoKart
 chassis, 1b part places from the approved designs with mounts, styles and the
 driver zone (this), 2 GoKart body, 3 GT GoKart, 4 F1 GoKart, 5 paint and the
 five variations, 6 swapping parts in the Test Lab.
+
+## D. The F1 GoKart model (owner: "design the whole F1 kart, best methods")
+
+Built in `f1-kart.js` with standard, proven techniques (`shapes.js`):
+
+1. **Lofting superellipse cross-sections** for the tub, nose, side pods and
+   engine cover (the fuselage and hull method; the superellipse moves between
+   oval and boxy). The cockpit is opened by lowering the top of the rings
+   between the side walls, blended in and out so the shape stays smooth.
+2. **NACA 4-digit airfoils** (the published equations) for the front and rear
+   wings and their flaps, mounted upside down like real race-car wings.
+3. **Double-wishbone suspension**: upper and lower A-arms, push rods and
+   steering links, as on real formula cars.
+4. **Earcut triangulation** (three.js ShapeUtils) to close the loft ends, and
+   **per-face colour by place around the ring**, so stripes run cleanly along
+   the body.
+5. **One shared material with vertex colours and merged geometry**: about
+   12,600 triangles in 15 meshes for the whole kart.
+
+Every body part is its own `part:<slot>` group and is checked to sit inside
+its measured part box; the rear wing's struts start exactly at the wing mount.
+No part enters the driver's head or body space. Colours come from the approved
+design (teal, orange, dark carbon).
