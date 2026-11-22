@@ -21,7 +21,7 @@ import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {makeTorsoOption} from './torso-variants.js';
 import {buildTorsoSurface,buildRingSurface,direction} from './torso-shape.js';
 import {rayHit,keepOutside} from './body-sockets.js';
-import {press as pressBall,refineNear,pointNormals,softEdge,SOCKET_GAP,SOCKET_EDGE,SOCKET_SKIN} from './sockets.js';
+import {press as pressBall,refineNear,pointNormals,softEdge,SOCKET_GAP,SOCKET_EDGE} from './sockets.js';
 import {buildHeadSet,CHOSEN_NECK} from './head-options.js';
 import {CHOSEN_FACE} from './face.js';
 import {HAND_FEET_SOURCE,adjustPart,CHOSEN_HAND_FOOT} from './hands-feet.js';
@@ -287,9 +287,16 @@ export const PREVIEW_PRESS=.9;
  *    thigh's rounded top just past the ball's centre; "push the ball slightly deeper into the ... upper leg");
  *  - into the torso, HIP_TORSO_PRESS of the radius, measured on the torso's surface: 40%, then 45%, then about 1 cm
  *    deeper again ("the hip balls need to be deeper in the torso ... the torso only, not the upper leg"): 54%;
- *    then about 1 cm more ("ball needs to be deeper in the torso"): 63%.
+ *    then about 1 cm more ("ball needs to be deeper in the torso"): 63%; then 2 cm more ("I said deeper not slightly
+ *    deeper, so another 2 cm deeper"): 80.3% (9.28 cm of the 11.55 cm radius).
  */
-export const HIP_THIGH_EXTRA=.15,HIP_TORSO_PRESS=.63;
+export const HIP_THIGH_EXTRA=.15,HIP_TORSO_PRESS=.803;
+/**
+ * The clay layer kept over the hip ball where the torso faces away from it, as a share of the ball's radius: 12%
+ * (the shoulders keep 25%, SOCKET_SKIN). With the ball this deep it pokes out past the torso's sides, and 25% left
+ * a thin shelf of clay sticking out at both hip corners; 12% keeps a small rounded lip. Claude's pick.
+ */
+export const HIP_SOCKET_SKIN=.12;
 /**
  * Once pressed together, how far a limb's near end sits past its ball's centre, along the limb: 1 - press of the
  * ball's radius (the hip: 1 - press - HIP_THIGH_EXTRA, so the thigh's top is just above the centre).
@@ -337,13 +344,19 @@ export function mouldSockets(part,centres,R,soft,skin){
  const refined=refineNear(part.normals?part:{...part,normals:pointNormals(part)},centres[0],reach,SOCKET_EDGE,6,weight);
  let out=refined;for(const c of centres)out=pressBall(out,c,R,soft,skin);
  for(const c of centres)out=keepOutside(out,c,R);
+ // A deep press stretches the triangles it pushes into the cup (at 80% deep, a flat triangle's middle sat 3 mm
+ // inside the gap): split them again, now following the pressed surface, and put the new points out onto the cup.
+ const nOld=out.positions.length;
+ out=refineNear({positions:out.positions,index:out.index,normals:angleNormals(out)},centres[0],R+soft,SOCKET_EDGE,6,m=>centres.some(c=>dist(m,c)<R+soft)?1:0);
+ for(const c of centres)out=keepOutside(out,c,R);
  // Shading directions: where the press left the surface in place, the carried directions, so the split area shades
  // exactly like the rest of the part (directions measured on the split triangles showed faint patches and a seam
  // line where they meet the coarser triangles); where the press moved it (the socket and its soft edge), the
  // directions of the new surface, blended in over the first 5 mm of movement.
+ // (Points added by the second split are all in the moved area.)
  const P=out.positions,C=refined.normals,A=angleNormals(out),N=new Array(P.length);
- for(let i=0;i<P.length;i+=3){const m=Math.hypot(P[i]-refined.positions[i],P[i+1]-refined.positions[i+1],P[i+2]-refined.positions[i+2]),x=Math.min(1,m/.005),t=x*x*(3-2*x);
-  const n=[0,1,2].map(k=>C[i+k]*(1-t)+A[i+k]*t),l=Math.hypot(...n)||1;for(let k=0;k<3;k++)N[i+k]=n[k]/l;}
+ for(let i=0;i<P.length;i+=3){const m=i<nOld?Math.hypot(P[i]-refined.positions[i],P[i+1]-refined.positions[i+1],P[i+2]-refined.positions[i+2]):1,x=Math.min(1,m/.005),t=x*x*(3-2*x);
+  const n=[0,1,2].map(k=>(i<nOld?C[i+k]:0)*(1-t)+A[i+k]*t),l=Math.hypot(...n)||1;for(let k=0;k<3;k++)N[i+k]=n[k]/l;}
  return {positions:P,index:out.index,normals:N};
 }
 export function separatedOriginalBody(bodyId='boy',{press=0}={}){
@@ -403,7 +416,10 @@ export function separatedOriginalBody(bodyId='boy',{press=0}={}){
  let hipSocket=null;
  if(press){
   const Hc=leg[0].centre,R=rH+SOCKET_GAP,soft=softEdge(rH),strip=m=>({positions:m.positions,index:m.index});
-  const torso=mouldSockets({positions:parts[0].positions,index:parts[0].index},[Hc,[-Hc[0],Hc[1],Hc[2]]],R,soft,SOCKET_SKIN*rH);
+  // The two sockets' soft edges stop halfway between the balls (soft edges overlapping in the thin strip of torso
+  // between two deep sockets folded it), and the clay layer is HIP_SOCKET_SKIN thick.
+  const torsoSoft=Math.min(soft,Hc[0]-R);
+  const torso=mouldSockets({positions:parts[0].positions,index:parts[0].index},[Hc,[-Hc[0],Hc[1],Hc[2]]],R,torsoSoft,HIP_SOCKET_SKIN*rH);
   parts[0]={...parts[0],positions:torso.positions,index:torso.index,normals:torso.normals};
   hipSocket={centre:Hc,radius:rH,R,soft};
  }
