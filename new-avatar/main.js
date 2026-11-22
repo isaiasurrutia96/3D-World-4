@@ -1,5 +1,5 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
-//  - Original limbs: the athletic torso, approved head, hands and feet with the original avatar's neck and limbs (avatar-v2/original-body.js);
+//  - Original limbs: the athletic torso, approved head, hands and feet with the original avatar's limbs, separated, a ball at every joint (avatar-v2/original-body.js);
 //  - Avatar: the complete avatar, every joint pressed into snug sockets (avatar-v2/body-sockets.js);
 //  - Shoulder sockets: torso, shoulder balls and upper arms pressed together (avatar-v2/sockets.js);
 //  - Full body: every approved piece put together, still separate (avatar-v2/assembly.js);
@@ -25,7 +25,7 @@ import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
-import {originalLimbBody} from '../avatar-v2/original-body.js';
+import {separatedOriginalBody} from '../avatar-v2/original-body.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
@@ -90,9 +90,9 @@ const full=fullBodyPreview('boy');
 GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate: every arm and leg piece 15% bigger (hands then 10% smaller), feet 3 inches longer than the head; torso, neck and head unchanged.',
  items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
-const mix=originalLimbBody('boy');
-GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet, with everything else brought back from the original avatar (3D-WORLD-3): its neck, upper arms, forearms, thighs and calves, in their original places, with each limb 10% longer and the hands 10% smaller.',
- items:[{id:'original-boy',label:'Boy · original limbs',tag:'Boy',face:mix.face,ground:true,note:`Original neck; original upper arms, forearms, thighs and calves each 10% longer (same thickness, ends unchanged). Athletic torso, your head (where the original head was), hands 10% smaller, feet as before. He stands ${(mix.height*100).toFixed(0)} cm tall.`,
+const mix=separatedOriginalBody('boy');
+GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet with the original avatar\'s limbs (each 10% longer, calves 50 cm), every piece separated and the original neck removed, with a ball at every joint: as thick as the ends it joins, 300 triangles each.',
+ items:[{id:'original-boy',label:'Boy · pieces and joint balls',tag:'Boy',face:mix.face,ground:true,note:`Balls: neck ${(mix.balls['ball-neck'].radius*200).toFixed(1)} cm (approved size), shoulders ${(mix.balls['ball-shoulder'].radius*200).toFixed(1)}, elbows ${(mix.balls['ball-elbow'].radius*200).toFixed(1)}, wrists ${(mix.balls['ball-wrist'].radius*200).toFixed(1)}, hips ${(mix.balls['ball-hip'].radius*200).toFixed(1)}, knees ${(mix.balls['ball-knee'].radius*200).toFixed(1)}, ankles ${(mix.balls['ball-ankle'].radius*200).toFixed(1)} cm. Balls 2 cm from the torso, every other piece 6 mm from its ball. ${(mix.height*100).toFixed(0)} cm tall with everything apart.`,
   parts:mix.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const avatar=socketedBody('boy');
 GROUPS.push({id:'avatar',label:'Avatar',intro:'The complete avatar: every joint pressed together the same way as the shoulders. Each ball sits snug in a socket on both sides, with soft edges, and every joint bends through its range without parts touching.',
