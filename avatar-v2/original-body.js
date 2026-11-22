@@ -298,6 +298,15 @@ export const HIP_THIGH_EXTRA=.15,HIP_TORSO_PRESS=.803;
  */
 export const HIP_SOCKET_SKIN=.12;
 /**
+ * The torso's hip socket rims rounded out (owner, 22 November 2026: "the sockets in the torso has sharp rounded
+ * edges ... round out the edges"): HIP_RIM_ROUNDS rounds of smoothing (roundOut) on the surface within HIP_RIM_BAND
+ * of each cup (fading out over two more triangle lengths). Measured: the outer rims' tightest rounding went from
+ * 5 mm to about 9 mm and the sharpest turn by the sockets from 39° to 34°; only the rims change, by up to about
+ * 2 cm where the thin wedge of torso at the front of each cup rounds off. (Fewer rounds left a sharper turn; more
+ * rounds or a wider band moved more of the torso, slimmed it around the hips and folded the strip between the balls.)
+ */
+export const HIP_RIM_ROUNDS=100,HIP_RIM_BAND=.01;
+/**
  * Once pressed together, how far a limb's near end sits past its ball's centre, along the limb: 1 - press of the
  * ball's radius (the hip: 1 - press - HIP_THIGH_EXTRA, so the thigh's top is just above the centre).
  */
@@ -317,6 +326,24 @@ export function sinkIntoTorso(shape,clear,radius,dir,depth){
 }
 export function pressedPreviewBody(bodyId='boy',press=PREVIEW_PRESS){return separatedOriginalBody(bodyId,{press});}
 
+/**
+ * Rounds out every edge and rim near sockets (owner, 22 November 2026: no sharp edges, only smooth soft rims): the
+ * surface within `reach` of a ball's centre (fading out over two more triangle lengths) is smoothed `rounds` times,
+ * each point moved halfway to the middle of its neighbours, and after every round any point inside a socket's gap
+ * is put back out onto it. Where the torso's side meets a deep cup it ends in a thin wedge; this smoothing rounds
+ * the wedge's tip off and lays the clay softly onto the cup, never closer to the ball than the gap. (Taubin's
+ * shrink-free smoothing was tried first: it keeps thin wedges as they are, so the edge stayed.)
+ */
+export function roundOut(part,centres,R,reach,rounds){
+ const P=[...part.positions],n=P.length/3,I=part.index,near=Array.from({length:n},()=>new Set());
+ for(let t=0;t<I.length;t+=3)for(let k=0;k<3;k++){const a=I[t+k],c=I[t+(k+1)%3];near[a].add(c);near[c].add(a);}
+ const nb=near.map(s=>[...s]),fade=2*SOCKET_EDGE,w=new Float64Array(n);
+ for(let i=0;i<n;i++){const d=Math.min(...centres.map(c=>Math.hypot(P[3*i]-c[0],P[3*i+1]-c[1],P[3*i+2]-c[2]))),x=Math.min(1,Math.max(0,(reach+fade-d)/fade));w[i]=x*x*(3-2*x);}
+ const step=f=>{const Q=[...P];for(let i=0;i<n;i++){if(!w[i]||!nb[i].length)continue;const m=[0,0,0];for(const j of nb[i])for(let k=0;k<3;k++)m[k]+=Q[3*j+k]/nb[i].length;for(let k=0;k<3;k++)P[3*i+k]=Q[3*i+k]+w[i]*f*(m[k]-Q[3*i+k]);}};
+ const out=()=>{for(const c of centres)for(let i=0;i<n;i++){const d=[0,1,2].map(k=>P[3*i+k]-c[k]),l=Math.hypot(...d);if(l<R&&l>0)for(let k=0;k<3;k++)P[3*i+k]=c[k]+d[k]/l*R;}};
+ for(let r=0;r<rounds;r++){step(.5);out();}
+ return {...part,positions:P};
+}
 /** Surface directions, each point's the average of its triangles' directions weighted by the angle they make there. */
 export function angleNormals({positions:P,index:I}){
  const N=new Array(P.length).fill(0),pt=i=>[P[3*i],P[3*i+1],P[3*i+2]],sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
@@ -336,7 +363,7 @@ export function angleNormals({positions:P,index:I}){
  * ball after the first was pressed bent the surface between them: a 57° fold at the torso's back.) Points the
  * later presses nudge back into an earlier socket are put back out onto it.
  */
-export function mouldSockets(part,centres,R,soft,skin){
+export function mouldSockets(part,centres,R,soft,skin,roundRims=0,rimBand=HIP_RIM_BAND){
  const reach=R+skin+soft+6*SOCKET_EDGE,fade=6*SOCKET_EDGE,dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
  const weight=m=>Math.max(...centres.map(c=>{const d=dist(m,c),f=Math.min(1,Math.max(0,(reach-d)/fade));return f>0?f*f*(3-2*f):(d<reach?1e-9:0);}));
  // The part's smooth surface directions, carried through the splitting (they also tell the clay layer which way the
@@ -349,6 +376,8 @@ export function mouldSockets(part,centres,R,soft,skin){
  const nOld=out.positions.length;
  out=refineNear({positions:out.positions,index:out.index,normals:angleNormals(out)},centres[0],R+soft,SOCKET_EDGE,6,m=>centres.some(c=>dist(m,c)<R+soft)?1:0);
  for(const c of centres)out=keepOutside(out,c,R);
+ // Then the rims rounded out (owner: no sharp edges, only smooth soft rims): only right by the cups.
+ if(roundRims)out=roundOut(out,centres,R,R+rimBand,roundRims);
  // Shading directions: where the press left the surface in place, the carried directions, so the split area shades
  // exactly like the rest of the part (directions measured on the split triangles showed faint patches and a seam
  // line where they meet the coarser triangles); where the press moved it (the socket and its soft edge), the
@@ -419,7 +448,7 @@ export function separatedOriginalBody(bodyId='boy',{press=0}={}){
   // The two sockets' soft edges stop halfway between the balls (soft edges overlapping in the thin strip of torso
   // between two deep sockets folded it), and the clay layer is HIP_SOCKET_SKIN thick.
   const torsoSoft=Math.min(soft,Hc[0]-R);
-  const torso=mouldSockets({positions:parts[0].positions,index:parts[0].index},[Hc,[-Hc[0],Hc[1],Hc[2]]],R,torsoSoft,HIP_SOCKET_SKIN*rH);
+  const torso=mouldSockets({positions:parts[0].positions,index:parts[0].index},[Hc,[-Hc[0],Hc[1],Hc[2]]],R,torsoSoft,HIP_SOCKET_SKIN*rH,HIP_RIM_ROUNDS);
   parts[0]={...parts[0],positions:torso.positions,index:torso.index,normals:torso.normals};
   hipSocket={centre:Hc,radius:rH,R,soft};
  }

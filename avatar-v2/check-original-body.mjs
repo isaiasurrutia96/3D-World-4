@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,sinkIntoTorso,angleNormals,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
@@ -198,6 +198,26 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
   const plain=pv.whole.torsoShape?pv.whole.parts.find(p=>p.name==='torso').positions:null;let inside=0;for(let i=0;i<plain.length;i+=3)for(const c of [C,Cr])if(Math.hypot(plain[i]-c[0],plain[i+1]-c[1],plain[i+2]-c[2])<R)inside++;
   assert(inside>0,'the torso before its sockets did not reach the gap');
   return out.join('; ')+`; thighs unchanged in shape; without the sockets ${inside} torso points would be inside the gap`;});
+ check(`put together: the torso's hip socket rims are rounded out (no sharp edges): on the outer sides every bend by the sockets rounds over at least 8 mm, and only the rims change`,()=>{
+  const pv=pressedPreviewBody('boy'),{centre:C,radius:r,R,soft}=pv.hipSocket,Cr=[-C[0],C[1],C[2]],base=pv.whole.parts.find(p=>p.name==='torso');
+  // Tightest rounding by the sockets on their outer sides: each edge's length over the angle its two triangles bend by.
+  const tightest=part=>{const P=part.positions,I=part.index,fn=t=>{const q=k=>[P[3*I[t+k]],P[3*I[t+k]+1],P[3*I[t+k]+2]],a=q(0),u=q(1).map((v,j)=>v-a[j]),w=q(2).map((v,j)=>v-a[j]);return [u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];};
+   const e=new Map();for(let t=0;t<I.length;t+=3)for(let k=0;k<3;k++){const a=I[t+k],c=I[t+(k+1)%3],key=a<c?a+','+c:c+','+a;(e.get(key)??e.set(key,[]).get(key)).push(t);}
+   let min=Infinity;for(const [key,ts] of e){const [x,y]=key.split(',').map(Number),m=[0,1,2].map(k=>(P[3*x+k]+P[3*y+k])/2);
+    if(Math.abs(m[0])<=C[0]||Math.min(Math.hypot(...m.map((v,k)=>v-C[k])),Math.hypot(...m.map((v,k)=>v-Cr[k])))>.2)continue;
+    const a=fn(ts[0]),c=fn(ts[1]),ang=Math.acos(Math.max(-1,Math.min(1,(a[0]*c[0]+a[1]*c[1]+a[2]*c[2])/(Math.hypot(...a)*Math.hypot(...c)))));if(ang<.05)continue;
+    min=Math.min(min,Math.hypot(P[3*x]-P[3*y],P[3*x+1]-P[3*y+1],P[3*x+2]-P[3*y+2])/ang);}return min;};
+  const done=pv.parts.find(p=>p.name==='torso'),now=tightest(done);
+  // The same sockets without the rounding: a tighter edge (test of the test: the check sees the difference).
+  const plain=mouldSockets({positions:base.positions,index:base.index},[C,Cr],R,Math.min(soft,C[0]-R),HIP_SOCKET_SKIN*r,0),before=tightest(plain);
+  assert(now>=.008,`a rim rounds over only ${(now*1000).toFixed(1)} mm`);assert(before<.008,`unrounded already ${(before*1000).toFixed(1)} mm`);
+  // Only the rims moved: nothing beyond the band (plus its fade), and nothing more than 1 cm.
+  assert.equal(plain.positions.length,done.positions.length);let moved=0,far=0;const reach=R+HIP_RIM_BAND+2*.012;
+  for(let i=0;i<done.positions.length;i+=3){const m=Math.hypot(...[0,1,2].map(k=>done.positions[i+k]-plain.positions[i+k]));moved=Math.max(moved,m);
+   const q=Math.min(...[C,Cr].map(c=>Math.hypot(...[0,1,2].map(k=>plain.positions[i+k]-c[k]))));if(q>reach+1e-9)far=Math.max(far,m);}
+  // (The thin wedge of torso at the front of each cup rounds off by pulling back: measured 2.1 cm.)
+  assert(moved<=.025,`the torso moved ${(moved*1000).toFixed(1)} mm`);assert(far<1e-12,`moved beyond the rims by ${(far*1000).toFixed(3)} mm`);
+  return `tightest outer rounding ${(before*1000).toFixed(1)} → ${(now*1000).toFixed(1)} mm (${HIP_RIM_ROUNDS} rounds within ${HIP_RIM_BAND*100} cm of the cups); torso moved at most ${(moved*1000).toFixed(1)} mm, only at the rims`;});
  check('test of the test: sinkIntoTorso to depth 0 just touches, and refuses a start inside the torso',()=>{
   const shape=sep.whole.torsoShape,H=sg('ball-hip','left'),c=sinkIntoTorso(shape,H.centre,H.radius,[0,-1,0],0);
   const probes=Array.from({length:2000},(_,i)=>{const y=1-2*(i+.5)/2000,q=Math.sqrt(1-y*y),a=i*Math.PI*(3-Math.sqrt(5));return [Math.cos(a)*q,y,Math.sin(a)*q];});
