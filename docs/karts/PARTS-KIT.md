@@ -3,7 +3,7 @@
 Written 22 November 2026 for the owner, Claude and Codex. It lists every part
 each kart class has, numbered so anyone can point to one ("GT-07"). Sections
 A to G were **approved by the owner on 22 November 2026** with the changes
-they asked for. Section G (models per class) is a recommendation waiting for
+they asked for. Section H (models per class) is a recommendation waiting for
 the owner's answer. Sizes and mount positions are not in this file: they are
 measured after the owner approves the kart sizes (`docs/KARTS.md`, G).
 Weapons are part of racing, which Codex owns: Claude builds the look of the
