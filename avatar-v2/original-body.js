@@ -286,9 +286,10 @@ export const PREVIEW_PRESS=.9;
  *  - into the thigh, HIP_THIGH_EXTRA more of the ball's radius than the other joints (90% + 15% = 105%: the
  *    thigh's rounded top just past the ball's centre; "push the ball slightly deeper into the ... upper leg");
  *  - into the torso, HIP_TORSO_PRESS of the radius, measured on the torso's surface: 40%, then 45%, then about 1 cm
- *    deeper again ("the hip balls need to be deeper in the torso ... the torso only, not the upper leg"): 54%.
+ *    deeper again ("the hip balls need to be deeper in the torso ... the torso only, not the upper leg"): 54%;
+ *    then about 1 cm more ("ball needs to be deeper in the torso"): 63%.
  */
-export const HIP_THIGH_EXTRA=.15,HIP_TORSO_PRESS=.54;
+export const HIP_THIGH_EXTRA=.15,HIP_TORSO_PRESS=.63;
 /**
  * Once pressed together, how far a limb's near end sits past its ball's centre, along the limb: 1 - press of the
  * ball's radius (the hip: 1 - press - HIP_THIGH_EXTRA, so the thigh's top is just above the centre).
