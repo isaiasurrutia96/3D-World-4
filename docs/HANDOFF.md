@@ -108,5 +108,24 @@ owner review before the next chunk. Resume when the owner returns to it.
 Later discussion: a measured F1-inspired test course and five experimental
 upgrade steps. No final performance budgets, tier statistics or starter-kart
 assignment have been approved. Do not implement those later chunks from these
-notes alone. The separate Motion Lab cleanup is also unimplemented. The
-current preparation changes documentation only; preserve game code and assets.
+notes alone. The separate Motion Lab cleanup is also unimplemented. That
+preparation changed documentation only; preserve game code and assets.
+
+### Shared-lab foundation follow-up
+
+The owner subsequently authorized foundation work before the keyboard/Isometric
+chunk. Codex preserved the current `cf4e6ec` avatar/kart work and approved Fast
+handling. Shared input now has complete neutral samples and interruption/reset
+guards. The Test Lab's Tracks workspace links to actual driving; old driving
+bookmarks redirect there. README distinguishes current work from old demos.
+
+`npm run test:lab-foundations` runs 61 Node checks. After a build,
+`npm run test:lab-foundations-browser` runs nine actual-page suites, including
+Chromium/WebKit return-to-app checks. These gate publication and PR checks;
+PRs never publish. Test results and decisions are in the final section of
+`racing-core/PLAN.md`, with the contract in `test-lab/FOUNDATIONS.md`. The local
+full build, 233 racing checks, 8 official-avatar checks and browser suites pass.
+
+This is a foundation milestone, not a new driving-feel or character approval.
+The next keyboard/Isometric chunk is still unimplemented. No need to ask the
+owner for an immediate phone feel test just for this infrastructure change.

@@ -2,6 +2,10 @@
 
 Updated 20 November 2026. This is the single plan and approval record for the fresh rebuild.
 
+Current follow-up: the owner authorized a shared-lab foundation pass before the
+keyboard/Isometric chunk. Its scope, decisions and verification are recorded in
+the final section below; handling is preserved.
+
 ## Owner direction and approvals
 
 - **Approved:** start fresh, with LetsGo Racing as the behavior and eventual appearance target. The owner explicitly declined a comparison/audit against the previous rebuild.
@@ -684,3 +688,54 @@ reference. Save the exact approved 97d2ba8 viewer; do not retune anything.
   Preserve Claude's newer movement changes through 747d0ba and later commits.
 - Further performance-tier design remains discussion only; no upgrade economy
   or additional tuning is implemented by this checkpoint task.
+
+## Shared-lab foundation pass — before keyboard and Isometric changes
+
+1. **Owner authorization:** strengthen shared foundations first, then consider
+   keyboard controls and the driving Isometric view. The owner said to focus on
+   code and defer hands-on review until a useful milestone. This pass does not
+   implement those next controls/views, retune handling or change avatar work.
+2. **Baseline and compatibility:** resumed against `cf4e6ec`, preserving newer
+   avatar/kart work. Fast remains `kart-v1-c0934f4555677c0e`, 180/220 mph and
+   .135 s slip settling. No motion-core, avatar, kart-model, vehicle-physics,
+   contact, track or frozen-checkpoint source is changed by this pass.
+3. **Input layer:** retain the existing shared translator instead of building a
+   second control system. Samples always include neutral actions when paused.
+   Hidden/disabled/unfocused commands cannot accumulate; reset releases pointer
+   captures. Window-capture releases survive interrupted bubbling and failed
+   pointer capture. Independent fingers and reused capture IDs remain safe.
+   Invalid controller axes are neutralized. Existing keyboard mappings, mouse
+   look buttons and analog response are retained; no timed hold cutoff is used.
+4. **Verification infrastructure:** `test:lab-foundations` groups existing input,
+   pedal, lifecycle, camera, FPV, installation and zoom checks with 11 focused
+   shared-input regressions. The nine-suite browser runner checks the actual
+   built pages sequentially, reports each suite's result/duration and exits
+   nonzero on failure. A shared launcher supports pinned Playwright browsers in
+   CI and the installed Chromium locally. Existing browser assertions remain.
+5. **Publication:** main and PR workflows run Node/physics/asset checks, build,
+   install Chromium/WebKit with their host libraries, then run the browser
+   suites before deployment. PRs cannot publish. Reports are attached to the
+   run. A local missing-WebKit-library failure proved the runner stops rather
+   than skipping a suite; no skip or host-validation override is set in CI.
+6. **Navigation:** README current links distinguish Test Lab, track inspection
+   and actual driving. Tracks offers an Open driving test link below the
+   viewer. Old Test Lab driving bookmarks redirect to driving while preserving
+   track, handling and debug selections. Historical movement pages and prototype
+   race results are identified as historical. Reusable Motion Lab code stays.
+7. **Checks:** 61 foundation Node checks PASS; 233 current racing checks PASS;
+   8 official-avatar checks PASS; full build/strict typing and 47 racing-page
+   build checks PASS. All nine pinned-browser suites PASS in Chromium/WebKit.
+   The final compatibility adjustment preserving right-button mouse look also
+   passes the six route/native-input/layout browser checks after rebuilding the
+   affected pages. The 11 new regressions produce 8 FAIL/3 PASS against the
+   original input module and 11 PASS against the fix. The frozen driving HTML
+   still hashes to `9b0f7f6046eeb7b3ce54daad6a711914d9161a74fd88100205c68b958b5d6d23`.
+8. **Environment and limits:** local WebKit used Debian runtime libraries
+   extracted under `/tmp`, with host-library discovery disabled only for that
+   temporary local setup (its discovery consults the system linker cache).
+   Actual browser tests still execute. CI installs host dependencies normally.
+   Emulation is not physical phone/controller approval or a frame-rate claim.
+9. **Next chunk:** keyboard K/M/S/F/Space and driving Isometric remain pending
+   owner review of this foundation milestone. No new performance tier or kart
+   handling is introduced here. See `test-lab/FOUNDATIONS.md` for the maintained
+   input contract and reproduction commands.

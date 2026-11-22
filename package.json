@@ -54,6 +54,8 @@
     "build:racing-lab": "node racing-lab/build.mjs",
     "test:racing-lab": "node racing-lab/tests/browser.mjs",
     "test:inspection-zoom": "node --test test-lab/zoom.test.mjs",
+    "test:lab-foundations": "node --test motion-lab/tests/input.test.mjs racing-lab/tests/driving-controls.test.mjs racing-lab/tests/driving-pedals.test.mjs racing-lab/tests/page-activity.test.mjs racing-lab/tests/app.test.mjs racing-lab/tests/chase-camera.test.mjs racing-lab/tests/fpv.test.mjs test-lab/zoom.test.mjs",
+    "test:lab-foundations-browser": "node scripts/check-lab-foundations-browser.mjs",
     "build:elbow-lab": "node elbow-lab/build.mjs",
     "test:elbow-lab": "node elbow-lab/tests/browser.mjs",
     "test:study-assets": "node --test tests/study-asset.test.mjs",

@@ -2,6 +2,11 @@
 
 The published workspace is `/test-lab/`. Its static UI lives in `public/test-lab/` and is copied to `dist/` by Vite.
 
+Tracks is inspection; its workspace includes **Open driving test** for the
+approved solo driving page. Old `?test=driving` bookmarks now open that driving
+page directly and preserve track/handling selections. See [FOUNDATIONS.md](FOUNDATIONS.md)
+for the shared input contract and the Node/browser checks that gate publishing.
+
 Our avatar and Skeleton now share the official approved original-shape joint
 assembly, pinned in `avatar/official.json`. Both viewers load its prebuilt data
 through `avatar/src/official-avatar.js`; no procedural body/socket construction

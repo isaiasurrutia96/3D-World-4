@@ -1,6 +1,6 @@
 # Universal Motion Lab
 
-Live page: `/motion-lab/`. This is the reusable movement test template. Its visuals are deliberately plain placeholders. The older general object Test Lab and its checkpoint remain available separately.
+The owner's testing hub is `/test-lab/`. `/motion-lab/` is the marker/input harness for the reusable page and input modules used by track inspection and driving. It has deliberately plain visuals and does not represent the current avatar's walking/running animation. Keep the shared implementation and frozen baseline intact.
 
 Work code first: structure and controls, automatic checks, then visual refinement. Do not edit `motion-core/` from lab work.
 
@@ -30,3 +30,11 @@ foreground layout settling. Offscreen and hidden stages stay paused.
 The racing build runs its Node lifecycle regressions, and
 `npm run test:racing-home-screen` exercises native touch and page-return ordering.
 Set `TEST_BROWSER=webkit` to run the browser checks with an installed WebKit.
+
+Shared-input release guards are checked by `motion-lab/tests/input.test.mjs`:
+paused samples include neutral action flags, capture failure has a global release
+fallback, reset releases captured contacts, and releases run in window capture
+phase. Existing key mappings and analog strength are unchanged. Run
+`npm run test:lab-foundations` and, after a build,
+`npm run test:lab-foundations-browser`; the latter checks this marker harness,
+track inspection, driving and app return before publication.
