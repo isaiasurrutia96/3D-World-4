@@ -62,10 +62,11 @@ check('Leaving or freezing cancels pending foreground work immediately',
     });return {pauseSignals:2};
 });
 check('Viewport changes and scrolling re-evaluate current bounds rather than stale observer snapshots',
- 'Move stage offscreen and notify observer; return it, then resize the visual viewport.',
+ 'Move stage behind the sticky header; scroll back before an intersection callback, then resize the viewport.',
  'Offscreen pauses and visible layout resumes without a document visibility event.',()=>fixture(f=>{
-    f.setRect({width:800,height:700,top:-800,bottom:-100});f.observer.callback();assert.equal(f.active,false);
-    f.setRect({width:800,height:750,top:50,bottom:800});f.fire(f.win.visualViewport,'resize');assert.equal(f.active,true);
+    f.setRect({width:800,height:750,top:-700,bottom:50});f.fire(f.win,'scroll');assert.equal(f.active,false);
+    f.setRect({width:800,height:750,top:50,bottom:800});f.fire(f.win,'scroll');assert.equal(f.active,true);
+    f.setRect({width:800,height:750,top:801,bottom:1551});f.fire(f.win.visualViewport,'resize');assert.equal(f.active,false);
     return {offscreenPaused:true,visibleResumed:true};
 }));
 check('Disposed activity handlers cannot reactivate a removed page',

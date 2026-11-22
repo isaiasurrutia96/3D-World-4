@@ -52,7 +52,7 @@
     },
     {
       "rule": "Viewport changes and scrolling re-evaluate current bounds rather than stale observer snapshots",
-      "input": "Move stage offscreen and notify observer; return it, then resize the visual viewport.",
+      "input": "Move stage behind the sticky header; scroll back before an intersection callback, then resize the viewport.",
       "expected": "Offscreen pauses and visible layout resumes without a document visibility event.",
       "measured": {
         "offscreenPaused": true,

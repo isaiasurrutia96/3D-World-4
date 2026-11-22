@@ -31,6 +31,9 @@ export function bindStageActivity({stage,topbar,input,setActive}) {
     on(window,'pageshow',resume);on(window,'focus',resume);on(document,'resume',resume);
     on(document,'visibilitychange',()=>document.hidden?pause():resume());
     on(window,'resize',recheck);
+    // A sticky header can cover the remaining stage without crossing the
+    // observer's intersection threshold. Scroll provides the exact bounds.
+    on(window,'scroll',refresh,{passive:true});
     if(window.visualViewport)on(window.visualViewport,'resize',recheck);
     // Recover before the button/canvas handler sees input.enabled. A missed
     // OS resume notification must not make every subsequent tap a no-op.
