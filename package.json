@@ -34,7 +34,7 @@
     "build:karts": "node karts/build.mjs",
     "test:karts": "node --test kart-parts/check.mjs kart-parts/models-check.mjs",
     "test:karts-browser": "node kart-parts/browser.mjs",
-    "test:new-avatar": "node avatar-v2/check-torso.mjs && node avatar-v2/check-ball.mjs && node avatar-v2/check-limbs.mjs && node avatar-v2/check-head.mjs && node avatar-v2/check-face.mjs && node avatar-v2/check-assembly.mjs && node avatar-v2/check-hands-feet.mjs && node avatar-v2/check-sockets.mjs && node avatar-v2/check-body-sockets.mjs",
+    "test:new-avatar": "node avatar-v2/check-torso.mjs && node avatar-v2/check-ball.mjs && node avatar-v2/check-limbs.mjs && node avatar-v2/check-head.mjs && node avatar-v2/check-face.mjs && node avatar-v2/check-assembly.mjs && node avatar-v2/check-hands-feet.mjs && node avatar-v2/check-sockets.mjs && node avatar-v2/check-body-sockets.mjs && node avatar-v2/check-original-body.mjs",
     "test:torso": "node tests/avatar/torso-split.mjs",
     "test:chest": "node tests/avatar/chest-bend.mjs",
     "test:hands": "node tests/avatar/hand-skin.mjs",

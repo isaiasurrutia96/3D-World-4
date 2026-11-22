@@ -141,6 +141,7 @@ the limbs will be redone one thing at a time after the torso is chosen.
 | `check-assembly.mjs` | Checks the assembly: joints, ball sizes, gaps, mirror, no limb inside the torso, sealed parts, triangle budget. |
 | `sockets.js` | Socket tools: refine (PN triangles), press, stamp, flat faces for bends; the approved shoulder sockets. |
 | `body-sockets.js` | The complete avatar: every joint pressed into snug sockets, bend ranges checked. |
+| `original-body.js`, `build-original-limbs.mjs`, `original-limbs.json` | The owner's mix: athletic torso, approved head, hands and feet with the original avatar's neck and limbs (from Avatar Checkpoint 1, 3D-WORLD-3). |
 | `hands-feet.js` | The original hand and foot and gentle variations (size, length/width/thickness, puff), anchored at the wrist and ankle. |
 | `build-hands-feet.mjs` | Copies the pre-joint hand and foot from the frozen Avatar Checkpoint 2 page (headless browser) into `hands-feet-source.json`, simplifying the hand. |
 | `check-hands-feet.mjs` | Checks the hands and feet: original exact, triangles kept, pivots fixed, sizes as stated, no cracks, options distinct. |

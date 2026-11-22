@@ -1,4 +1,5 @@
 // New avatar (version 2): parts to choose from and the chosen parts, in tabs.
+//  - Original limbs: the athletic torso, approved head, hands and feet with the original avatar's neck and limbs (avatar-v2/original-body.js);
 //  - Avatar: the complete avatar, every joint pressed into snug sockets (avatar-v2/body-sockets.js);
 //  - Shoulder sockets: torso, shoulder balls and upper arms pressed together (avatar-v2/sockets.js);
 //  - Full body: every approved piece put together, still separate (avatar-v2/assembly.js);
@@ -24,6 +25,7 @@ import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
+import {originalLimbBody} from '../avatar-v2/original-body.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
 
@@ -88,6 +90,10 @@ const full=fullBodyPreview('boy');
 GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put together, still separate: every arm and leg piece 15% bigger (hands then 10% smaller), feet 3 inches longer than the head; torso, neck and head unchanged.',
  items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+const mix=originalLimbBody('boy');
+GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet, with everything else brought back from the original avatar (3D-WORLD-3): its neck, upper arms, forearms, thighs and calves, exactly as they were and where they were.',
+ items:[{id:'original-boy',label:'Boy · original limbs',tag:'Boy',face:mix.face,ground:true,note:`Original neck, upper arms, forearms, thighs and calves, unchanged. Athletic torso, your head (where the original head was), your hands and feet at the original wrists and ankles. He stands ${(mix.height*100).toFixed(0)} cm tall.`,
+  parts:mix.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const avatar=socketedBody('boy');
 GROUPS.push({id:'avatar',label:'Avatar',intro:'The complete avatar: every joint pressed together the same way as the shoulders. Each ball sits snug in a socket on both sides, with soft edges, and every joint bends through its range without parts touching.',
  items:[{id:'avatar-boy',label:'Boy · complete',tag:'Boy',face:avatar.face,note:`All ${avatar.parts.length} pieces in snug sockets (6 mm gap). Elbows fold to 120° and knees to 120°; wrists, ankles and neck through their full ranges; hips swing forward cleanly to about 80°. He stands ${(avatar.height*100).toFixed(0)} cm tall.`,
@@ -124,9 +130,10 @@ GROUPS.push({id:'shoulder',label:'Shoulders',intro:'The boy\'s torso with a shou
  items:[{id:'shoulder-boy',label:'Torso · shoulders · upper arms',tag:'Boy',note:`Shoulder balls ${(preview.shoulderBall*200).toFixed(1)} cm wide, the size of a shoulder (5% bigger than the upper arm's thickest point), separated from the torso by a 2 cm gap. Upper arms 10% thicker than approved, same shape and the approved length (${(preview.upper.length*100).toFixed(1)} cm).`,
   parts:preview.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 
-// The newest work opens first: the complete avatar, then the shoulder sockets.
+// The newest work opens first: the original limbs, then the complete avatar, then the shoulder sockets.
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='shoulder-sockets'),1));
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='avatar'),1));
+GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='original'),1));
 
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
 let widest=0;
@@ -137,7 +144,7 @@ for(const group of GROUPS){
   for(const part of item.parts){const mesh=new T.Mesh(part.geometry,material);mesh.name=part.name;mesh.position.y=part.y;mesh.castShadow=true;g.add(mesh);}
   // Anything that reaches below the floor is raised to stand on it (display only; the parts are unchanged).
   // The box below already includes that lift, so the label and the centre allow for it.
-  const below=new T.Box3().setFromObject(g).min.y;if(below<0)g.position.y=-below;
+  const below=new T.Box3().setFromObject(g).min.y;if(below<0||item.ground)g.position.y=-below;// `ground`: stand on the floor even if slightly above it
   const box=new T.Box3().setFromObject(g),width=box.max.x-box.min.x,height=box.max.y-box.min.y;
   if(i>0)x+=GAP;x+=width/2;g.position.x=x;x+=width/2;
   const tag=label(item.tag);tag.position.set(0,box.min.y-g.position.y-.1,0);g.add(tag);group.row.add(g);
