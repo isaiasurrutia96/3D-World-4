@@ -83,6 +83,19 @@ try {
   assert.ok(await page.evaluate(() => testLab.frame.contentWindow.testLabScene.floors.every(f => !f.visible)));
   await page.evaluate(() => testLab.setView('isometric'));
   assert.equal(await page.evaluate(() => testLab.frame.contentWindow.testLabScene.getState().isometric), true);
+  // The Test Lab's copy of the side panel stays in step with the page when
+  // switching karts and swapping styles (owner report, 22 Nov 2026).
+  const lab = page.locator('#live-controls'), state = () => page.evaluate(() => { const k = testLab.frame.contentWindow.kartLab; return {kart: k.kart.label, wing: k.choices.wing}; });
+  for (const [tap, kartName, wing] of [['F1 GoKart', 'F1 GoKart', 'f1-wing'], ['GT GoKart', 'GT GoKart', 'gt-wing'], ['GT wing', 'GT GoKart', 'gt-wing'], ['Tall extended wing', 'GT GoKart', 'tall-wing'], ['F1 GoKart', 'F1 GoKart', 'f1-wing'], ['GoKart', 'GoKart', 'low-spoiler']]) {
+    const copy = lab.getByRole('button', {name: tap, exact: true});
+    assert.equal(await copy.count(), 1, `exactly one visible "${tap}" button`);
+    await copy.tap();
+    assert.deepEqual(await state(), {kart: kartName, wing}, `after tapping ${tap}`);
+    assert.equal(await copy.getAttribute('aria-pressed'), 'true', `"${tap}" shows as pressed`);
+  }
+  assert.equal(await lab.getByRole('button', {name: 'GT wing', exact: true}).count(), 0, 'other karts\' buttons are hidden');
+  for (const name of ['F1 GoKart', 'GT GoKart', 'F1 GoKart']) await lab.getByRole('button', {name, exact: true}).tap({noWaitAfter: true});// quick taps
+  assert.equal((await state()).kart, 'F1 GoKart', 'the last quick tap wins');
   assert.deepEqual(errors, []);
-  console.log('Karts loads in the Test Lab with grey floor, Inspection and Isometric');
+  console.log('Karts loads in the Test Lab with grey floor, Inspection, Isometric and a working copied panel');
 } finally { await browser.close(); server.close(); }

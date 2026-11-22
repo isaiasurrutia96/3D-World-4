@@ -43,12 +43,19 @@ const mainTag = tag('Main kart (unchanged)', .13); mainTag.position.set(0, .02, 
 let kart = KARTS[0], choices = defaultChoices(kart), base = null, outlines = null, labels = null, zone = null, kartTag = null;
 let showOutlines = true, showLabels = true, showDriver = true, highlighted = null;
 
-function rebuildBase() {// chassis or wheels, the driver zone and the name tag
-  for (const o of [base, zone, kartTag]) if (o) { newKart.remove(o); dispose(o); }
-  const model = MODELS[kart.mode];
-  base = model ? model(kart) : kart.hasChassis ? buildChassis(kart) : buildWheels(kart); base.traverse(o => { if (o.isMesh) o.castShadow = true; }); newKart.add(base);
-  zone = buildDriverZone(kart); zone.visible = showDriver; newKart.add(zone);
-  kartTag = tag(model ? `New ${kart.label}` : kart.hasChassis ? `New ${kart.label} · chassis` : `New ${kart.label} · wheels and part places`, .13); kartTag.position.set(0, .02, 2.1); newKart.add(kartTag);
+// Each kart's model, driver zone and name tag are built once and kept, so
+// switching karts is instant (a model can take a moment to build on a phone).
+const built = new Map();
+function showBase() {
+  if (!built.has(kart.id)) {
+    const model = MODELS[kart.mode];
+    const b = model ? model(kart) : kart.hasChassis ? buildChassis(kart) : buildWheels(kart); b.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    const t = tag(model ? `New ${kart.label}` : kart.hasChassis ? `New ${kart.label} · chassis` : `New ${kart.label} · wheels and part places`, .13); t.position.set(0, .02, 2.1);
+    const item = {base: b, zone: buildDriverZone(kart), tag: t};
+    newKart.add(item.base, item.zone, item.tag); built.set(kart.id, item);
+  }
+  for (const [id, item] of built) for (const o of [item.base, item.zone, item.tag]) o.visible = id === kart.id;
+  ({base, zone, tag: kartTag} = built.get(kart.id));
 }
 function rebuildOutlines() {// part boxes and one label per kind of part
   for (const o of [outlines, labels]) if (o) { newKart.remove(o); dispose(o); }
@@ -108,15 +115,20 @@ function info() {
   const wb = (kart.wheels.frontZ - kart.wheels.rearZ).toFixed(2);
   $('#info').textContent = `${parts.length} kinds of parts, ${boxes} boxes · wheelbase ${wb} m${tris}${kart.hasChassis ? ' · wheels in the same places as the main kart' : ''}.`;
 }
+// The side panel holds every kart's buttons, built once; buttons of other
+// karts are hidden. (The Test Lab copies this panel once when the page loads
+// and then follows each button's pressed and hidden state, so the panel must
+// not be rebuilt.)
+const mine = selector => `[data-for="${kart.id}"]${selector}`;
 function selectStyle(slot, id) {
   choices = {...choices, [slot]: id}; rebuildOutlines(); info();
-  pressed(`[data-swap="${slot}"]`, b => b.dataset.style === id);
+  pressed(mine(`[data-swap="${slot}"]`), b => b.dataset.style === id);
   const problems = layoutKart(kart, choices).find(p => p.slot === slot).problems;
   $('#note').textContent = problems.length ? problems.join(' ') : `${SLOTS[slot].label}: ${STYLES[slot][id].label} snapped onto the ${SLOTS[slot].label.toLowerCase()} mount.`;
 }
 function highlight(slot) {
   highlighted = highlighted === slot ? null : slot; applyVisibility();
-  pressed('[data-part]', b => b.dataset.part === highlighted);
+  pressed(mine('[data-part]'), b => b.dataset.part === highlighted);
   $('#note').textContent = highlighted ? `${SLOTS[highlighted].label}: ${SLOTS[highlighted].note}` : intro();
 }
 function setKart(id) {
@@ -124,23 +136,24 @@ function setKart(id) {
   // A finished model starts with its boxes and driver zone hidden, so the kart itself shows.
   showOutlines = showDriver = !MODELS[kart.mode];
   pressed('#toggle-outlines', () => showOutlines); pressed('#toggle-driver', () => showDriver);
-  rebuildBase(); rebuildOutlines(); info();
+  showBase(); rebuildOutlines(); info();
   pressed('[data-kart]', b => b.dataset.kart === kart.id);
-  const swaps = $('#swaps'); swaps.replaceChildren();
-  for (const slot of Object.keys(kart.mounts)) {
-    const ids = stylesFor(kart, slot); if (ids.length < 2) continue;
-    const row = document.createElement('div'); row.className = 'swap';
-    const name = document.createElement('p'); name.textContent = SLOTS[slot].label; row.append(name);
-    const group = document.createElement('div'); row.append(group);
-    for (const styleId of ids) button(group, STYLES[slot][styleId].label, {swap: slot, style: styleId}, () => selectStyle(slot, styleId));
-    swaps.append(row);
-    pressed(`[data-swap="${slot}"]`, b => b.dataset.style === choices[slot]);
-  }
-  const parts = $('#parts'); parts.replaceChildren();
-  for (const slot of Object.keys(kart.mounts)) button(parts, SLOTS[slot].label + (kart.design[slot] ? '' : ' (optional)'), {part: slot}, () => highlight(slot));
+  for (const el of document.querySelectorAll('[data-for]')) el.hidden = el.dataset.for !== kart.id;
+  for (const slot of Object.keys(kart.mounts)) pressed(mine(`[data-swap="${slot}"]`), b => b.dataset.style === choices[slot]);
+  pressed(mine('[data-part]'), () => false);
   $('#note').textContent = intro();
 }
-for (const k of KARTS) button($('#karts'), k.label, {kart: k.id}, () => setKart(k.id));
+for (const k of KARTS) {
+  button($('#karts'), k.label, {kart: k.id}, () => setKart(k.id));
+  for (const slot of Object.keys(k.mounts)) {
+    const ids = stylesFor(k, slot); if (ids.length < 2) continue;
+    const row = document.createElement('section'); row.className = 'swap'; row.dataset.for = k.id;
+    const name = document.createElement('p'); name.textContent = SLOTS[slot].label; row.append(name);
+    for (const styleId of ids) button(row, STYLES[slot][styleId].label, {for: k.id, swap: slot, style: styleId}, () => selectStyle(slot, styleId));
+    $('#swaps').append(row);
+  }
+  for (const slot of Object.keys(k.mounts)) button($('#parts'), SLOTS[slot].label + (k.design[slot] ? '' : ' (optional)'), {for: k.id, part: slot}, () => highlight(slot));
+}
 const toggle = (id, get, set) => { const b = $(id); b.onclick = () => { set(!get()); b.setAttribute('aria-pressed', String(get())); applyVisibility(); }; };
 toggle('#toggle-outlines', () => showOutlines, v => { showOutlines = v; });
 toggle('#toggle-labels', () => showLabels, v => { showLabels = v; });
@@ -163,5 +176,5 @@ renderer.setAnimationLoop(ms => {
   controls.update(); renderer.render(scene, camera);
 });
 window.kartLab = {scene, camera, controls, renderer, mainKart, newKart, setKart, selectStyle, setFocus, view, highlight,
-  get kart() { return kart; }, get choices() { return choices; }, get base() { return base; }, get outlines() { return outlines; }, get zone() { return zone; }, getFocus: () => focus};
+  get kart() { return kart; }, get choices() { return choices; }, built, get base() { return base; }, get outlines() { return outlines; }, get zone() { return zone; }, getFocus: () => focus};
 $('#loading').hidden = true; window.kartLabReady = true;
