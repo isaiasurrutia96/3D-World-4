@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
@@ -41,9 +41,28 @@ const thick=(pos,L,from,to)=>{let r=0;for(let i=0;i<pos.length;i+=3){const p=P(p
 const neighbours={'upper-arm':['shoulder','elbow'],forearm:['elbow','wrist'],thigh:['hip','knee'],calf:['knee','ankle']};
 for(const n of ['upper-arm','forearm','thigh','calf']){const slim=SLIM_LIMBS.includes(n);
  check(`${n}: ${slim?`slimmed to ${Math.round((SLIM_OVER_BALL-1)*100)}% wider than its bigger ball`:"as thick as Our avatar's"}, ends unchanged in shape`,()=>{
-  const want=slim?SLIM_OVER_BALL*2*Math.max(...neighbours[n].map(k=>b.ballR[k])):ourAvatar.limbs[n].thickness;
+  // The slim width uses the hip ball's size before it was made bigger (only the thigh's top widens with it).
+  const base=k=>k==='hip'?b.ballR.hip/BALL_SIZE.hip:b.ballR[k];
+  const want=slim?SLIM_OVER_BALL*2*Math.max(...neighbours[n].map(base)):ourAvatar.limbs[n].thickness;
   const now=g(n,'left').positions,L=limbLine(now);let r=0;for(let i=0;i<now.length;i+=3){const v=[now[i]-L.centre[0],now[i+1]-L.centre[1],now[i+2]-L.centre[2]],sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];r=Math.max(r,Math.hypot(v[0]-L.dir[0]*sa,v[1]-L.dir[1]*sa,v[2]-L.dir[2]*sa));}
   assert(Math.abs(2*r-want)<.003,`thickness ${(2*r*100).toFixed(1)} cm, wanted ${(want*100).toFixed(1)}`);return `thickness ${(2*r*100).toFixed(1)} cm, length ${(L.length*100).toFixed(1)} cm`;});}
+check(`thigh: its top ${Math.round((THIGH_TOP_WIDER-1)*100)}% wider at the end, fading smoothly to unchanged by its middle; length unchanged`,()=>{
+  // Rebuild the thigh without the widening (its own unwidened shape is the slim thigh), then compare point by point.
+  const now=g('thigh','left').positions,L=limbLine(now);
+  // Widening is undone exactly by the inverse factor at each point's place along the line (the line is the same: checked below).
+  const plain=new Array(now.length);let worstTop=0,worstBelow=0;
+  for(let i=0;i<now.length;i+=3){const v=[0,1,2].map(k=>now[i+k]-L.centre[k]),sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2],t=Math.min(1,Math.max(0,((sa-L.start)/L.length)/THIGH_WIDEN_UNTIL)),k=1+(THIGH_TOP_WIDER-1)*(1-t*t*(3-2*t));
+   for(let j=0;j<3;j++)plain[i+j]=L.centre[j]+L.dir[j]*sa+(v[j]-L.dir[j]*sa)/k;}
+  const again=widenTop(plain,THIGH_TOP_WIDER);for(let i=0;i<now.length;i++)worstTop=Math.max(worstTop,Math.abs(again[i]-now[i]));
+  assert(worstTop<1e-6,`round trip ${worstTop}`);
+  // Below the middle nothing moves; the top end moves out by the full factor; the length is the same.
+  const Lp=limbLine(plain),w=widenTop(plain,THIGH_TOP_WIDER);
+  for(let i=0;i<plain.length;i+=3){const sa=[0,1,2].reduce((a,k)=>a+(plain[i+k]-Lp.centre[k])*Lp.dir[k],0),t=(sa-Lp.start)/Lp.length;if(t>=THIGH_WIDEN_UNTIL)for(let j=0;j<3;j++)worstBelow=Math.max(worstBelow,Math.abs(w[i+j]-plain[i+j]));}
+  assert(worstBelow<1e-9,`below the middle moved ${worstBelow}`);assert(Math.abs(limbLine(w).length-Lp.length)<1e-6,'length changed');
+  const topNow=endRadius(now,L,'top'),topPlain=endRadius(plain,Lp,'top');assert(topNow>topPlain*1.05,`top ${topNow} vs ${topPlain}`);
+  // Test of the test: a factor of 1 changes nothing.
+  const same=widenTop(plain,1);assert(same.every((x,i)=>Math.abs(x-plain[i])<1e-12),'factor 1 moved points');
+  return `top end ${(2*topPlain*100).toFixed(1)} → ${(2*topNow*100).toFixed(1)} cm across; below the middle unchanged`;});
 check('test of the test: thickening to a size and back returns the same limb',()=>{const p=src.parts.left.thigh.positions,L=limbLine(p),t=thickenTo(thickenTo(p,.4),.2961);let w=0;for(let i=0;i<p.length;i++)w=Math.max(w,Math.abs(t[i]-thickenTo(p,.2961)[i]));assert(w<1e-9);return 'checked';});
 check(`put together (balls ${Math.round(PREVIEW_PRESS*100)}% in): every joint-to-joint distance matches Our avatar's within 5 mm`,()=>{
  const pv=pressedPreviewBody('boy'),c=n=>pv.balls[n].centre,d=(a,b2)=>dist(c(a),c(b2)),out=[];
@@ -90,8 +109,8 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
  check(`separated: every ball is the approved ${CHOSEN_BALL_TRIANGLES}-triangle ball (the fewest of the three tried), perfectly round`,()=>{
   for(const n of balls)for(const s2 of n==='ball-neck'?['centre']:['left','right']){const m=sg(n,s2);assert.equal(m.index.length/3,CHOSEN_BALL_TRIANGLES,n);for(let i=0;i<m.positions.length;i+=3)assert(Math.abs(dist(P(m.positions,i/3),m.centre)-m.radius)<1e-9,n);}
   return '13 balls × 300 triangles';});
- check('separated: each ball is as thick as the ends it joins (elbows and knees: the thinner end; neck: the approved size), then adjusted: shoulders and neck 10% bigger, wrists and ankles 10% smaller',()=>{
-  assert.deepEqual(BALL_SIZE,{shoulder:1.1,neck:1.1,wrist:.9,ankle:.9});
+ check('separated: each ball is as thick as the ends it joins (elbows and knees: the thinner end; neck: the approved size), then adjusted: shoulders, neck and hips 10% bigger, wrists and ankles 10% smaller',()=>{
+  assert.deepEqual(BALL_SIZE,{shoulder:1.1,neck:1.1,wrist:.9,ankle:.9,hip:1.1});
   // The balls are sized from the limbs before slimming (recorded as ballR), so the slimmer limbs keep the same balls.
   const W=sep.whole,R=W.ballR;
   const want={'ball-shoulder':R.shoulder,'ball-elbow':R.elbow,'ball-wrist':R.wrist,'ball-hip':R.hip,'ball-knee':R.knee,'ball-ankle':R.ankle,'ball-neck':BALL_SIZE.neck*buildHeadSet(CHOSEN_NECK,makeTorsoOption(torsoBase.shape,CHOSEN_TORSO)).ball.radius};
@@ -129,9 +148,9 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
     const axial=[0,1,2].reduce((t,k)=>t+(c[k]-B.centre[k])*B.dir[k],0);const gap=B.start-axial-m.radius;assert(Math.abs(gap-BALL_GAP)<1e-6,`${bn}: gap above the ${below} ${(gap*1000).toFixed(2)} mm`);}
    out.push(bn.slice(5));}
   return 'centred: '+out.join(', ');});
- check('separated: the hip balls are as close together as Our avatar\'s (the same gap between their inner edges)',()=>{
+ check('separated: the hip balls closer together than Our avatar\'s: its gap between their inner edges divided by the golden ratio',()=>{
   const l=sg('ball-hip','left'),r2=sg('ball-hip','right'),gap=(l.centre[0]-l.radius)-(r2.centre[0]+r2.radius);
-  assert(Math.abs(gap-ourAvatar.hipBallGap)<.001,`gap ${(gap*100).toFixed(2)} cm, Our avatar ${(ourAvatar.hipBallGap*100).toFixed(2)} cm`);return `${(gap*100).toFixed(1)} cm apart (Our avatar ${(ourAvatar.hipBallGap*100).toFixed(1)} cm)`;});
+  assert(Math.abs(HIP_BALL_GAP-ourAvatar.hipBallGap/GOLDEN)<1e-12);assert(Math.abs(gap-HIP_BALL_GAP)<.001,`gap ${(gap*100).toFixed(2)} cm, wanted ${(HIP_BALL_GAP*100).toFixed(2)} cm`);return `${(gap*100).toFixed(1)} cm apart (Our avatar ${(ourAvatar.hipBallGap*100).toFixed(1)} cm)`;});
  check('put together: the shoulder balls sit as far from the middle as Our avatar\'s (not wide shoulders); apart they still clear the torso by 2 cm',()=>{
   const pv=pressedPreviewBody('boy'),l=pv.parts.find(p=>p.name==='ball-shoulder'&&p.side==='left'),r2=pv.parts.find(p=>p.name==='ball-shoulder'&&p.side==='right');
   assert(Math.abs(l.centre[0]-ourAvatar.shoulderBallX)<1e-9&&Math.abs(-r2.centre[0]-ourAvatar.shoulderBallX)<1e-9,`left ${l.centre[0]}, right ${r2.centre[0]}, Our avatar ${ourAvatar.shoulderBallX}`);

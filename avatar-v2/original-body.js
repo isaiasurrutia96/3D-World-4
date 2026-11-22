@@ -121,6 +121,19 @@ export function thickenTo(positions,thickness){
   for(let j=0;j<3;j++)out[i+j]=L.centre[j]+L.dir[j]*sa+(v[j]-L.dir[j]*sa)*k;}
  return out;
 }
+/**
+ * A limb's top end made wider: each point moved out from the limb's line by `factor` at the top end, fading
+ * smoothly (smoothstep) to no change at `until` (share of its length from the top) and below. Length unchanged.
+ */
+export function widenTop(positions,factor,until=THIGH_WIDEN_UNTIL){
+ const L=limbLine(positions),out=new Array(positions.length);
+ for(let i=0;i<positions.length;i+=3){
+  const v=[positions[i]-L.centre[0],positions[i+1]-L.centre[1],positions[i+2]-L.centre[2]],sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];
+  const t=Math.min(1,Math.max(0,((sa-L.start)/L.length)/until)),k=1+(factor-1)*(1-t*t*(3-2*t));
+  for(let j=0;j<3;j++)out[i+j]=L.centre[j]+L.dir[j]*sa+(v[j]-L.dir[j]*sa)*k;
+ }
+ return out;
+}
 const shifted=(p,v)=>({...p,positions:p.positions.map((x,i)=>x+v[i%3]),...(p.pivot?{pivot:p.pivot.map((x,k)=>x+v[k])}:{})});
 
 export function originalLimbBody(bodyId='boy'){
@@ -142,7 +155,7 @@ export function originalLimbBody(bodyId='boy'){
  // Ball sizes follow the (thickened) limb ends, by the same rules as the separated avatar.
  const ends=n=>{const pos=piece('left',n).positions,L=limbLine(pos);return {top:endRadius(pos,L,'top'),bottom:endRadius(pos,L,'bottom')};};
  const E={u:ends('upper-arm'),f:ends('forearm'),t:ends('thigh'),c:ends('calf')};
- const ballR={shoulder:BALL_SIZE.shoulder*E.u.top,elbow:Math.min(E.u.bottom,E.f.top),wrist:BALL_SIZE.wrist*E.f.bottom,hip:E.t.top,knee:Math.min(E.t.bottom,E.c.top),ankle:BALL_SIZE.ankle*E.c.bottom};
+ const ballR={shoulder:BALL_SIZE.shoulder*E.u.top,elbow:Math.min(E.u.bottom,E.f.top),wrist:BALL_SIZE.wrist*E.f.bottom,hip:BALL_SIZE.hip*E.t.top,knee:Math.min(E.t.bottom,E.c.top),ankle:BALL_SIZE.ankle*E.c.bottom};
  const between={'upper-arm':['shoulder','elbow'],forearm:['elbow','wrist'],thigh:['hip','knee'],calf:['knee','ankle']};
  const targetLength=n=>{const [a,b]=between[n];return ourAvatar.jointToJoint[n]-(1-PREVIEW_PRESS)*(ballR[a]+ballR[b]);};
  const built={};
@@ -155,13 +168,17 @@ export function originalLimbBody(bodyId='boy'){
  // The joint balls, sized from these limbs' ends (the same rules and sizes as before the slimming).
  const endOf=(n,e)=>{const pos=built['left:'+n];return endRadius(pos,limbLine(pos),e);};
  const balls={shoulder:BALL_SIZE.shoulder*endOf('upper-arm','top'),elbow:Math.min(endOf('upper-arm','bottom'),endOf('forearm','top')),wrist:BALL_SIZE.wrist*endOf('forearm','bottom'),
-  hip:endOf('thigh','top'),knee:Math.min(endOf('thigh','bottom'),endOf('calf','top')),ankle:BALL_SIZE.ankle*endOf('calf','bottom')};
+  hip:BALL_SIZE.hip*endOf('thigh','top'),knee:Math.min(endOf('thigh','bottom'),endOf('calf','top')),ankle:BALL_SIZE.ankle*endOf('calf','bottom')};
  // Then the forearms, thighs and calves slimmer (owner, 22 November 2026: "almost the size of the balls but
  // slightly bigger"): SLIM_OVER_BALL times the bigger of their two balls across, scaled around their own line
  // (same length). The balls keep their sizes.
- const slimTo=n=>{const [a,b]=between[n];return SLIM_OVER_BALL*2*Math.max(balls[a],balls[b]);};
+ // The slim width uses the hip ball's size before it was made bigger, so only the thigh's top widens with it (below).
+ const slimBalls={...balls,hip:balls.hip/BALL_SIZE.hip},slimTo=n=>{const [a,b]=between[n];return SLIM_OVER_BALL*2*Math.max(slimBalls[a],slimBalls[b]);};
+ // The thigh's top a little wider (owner, 22 November 2026): THIGH_TOP_WIDER at its top end, fading
+ // smoothly to the slim width by the thigh's middle.
+ const shaped=(name,pos)=>name==='thigh'?widenTop(pos,THIGH_TOP_WIDER):pos;
  for(const side of ['left','right'])for(const name of ['upper-arm','forearm','thigh','calf']){
-  const pos=built[side+':'+name],positions=SLIM_LIMBS.includes(name)?thickenTo(pos,slimTo(name)):pos;
+  const pos=built[side+':'+name],positions=shaped(name,SLIM_LIMBS.includes(name)?thickenTo(pos,slimTo(name)):pos);
   parts.push({name,side,positions,index:raw(side,name).index});}
  // Hands and feet: approved shapes and sizes, at the original joints; the right side mirrors the left.
  const handSize=CHOSEN_HAND_FOOT.size*LIMB_SCALE*HAND_SCALE*ORIGINAL_HAND_SHRINK;
@@ -212,7 +229,13 @@ const add3=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sub3=(a,b)=>[a[0]-b[0],a[1]-b[
  * Size adjustments to the joint balls (owner, 22 November 2026): wrists and ankles "a bit smaller", shoulders
  * and neck "slightly bigger". 10% each way is Claude's pick; 1 leaves a ball at its end's thickness.
  */
-export const BALL_SIZE={shoulder:1.1,neck:1.1,wrist:.9,ankle:.9};
+export const BALL_SIZE={shoulder:1.1,neck:1.1,wrist:.9,ankle:.9,hip:1.1};
+/**
+ * Hips (owner, 22 November 2026: hip balls "slightly bigger and closer together", the thigh's top "a little bit
+ * wider"): hip balls 10% bigger (BALL_SIZE.hip); the gap between their inner edges Our avatar's divided by the
+ * golden ratio; the thigh's top 20% wider at its end, fading out by the thigh's middle. Claude's picks.
+ */
+export const GOLDEN=(1+Math.sqrt(5))/2,HIP_BALL_GAP=ourAvatar.hipBallGap/GOLDEN,THIGH_TOP_WIDER=1.2,THIGH_WIDEN_UNTIL=.5;
 
 /**
  * The owner's mix taken apart: every piece separate, the original neck removed,
@@ -284,8 +307,8 @@ export function separatedOriginalBody(bodyId='boy',{press=0}={}){
  const arm=chain({centre:S,radius:rS},[upper,fore,hand],[null,()=>B.elbow,()=>B.wrist],['ball-shoulder','ball-elbow','ball-wrist']);
  // Leg: hip ball as thick as the thigh's top, pushed straight down until 2 cm clear of the torso.
  const thigh=get('thigh'),calf=get('calf'),foot=get('foot');
- // Hip balls as close together as Our avatar's (owner: "so it doesn't look like it has really wide hips"): the same gap between their inner edges.
- const rH=B.hip,hipStart=[ourAvatar.hipBallGap/2+rH,HIP[1],HIP[2]],H=intoTorso(clearOfTorso(torsoShape,hipStart,rH,[0,-1,0],SHOULDER_TORSO_GAP),rH,[0,-1,0]);
+ // Hip balls close together (owner: "so it doesn't look like it has really wide hips", then "closer together"): HIP_BALL_GAP between their inner edges.
+ const rH=B.hip,hipStart=[HIP_BALL_GAP/2+rH,HIP[1],HIP[2]],H=intoTorso(clearOfTorso(torsoShape,hipStart,rH,[0,-1,0],SHOULDER_TORSO_GAP),rH,[0,-1,0]);
  const leg=chain({centre:H,radius:rH},[thigh,calf,foot],[null,()=>B.knee,()=>B.ankle],['ball-hip','ball-knee','ball-ankle']);
  // The feet would meet in the middle: each whole leg moves straight outward just enough to leave the usual gap between them.
  const footNow=leg.at(-1);let inner=Infinity;for(let i=0;i<footNow.positions.length;i+=3)inner=Math.min(inner,footNow.positions[i]);

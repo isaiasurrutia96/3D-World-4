@@ -13,8 +13,8 @@
 //    torso; the chosen base face is pressed onto the head (DecalGeometry);
 //  - Torsos / Arms / Legs: the chosen boy's part and the girl's version.
 // Each tab has its own row; "Compare all" frames that row, and each item's
-// button moves the camera in on it and hides the rest. The approved avatar is
-// not used here.
+// button moves the camera in on it and hides the rest. Our avatar (the approved
+// avatar, its phone-ready game copy) stands next to the put-together preview to compare.
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {DecalGeometry} from 'three/addons/geometries/DecalGeometry.js';
@@ -26,10 +26,11 @@ import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
-import {separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS} from '../avatar-v2/original-body.js';
+import {separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,TORSO_PRESS} from '../avatar-v2/original-body.js';
 import {elbowTest,ELBOW_TEST_POSES,CLOSER_DEPTHS,CLAY_LIP} from '../avatar-v2/elbow-test.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
+import {loadGameAvatar,GAME_AVATAR} from '../avatar/src/light-avatar.js';
 
 const GAP=.3;// metres of space between items, left to right
 const stage=document.querySelector('#stage');
@@ -93,8 +94,11 @@ GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put togethe
  items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const together=pressedPreviewBody('boy');
-GROUPS.push({id:'together',label:'Put together',intro:`A preview of how he looks put together, using exactly his own pieces: every ball pressed ${Math.round(PREVIEW_PRESS*100)}% of its radius into the limbs, hands, feet and head (25% into the torso, the neck ball where it was approved). No sockets carved yet; where a ball sits inside a limb it is simply hidden, which is how it will look.`,
- items:[{id:'together-boy',label:'Boy · put together',tag:'Boy',face:together.face,ground:true,note:`Exactly his pieces, pressed together. ${(together.height*100).toFixed(0)} cm tall.`,
+// Room kept for Our avatar while it loads (about its width and height, metres); it is placed in it once loaded.
+const OUR_AVATAR_SPACE={width:1,height:1.9};
+GROUPS.push({id:'together',label:'Put together',intro:`A preview of how he looks put together, using exactly his own pieces: every ball pressed ${Math.round(PREVIEW_PRESS*100)}% of its radius into the limbs, hands, feet and head (${Math.round(TORSO_PRESS*100)}% into the torso, the neck ball where it was approved). Our avatar stands on the left to compare. No sockets carved yet; where a ball sits inside a limb it is simply hidden, which is how it will look.`,
+ items:[{id:'our-avatar',label:'Our avatar',tag:'Our avatar',parts:[],reserve:OUR_AVATAR_SPACE,note:`Our avatar (the approved avatar in its phone-ready copy, ${GAME_AVATAR.triangles.toLocaleString()} triangles: same shapes, fewer triangles), exactly as it stands in the Our avatar section, for comparing.`},
+  {id:'together-boy',label:'Boy · put together',tag:'Boy',face:together.face,ground:true,note:`Exactly his pieces, pressed together. ${(together.height*100).toFixed(0)} cm tall.`,
   parts:together.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const elbowItems=[];
 for(const share of CLOSER_DEPTHS){const e=elbowTest(share,'boy',{lip:CLAY_LIP}),name=`${Math.round(share*100)}% deep`;
@@ -103,7 +107,7 @@ for(const share of CLOSER_DEPTHS){const e=elbowTest(share,'boy',{lip:CLAY_LIP}),
   parts:e.pose(deg).map(p=>({name:p.name,geometry:geometryOf(p),y:0}))});}
 GROUPS.push({id:'elbow-test',label:'Elbow test',intro:'One elbow (his left), the limbs pressed closer with thick clay around the hard ball, three depths: the ball sits 70%, 80% or 90% of its radius into each limb, the clay staying thick around it like pushed clay. Each shown straight, bent 90° and bent 120°.',items:elbowItems});
 const mix=separatedOriginalBody('boy');
-GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet with the original avatar\'s limbs (each 10% longer, calves 50 cm), every piece separated and the original neck removed, with a ball at every joint: as thick as the ends it joins (shoulders and neck 10% bigger, wrists and ankles 10% smaller), 300 triangles each.',
+GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet with the original avatar\'s limbs (each 10% longer, calves 50 cm), every piece separated and the original neck removed, with a ball at every joint: as thick as the ends it joins (shoulders, neck and hips 10% bigger, wrists and ankles 10% smaller), 300 triangles each.',
  items:[{id:'original-boy',label:'Boy · pieces and joint balls',tag:'Boy',face:mix.face,ground:true,note:`Balls: neck ${(mix.balls['ball-neck'].radius*200).toFixed(1)} cm (approved size), shoulders ${(mix.balls['ball-shoulder'].radius*200).toFixed(1)}, elbows ${(mix.balls['ball-elbow'].radius*200).toFixed(1)}, wrists ${(mix.balls['ball-wrist'].radius*200).toFixed(1)}, hips ${(mix.balls['ball-hip'].radius*200).toFixed(1)}, knees ${(mix.balls['ball-knee'].radius*200).toFixed(1)}, ankles ${(mix.balls['ball-ankle'].radius*200).toFixed(1)} cm. Balls 2 cm from the torso, every other piece 6 mm from its ball. ${(mix.height*100).toFixed(0)} cm tall with everything apart.`,
   parts:mix.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const avatar=socketedBody('boy');
@@ -158,11 +162,13 @@ for(const group of GROUPS){
   for(const part of item.parts){const mesh=new T.Mesh(part.geometry,material);mesh.name=part.name;mesh.position.y=part.y;mesh.castShadow=true;g.add(mesh);}
   // Anything that reaches below the floor is raised to stand on it (display only; the parts are unchanged).
   // The box below already includes that lift, so the label and the centre allow for it.
-  const below=new T.Box3().setFromObject(g).min.y;if(below<0||item.ground)g.position.y=-below;// `ground`: stand on the floor even if slightly above it
-  const box=new T.Box3().setFromObject(g),width=box.max.x-box.min.x,height=box.max.y-box.min.y;
+  // `reserve`: an item that loads later (Our avatar) keeps a box of that size, standing on the floor.
+  const reserved=item.reserve?new T.Box3(new T.Vector3(-item.reserve.width/2,0,-.2),new T.Vector3(item.reserve.width/2,item.reserve.height,.2)):null;
+  const below=reserved?0:new T.Box3().setFromObject(g).min.y;if(below<0||item.ground)g.position.y=-below;// `ground`: stand on the floor even if slightly above it
+  const box=reserved??new T.Box3().setFromObject(g),width=box.max.x-box.min.x,height=box.max.y-box.min.y;
   if(i>0)x+=GAP;x+=width/2;g.position.x=x;x+=width/2;
   const tag=label(item.tag);tag.position.set(0,box.min.y-g.position.y-.1,0);g.add(tag);group.row.add(g);
-  return {...item,group:g,mesh:g.children[0],width,height,centre:box.getCenter(new T.Vector3()).add(new T.Vector3(g.position.x,0,0)),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
+  return {...item,group:g,mesh:g.children[0],width,height,centre:box.getCenter(new T.Vector3()).add(new T.Vector3(g.position.x,0,0)),triangles:item.reserve?GAME_AVATAR.triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
  });
  group.row.position.x=-x/2;for(const o of group.options)o.centre.x-=x/2;
  // Faces are pressed on once every item is in its final place.
@@ -237,3 +243,14 @@ renderer.setAnimationLoop(ms=>{
 });
 window.newAvatarLab={scene,camera,controls,renderer,groups:GROUPS,get options(){return options;},setGroup,setFocus,view,torso,getFocus:()=>focus,getGroup:()=>active.id};
 document.querySelector('#loading').hidden=true;window.newAvatarReady=true;
+// Our avatar, loaded after the page is ready (about 2 MB): centred in its kept space, standing on the floor.
+window.ourAvatarLoaded=(async()=>{
+ const slot=GROUPS.flatMap(g=>g.options).find(o=>o.id==='our-avatar');
+ try{
+  const avatar=await loadGameAvatar(),root=avatar.root;
+  root.traverse(o=>{if(o.isMesh)o.castShadow=true;});slot.group.add(root);slot.group.updateMatrixWorld(true);
+  const box=new T.Box3().setFromObject(root),c=box.getCenter(new T.Vector3()),local=slot.group.worldToLocal(new T.Vector3(c.x,box.min.y,c.z));
+  root.position.sub(local);
+  window.newAvatarLab.ourAvatar=avatar;return true;
+ }catch(error){console.error('Our avatar could not load',error);const note=label('Our avatar did not load');note.position.set(0,1,0);slot.group.add(note);return false;}
+})();
