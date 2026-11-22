@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,HIP_BALL_GROW,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
@@ -42,7 +42,9 @@ const thick=(pos,L,from,to)=>{let r=0;for(let i=0;i<pos.length;i+=3){const p=P(p
 const neighbours={'upper-arm':['shoulder','elbow'],forearm:['elbow','wrist'],thigh:['hip','knee'],calf:['knee','ankle']};
 for(const n of ['upper-arm','forearm','thigh','calf']){const slim=SLIM_LIMBS.includes(n);
  check(`${n}: ${slim?`slimmed to ${Math.round((SLIM_OVER[n]-1)*100)}% wider than its bigger ball`:"as thick as Our avatar's"}, ends unchanged in shape`,()=>{
-  const want=slim?SLIM_OVER[n]*2*Math.max(...neighbours[n].map(k=>b.ballR[k])):ourAvatar.limbs[n].thickness;
+  // (The thigh follows the hip ball's size before HIP_BALL_GROW.)
+  const base=k=>k==='hip'?b.ballR.hip/HIP_BALL_GROW:b.ballR[k];
+  const want=slim?SLIM_OVER[n]*2*Math.max(...neighbours[n].map(base)):ourAvatar.limbs[n].thickness;
   const now=g(n,'left').positions,L=limbLine(now,g(n,'left').axis);let r=0;for(let i=0;i<now.length;i+=3){const v=[now[i]-L.centre[0],now[i+1]-L.centre[1],now[i+2]-L.centre[2]],sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];r=Math.max(r,Math.hypot(v[0]-L.dir[0]*sa,v[1]-L.dir[1]*sa,v[2]-L.dir[2]*sa));}
   assert(Math.abs(2*r-want)<.003,`thickness ${(2*r*100).toFixed(1)} cm, wanted ${(want*100).toFixed(1)}`);return `thickness ${(2*r*100).toFixed(1)} cm, length ${(L.length*100).toFixed(1)} cm`;});}
 check(`thigh: its top ${Math.round((THIGH_TOP_WIDER-1)*100)}% wider at the end, fading smoothly to unchanged by its middle; length unchanged`,()=>{
@@ -151,14 +153,19 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
   assert.deepEqual(SLIM_OVER,{forearm:1.1,thigh:1.1+.05,calf:1.1+.08});return 'forearm 10%, thigh 15% (of the bigger hip ball), calf 18%';});
  check('the deeper hip press and the thicker limbs leave every ball its size (measured with every joint pressed alike)',()=>{
   // The sizes before this change (22 November 2026), in cm across: the deeper hip press shortens the thigh 1.2 cm and must not change them.
-  const was={shoulder:21.1808,elbow:18.0171,wrist:15.5476,hip:23.1053,knee:19.8728,ankle:19.9069};
+  // (The hip then 10% bigger on purpose, HIP_BALL_GROW: 23.1053 to 25.4158.)
+  const was={shoulder:21.1808,elbow:18.0171,wrist:15.5476,hip:23.1053*HIP_BALL_GROW,knee:19.8728,ankle:19.9069};
   for(const [k,v] of Object.entries(was))assert(Math.abs(b.ballR[k]*200-v)<1e-3,`${k}: ${(b.ballR[k]*200).toFixed(4)} vs ${v}`);return 'unchanged';});
- check(`put together: the hip ball sinks ${Math.round(HIP_TORSO_PRESS*100)}% of its radius into the torso and ${Math.round((PREVIEW_PRESS+HIP_THIGH_EXTRA)*100)}% into the thigh (the other joints ${Math.round(PREVIEW_PRESS*100)}%)`,()=>{
+ check(`put together: the hip ball (placed as the 10% smaller one, sunk ${Math.round(HIP_TORSO_PRESS*100)}% of its radius, then grown outward) sits deep in the torso and ${Math.round((PREVIEW_PRESS+HIP_THIGH_EXTRA)*100)}% into the thigh (the other joints ${Math.round(PREVIEW_PRESS*100)}%)`,()=>{
   const pv=pressedPreviewBody('boy'),pg=(n,s='left')=>pv.parts.find(p=>p.name===n&&p.side===s),H=pg('ball-hip'),shape=pv.whole.torsoShape;
   // How deep a ball sits past the torso's surface, measured on its own: the smallest d for which a ball d smaller touches nothing inside (4,000 test points).
   const probes=Array.from({length:4000},(_,i)=>{const y=1-2*(i+.5)/4000,q=Math.sqrt(1-y*y),a=i*Math.PI*(3-Math.sqrt(5));return [Math.cos(a)*q,y,Math.sin(a)*q];});
   const sunk=m=>{let lo=-.3,hi=m.radius;for(let k=0;k<40;k++){const d=(lo+hi)/2;if(probes.every(p=>insideTorso(shape,m.centre.map((v,j)=>v+p[j]*(m.radius-d)))<=0))hi=d;else lo=d;}return hi;};
-  const into=sunk(H);assert(Math.abs(into-HIP_TORSO_PRESS*H.radius)<.001,`hip ball ${(into*100).toFixed(2)} cm into the torso, wanted ${(HIP_TORSO_PRESS*H.radius*100).toFixed(2)}`);
+  // The ball is placed as the 10% smaller one was (sunk HIP_TORSO_PRESS of its radius), then grown outward: it sits at
+  // least as deep as that smaller ball did.
+  const rSmall=H.radius/HIP_BALL_GROW,into=sunk(H);assert(into>=HIP_TORSO_PRESS*rSmall-.001&&into<H.radius,`hip ball ${(into*100).toFixed(2)} cm into the torso, wanted at least ${(HIP_TORSO_PRESS*rSmall*100).toFixed(2)}`);
+  // Test of the test for the placement: the smaller ball at the same height, moved back in by the growth, sinks exactly HIP_TORSO_PRESS.
+  const small={centre:[H.centre[0]-(H.radius-rSmall),H.centre[1],H.centre[2]],radius:rSmall};assert(Math.abs(sunk(small)-HIP_TORSO_PRESS*rSmall)<.001,`smaller ball ${(sunk(small)*100).toFixed(2)} cm`);
   // Test of the test: the separated hip ball (clear of the torso) measures as not in it at all.
   assert(sunk(sg('ball-hip','left'))<0,'the separated ball measured as inside');
   // Into the limbs: each limb's top tip (on its own line) sits nearOffset past the ball's centre.
