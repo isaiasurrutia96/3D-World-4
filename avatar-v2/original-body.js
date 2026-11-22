@@ -17,6 +17,7 @@
 //    bigger, then 10% smaller), then 10% smaller again (owner); feet 3 inches
 //    longer than the head.
 import source from './original-limbs.json' with {type:'json'};
+import {ShapeUtils,Vector2} from 'three';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {makeTorsoOption} from './torso-variants.js';
 import {buildTorsoSurface,buildRingSurface,direction} from './torso-shape.js';
@@ -327,6 +328,281 @@ export function sinkIntoTorso(shape,clear,radius,dir,depth){
  return at(lo);
 }
 export function pressedPreviewBody(bodyId='boy',press=PREVIEW_PRESS){return separatedOriginalBody(bodyId,{press});}
+// Both shoulder balls pushed into the torso like a hard ball into clay, then pulled back out (owner, 22 November 2026:
+// "push the balls into the torso, imagine the torso is clay and the ball is hard, let the ball naturally sculpt the
+// socket"; then "once you push the ball in pull it back out and leave it"). Each ball travels straight in along its
+// push line (x), from beside the torso (where the separated avatar has it, 2 cm clear) to its put-together place, and clears the clay from its
+// path: the ball plus the usual 6 mm gap (SOCKET_GAP) ahead of its centre, and the tube it travelled along behind it.
+// Built as a cut (a mesh boolean, the standard way to take one shape out of another): the clay's triangles are cut
+// exactly along the edge of each path (cutAlong), the ones inside are removed, and the socket is filled with the
+// path's own surface, laid out exactly to the rim (the rim drawn flat around the bottom of the socket, filled with
+// three.js's polygon filling, then split to the usual socket triangles and put back on the ball's surface). Where the
+// path runs out through the top of a shoulder's outer corner, the socket opens there, as the ball would leave it.
+// Before the cut the torso gets the usual socket triangles (refineNear, SOCKET_EDGE 1.2 cm) near each ball. Then each
+// ball is pulled straight back out to where it started (the separated avatar's place). `inBalls`: where they were pushed to; `balls`: pulled out.
+// `kind` per point: 0 the torso's outside, 1 the rim, 2 the socket. `displaced`: clay cleared (m^3).
+export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
+ const torso=pressed.parts.find(p=>p.name==='torso'),balls=pressed.parts.filter(p=>p.name==='ball-shoulder');
+ const r=balls[0].radius,R=r+SOCKET_GAP,centres=balls.map(b=>b.centre),dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ const reach=R+6*SOCKET_EDGE,fade=6*SOCKET_EDGE;
+ const weight=m=>Math.max(...centres.map(c=>{const d=dist(m,c),f=Math.min(1,Math.max(0,(reach-d)/fade));return f>0?f*f*(3-2*f):(d<reach?1e-9:0);}));
+ const refined=refineNear(torso.normals?torso:{...torso,normals:pointNormals(torso)},centres[0],reach,SOCKET_EDGE,6,weight);
+ const paths=centres.map(c=>socketPath(c,R));
+ // The cut, with snap rounding; a point the snapping would make into a pinch (the rim passing through it twice) is
+ // left unsnapped and the cut redone.
+ const EPS=1e-9,key=(a,b)=>a<b?a+','+b:b+','+a,noSnap=new Set();let part,P,N,kind,pt,kept,next;
+ for(let attempt=0;;attempt++){
+  part=refined;for(const w of paths)part=cutAlong(part,w.phi,0,noSnap);
+  P=[...part.positions];N=[...part.normals];kind=[];pt=i=>[P[3*i],P[3*i+1],P[3*i+2]];
+  for(let i=0;i<P.length/3;i++){const q=pt(i),f=Math.min(...paths.map(w=>w.phi(q)));kind.push(f<-EPS?3:Math.abs(f)<=1e-7?1:0);}
+  // The clay outside the paths stays; the triangles inside go.
+  kept=[];for(let t=0;t<part.index.length;t+=3){const v=[part.index[t],part.index[t+1],part.index[t+2]];if(v.some(i=>kind[i]===3))continue;if(v.every(i=>kind[i]===1)&&paths.some(w=>w.phi(v.map(pt).reduce((m,q)=>m.map((x,k)=>x+q[k]/3),[0,0,0]))<-EPS))continue;kept.push(...v);}
+  // The rim: edges of the kept clay used once, each socket's rim going round the opposite way to the clay beside it.
+  const used=new Map();for(let t=0;t<kept.length;t+=3)for(let e=0;e<3;e++){const a=kept[t+e],b=kept[t+(e+1)%3];used.set(key(a,b),(used.get(key(a,b))??0)+1);}
+  next=new Map();const outs=new Map();for(let t=0;t<kept.length;t+=3)for(let e=0;e<3;e++){const a=kept[t+e],b=kept[t+(e+1)%3];if(used.get(key(a,b))===1){next.set(b,a);outs.set(b,(outs.get(b)??0)+1);}}
+  const pinch=[...outs].filter(([,n])=>n>1).map(([v])=>v);if(!pinch.length)break;
+  if(attempt>=5)throw Error('pushShoulderBalls: the rim keeps pinching');pinch.forEach(v=>noSnap.add(v));
+ }
+ // Each socket: its rim drawn flat around the socket's bottom, filled, split and put back on the path's surface.
+ const sockets=[],seen=new Set();
+ for(const start of next.keys()){if(seen.has(start))continue;const loop=[];let v=start;while(!seen.has(v)){seen.add(v);loop.push(v);v=next.get(v);if(v===undefined)throw Error('pushShoulderBalls: the rim is not closed');}
+  if(v!==start)throw Error('pushShoulderBalls: the rim crosses itself');sockets.push(loop);}
+ const cavity=[];
+ for(const loop of sockets){
+  const w=paths.find(w=>loop.every(i=>Math.abs(w.phi(pt(i)))<=1e-7));if(!w)throw Error('pushShoulderBalls: a rim on no path');
+  const flat=loop.map(i=>w.toFlat(pt(i)));
+  let faces=ShapeUtils.triangulateShape(flat.map(([x,y])=>new Vector2(x,y)),[]).map(f=>f.map(j=>loop[j]));
+  // Facing into the socket (away from the clay), like the rest of the torso's outside.
+  const face=f=>{const [a,b,c]=f.map(pt),n=[(b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]),(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]),(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])],m=[0,1,2].map(k=>(a[k]+b[k]+c[k])/3),inw=w.inward(m);return n[0]*inw[0]+n[1]*inw[1]+n[2]*inw[2];};
+  if(faces.reduce((s,f)=>s+face(f),0)<0)faces=faces.map(([a,b,c])=>[a,c,b]);
+  // Split to the usual socket triangles; the rim's own edges stay as they are (they are shared with the clay).
+  let T=faces.flat();const rimEdge=new Set();for(let k=0;k<loop.length;k++)rimEdge.add(key(loop[k],loop[(k+1)%loop.length]));const flatOf=new Map(loop.map((i,k)=>[i,flat[k]]));
+  for(let round=0;round<12;round++){const split=new Map();
+   for(let t=0;t<T.length;t+=3)for(let e=0;e<3;e++){const a=T[t+e],b=T[t+(e+1)%3],k=key(a,b);if(split.has(k)||rimEdge.has(k)||dist(pt(a),pt(b))<=SOCKET_EDGE)continue;
+    const fa=flatOf.get(a),fb=flatOf.get(b),fm=[(fa[0]+fb[0])/2,(fa[1]+fb[1])/2],q=w.fromFlat(fm);split.set(k,P.length/3);flatOf.set(P.length/3,fm);P.push(...q);N.push(...w.inward(q));kind.push(2);}
+   if(!split.size)break;const out=[];
+   for(let t=0;t<T.length;t+=3){const v=[T[t],T[t+1],T[t+2]],m=[0,1,2].map(e=>split.get(key(v[e],v[(e+1)%3]))),n=m.filter(x=>x!==undefined).length;
+    if(n===0){out.push(...v);continue;}if(n===3){out.push(v[0],m[0],m[2],m[0],v[1],m[1],m[2],m[1],v[2],m[0],m[1],m[2]);continue;}
+    const rr=n===1?m.findIndex(x=>x!==undefined):[0,1,2].find(e=>m[e]!==undefined&&m[(e+1)%3]!==undefined),V=[0,1,2].map(k=>v[(k+rr)%3]),M=[0,1,2].map(k=>m[(k+rr)%3]);
+    if(n===1)out.push(V[0],M[0],V[2],M[0],V[1],V[2]);else out.push(V[1],M[1],M[0],V[0],M[0],M[1],V[0],M[1],V[2]);}
+   T=out;}
+  // Lawson's edge flips on the drawing (a Delaunay triangulation): well-shaped triangles instead of slivers.
+  const flips=()=>{for(let pass=0;pass<50;pass++){let n=0;const opp=new Map();
+    for(let t=0;t<T.length;t+=3)for(let e=0;e<3;e++){const a=T[t+e],b=T[t+(e+1)%3],k=key(a,b);if(rimEdge.has(k))continue;(opp.get(k)??opp.set(k,[]).get(k)).push([t,e]);}
+    const done=new Set();
+    for(const [k,two] of opp){if(two.length!==2)continue;const [[t1,e1],[t2,e2]]=two;if(done.has(t1)||done.has(t2))continue;
+     const a=T[t1+e1],b=T[t1+(e1+1)%3],c=T[t1+(e1+2)%3],d=T[t2+(e2+2)%3],F=i=>flatOf.get(i),[A,B,Cc,D]=[F(a),F(b),F(c),F(d)];
+     const orient=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),sg=Math.sign(orient(A,B,Cc));
+     // d inside the circle through a, b, c (for the drawing's winding) and the flip keeps both triangles the same way round.
+     const ad=[A[0]-D[0],A[1]-D[1]],bd=[B[0]-D[0],B[1]-D[1]],cd=[Cc[0]-D[0],Cc[1]-D[1]];
+     const det=(ad[0]*ad[0]+ad[1]*ad[1])*(bd[0]*cd[1]-cd[0]*bd[1])-(bd[0]*bd[0]+bd[1]*bd[1])*(ad[0]*cd[1]-cd[0]*ad[1])+(cd[0]*cd[0]+cd[1]*cd[1])*(ad[0]*bd[1]-bd[0]*ad[1]);
+     if(sg*det<=1e-30)continue;if(Math.sign(orient(Cc,A,D))!==sg||Math.sign(orient(D,B,Cc))!==sg)continue;
+     T[t1]=c;T[t1+1]=a;T[t1+2]=d;T[t2]=d;T[t2+1]=b;T[t2+2]=c;done.add(t1);done.add(t2);n++;}
+    if(!n)break;}};
+  flips();
+  // Even out the socket's inner points (on the drawing, so they stay on the ball's surface): a few relaxing rounds.
+  const nb=new Map();for(let t=0;t<T.length;t+=3)for(let e=0;e<3;e++){const a=T[t+e],b=T[t+(e+1)%3];for(const [x,y] of [[a,b],[b,a]])if(kind[x]===2)(nb.get(x)??nb.set(x,new Set()).get(x)).add(y);}
+  for(let it=0;it<10;it++)for(const [x,ys] of nb){let sx=0,sy=0;for(const y of ys){const f=flatOf.get(y);sx+=f[0];sy+=f[1];}const f=flatOf.get(x),g=[f[0]+.5*(sx/ys.size-f[0]),f[1]+.5*(sy/ys.size-f[1])];flatOf.set(x,g);}
+  flips();
+  for(const x of nb.keys()){const q=w.fromFlat(flatOf.get(x));P.splice(3*x,3,...q);N.splice(3*x,3,...w.inward(q));}
+  cavity.push(...T);
+ }
+ // The points that were inside the paths are no longer used; the index keeps only the kept clay and the sockets.
+ const index=[...kept,...cavity];
+ const vol=(X,J)=>{let v=0;for(let t=0;t<J.length;t+=3){const a=3*J[t],b=3*J[t+1],e=3*J[t+2];v+=(X[a]*(X[b+1]*X[e+2]-X[b+2]*X[e+1])-X[a+1]*(X[b]*X[e+2]-X[b+2]*X[e])+X[a+2]*(X[b]*X[e+1]-X[b+1]*X[e]))/6;}return v;};
+ // Unused points dropped and the rest renumbered.
+ const keep=new Map(),pos=[],nor=[],kinds=[];for(const i of index)if(!keep.has(i)){keep.set(i,kinds.length);pos.push(P[3*i],P[3*i+1],P[3*i+2]);nor.push(N[3*i],N[3*i+1],N[3*i+2]);kinds.push(kind[i]===3?2:kind[i]);}
+ let carved={...torso,positions:pos,index:index.map(i=>keep.get(i)),normals:nor};
+ // Where the cut passed very close to a point it left rim points a fraction of a millimetre apart, with specks of
+ // triangles between them. Those rim edges (under 1 mm) are collapsed, the standard clean-up: both points become one,
+ // on the rim, if the two share no neighbours but the two triangles on that edge (the link condition) and no triangle
+ // around them turns over.
+ carved=collapseShortRimEdges(carved,kinds,paths,.001);
+ const out=apart.parts.filter(p=>p.name==='ball-shoulder');
+ // For drawing, the rim is a hard edge: the socket's triangles get their own copies of the rim points, shaded like
+ // the socket, while the outside's triangles keep the rim points shaded like the outside (the standard way to draw a
+ // crease; a shared point would blend the two and shade the first row of the socket unevenly). `solid` keeps one
+ // point per place, for measuring and for the round-over.
+ const sp=carved.positions,si=carved.index,phiAt=q=>Math.min(...paths.map(w=>w.phi(q))),dpos=[...sp],dnor=[...carved.normals],copy=new Map(),dindex=[];
+ for(let t=0;t<si.length;t+=3){const v=[si[t],si[t+1],si[t+2]],q=k=>[sp[3*k],sp[3*k+1],sp[3*k+2]];
+  const socket=v.some(k=>kinds[k]===2)||v.every(k=>kinds[k]===1)&&phiAt([0,1,2].map(j=>(sp[3*v[0]+j]+sp[3*v[1]+j]+sp[3*v[2]+j])/3))<0;
+  dindex.push(...v.map(k=>{if(!socket||kinds[k]!==1)return k;if(!copy.has(k)){const p=q(k),w=paths.find(w=>Math.sign(w.c[0])===Math.sign(p[0]));copy.set(k,dpos.length/3);dpos.push(...p);dnor.push(...w.inward(p));}return copy.get(k);}));}
+ const drawn={...carved,positions:dpos,index:dindex,normals:dnor};
+ return {body:bodyId,parts:[drawn,...out],torso:drawn,solid:carved,kind:kinds,refined,before:part,paths,ways:paths.map(w=>w.phi),balls:out,inBalls:balls,R,displaced:vol(refined.positions,refined.index)-vol(carved.positions,carved.index)};
+}
+export function collapseShortRimEdges(part,kind,paths,minLen,types=null){
+ let P=[...part.positions],N=[...part.normals],I=[...part.index];const pt=i=>[P[3*i],P[3*i+1],P[3*i+2]],key=(a,b)=>a<b?a+','+b:b+','+a,dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ const nrm=(a,b,c)=>[(b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]),(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]),(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])];
+ for(let pass=0;pass<10;pass++){
+  const fan=new Map();for(let t=0;t<I.length;t+=3)for(let k=0;k<3;k++)(fan.get(I[t+k])??fan.set(I[t+k],[]).get(I[t+k])).push(t);
+  const gone=new Set(),touched=new Set();let n=0;
+  for(let t=0;t<I.length;t+=3){if(gone.has(t))continue;for(let e=0;e<3;e++){const a=I[t+e],b=I[t+(e+1)%3];if(kind[a]!==1||kind[b]!==1||touched.has(a)||touched.has(b))continue;
+   if(dist(pt(a),pt(b))>=minLen)continue;
+   const ta=fan.get(a).filter(x=>!gone.has(x)),tb=fan.get(b).filter(x=>!gone.has(x)),both=ta.filter(x=>tb.includes(x));if(both.length!==2)continue;
+   const nbr=v=>new Set(fan.get(v).filter(x=>!gone.has(x)).flatMap(x=>[I[x],I[x+1],I[x+2]]).filter(u=>u!==v)),na=nbr(a),nb=nbr(b),common=[...na].filter(u=>nb.has(u)&&u!==a&&u!==b);
+   const opp=both.map(x=>[I[x],I[x+1],I[x+2]].find(u=>u!==a&&u!==b));if(common.length!==2||!opp.every(u=>common.includes(u)))continue;
+   // The merged point: the middle of the edge, put back onto the rim (the edge bows into the path).
+   const m=[0,1,2].map(k=>(P[3*a+k]+P[3*b+k])/2),w=paths.find(w=>Math.sign(w.c[0])===Math.sign(m[0])),q=w.phi(m)<0?w.nearest(m):m;
+   // No triangle around either point may turn over.
+   let ok=true;for(const x of [...ta,...tb]){if(both.includes(x))continue;const v=[I[x],I[x+1],I[x+2]],before=nrm(...v.map(pt)),after=nrm(...v.map(u=>u===a||u===b?q:pt(u)));if(before[0]*after[0]+before[1]*after[1]+before[2]*after[2]<=0){ok=false;break;}}
+   if(!ok)continue;
+   P.splice(3*a,3,...q);for(const x of tb)for(let k=0;k<3;k++)if(I[x+k]===b)I[x+k]=a;both.forEach(x=>gone.add(x));
+   [...na,...nb,a,b].forEach(u=>touched.add(u));n++;break;}}
+  if(!n)break;const out=[],ty=[];for(let t=0;t<I.length;t+=3)if(!gone.has(t)){out.push(I[t],I[t+1],I[t+2]);if(types)ty.push(types[t/3]);}I=out;if(types){types.length=0;types.push(...ty);}
+ }
+ // Unused points dropped (the collapsed ones) and the rest renumbered, kinds kept in step.
+ const keep=new Map(),pos=[],nor=[],kinds=[];for(const i of I)if(!keep.has(i)){keep.set(i,kinds.length);pos.push(P[3*i],P[3*i+1],P[3*i+2]);nor.push(N[3*i],N[3*i+1],N[3*i+2]);kinds.push(kind[i]);}
+ kind.length=0;kind.push(...kinds);
+ return {...part,positions:pos,index:I.map(i=>keep.get(i)),normals:nor};
+}
+/**
+ * A ball's path through the clay, travelling straight in along x toward the body's middle and stopping with its centre
+ * at `c`: ahead of the centre the ball itself (radius R), behind it the tube it came along. `phi`: below 0 inside, 0 on
+ * the edge, above 0 outside. `inward`: the direction from the edge into the path (the socket's facing). `toFlat` /
+ * `fromFlat`: the edge drawn flat around the socket's bottom (distance along the edge from the bottom, and the angle
+ * round the travel line), so a rim on it can be filled as a flat polygon and put back exactly on the edge.
+ */
+export function socketPath(c,R){
+ const d=-Math.sign(c[0]),quarter=R*Math.PI/2;
+ return {c,R,d,
+  phi:p=>{const u=d*(p[0]-c[0]),rho=Math.hypot(p[1]-c[1],p[2]-c[2]);return u>0?Math.hypot(u,rho)-R:rho-R;},
+  inward:p=>{const v=[p[0]-c[0],p[1]-c[1],p[2]-c[2]];if(d*v[0]>0){const l=Math.hypot(...v);return v.map(x=>-x/l);}const rho=Math.hypot(v[1],v[2]);return [0,-v[1]/rho,-v[2]/rho];},
+  toFlat:p=>{const u=d*(p[0]-c[0]),y=p[1]-c[1],z=p[2]-c[2],rho=Math.hypot(y,z),th=Math.atan2(z,y),s=u>0?R*Math.atan2(rho,u):quarter-u;return [s*Math.cos(th),s*Math.sin(th)];},
+  fromFlat:([X,Y])=>{const s=Math.hypot(X,Y),th=Math.atan2(Y,X);let u,rho;if(s<=quarter){u=R*Math.cos(s/R);rho=R*Math.sin(s/R);}else{u=quarter-s;rho=R;}return [c[0]+d*u,c[1]+rho*Math.cos(th),c[2]+rho*Math.sin(th)];},
+  nearest:p=>{const v=[p[0]-c[0],p[1]-c[1],p[2]-c[2]];if(d*v[0]>0){const q=Math.hypot(...v);return v.map((x,k)=>c[k]+x*R/q);}const rho=Math.hypot(v[1],v[2]);return [p[0],c[1]+v[1]*R/rho,c[2]+v[2]*R/rho];}};
+}
+// The sockets' rims chiselled and softened (owner, 22 November 2026, circling the thin sliver of clay that overhangs the
+// top of the socket: "can u chisel that away, then soften up the rim of the socket"). The proven way to do both at once
+// is the rolling-ball round-over that CAD fillets use (in mathematics, the morphological opening): a ball of radius `f`
+// rolls everywhere inside the clay; whatever it cannot reach is cut away. Clay thinner than the ball is chiselled off,
+// and the rim takes the ball's round shape; everywhere the ball reaches, nothing changes. Here the ball's centre runs
+// along the line where it touches both the torso's outside and the socket (`centre line`: the torso's outside moved in
+// by f, crossed with the socket moved out by f); a point the ball cannot reach goes to the nearest point of the ball
+// rolled along that line. First the clay near the rims gets triangles a third of f long, so the round edge is smooth.
+export const SHOULDER_RIM_ROUND=.005;
+export function softenShoulderRims(ps,f=SHOULDER_RIM_ROUND){
+ const {paths}=ps,phi=p=>Math.min(...paths.map(w=>w.phi(p))),pathOf=p=>paths.find(w=>Math.sign(w.c[0])===Math.sign(p[0])),band=4*f;
+ const P=[...ps.solid.positions],N=[...ps.solid.normals],K=[...ps.kind];let I=[...ps.solid.index],TT=[];
+ const pt=(X,i)=>[X[3*i],X[3*i+1],X[3*i+2]],sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],len=v=>Math.hypot(...v),key=(a,b)=>a<b?a*4194304+b:b*4194304+a;
+ // Which side each triangle is on: the socket (any socket point, or all rim points with the middle inside a path) or the outside.
+ for(let t=0;t<I.length;t+=3){const v=[I[t],I[t+1],I[t+2]];TT.push(v.some(i=>K[i]===2)||v.every(i=>K[i]===1)&&phi([0,1,2].map(k=>(P[3*v[0]+k]+P[3*v[1]+k]+P[3*v[2]+k])/3))<0?2:0);}
+ // A grid of points for 'what is near here' questions; `each` visits the nearby items without building lists.
+ const grid=(pts,cell)=>{const g=new Map(),K3=(x,y,z)=>((x+512)*1024+(y+512))*1024+(z+512),c=v=>Math.floor(v/cell);pts.forEach((p,i)=>{const k=K3(c(p[0]),c(p[1]),c(p[2]));(g.get(k)??g.set(k,[]).get(k)).push(i);});
+  return {each:(p,r,fn)=>{const cx=c(p[0]),cy=c(p[1]),cz=c(p[2]),n=Math.ceil(r/cell);for(let x=-n;x<=n;x++)for(let y=-n;y<=n;y++)for(let z=-n;z<=n;z++){const l=g.get(K3(cx+x,cy+y,cz+z));if(l)for(const j of l)if(fn(j)===true)return true;}return false;}};};
+ const rim=[];for(let i=0;i<K.length;i++)if(K[i]===1)rim.push(pt(P,i));
+ const rimGrid=grid(rim,band),b2=band*band,nearRimAt=p=>rimGrid.each(p,band,j=>{const q=rim[j],x=q[0]-p[0],y=q[1]-p[1],z=q[2]-p[2];return x*x+y*y+z*z<b2;}),nearCache=[],nearRim=p=>nearRimAt(p),nearI=i=>nearCache[i]??(nearCache[i]=nearRimAt(pt(P,i)));
+ const closest=(p,a,b,c)=>{const ab=sub(b,a),ac=sub(c,a),ap=sub(p,a),dot=(x,y)=>x[0]*y[0]+x[1]*y[1]+x[2]*y[2],d1=dot(ab,ap),d2=dot(ac,ap);if(d1<=0&&d2<=0)return a;
+  const bp=sub(p,b),d3=dot(ab,bp),d4=dot(ac,bp);if(d3>=0&&d4<=d3)return b;const vc=d1*d4-d3*d2;if(vc<=0&&d1>=0&&d3<=0){const v=d1/(d1-d3);return a.map((x,k)=>x+v*ab[k]);}
+  const cp=sub(p,c),d5=dot(ab,cp),d6=dot(ac,cp);if(d6>=0&&d5<=d6)return c;const vb=d5*d2-d1*d6;if(vb<=0&&d2>=0&&d6<=0){const w=d2/(d2-d6);return a.map((x,k)=>x+w*ac[k]);}
+  const va=d3*d6-d5*d4;if(va<=0&&d4-d3>=0&&d5-d6>=0){const w=(d4-d3)/((d4-d3)+(d5-d6));return b.map((x,k)=>x+w*(c[k]-x));}const den=1/(va+vb+vc),v=vb*den,w=vc*den;return a.map((x,k)=>x+ab[k]*v+ac[k]*w);};
+ const unit=i=>{const n=pt(N,i),l=len(n)||1;return n.map(v=>v/l);};
+ let inset,outside,line,lineGrid,triGrid;
+ const insetOf=i=>{if(!inset.has(i)){const q=pt(P,i),n=unit(i);inset.set(i,[q[0]-f*n[0],q[1]-f*n[1],q[2]-f*n[2]]);}return inset.get(i);};
+ // The ball's centre line: the torso's outside moved in by f, where the socket is exactly f away (one piece per
+ // outside triangle that crosses that level), and the outside triangles near the rims (to tell how deep a point is).
+ const measure=()=>{inset=new Map();outside=[];line=[];
+  for(let t=0;t<I.length;t+=3){if(TT[t/3]!==0)continue;const v=[I[t],I[t+1],I[t+2]];if(!v.some(nearI))continue;outside.push(t);
+   const X=v.map(insetOf),g=X.map(x=>phi(x)-f),cut=[];for(let e=0;e<3;e++){const a=e,b=(e+1)%3;if((g[a]<0)!==(g[b]<0)){const s=g[a]/(g[a]-g[b]);cut.push(X[a].map((x,j)=>x+s*(X[b][j]-x)));}}
+   if(cut.length===2)line.push(cut);}
+  lineGrid=grid(line.map(([a,b])=>a.map((x,j)=>(x+b[j])/2)),band);triGrid=grid(outside.map(t=>[0,1,2].map(j=>(P[3*I[t]+j]+P[3*I[t+1]+j]+P[3*I[t+2]+j])/3)),band);};
+ const depth=p=>{let bd=Infinity,sign=1;triGrid.each(p,2*f,j=>{const t=outside[j],a=pt(P,I[t]),b=pt(P,I[t+1]),c=pt(P,I[t+2]),q=closest(p,a,b,c),d=len(sub(p,q));if(d<bd){bd=d;const n=[(b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]),(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]),(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])];sign=(p[0]-q[0])*n[0]+(p[1]-q[1])*n[1]+(p[2]-q[2])*n[2]<0?1:-1;}});return bd===Infinity?Infinity:sign*bd;};
+ // Can the rolling ball touch this point from inside the clay? (Outside and rim points: the ball sits just under the
+ // outside; socket points: just behind the socket's surface.)
+ // (Asked once per point: splitting adds triangles but does not move any point or change the surfaces.)
+ const reachCache=[],reaches=i=>{if(reachCache[i]!==undefined)return reachCache[i];const p=pt(P,i);let r;if(K[i]!==2)r=phi(insetOf(i))>=f-1e-9;else{const m=pathOf(p).inward(p);r=depth([p[0]-f*m[0],p[1]-f*m[1],p[2]-f*m[2]])>=f-1e-9;}return reachCache[i]=r;};
+ const onLine=p=>{let best=null,bd=Infinity;lineGrid.each(p,band,j=>{const [a,b]=line[j],ab=sub(b,a),l2=ab[0]**2+ab[1]**2+ab[2]**2,s=l2?Math.max(0,Math.min(1,((p[0]-a[0])*ab[0]+(p[1]-a[1])*ab[1]+(p[2]-a[2])*ab[2])/l2)):0,q=a.map((x,k)=>x+s*ab[k]),d=len(sub(p,q));if(d<bd){bd=d;best=q;}});return best;};
+ // 1. Where the ball cuts (the rim and every point it cannot reach), triangles are split until half of f long, so the
+ // round edge is smooth. New points: on the outside, the middle of the edge; in the socket or on the rim, put back on
+ // the socket's surface.
+ for(let round=0;round<6;round++){
+  measure();const cutHere=new Map(),cuts=i=>{if(!cutHere.has(i))cutHere.set(i,K[i]===1||nearI(i)&&!reaches(i));return cutHere.get(i);};
+  const sides=new Map();for(let t=0;t<I.length;t+=3){if(!(nearI(I[t])||nearI(I[t+1])||nearI(I[t+2])))continue;for(let e=0;e<3;e++){const k=key(I[t+e],I[t+(e+1)%3]);(sides.get(k)??sides.set(k,[]).get(k)).push(TT[t/3]);}}
+  const split=new Map();
+  for(let t=0;t<I.length;t+=3){if(!(nearI(I[t])||nearI(I[t+1])||nearI(I[t+2])))continue;const v=[I[t],I[t+1],I[t+2]];if(!v.some(cuts))continue;
+   for(let e=0;e<3;e++){const a=v[e],b=v[(e+1)%3],k=key(a,b);if(split.has(k)||len(sub(pt(P,a),pt(P,b)))<=f/2)continue;
+    // (An edge between two rim points bows into the socket's path, the rim being curved: its middle goes onto the rim.)
+    const m=[0,1,2].map(j=>(P[3*a+j]+P[3*b+j])/2),sd=sides.get(k),onSocket=sd.includes(2),onOut=sd.includes(0),kk=onSocket&&onOut||!onSocket&&phi(m)<0?1:onSocket?2:0;
+    const q=kk===0?m:pathOf(m).nearest(m);split.set(k,P.length/3);P.push(...q);K.push(kk);
+    if(kk===2)N.push(...pathOf(q).inward(q));else{const n=[0,1,2].map(j=>N[3*a+j]+N[3*b+j]),l=len(n)||1;N.push(n[0]/l,n[1]/l,n[2]/l);}}}
+  if(!split.size)break;
+  const out=[],types=[];
+  for(let t=0;t<I.length;t+=3){const ty=TT[t/3],v=[I[t],I[t+1],I[t+2]],m=[0,1,2].map(e=>split.get(key(v[e],v[(e+1)%3]))),n=m.filter(x=>x!==undefined).length;
+   let add;if(n===0)add=v;else if(n===3)add=[v[0],m[0],m[2],m[0],v[1],m[1],m[2],m[1],v[2],m[0],m[1],m[2]];
+   else{const r=n===1?m.findIndex(x=>x!==undefined):[0,1,2].find(e=>m[e]!==undefined&&m[(e+1)%3]!==undefined),V=[0,1,2].map(k=>v[(k+r)%3]),M=[0,1,2].map(k=>m[(k+r)%3]);
+    add=n===1?[V[0],M[0],V[2],M[0],V[1],V[2]]:[V[1],M[1],M[0],V[0],M[0],M[1],V[0],M[1],V[2]];}
+   out.push(...add);for(let j=0;j<add.length;j+=3)types.push(ty);}
+  I=out;TT=types;
+ }
+ // Specks of triangles the splitting left along the rims: rim edges under a fifth of f collapsed (as after the cut).
+ {const c=collapseShortRimEdges({positions:P,normals:N,index:I},K,paths,f/5,TT);P.length=0;P.push(...c.positions);N.length=0;N.push(...c.normals);I=c.index;nearCache.length=0;reachCache.length=0;}
+ // Slivers near the rims (left where the cut passed very close to a point) are cleaned up with edge flips, the standard
+ // way to improve triangle shapes: where two triangles on the same side meet almost flat (under 10 degrees) and one has
+ // a corner under 10 degrees, their shared edge is swapped for the other diagonal if that gives better corners. The
+ // rim's own edges and the edges between the outside and the socket are never swapped.
+ {const ang=(p,q,r)=>{const u=sub(q,p),w=sub(r,p);return Math.acos(Math.max(-1,Math.min(1,(u[0]*w[0]+u[1]*w[1]+u[2]*w[2])/(len(u)*len(w)||1))));};
+  const minA=(a,b,c)=>{const A=pt(P,a),B=pt(P,b),C=pt(P,c);return Math.min(ang(A,B,C),ang(B,C,A),ang(C,A,B));};
+  const nrm=(a,b,c)=>{const A=pt(P,a),B=pt(P,b),C=pt(P,c),n=[(B[1]-A[1])*(C[2]-A[2])-(B[2]-A[2])*(C[1]-A[1]),(B[2]-A[2])*(C[0]-A[0])-(B[0]-A[0])*(C[2]-A[2]),(B[0]-A[0])*(C[1]-A[1])-(B[1]-A[1])*(C[0]-A[0])],l=len(n)||1;return n.map(x=>x/l);};
+  const lim=10*Math.PI/180;
+  for(let pass=0;pass<20;pass++){let n=0;const opp=new Map();
+   for(let t=0;t<I.length;t+=3){if(!nearI(I[t]))continue;for(let e=0;e<3;e++){const k=key(I[t+e],I[t+(e+1)%3]);(opp.get(k)??opp.set(k,[]).get(k)).push([t,e]);}}
+   const done=new Set();
+   for(const two of opp.values()){if(two.length!==2)continue;const [[t1,e1],[t2,e2]]=two;if(done.has(t1)||done.has(t2)||TT[t1/3]!==TT[t2/3])continue;
+    const a=I[t1+e1],b=I[t1+(e1+1)%3],c=I[t1+(e1+2)%3],d=I[t2+(e2+2)%3];if(K[a]===1&&K[b]===1||c===d||opp.has(key(c,d)))continue;
+    const before=Math.min(minA(a,b,c),minA(b,a,d));if(before>=lim)continue;
+    const n1=nrm(a,b,c),n2=nrm(b,a,d);if(n1[0]*n2[0]+n1[1]*n2[1]+n1[2]*n2[2]<Math.cos(lim))continue;
+    const m1=nrm(c,a,d),m2=nrm(d,b,c);if(m1[0]*n1[0]+m1[1]*n1[1]+m1[2]*n1[2]<=0||m2[0]*n1[0]+m2[1]*n1[1]+m2[2]*n1[2]<=0)continue;
+    if(Math.min(minA(c,a,d),minA(d,b,c))<=before)continue;
+    I[t1]=c;I[t1+1]=a;I[t1+2]=d;I[t2]=d;I[t2+1]=b;I[t2+2]=c;done.add(t1);done.add(t2);opp.set(key(c,d),[]);n++;}
+   if(!n)break;}}
+ measure();
+ // 2. Every point the rolling ball cannot reach goes to the nearest point of the ball rolled along its centre line.
+ const out=[...P];let chiselled=0;
+ for(let i=0;i<K.length;i++){const p=pt(P,i);if(!nearI(i)||reaches(i))continue;const g=onLine(p);if(!g)continue;const d=len(sub(p,g));if(d<=f)continue;
+  for(let k=0;k<3;k++)out[3*i+k]=g[k]+f*(p[k]-g[k])/d;chiselled++;}
+ // Shading: where nothing moved, the directions it had; where the ball cut, the new surface's (blended over 5 mm).
+ const A=angleNormals({positions:out,index:I}),NN=new Array(out.length);
+ for(let i=0;i<out.length;i+=3){const m=Math.hypot(out[i]-P[i],out[i+1]-P[i+1],out[i+2]-P[i+2]),x=Math.min(1,m/.005),t=x*x*(3-2*x);
+  const n=[0,1,2].map(k=>N[i+k]*(1-t)+A[i+k]*t),l=Math.hypot(...n)||1;for(let k=0;k<3;k++)NN[i+k]=n[k]/l;}
+ const vol=(X,J)=>{let v=0;for(let t=0;t<J.length;t+=3){const a=3*J[t],b=3*J[t+1],e=3*J[t+2];v+=(X[a]*(X[b+1]*X[e+2]-X[b+2]*X[e+1])-X[a+1]*(X[b]*X[e+2]-X[b+2]*X[e])+X[a+2]*(X[b]*X[e+1]-X[b+1]*X[e]))/6;}return v;};
+ const torso={...ps.solid,positions:out,index:I,normals:NN};
+ return {...ps,parts:[torso,...ps.balls],torso,solid:torso,rough:{positions:P,index:I,kind:K},line,f,chiselled,removed:vol(P,I)-vol(out,I)};
+}
+/**
+ * Splits every edge that crosses `phi = 0` (phi(point) < 0 inside) at the exact crossing (bisection on the edge),
+ * so the mesh has a line of points exactly where it meets that boundary. Triangles are split with the same patterns
+ * as refineNear (same winding); the new points lie on the old flat triangles, so the surface does not change shape,
+ * and get the blend of their ends' carried directions. A point exactly on the boundary counts as outside.
+ */
+export function cutAlong(part,phi,snap=.15,noSnap=new Set()){
+ const P=[...part.positions],I=part.index,N=[...part.normals],pt=i=>[P[3*i],P[3*i+1],P[3*i+2]],split=new Map(),key=(a,b)=>a<b?a+','+b:b+','+a;
+ // A point within a hair (1e-9 m) of the boundary counts as on it (outside), so a snapped point is never split again.
+ let inside=new Map(),isIn=i=>{if(!inside.has(i))inside.set(i,phi(pt(i))<-1e-9);return inside.get(i);};
+ // Snap rounding: where the crossing falls within `snap` of an edge's end, that end is moved onto the boundary
+ // (along the edge) instead of splitting the edge, which would leave a sliver of a triangle there.
+ if(snap>0){const to=new Map();
+  for(let t=0;t<I.length;t+=3)for(let e=0;e<3;e++){const a=I[t+e],b=I[t+(e+1)%3];if(isIn(a)===isIn(b))continue;
+   const A=pt(a),B=pt(b),at=s=>A.map((v,j)=>v+s*(B[j]-v));let lo=0,hi=1;const inA=isIn(a);for(let n=0;n<60;n++){const m=(lo+hi)/2;if((phi(at(m))<0)===inA)lo=m;else hi=m;}
+   const s=(lo+hi)/2,[v,d]=s<snap?[a,s]:s>1-snap?[b,1-s]:[null,0];if(v!==null&&!noSnap.has(v)&&(!to.has(v)||to.get(v).d>d))to.set(v,{d,q:at(s)});}
+  for(const [v,{q}] of to)P.splice(3*v,3,...q);
+  inside=new Map();isIn=i=>{if(!inside.has(i))inside.set(i,phi(pt(i))<-1e-9);return inside.get(i);};}
+ for(let t=0;t<I.length;t+=3)for(let e=0;e<3;e++){
+  const a=I[t+e],b=I[t+(e+1)%3],k=key(a,b);if(split.has(k)||isIn(a)===isIn(b))continue;
+  const A=pt(a),B=pt(b),at=s=>A.map((v,j)=>v+s*(B[j]-v));let lo=0,hi=1;const inA=isIn(a);
+  for(let n=0;n<60;n++){const m=(lo+hi)/2;if((phi(at(m))<0)===inA)lo=m;else hi=m;}
+  const s=(lo+hi)/2;split.set(k,P.length/3);P.push(...at(s));
+  const n=[0,1,2].map(j=>N[3*a+j]*(1-s)+N[3*b+j]*s),l=Math.hypot(...n)||1;N.push(n[0]/l,n[1]/l,n[2]/l);
+ }
+ const out=[];
+ for(let t=0;t<I.length;t+=3){
+  const v=[I[t],I[t+1],I[t+2]],m=[0,1,2].map(e=>split.get(key(v[e],v[(e+1)%3]))),n=m.filter(x=>x!==undefined).length;
+  if(n===0){out.push(...v);continue;}
+  if(n===3){out.push(v[0],m[0],m[2],m[0],v[1],m[1],m[2],m[1],v[2],m[0],m[1],m[2]);continue;}
+  const r=n===1?m.findIndex(x=>x!==undefined):[0,1,2].find(e=>m[e]!==undefined&&m[(e+1)%3]!==undefined);
+  const V=[0,1,2].map(k=>v[(k+r)%3]),M=[0,1,2].map(k=>m[(k+r)%3]);
+  if(n===1)out.push(V[0],M[0],V[2],M[0],V[1],V[2]);else out.push(V[1],M[1],M[0],V[0],M[0],M[1],V[0],M[1],V[2]);
+ }
+ return {positions:P,index:out,normals:N};
+}
 
 /**
  * Rounds out every edge and rim near sockets (owner, 22 November 2026: no sharp edges, only smooth soft rims): the

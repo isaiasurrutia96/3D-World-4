@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,pushShoulderBalls,softenShoulderRims,SHOULDER_RIM_ROUND,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
@@ -235,6 +235,55 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
   assert(Math.abs(l.centre[1]-sg('ball-shoulder','left').centre[1])<1e-9&&Math.abs(l.centre[2]-sg('ball-shoulder','left').centre[2])<1e-9,'moved only across');
   return `${(l.centre[0]*100).toFixed(1)} cm from the middle (Our avatar ${(ourAvatar.shoulderBallX*100).toFixed(1)}; apart ${(apart*100).toFixed(1)})`;});
  check('separated: the right side is the exact mirror of the left',()=>{for(const p of sep.parts.filter(p=>p.side==='left')){const q=sg(p.name,'right');for(let i=0;i<p.positions.length;i+=3)assert(p.positions[i]===-q.positions[i]&&p.positions[i+1]===q.positions[i+1]&&p.positions[i+2]===q.positions[i+2],p.name);}return 'mirrored';});
+ // Shared by the two shoulder-socket checks below (both built once).
+ let shoulderCut=null;const cutShoulders=()=>shoulderCut??(shoulderCut=(()=>{const pv=pressedPreviewBody('boy'),ps=pushShoulderBalls('boy',pv,{apart:sep});return {pv,ps,soft:softenShoulderRims(ps)};})());
+ const meshFacts=(X,I)=>{const fn=t=>{const q=k=>[X[3*I[t+k]],X[3*I[t+k]+1],X[3*I[t+k]+2]],a=q(0),u=q(1).map((v,j)=>v-a[j]),w=q(2).map((v,j)=>v-a[j]);return [u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];};
+  const e=new Map();let vol=0,flat=0;for(let t=0;t<I.length;t+=3){const n=fn(t);if(Math.hypot(...n)<1e-14)flat++;vol+=(X[3*I[t]]*n[0]+X[3*I[t]+1]*n[1]+X[3*I[t]+2]*n[2])/6;for(let k=0;k<3;k++){const a=I[t+k],c=I[t+(k+1)%3],key=a<c?a+','+c:c+','+a;(e.get(key)??e.set(key,[]).get(key)).push(t);}}
+  // The sharpest bend between neighbouring triangles near given points (within `r`), counting only triangles over 0.1 mm²; smaller specks bent over 60 degrees are counted apart.
+  const bends=(pts,r)=>{let worst=0,specks=0,speckArea=0;for(const [key,ts] of e){if(ts.length!==2)continue;const x=+key.split(',')[0],p=[X[3*x],X[3*x+1],X[3*x+2]];if(!pts.some(q=>Math.hypot(q[0]-p[0],q[1]-p[1],q[2]-p[2])<r))continue;
+    const a=fn(ts[0]),c=fn(ts[1]),la=Math.hypot(...a),lc=Math.hypot(...c);if(!la||!lc)continue;const ang=Math.acos(Math.max(-1,Math.min(1,(a[0]*c[0]+a[1]*c[1]+a[2]*c[2])/(la*lc))))*180/Math.PI;
+    if(Math.min(la,lc)/2<1e-7){if(ang>60){specks++;speckArea+=Math.min(la,lc)/2;}continue;}worst=Math.max(worst,ang);}return {worst,specks,speckArea};};
+  return {fn,sealed:[...e.values()].every(ts=>ts.length===2),vol,flat,bends};};
+ check('shoulder sockets: each ball pushed straight into the clay torso and pulled back out, the clay in its path taken out (cut exactly along the path\'s edge, the socket filled with the path\'s own surface); the clay outside the paths unmoved; sealed, no folds; balls back where they started',()=>{
+  const {pv,ps}=cutShoulders(),S=ps.solid,P=S.positions,I=S.index,K=ps.kind;
+  assert.deepEqual(ps.parts.map(p=>p.name+'.'+p.side).sort(),['ball-shoulder.left','ball-shoulder.right','torso.centre']);
+  for(const b of ps.inBalls)assert(b===pv.parts.find(p=>p.name==='ball-shoulder'&&p.side===b.side),`${b.side}: not pushed to its put-together place`);
+  for(const b of ps.balls)assert(b===sep.parts.find(p=>p.name==='ball-shoulder'&&p.side===b.side),`${b.side}: not pulled back out to where it started`);
+  const r=ps.inBalls[0].radius,R=r+SOCKET_GAP;assert(Math.abs(ps.R-R)<1e-15);const phi=q=>Math.min(...ps.paths.map(w=>w.phi(q)));
+  // No clay left inside a path; the socket's and the rim's points exactly on the path's edge.
+  for(let i=0;i<P.length/3;i++){const q=[P[3*i],P[3*i+1],P[3*i+2]],f=phi(q);assert(f>=-1e-9,'clay left inside a path');if(K[i]===2)assert(Math.abs(f)<1e-9,'a socket point off the path\'s edge');if(K[i]===1)assert(Math.abs(f)<=1e-7,'a rim point off the path\'s edge');}
+  // The clay outside the paths did not move: every point of the torso (with its usual socket triangles) outside the paths is still there, exactly.
+  const have=new Set();for(let i=0;i<P.length;i+=3)have.add(P[i]+','+P[i+1]+','+P[i+2]);const T0=ps.refined.positions;let kept=0;
+  for(let i=0;i<T0.length;i+=3){const q=[T0[i],T0[i+1],T0[i+2]];if(phi(q)<=1e-7)continue;assert(have.has(q.join(',')),'a point outside the paths moved or went missing');kept++;}
+  // Sealed, facing out, no flat triangles, no fold-backs; every socket triangle faces into its socket.
+  const m=meshFacts(P,I);assert(m.sealed,'not sealed');assert(m.vol>0,'faces in');assert.equal(m.flat,0,'flat triangles');
+  let away=0;for(let t=0;t<I.length;t+=3){if(![0,1,2].some(k=>K[I[t+k]]===2))continue;const c=[0,1,2].map(j=>(P[3*I[t]+j]+P[3*I[t+1]+j]+P[3*I[t+2]+j])/3),w=ps.paths.find(w=>Math.sign(w.c[0])===Math.sign(c[0])),n=m.fn(t),d=w.inward(c);if(n[0]*d[0]+n[1]*d[1]+n[2]*d[2]<=0)away++;}assert.equal(away,0,`${away} socket triangles face the wrong way`);
+  const rim=[];for(let i=0;i<K.length;i++)if(K[i]===1)rim.push([P[3*i],P[3*i+1],P[3*i+2]]);const b=m.bends(rim,.02);assert(b.worst<150,`a ${b.worst.toFixed(0)}° fold at a rim`);
+  // Where the balls were: every triangle's middle at least half the gap (3 mm) from the ball (flat triangles across the round socket sag a little into the gap).
+  let mid=Infinity;for(const w of ps.paths)for(let t=0;t<I.length;t+=3){const c=[0,1,2].map(j=>(P[3*I[t]+j]+P[3*I[t+1]+j]+P[3*I[t+2]+j])/3);mid=Math.min(mid,Math.hypot(c[0]-w.c[0],c[1]-w.c[1],c[2]-w.c[2]));}assert(mid-r>=SOCKET_GAP/2,`a triangle only ${((mid-r)*1000).toFixed(1)} mm from the ball`);
+  // Drawn copy: the same triangles at the same places, with the rim's points copied for the socket's side (a hard edge).
+  const D=ps.torso;assert.equal(D.index.length,I.length);for(let k=0;k<I.length;k++)for(let j=0;j<3;j++)assert.equal(D.positions[3*D.index[k]+j],P[3*I[k]+j],'the drawn copy differs');
+  // Pulled out: each ball back beside the torso, at least the usual 2 cm from the clay.
+  let gap=Infinity;for(const ball of ps.balls)for(let i=0;i<P.length;i+=3)gap=Math.min(gap,Math.hypot(P[i]-ball.centre[0],P[i+1]-ball.centre[1],P[i+2]-ball.centre[2])-ball.radius);assert(gap>=SHOULDER_TORSO_GAP-.001,`a pulled-out ball only ${(gap*100).toFixed(2)} cm from the torso`);
+  // Test of the test: before the cut, the torso had clay inside the paths (so 'no clay left inside' can fail).
+  let inside=0;for(let i=0;i<T0.length;i+=3)if(phi([T0[i],T0[i+1],T0[i+2]])<-1e-9)inside++;assert(inside>0,'nothing was in the balls\' paths');
+  return `${Math.round(ps.displaced/2*1e6)} cm³ of clay out of each socket; ${kept.toLocaleString()} points outside the paths unmoved; rims exactly on the paths' edges, sharpest bend ${b.worst.toFixed(0)}° (left as the ball made it); sealed, no flat triangles, no socket triangle the wrong way; balls ${(gap*100).toFixed(1)} cm from the torso; before the cut ${inside} points were inside the paths`;});
+ check(`shoulder sockets' rims chiselled and softened (owner, circling the thin sliver over the top: "chisel that away, then soften up the rim of the socket"): a ${Math.round(SHOULDER_RIM_ROUND*1000)} mm ball rolled along the inside of the clay and everything it could not reach cut off; far from the rims nothing changed; sealed; the rims' sharpest bend under 45 degrees`,()=>{
+  const {ps,soft:s}=cutShoulders(),f=SHOULDER_RIM_ROUND,X=s.torso.positions,I=s.torso.index,Q=s.rough.positions,S=ps.solid.positions;
+  assert.deepEqual(s.parts.map(p=>p.name+'.'+p.side).sort(),['ball-shoulder.left','ball-shoulder.right','torso.centre']);for(const b of s.balls)assert(ps.balls.includes(b),'the balls changed');
+  const rim=[];ps.kind.forEach((k,i)=>{if(k===1)rim.push([S[3*i],S[3*i+1],S[3*i+2]]);});const near=(p,r)=>rim.some(q=>Math.hypot(q[0]-p[0],q[1]-p[1],q[2]-p[2])<r);
+  // Far from the rims (more than 4f) nothing changed: every point of the cut there is still there, exactly.
+  const have=new Set();for(let i=0;i<X.length;i+=3)have.add(X[i]+','+X[i+1]+','+X[i+2]);let far=0;
+  for(let i=0;i<S.length;i+=3){const p=[S[i],S[i+1],S[i+2]];if(near(p,4*f))continue;assert(have.has(p.join(',')),'a point far from the rims moved');far++;}
+  // Every point the round-over moved now lies on the rolled ball: exactly f from the ball's centre line.
+  const seg=(p,[a,b])=>{const ab=[0,1,2].map(k=>b[k]-a[k]),l2=ab[0]**2+ab[1]**2+ab[2]**2,t=l2?Math.max(0,Math.min(1,((p[0]-a[0])*ab[0]+(p[1]-a[1])*ab[1]+(p[2]-a[2])*ab[2])/l2)):0;return Math.hypot(...[0,1,2].map(k=>p[k]-a[k]-t*ab[k]));};
+  let moved=0,off=0;for(let i=0;i<X.length;i+=3){if(X[i]===Q[i]&&X[i+1]===Q[i+1]&&X[i+2]===Q[i+2])continue;moved++;const p=[X[i],X[i+1],X[i+2]];let d=Infinity;for(const l of s.line)d=Math.min(d,seg(p,l));off=Math.max(off,Math.abs(d-f));}
+  assert(moved>0,'nothing was rounded');assert(off<1e-6,`a rounded point ${(off*1000).toFixed(3)} mm off the rolled ball`);assert.equal(moved,s.chiselled);
+  // Sealed, facing out, no flat triangles; the rims soft: the sharpest bend near them under 45 degrees.
+  const m=meshFacts(X,I);assert(m.sealed,'not sealed');assert(m.vol>0,'faces in');assert.equal(m.flat,0,'flat triangles');const b=m.bends(rim,.02);assert(b.worst<45,`a ${b.worst.toFixed(0)}° bend at a rim`);
+  // Test of the test: the cut's raw rims are far sharper (so the 45 degree check can fail).
+  const raw=meshFacts(ps.solid.positions,ps.solid.index).bends(rim,.02);assert(raw.worst>=45,`the raw rims were already soft (${raw.worst.toFixed(0)}°)`);
+  return `${moved.toLocaleString()} points moved onto the rolled ball (all exactly ${(f*1000).toFixed(0)} mm from its centre line); ${(s.removed*1e6).toFixed(1)} cm³ of clay cut off in all; ${far.toLocaleString()} points far from the rims unmoved; sharpest bend at the rims ${b.worst.toFixed(1)}° (raw ${raw.worst.toFixed(0)}°); ${b.specks} specks under 0.1 mm² (${(b.speckArea*1e6).toFixed(2)} mm² in all) still bent sharply, too small to see; sealed, no flat triangles`;});
  check('separated: reports his height apart',()=>`${(sep.height*100).toFixed(1)} cm with every piece apart (shorter once pressed together); ${sep.parts.reduce((n,p)=>n+p.index.length/3,0).toLocaleString()} triangles`);
 }
 console.table(results);

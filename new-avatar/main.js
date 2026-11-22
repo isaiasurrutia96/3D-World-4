@@ -26,7 +26,7 @@ import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
-import {separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,HIP_TORSO_PRESS,HIP_THIGH_EXTRA} from '../avatar-v2/original-body.js';
+import {separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,pushShoulderBalls,softenShoulderRims,SHOULDER_RIM_ROUND} from '../avatar-v2/original-body.js';
 import {elbowTest,ELBOW_TEST_POSES,CLOSER_DEPTHS,CLAY_LIP} from '../avatar-v2/elbow-test.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
@@ -107,6 +107,13 @@ for(const share of CLOSER_DEPTHS){const e=elbowTest(share,'boy',{lip:CLAY_LIP}),
   parts:e.pose(deg).map(p=>({name:p.name,geometry:geometryOf(p),y:0}))});}
 GROUPS.push({id:'elbow-test',label:'Elbow test',intro:'One elbow (his left), the limbs pressed closer with thick clay around the hard ball, three depths: the ball sits 70%, 80% or 90% of its radius into each limb, the clay staying thick around it like pushed clay. Each shown straight, bent 90° and bent 120°.',items:elbowItems});
 const mix=separatedOriginalBody('boy');
+// The torso with its shoulder sockets and both shoulder balls beside it (owner, 22 November 2026: "just put the torso
+// with the socket and the ball, but the ball separated in the new avatar, and that's it"): each ball pushed straight
+// into the clay torso and pulled back out, the sockets' rims then chiselled and softened.
+const shoulderCut=pushShoulderBalls('boy',together,{apart:mix}),shoulderSoft=softenShoulderRims(shoulderCut);
+GROUPS.push({id:'torso-sockets',label:'Torso sockets',intro:'His torso with the shoulder sockets: each shoulder ball was pushed straight into the clay torso, to where it sits when he is put together, then pulled back out beside it. The thin sliver of clay over the top of each socket is chiselled off and every rim softened.',
+ items:[{id:'torso-sockets-boy',label:'Torso · shoulder sockets',tag:'Torso',note:`Each socket is exactly what its ball left (the ball plus the usual 6 mm gap; ${Math.round(shoulderSoft.displaced/2*1e6)} cm³ of clay each). Then a ${Math.round(SHOULDER_RIM_ROUND*1000)} mm ball rolled along the inside of the clay and whatever it could not reach was cut off (${(shoulderSoft.removed*1e6).toFixed(1)} cm³ in all). The balls sit beside the torso where they started.`,
+  parts:shoulderSoft.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet with the original avatar\'s limbs (each 10% longer, calves 50 cm), every piece separated and the original neck removed, with a ball at every joint: as thick as the ends it joins (shoulders, neck and hips 10% bigger, wrists and ankles 10% smaller), 300 triangles each.',
  items:[{id:'original-boy',label:'Boy · pieces and joint balls',tag:'Boy',face:mix.face,ground:true,note:`Balls: neck ${(mix.balls['ball-neck'].radius*200).toFixed(1)} cm (approved size), shoulders ${(mix.balls['ball-shoulder'].radius*200).toFixed(1)}, elbows ${(mix.balls['ball-elbow'].radius*200).toFixed(1)}, wrists ${(mix.balls['ball-wrist'].radius*200).toFixed(1)}, hips ${(mix.balls['ball-hip'].radius*200).toFixed(1)}, knees ${(mix.balls['ball-knee'].radius*200).toFixed(1)}, ankles ${(mix.balls['ball-ankle'].radius*200).toFixed(1)} cm. Balls 2 cm from the torso, every other piece 6 mm from its ball. ${(mix.height*100).toFixed(0)} cm tall with everything apart.`,
   parts:mix.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
@@ -152,6 +159,7 @@ GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='avatar'),1));
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='original'),1));
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='elbow-test'),1));
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='together'),1));
+GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='torso-sockets'),1));
 
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
 let widest=0;

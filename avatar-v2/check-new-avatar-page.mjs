@@ -1,4 +1,5 @@
-// Browser check of the New avatar page's "Put together" tab: Our avatar loads next to the new avatar.
+// Browser check of the New avatar page: the first tab, Torso sockets, shows only the torso and both shoulder balls;
+// on the "Put together" tab Our avatar loads next to the new avatar.
 // Usage: npm run build:new-avatar && npm run build:avatar-test, then node avatar-v2/check-new-avatar-page.mjs
 // (the second build copies Our avatar's files into dist; restore avatar-test/index.html with git checkout after it).
 import assert from 'node:assert/strict';
@@ -13,6 +14,14 @@ try{
   const page=await browser.newPage({viewport:{width:w,height:h}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400&&!r.url().endsWith('favicon.ico'))errors.push(r.status()+' '+r.url());});
   await page.goto(`http://localhost:${server.address().port}/new-avatar/`);await page.waitForFunction(()=>window.newAvatarReady,null,{timeout:180000});
+  // The first tab: the torso with its shoulder sockets and both balls beside it, nothing else.
+  const first=await page.evaluate(()=>{const L=window.newAvatarLab,names=g=>{const n=[];g.traverse(o=>{if(o.isMesh)n.push(o.name);});return n.sort();};
+   const item=L.options[0],extra=item.group.children.find(o=>o.isMesh).clone();extra.name='head';item.group.add(extra);const withExtra=names(item.group);item.group.remove(extra);
+   return {group:L.getGroup(),ids:L.options.map(o=>o.id),names:names(item.group),withExtra};});
+  const want=['ball-shoulder.left','ball-shoulder.right','torso'];
+  assert.equal(first.group,'torso-sockets','the Torso sockets tab opens first');assert.deepEqual(first.ids,['torso-sockets-boy']);assert.deepEqual(first.names,want,'only the torso and both shoulder balls');
+  assert.notDeepEqual(first.withExtra,want,'test of the test: an extra piece was not caught');
+  await page.evaluate(()=>window.newAvatarLab.setGroup('together'));
   const loaded=await page.evaluate(()=>window.ourAvatarLoaded);
   assert.equal(loaded,true,'Our avatar did not load: '+errors.join('; '));
   const m=await page.evaluate(()=>{const L=window.newAvatarLab,box=g=>{const b={min:[1e9,1e9,1e9],max:[-1e9,-1e9,-1e9]};g.updateMatrixWorld(true);const v=new (g.position.constructor)();
@@ -23,7 +32,7 @@ try{
   assert(Math.abs(m.ours.min[1])<.002,`Our avatar not on the floor: lowest ${m.ours.min[1]}`);
   const tall=m.ours.max[1]-m.ours.min[1];assert(tall>1.8&&tall<2,`Our avatar ${tall} m tall`);
   assert(m.ours.max[0]<m.neu.min[0],'Our avatar overlaps the new avatar');
-  results.push(`${w}px: Our avatar ${(tall*100).toFixed(1)} cm tall on the floor, ${((m.neu.min[0]-m.ours.max[0])*100).toFixed(0)} cm left of the new avatar, no errors`);
+  results.push(`${w}px: Torso sockets first (torso and both shoulder balls only; an extra piece is caught); Our avatar ${(tall*100).toFixed(1)} cm tall on the floor, ${((m.neu.min[0]-m.ours.max[0])*100).toFixed(0)} cm left of the new avatar, no errors`);
   await page.close();}
 }finally{await browser.close();server.close();}
-console.log(results.join('\n'));console.log('PASS: Our avatar loads next to the new avatar on the Put together tab.');
+console.log(results.join('\n'));console.log('PASS: the Torso sockets tab opens first with only the torso and both shoulder balls; Our avatar loads next to the new avatar on the Put together tab.');
