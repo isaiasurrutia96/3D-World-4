@@ -53,6 +53,8 @@ how it should feel), and even then, bring me options to react to.
    simple words.
 2. End every reply by telling me, straight to the point, exactly what you
    need from me, what I have to decide, or what happens next.
+   When I have to choose, never just name an option's letter or number:
+   say in a few words what each choice is. (Added 22 November 2026.)
 3. Give a time estimate for any task likely to take more than two minutes.
 4. Use plain English and complete sentences, in well-organized paragraphs.
    Bold only the most important ideas.
