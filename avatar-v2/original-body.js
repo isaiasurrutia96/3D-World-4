@@ -141,7 +141,7 @@ function clearOfTorso(shape,start,radius,dir,gap){
 }
 const ballPart=(name,side,radius,centre)=>{const b=buildBall({radius,triangles:CHOSEN_BALL_TRIANGLES});return {name,side,positions:b.positions.map((v,i)=>v+centre[i%3]),index:b.index,radius,centre};};
 const moveBy=(p,v)=>({...p,positions:p.positions.map((x,i)=>x+v[i%3]),...(p.pivot?{pivot:p.pivot.map((x,k)=>x+v[k])}:{}),...(p.centre?{centre:p.centre.map((x,k)=>x+v[k])}:{})});
-const add3=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],scale3=(a,s)=>[a[0]*s,a[1]*s,a[2]*s],neg=a=>[-a[0],-a[1],-a[2]];
+const add3=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sub3=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],scale3=(a,s)=>[a[0]*s,a[1]*s,a[2]*s],neg=a=>[-a[0],-a[1],-a[2]],dot3=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 
 /**
  * The owner's mix taken apart: every piece separate, the original neck removed,
@@ -152,7 +152,8 @@ const add3=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],scale3=(a,s)=>[a[0]*s,a[1]*s,a
  * past either). The neck ball keeps the approved neck ball's size.
  * Spacing, the approved rules: a ball clears the torso by 2 cm (shoulders:
  * "separated, not resting against the torso"; hips and neck the same), and
- * every other part sits the usual 6 mm from its ball. The torso stays put; each
+ * every other part sits the usual 6 mm from its ball, each ball exactly between
+ * its two pieces (on both centre lines; owner: "exactly between the limbs"). The torso stays put; each
  * arm and leg is laid out from the torso down its own pieces' lines, every
  * piece only moved (not turned or reshaped); each leg then moves outward just
  * enough that the feet do not meet. The right side mirrors the left.
@@ -162,17 +163,25 @@ export function separatedOriginalBody(bodyId='boy'){
  const parts=[get('torso','centre')],balls={};
  const lineOf=p=>limbLine(p.positions);
  // A chain from the torso: ball, piece, ball, piece, ... each piece moved so its near tip is one gap past the ball.
+ // A chain from the torso: ball, piece, ball, piece, ... with every ball exactly between its two pieces: on the
+ // centre line of the piece above and of the piece below, one 6 mm gap from each along that line.
  function chain(firstBall,pieces,ends,names){
   let ballCentre=firstBall.centre,radius=firstBall.radius,out=[ballPart(names[0],'left',radius,ballCentre)];
   for(let k=0;k<pieces.length;k++){
-   // The hand and foot (the last piece) follow their limb's line; every limb follows its own.
-   const piece=pieces[k],dir=k===pieces.length-1?lineOf(pieces[k-1]).dir:lineOf(piece).dir;
-   // Move the piece along `dir` so its tip nearest the ball (farthest back along dir) sits one gap past the ball.
-   const back=reach(piece.positions,ballCentre,neg(dir)),moved=moveBy(piece,scale3(dir,back+radius+BALL_GAP));out.push(moved);
-   if(k===pieces.length-1)break;
-   // Next ball: one gap past this piece's far tip, along its line, as thick as the joint's ends.
-   const L=lineOf(moved),r=ends[k+1](moved,L,pieces[k+1]),tip=reach(moved.positions,ballCentre,dir);
-   ballCentre=add3(ballCentre,scale3(dir,tip+BALL_GAP+r));radius=r;out.push(ballPart(names[k+1],'left',r,ballCentre));
+   const piece=pieces[k];
+   if(k<pieces.length-1){
+    // A limb: moved (not turned) so its centre line runs through the ball's centre and its near end is one gap past the ball.
+    const L=lineOf(piece),dir=L.dir,nearEnd=add3(L.centre,scale3(dir,L.start)),moved=moveBy(piece,sub3(add3(ballCentre,scale3(dir,radius+BALL_GAP)),nearEnd));
+    out.push(moved);
+    // Next ball: on this limb's centre line, one gap past its far end, as thick as the joint's ends.
+    const M=lineOf(moved),r=ends[k+1](moved,M,pieces[k+1]);
+    ballCentre=add3(M.centre,scale3(dir,M.end+BALL_GAP+r));radius=r;out.push(ballPart(names[k+1],'left',r,ballCentre));
+   }else{
+    // The hand or foot: its joint point (wrist or ankle) moved onto the limb's centre line through the ball, then along
+    // that line until its nearest point is one gap past the ball.
+    const dir=lineOf(pieces[k-1]).dir,off=sub3(piece.pivot,ballCentre),along=dot3(off,dir),onLine=moveBy(piece,neg(sub3(off,scale3(dir,along))));
+    const back=reach(onLine.positions,ballCentre,neg(dir));out.push(moveBy(onLine,scale3(dir,back+radius+BALL_GAP)));
+   }
   }
   return out;
  }

@@ -114,6 +114,17 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
    for(let a=-1;a<=1;a++)for(let b2=-1;b2<=1;b2++)for(let c=-1;c<=1;c++){const gg=grid.get(key(x+a*cell,y+b2*cell,z+c*cell));if(!gg)continue;
     for(let k=0;k<gg.length;k+=2){if(gg[k]<=pi)continue;const q=sep.parts[gg[k]].positions,j=gg[k+1],d=Math.hypot(q[j]-x,q[j+1]-y,q[j+2]-z);if(d<worst){worst=d;which=`${p.name}.${p.side} / ${sep.parts[gg[k]].name}.${sep.parts[gg[k]].side}`;}}}}});
   assert(worst>=BALL_GAP-1e-6,`${which}: ${(worst*1000).toFixed(1)} mm`);return `closest: ${which}, ${(worst*1000).toFixed(1)} mm (legs moved ${(sep.legOut*1000).toFixed(1)} mm outward)`;});
+ check('separated: every ball is exactly between its two pieces: on both pieces\' centre lines (within 0.5 mm), 6 mm from each along the line',()=>{
+  const out=[];for(const [bn,above,below] of [['ball-elbow','upper-arm','forearm'],['ball-wrist','forearm','hand'],['ball-knee','thigh','calf'],['ball-ankle','calf','foot'],['ball-shoulder',null,'upper-arm'],['ball-hip',null,'thigh']]){
+   const m=sg(bn),c=m.centre;const offLine=(pos,L)=>{const v=[0,1,2].map(k=>c[k]-L.centre[k]),s2=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];return Math.hypot(...[0,1,2].map(k=>v[k]-L.dir[k]*s2));};
+   if(above){const A=limbLine(sg(above).positions);assert(offLine(null,A)<5e-4,`${bn} off the ${above}'s line by ${(offLine(null,A)*1000).toFixed(2)} mm`);
+    const axial=[0,1,2].reduce((t,k)=>t+(c[k]-A.centre[k])*A.dir[k],0)-A.end-m.radius;assert(Math.abs(axial-BALL_GAP)<1e-6,`${bn}: gap below the ${above} ${(axial*1000).toFixed(2)} mm`);}
+   const under=sg(below);if(below==='hand'||below==='foot'){const A=limbLine(sg(above).positions),p=under.pivot,v=[0,1,2].map(k=>p[k]-c[k]),s2=v[0]*A.dir[0]+v[1]*A.dir[1]+v[2]*A.dir[2];
+    const off=Math.hypot(...[0,1,2].map(k=>v[k]-A.dir[k]*s2));assert(off<5e-4,`${below}'s joint off the line by ${(off*1000).toFixed(2)} mm`);}
+   else{const B=limbLine(under.positions);assert(offLine(null,B)<5e-4,`${bn} off the ${below}'s line by ${(offLine(null,B)*1000).toFixed(2)} mm`);
+    const axial=[0,1,2].reduce((t,k)=>t+(c[k]-B.centre[k])*B.dir[k],0);const gap=B.start-axial-m.radius;assert(Math.abs(gap-BALL_GAP)<1e-6,`${bn}: gap above the ${below} ${(gap*1000).toFixed(2)} mm`);}
+   out.push(bn.slice(5));}
+  return 'centred: '+out.join(', ');});
  check('separated: the right side is the exact mirror of the left',()=>{for(const p of sep.parts.filter(p=>p.side==='left')){const q=sg(p.name,'right');for(let i=0;i<p.positions.length;i+=3)assert(p.positions[i]===-q.positions[i]&&p.positions[i+1]===q.positions[i+1]&&p.positions[i+2]===q.positions[i+2],p.name);}return 'mirrored';});
  check('separated: reports his height apart',()=>`${(sep.height*100).toFixed(1)} cm with every piece apart (shorter once pressed together); ${sep.parts.reduce((n,p)=>n+p.index.length/3,0).toLocaleString()} triangles`);
 }
