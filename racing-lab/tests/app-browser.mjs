@@ -1,4 +1,4 @@
-import {chromium} from 'playwright';
+import {launchTestBrowser} from '../../scripts/test-browser.mjs';
 import {createServer} from 'node:http';
 import {readFile,writeFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
@@ -15,7 +15,7 @@ const server=createServer(async(q,r)=>{
     }catch{r.statusCode=404;r.end();}
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
-const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const browser=await launchTestBrowser();
 try{
     const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});
     page.on('pageerror',e=>errors.push(e.message));

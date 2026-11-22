@@ -4,12 +4,14 @@
 // exposed silver tube frame with a tube front bumper, a navy bucket seat with
 // a silver trim and five-spoke silver rims. Real karts have no suspension:
 // stub axles and a solid rear axle, as here. Same methods as the F1 GoKart.
-import * as T from 'three';
-import {GOKART, STOCK, wheelsOf} from './spec.js';
+//
+// Every part is its own builder below (one per style id in the kart's parts
+// list in spec.js); assembleKart puts them together.
+import {GOKART, STOCK} from './spec.js';
 import {superellipse, loft, tube, curvedTube, mirrorX, stationCurve, range} from './shapes.js';
-import {kartMaterials, meshOf, partGroup, modelSkeleton, addWheels, seat, steeringPoint, roundWheel, roundedBlock, RIMS} from './kart-model.js';
+import {assembleKart, meshOf, seat, roundWheel, roundedBlock, wheelSet, RIMS} from './kart-model.js';
 
-export const GOKART_COLORS = Object.freeze({red: '#e1342c', white: '#f4f4f2', silver: '#c3cad2', navy: '#22304a', dark: '#2a3038'});
+export const GOKART_COLORS = Object.freeze({red: '#e1342c', white: '#f4f4f2', silver: '#c3cad2', navy: '#22304a', dark: '#2a3038', tire: '#16191e'});
 const C = GOKART_COLORS;
 const lofted = (curve, from, to, steps, ring, color) => loft(range(from, to, steps).map(z => ({z, ring: ring(curve(z))})), color);
 const ringOf = exponent => s => superellipse({cx: s.cx ?? 0, cy: (s.bottom + s.top)/2, halfWidth: s.w, halfHeight: (s.top - s.bottom)/2, exponent, count: 36});
@@ -31,58 +33,56 @@ const POD = stationCurve([
   {z: .63,  cx: .555, w: .135, bottom: .20, top: .50},
 ]);
 
-/** Builds the whole GoKart (see kart-model.js for the layout). */
+/** The GoKart's parts, by style id. Each returns where it belongs and its pieces. */
+export const GOKART_BUILDERS = Object.freeze({
+  // Perimeter tube frame, cross tubes, rear side bars and the kingpin carriers
+  // out to the front stub axles (kept at hub height even when raised).
+  'gokart-frame': ({kart, k, lift, wheels, materials}) => {
+    const y = kart.frameHeight, tubes = [];
+    tubes.push(curvedTube([[-.52, y, -1.10], [-.56, y, -.30], [-.54, y, .55], [-.42, y, 1.22], [0, y, 1.38], [.42, y, 1.22], [.54, y, .55], [.56, y, -.30], [.52, y, -1.10], [0, y, -1.16]], .032, C.silver, true));
+    for (const z of [-.95, -.30, .40, 1.0]) { const half = z > .9 ? .44 : .55; tubes.push(tube([-half, y, z], [half, y, z], .026, C.silver)); }
+    for (const s of [-1, 1]) {
+      tubes.push(tube([s*.52, y, -1.05], [s*.52, .49, -.86], .024, C.silver), tube([s*.52, .49, -.86], [s*.52, .49, -.58], .024, C.silver));
+      tubes.push(tube([s*.52, .32, -1.08], [s*.52, .32, -.55], .024, C.silver));
+    }
+    for (const w of wheels.filter(w => w.axle === 'front')) {
+      const s = Math.sign(w.at[0]), inner = (Math.abs(w.at[0]) - w.width/2)/k - .03, hubY = (w.radius - lift)/k;
+      tubes.push(tube([s*.42, y, w.at[2]/k], [s*inner, hubY, w.at[2]/k], .03, C.silver), roundedBlock([s*(inner + .015), hubY, w.at[2]/k], [.05, .16, .07], .015, C.dark));
+    }
+    return {space: 'design', parts: [meshOf('frame', tubes, materials.body)]};
+  },
+  'gokart-floor': ({kart, materials}) => ({space: 'design', parts: [meshOf('floor', [roundedBlock([0, kart.frameHeight - .02, -.1], [.86, .025, 1.7], .01, C.dark)], materials.body)]}),
+  // One solid rear axle between the rear wheels, with bearing hangers that
+  // reach the frame at any ride height.
+  'gokart-axles': ({kart, k, lift, wheels, materials}) => {
+    const rear = wheels.filter(w => w.axle === 'rear'), hub = rear[0].radius, z = rear[0].at[2], frameY = kart.frameHeight*k + lift;
+    const x = Math.abs(rear[0].at[0]) - rear[0].width*.4, pieces = [tube([-x, hub, z], [x, hub, z], .022, C.silver)];
+    for (const s of [-1, 1]) pieces.push(roundedBlock([s*.25, hub, z], [.06, .08, .08], .015, C.dark), tube([s*.25, hub, z], [s*.25, frameY, z - .001], .018, C.silver));
+    return {space: 'ground', parts: [meshOf('rear axle', pieces, materials.body)]};
+  },
+  // The design's tall navy bucket seat with a silver trim.
+  'gokart-seat': ({kart, materials}) => ({space: 'cockpit', parts: [meshOf('seat', seat(kart, C.navy, C.silver), materials.body)]}),
+  // A round three-spoke wheel within the driver's reach.
+  'gokart-steering': ({kart, k, grip, materials}) => ({space: 'cockpit',
+    parts: [meshOf('steering wheel', roundWheel(grip, .15, [0, (kart.frameHeight + .06)*k, .62*k], C.tire, C.silver), materials.body)]}),
+  'gokart-wheels': ctx => ({space: 'ground', parts: [wheelSet(ctx, RIMS.gokart)]}),
+  // Body parts of the approved design (design units).
+  'gokart-nose': ({materials}) => ({space: 'design',
+    parts: [meshOf('nose', [lofted(NOSE, .70, 1.97, 22, ringOf(3.4), (x, y, z, u) => u >= 0 && Math.abs(u - .5) < .035 ? C.white : C.red)], materials.body)]}),
+  'tube-bumper': ({materials}) => {
+    const bumper = curvedTube([[-.50, .205, 1.38], [-.48, .195, 1.70], [-.30, .185, 1.86], [0, .18, 1.89], [.30, .185, 1.86], [.48, .195, 1.70], [.50, .205, 1.38]], .026, C.silver);
+    const brackets = [-1, 1].map(s => tube([s*.40, .23, 1.37], [s*.50, .205, 1.40], .022, C.silver));// short brackets onto the frame's front loop
+    return {space: 'design', parts: [meshOf('front bumper', [bumper, ...brackets], materials.body)]};
+  },
+  'gokart-pods': ({materials}) => {
+    const right = lofted(POD, -.53, .63, 18, ringOf(5), () => C.red);
+    return {space: 'design', parts: [meshOf('side panels', [right, mirrorX(right)], materials.body)]};
+  },
+  'gokart-rear': ({materials}) => ({space: 'design', parts: [meshOf('rear bumper', [roundedBlock([0, .375, -1.18], [.86, .24, .30], .07, C.red, 3)], materials.body)]}),
+});
+
+/** Builds the whole GoKart from its parts list. */
 export function buildGoKart(kart = GOKART, setup = STOCK) {
   if (kart.mode !== 'gokart') throw new Error('buildGoKart needs a GoKart');
-  const materials = kartMaterials(), k = kart.scale, lift = setup.rideHeight ?? 0;
-  const {root, design, cockpit, wheels} = modelSkeleton(kart, setup);
-  const y = kart.frameHeight;
-
-  // Chassis (design units): perimeter tube frame, cross tubes, floor pan,
-  // rear side bars, stub-axle carriers, and the rear axle bearings.
-  const chassis = [];
-  chassis.push(curvedTube([[-.52, y, -1.10], [-.56, y, -.30], [-.54, y, .55], [-.42, y, 1.22], [0, y, 1.38], [.42, y, 1.22], [.54, y, .55], [.56, y, -.30], [.52, y, -1.10], [0, y, -1.16]], .032, C.silver, true));
-  for (const z of [-.95, -.30, .40, 1.0]) { const half = z > .9 ? .44 : .55; chassis.push(tube([-half, y, z], [half, y, z], .026, C.silver)); }
-  for (const s of [-1, 1]) {
-    chassis.push(tube([s*.52, y, -1.05], [s*.52, .49, -.86], .024, C.silver), tube([s*.52, .49, -.86], [s*.52, .49, -.58], .024, C.silver));
-    chassis.push(tube([s*.52, .32, -1.08], [s*.52, .32, -.55], .024, C.silver));
-  }
-  chassis.push(roundedBlock([0, y - .02, -.1], [.86, .025, 1.7], .01, C.dark));// floor pan
-  const front = wheelsOf(kart, setup).filter(w => w.axle === 'front');
-  for (const w of front) {// kingpin carriers from the frame out to the front stub axles, at hub height even when raised
-    const s = Math.sign(w.at[0]), inner = (Math.abs(w.at[0]) - w.width/2)/k - .03, hubY = (w.radius - lift)/k;
-    chassis.push(tube([s*.42, y, w.at[2]/k], [s*inner, hubY, w.at[2]/k], .03, C.silver), roundedBlock([s*(inner + .015), hubY, w.at[2]/k], [.05, .16, .07], .015, C.dark));
-  }
-  const chassisGroup = new T.Group(); chassisGroup.name = 'chassis'; chassisGroup.add(meshOf('chassis body', chassis, materials.body)); design.add(chassisGroup);
-
-  // Rear axle (real metres): one solid axle between the rear wheels, held by
-  // bearing hangers that reach the frame at any ride height.
-  const rear = wheelsOf(kart, setup).filter(w => w.axle === 'rear'), hub = rear[0].radius, rz = rear[0].at[2], frameY = y*k + lift;
-  const axleX = Math.abs(rear[0].at[0]) - rear[0].width*.4;
-  root.add(meshOf('rear axle', [tube([-axleX, hub, rz], [axleX, hub, rz], .022, C.silver),
-    ...[-1, 1].flatMap(s => [roundedBlock([s*.25, hub, rz], [.06, .08, .08], .015, C.dark), tube([s*.25, hub, rz], [s*.25, frameY, rz - .001], .018, C.silver)])], materials.body));
-
-  // Cockpit (real metres): the design's tall navy bucket seat with a silver
-  // trim, and a round three-spoke wheel within the driver's reach.
-  const grip = steeringPoint(kart, .62, -.10);
-  const parts = [...seat(kart, C.navy, C.silver), ...roundWheel(grip, .15, [0, (y + .06)*k, .62*k], '#16191e', C.silver)];
-  cockpit.add(meshOf('seat and steering', parts, materials.body));
-
-  addWheels(wheels, kart, setup, RIMS.gokart, materials);
-
-  // Body parts of the approved design (design units).
-  const nose = lofted(NOSE, .70, 1.97, 22, ringOf(3.4), (x, yy, z, u) => u >= 0 && Math.abs(u - .5) < .035 ? C.white : C.red);
-  design.add(partGroup('nose', kart.design.nose, [meshOf('nose', [nose], materials.body)]));
-
-  const bumper = curvedTube([[-.50, .205, 1.38], [-.48, .195, 1.70], [-.30, .185, 1.86], [0, .18, 1.89], [.30, .185, 1.86], [.48, .195, 1.70], [.50, .205, 1.38]], .026, C.silver);
-  const bumperStruts = [-1, 1].map(s => tube([s*.40, .23, 1.37], [s*.50, .205, 1.40], .022, C.silver));// short brackets onto the frame's front loop
-  design.add(partGroup('frontBumper', kart.design.frontBumper, [meshOf('front bumper', [bumper, ...bumperStruts], materials.body)]));
-
-  const podRight = lofted(POD, -.53, .63, 18, ringOf(5), () => C.red);
-  design.add(partGroup('sidePanels', kart.design.sidePanels, [meshOf('side panels', [podRight, mirrorX(podRight)], materials.body)]));
-
-  design.add(partGroup('rearBumper', kart.design.rearBumper, [meshOf('rear bumper', [roundedBlock([0, .375, -1.18], [.86, .24, .30], .07, C.red, 3)], materials.body)]));
-
-  root.userData.steering = grip;
-  return root;
+  return assembleKart(kart, setup, GOKART_BUILDERS);
 }

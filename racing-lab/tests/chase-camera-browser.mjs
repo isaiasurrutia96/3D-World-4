@@ -1,4 +1,4 @@
-import {chromium} from 'playwright';
+import {launchTestBrowser} from '../../scripts/test-browser.mjs';
 import {createServer} from 'node:http';
 import {readFile,writeFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
@@ -8,7 +8,7 @@ import {KART} from '../../racing-core/kart/index.ts';
 import {DRIVING_PROFILES,MPH} from '../../racing-core/kart/profiles.ts';
 const server=createServer(async(q,r)=>{try{let path=new URL(q.url,'http://local').pathname;if(path.endsWith('/'))path+='index.html';r.setHeader('Content-Type',({'.html':'text/html','.webmanifest':'application/manifest+json','.png':'image/png'})[extname(path)]||'application/octet-stream');r.end(await readFile(resolve('dist','.'+path)));}catch{r.statusCode=404;r.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
-const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),track=createTrack('original'),errors=[],rows=[];
+const browser=await launchTestBrowser(),track=createTrack('original'),errors=[],rows=[];
 try{
  for(const viewport of [{width:844,height:390},{width:390,height:844}]){
   const page=await browser.newPage({viewport,isMobile:true,hasTouch:true});page.on('pageerror',error=>errors.push(error.message));

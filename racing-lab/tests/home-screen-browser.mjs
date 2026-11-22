@@ -1,4 +1,4 @@
-import {chromium, webkit} from 'playwright';
+import {launchTestBrowser} from '../../scripts/test-browser.mjs';
 import {createServer} from 'node:http';
 import {readFile, writeFile} from 'node:fs/promises';
 import {resolve, extname} from 'node:path';
@@ -19,7 +19,7 @@ const server=createServer(async(req,res)=>{
     } catch {res.statusCode=404;res.end();}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
-const browser=await (engine==='webkit'?webkit:chromium).launch(engine==='webkit'?{}:{executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const browser=await launchTestBrowser(engine);
 const settle=page=>page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
 try {
     for(const version of baseline?['before','after']:['after']) {

@@ -10,10 +10,10 @@
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {installTestLabScene} from '../src/test-lab-scene.ts';
-import {KARTS, SLOTS, STYLES, stylesFor, defaultChoices, layoutKart} from '../kart-parts/spec.js';
+import {KARTS, SLOTS, STYLES, CHASSIS_STYLES, stylesFor, defaultChoices, layoutKart} from '../kart-parts/spec.js';
 import {buildOutlines, buildDriverZone, countTriangles} from '../kart-parts/build.js';
 import {buildKart} from '../kart-parts/models.js';
-import {driverDummy} from '../kart-parts/kart-model.js';
+import {driverDummy, partsOf} from '../kart-parts/kart-model.js';
 
 const GAP = .9;// metres between neighbouring karts
 const $ = selector => document.querySelector(selector);
@@ -55,7 +55,7 @@ for (const kart of KARTS) {
 for (const k of karts) k.group.position.x -= cursor/2;
 const totalWidth = cursor;
 
-let current = karts[0], showOutlines = false, showLabels = true, showDriver = true, showZone = false, highlighted = null;
+let current = karts[0], showOutlines = false, showLabels = true, showDriver = true, showZone = false, highlighted = null, isolated = null;
 function rebuildOutlines(k) {// part boxes and one label per kind of part, for one kart
   for (const o of [k.outlines, k.labels]) if (o) { k.group.remove(o); dispose(o); }
   k.outlines = buildOutlines(k.kart, k.choices); k.group.add(k.outlines);
@@ -69,8 +69,9 @@ function rebuildOutlines(k) {// part boxes and one label per kind of part, for o
 }
 function applyVisibility() {
   for (const k of karts) {
-    const mine = k === current;
-    k.dummy.visible = showDriver; k.zone.visible = showZone && mine;
+    const mine = k === current, alone = mine ? isolated : null;
+    for (const [slot, group] of Object.entries(partsOf(k.model))) group.visible = !alone || slot === alone;// one part on its own
+    k.dummy.visible = showDriver && !alone; k.zone.visible = showZone && mine;
     k.outlines.visible = showOutlines && mine; k.labels.visible = showOutlines && showLabels && mine;
     for (const box of k.outlines.children) {
       const on = highlighted === null || box.userData.slot === highlighted;
@@ -131,12 +132,19 @@ function highlight(slot) {
   pressed(mine('[data-part]'), b => b.dataset.part === highlighted);
   $('#note').textContent = highlighted ? `${SLOTS[highlighted].label}: ${SLOTS[highlighted].note}` : intro();
 }
+/** Shows one part of the chosen kart on its own (tap it again to see the whole kart). */
+const styleLabel = id => CHASSIS_STYLES[id]?.label ?? Object.values(STYLES).find(slot => slot[id])?.[id].label ?? id;
+function isolate(slot) {
+  isolated = isolated === slot ? null : slot; applyVisibility();
+  pressed(mine('[data-isolate]'), b => b.dataset.isolate === isolated);
+  $('#note').textContent = isolated ? `${SLOTS[isolated].label}: ${styleLabel(current.model.userData.parts[isolated])}. Each part is its own piece, built on its own; tap it again to see the whole kart.` : intro();
+}
 function setKart(id, look = true) {
-  current = karts.find(k => k.kart.id === id) ?? karts[0]; highlighted = null;
+  current = karts.find(k => k.kart.id === id) ?? karts[0]; highlighted = null; isolated = null;
   pressed('[data-kart]', b => b.dataset.kart === current.kart.id);
   for (const el of document.querySelectorAll('[data-for]')) el.hidden = el.dataset.for !== current.kart.id;
   for (const slot of Object.keys(current.kart.mounts)) pressed(mine(`[data-swap="${slot}"]`), b => b.dataset.style === current.choices[slot]);
-  pressed(mine('[data-part]'), () => false);
+  pressed(mine('[data-part]'), () => false); pressed(mine('[data-isolate]'), () => false);
   applyVisibility(); info(); $('#note').textContent = [...buildErrors, intro()].join(' ');
   if (look || focus === 'kart') setFocus('kart');
 }
@@ -151,6 +159,7 @@ for (const k of karts) {
     $('#swaps').append(row);
   }
   for (const slot of Object.keys(kart.mounts)) button($('#parts'), SLOTS[slot].label + (kart.design[slot] ? '' : ' (optional)'), {for: kart.id, part: slot}, () => highlight(slot));
+  for (const slot of Object.keys(k.model.userData.parts)) button($('#one-part'), SLOTS[slot].label, {for: kart.id, isolate: slot}, () => isolate(slot));
 }
 const toggle = (id, get, set) => { const b = $(id); b.setAttribute('aria-pressed', String(get())); b.onclick = () => { set(!get()); b.setAttribute('aria-pressed', String(get())); applyVisibility(); }; };
 toggle('#toggle-driver', () => showDriver, v => { showDriver = v; });
@@ -175,6 +184,6 @@ renderer.setAnimationLoop(ms => {
     camera.position.lerpVectors(glide.fromPos, glide.toPos, e); controls.target.lerpVectors(glide.fromTarget, glide.toTarget, e); if (glide.t >= 1) glide = null; }
   controls.update(); renderer.render(scene, camera);
 });
-window.kartLab = {scene, camera, controls, renderer, karts, buildErrors, setKart, selectStyle, setFocus, view, highlight,
+window.kartLab = {scene, camera, controls, renderer, karts, buildErrors, setKart, selectStyle, setFocus, view, highlight, isolate, getIsolated: () => isolated,
   get kart() { return current.kart; }, get current() { return current; }, get choices() { return current.choices; }, getFocus: () => focus};
 $('#loading').hidden = true; window.kartLabReady = true;

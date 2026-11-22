@@ -4,10 +4,13 @@
 // intakes, wheel arches over every wheel with the rims still visible, side
 // skirts with yellow inserts, a roll bar over the driver's head and a rear
 // wing on struts. Same methods as the F1 GoKart.
+//
+// Every part is its own builder below (one per style id in the kart's parts
+// list in spec.js); assembleKart puts them together.
 import * as T from 'three';
-import {GT_GOKART, STOCK, placePart, driverPose, AVATAR, wheelsOf} from './spec.js';
+import {GT_GOKART, STOCK, placePart} from './spec.js';
 import {superellipse, loft, wing, plate, tube, curvedTube, paint, mirrorX, stationCurve, range} from './shapes.js';
-import {kartMaterials, meshOf, partGroup, modelSkeleton, addWheels, wishbones, seat, steeringPoint, roundWheel, roundedBlock, RIMS} from './kart-model.js';
+import {assembleKart, meshOf, wishbones, seat, roundWheel, roundedBlock, wheelSet, RIMS} from './kart-model.js';
 
 export const GT_COLORS = Object.freeze({yellow: '#f5b800', black: '#1b1e22', dark: '#111417', grey: '#3a4048'});
 const C = GT_COLORS;
@@ -69,60 +72,63 @@ function arch(cx, cy, cz, inner, outer, width, color) {
   return [g, ...caps].map(part => paint(part.translate(cx, cy, cz), color));
 }
 
-/** Builds the whole GT GoKart (see kart-model.js for the layout). */
+/** The GT GoKart's parts, by style id. Each returns where it belongs and its pieces. */
+export const GT_BUILDERS = Object.freeze({
+  // Body tub with the cockpit opened in it, and the cockpit rim.
+  'gt-tub': ({materials}) => ({space: 'design', parts: [meshOf('body tub', [
+    lofted(TUB, -1.30, 1.22, 40, tubRing,
+      (x, y, z, u) => y < FLOOR + .03 && Math.abs(x) < .5 && z > -.36 && z < .32 ? C.dark : u >= 0 && (u < .2 || u > .8) ? C.black : band(.06)(x, y, z, u)),
+    curvedTube([[-.51, .85, -.32], [-.51, .835, 0], [-.48, .82, .30], [0, .84, .38], [.48, .82, .30], [.51, .835, 0], [.51, .85, -.32], [0, .86, -.40]], .03, C.black, true)], materials.body)]}),
+  'gt-floor': ({materials}) => ({space: 'design', parts: [meshOf('floor', [roundedBlock([0, .07, -.25], [1.0, .03, 2.0], .01, C.dark)], materials.body)]}),
+  // Just above and behind the driver's head, whatever the seat's tuning.
+  'gt-roll-bar': ({head, materials}) => {
+    const z = Math.min(-.52, head.back - .06), top = Math.max(1.56, head.top + .06);
+    return {space: 'design', parts: [meshOf('roll bar', [curvedTube([[-.32, .84, z + .03], [-.30, top - .22, z], [0, top, z - .02], [.30, top - .22, z], [.32, .84, z + .03]], .045, C.black)], materials.body)]};
+  },
+  'gt-seat': ({kart, materials}) => ({space: 'cockpit', parts: [meshOf('seat', seat(kart, C.black), materials.body)]}),
+  'gt-steering': ({k, grip, materials}) => ({space: 'cockpit', parts: [meshOf('steering wheel', roundWheel(grip, .15, [0, .80*k, .75*k], C.black, C.grey, 2), materials.body)]}),
+  'gt-wheels': ctx => ({space: 'ground', parts: [wheelSet(ctx, RIMS.gt)]}),
+  // Mostly hidden double wishbones, from the body to each upright.
+  'gt-wishbones': ({k, lift, wheels, materials}) => {
+    const arms = wheels.flatMap(w => {
+      const z = w.at[2]/k, toe = w.axle === 'front' ? .10 : -.10;
+      return wishbones(w, [[.40, .52, z - .14], [.40, .52, z + .14], [.40, .22, z - .16], [.40, .22, z + .16], [.38, .60, z - .06], [.40, .30, z + toe]]
+        .map(([px, py, pz]) => [px*k, py*k + lift, pz*k]), C.grey);
+    });
+    return {space: 'ground', parts: [meshOf('suspension', arms, materials.body)]};
+  },
+  // Body parts of the approved design (design units).
+  'gt-hood': ({materials}) => ({space: 'design', parts: [meshOf('hood', [lofted(HOOD, .66, 1.34, 14, ring(4), band(.07))], materials.body)]}),
+  'gt-nose': ({materials}) => ({space: 'design', parts: [meshOf('nose', [lofted(NOSE, 1.20, 1.70, 10, ring(3.6), band(.07))], materials.body)]}),
+  'gt-front-bumper': ({materials}) => {
+    const pieces = [lofted(BUMPER, 1.44, 1.80, 8, ring(4.5), () => C.black)];
+    for (const s of [-1, 1]) pieces.push(roundedBlock([s*.42, .24, 1.785], [.32, .10, .03], .012, C.yellow));// intakes
+    pieces.push(roundedBlock([0, .22, 1.79], [.30, .12, .02], .01, C.dark));// grille
+    return {space: 'design', parts: [meshOf('front bumper', pieces, materials.body)]};
+  },
+  'gt-skirts': ({materials}) => {
+    const right = [roundedBlock([.685, .285, .015], [.18, .44, .73], .05, C.black), roundedBlock([.77, .30, .015], [.02, .10, .50], .01, C.yellow)];
+    return {space: 'design', parts: [meshOf('side skirts', [...right, ...right.map(mirrorX)], materials.body)]};
+  },
+  'gt-rear': ({materials}) => ({space: 'design', parts: [meshOf('rear bumper',
+    [roundedBlock([0, .28, -1.22], [1.16, .34, .22], .06, C.black), roundedBlock([0, .36, -1.33], [.72, .05, .02], .01, C.yellow)], materials.body)]}),
+  // One arch over each wheel; arches follow their wheels when they move out.
+  'arch': ({k, wheels, materials}) => ({space: 'design',
+    parts: [meshOf('wheel arches', wheels.flatMap(w => arch(w.at[0]/k, w.radius/k, w.at[2]/k, w.radius/k + .03, w.radius/k + .09, .40, C.black)), materials.body)]}),
+  // A rear wing on struts that start at the wing mount.
+  'gt-wing': ({kart, k, materials}) => {
+    const box = placePart(kart, 'wing', 'gt-wing')[0], mount = kart.mounts.wing.at;
+    const top = (box.centre[1] + box.size[1]/2)/k, back = (box.centre[2] - box.size[2]/2)/k, front = (box.centre[2] + box.size[2]/2)/k;
+    const planes = [wing({span: 1.18, chord: .30, y: top - .10, leadingZ: front - .03, airfoil: [.06, .4, .12], angle: .08}, C.black)];
+    for (const s of [-1, 1]) planes.push(plate({x: s*.62, zMin: back + .01, zMax: front - .01, yMin: top - .28, yMax: top - .01, radius: .05}, C.yellow));
+    const struts = meshOf('rear wing struts', [-1, 1].map(s => tube([s*.2, mount[1], mount[2]], [s*.2, top - .16, front - .1], .022, C.black)), materials.body);
+    struts.userData = {strut: true};
+    return {space: 'design', parts: [meshOf('rear wing', planes, materials.body), struts]};
+  },
+});
+
+/** Builds the whole GT GoKart from its parts list. */
 export function buildGTKart(kart = GT_GOKART, setup = STOCK) {
   if (kart.mode !== 'gt') throw new Error('buildGTKart needs a GT GoKart');
-  const materials = kartMaterials(), k = kart.scale, lift = setup.rideHeight ?? 0;
-  const {root, design, cockpit, wheels} = modelSkeleton(kart, setup);
-  const {head} = driverPose(kart), headTop = (head[1] + AVATAR.headRadius)/k, headBack = (head[2] - AVATAR.headRadius)/k;
-
-  // Chassis (design units): body tub, cockpit rim, roll bar just above and
-  // behind the head, and the floor.
-  const chassis = [];
-  chassis.push(lofted(TUB, -1.30, 1.22, 40, tubRing,
-    (x, y, z, u) => y < FLOOR + .03 && Math.abs(x) < .5 && z > -.36 && z < .32 ? C.dark : u >= 0 && (u < .2 || u > .8) ? C.black : band(.06)(x, y, z, u)));
-  chassis.push(curvedTube([[-.51, .85, -.32], [-.51, .835, 0], [-.48, .82, .30], [0, .84, .38], [.48, .82, .30], [.51, .835, 0], [.51, .85, -.32], [0, .86, -.40]], .03, C.black, true));
-  const barZ = Math.min(-.52, headBack - .06), barTop = Math.max(1.56, headTop + .06);
-  chassis.push(curvedTube([[-.32, .84, barZ + .03], [-.30, barTop - .22, barZ], [0, barTop, barZ - .02], [.30, barTop - .22, barZ], [.32, .84, barZ + .03]], .045, C.black));
-  chassis.push(roundedBlock([0, .07, -.25], [1.0, .03, 2.0], .01, C.dark));
-  const chassisGroup = new T.Group(); chassisGroup.name = 'chassis'; chassisGroup.add(meshOf('chassis body', chassis, materials.body)); design.add(chassisGroup);
-
-  // Cockpit (real metres): black seat and a round wheel within reach.
-  const grip = steeringPoint(kart, .43, .16);
-  cockpit.add(meshOf('seat and steering', [...seat(kart, C.black), ...roundWheel(grip, .15, [0, .80*k, .75*k], C.black, C.grey, 2)], materials.body));
-
-  // Wheels and (mostly hidden) double-wishbone suspension.
-  addWheels(wheels, kart, setup, RIMS.gt, materials);
-  const susp = [];
-  for (const w of wheelsOf(kart, setup)) {
-    const front = w.axle === 'front', z = w.at[2]/k;
-    susp.push(...wishbones(w, [[.40, .52, z - .14], [.40, .52, z + .14], [.40, .22, z - .16], [.40, .22, z + .16], [.38, .60, z - .06], [.40, .30, z + (front ? .10 : -.10)]]
-      .map(([px, py, pz]) => [px*k, py*k + lift, pz*k]), C.grey));
-  }
-  root.add(meshOf('suspension', susp, materials.body));
-
-  // Body parts of the approved design (design units).
-  design.add(partGroup('hood', kart.design.hood, [meshOf('hood', [lofted(HOOD, .66, 1.34, 14, ring(4), band(.07))], materials.body)]));
-  design.add(partGroup('nose', kart.design.nose, [meshOf('nose', [lofted(NOSE, 1.20, 1.70, 10, ring(3.6), band(.07))], materials.body)]));
-  const bumper = [lofted(BUMPER, 1.44, 1.80, 8, ring(4.5), () => C.black)];
-  for (const s of [-1, 1]) bumper.push(roundedBlock([s*.42, .24, 1.785], [.32, .10, .03], .012, C.yellow));// intakes
-  bumper.push(roundedBlock([0, .22, 1.79], [.30, .12, .02], .01, C.dark));
-  design.add(partGroup('frontBumper', kart.design.frontBumper, [meshOf('front bumper', bumper, materials.body)]));
-  const skirt = [roundedBlock([.685, .285, .015], [.18, .44, .73], .05, C.black), roundedBlock([.77, .30, .015], [.02, .10, .50], .01, C.yellow)];
-  design.add(partGroup('sidePanels', kart.design.sidePanels, [meshOf('side skirts', [...skirt, ...skirt.map(mirrorX)], materials.body)]));
-  design.add(partGroup('rearBumper', kart.design.rearBumper, [meshOf('rear bumper',
-    [roundedBlock([0, .28, -1.22], [1.16, .34, .22], .06, C.black), roundedBlock([0, .36, -1.33], [.72, .05, .02], .01, C.yellow)], materials.body)]));
-  const arches = wheelsOf(kart, setup).flatMap(w => arch(w.at[0]/k, w.radius/k, w.at[2]/k, w.radius/k + .03, w.radius/k + .09, .40, C.black));
-  design.add(partGroup('fenders', kart.design.fenders, [meshOf('wheel arches', arches, materials.body)]));
-
-  const box = placePart(kart, 'wing', kart.design.wing)[0], mount = kart.mounts.wing.at;
-  const top = (box.centre[1] + box.size[1]/2)/k, back = (box.centre[2] - box.size[2]/2)/k, frontZ = (box.centre[2] + box.size[2]/2)/k;
-  const rw = [wing({span: 1.18, chord: .30, y: top - .10, leadingZ: frontZ - .03, airfoil: [.06, .4, .12], angle: .08}, C.black)];
-  for (const s of [-1, 1]) rw.push(plate({x: s*.62, zMin: back + .01, zMax: frontZ - .01, yMin: top - .28, yMax: top - .01, radius: .05}, C.yellow));
-  const struts = meshOf('rear wing struts', [-1, 1].map(s => tube([s*.2, mount[1], mount[2]], [s*.2, top - .16, frontZ - .1], .022, C.black)), materials.body);
-  struts.userData = {strut: true};
-  design.add(partGroup('wing', kart.design.wing, [meshOf('rear wing', rw, materials.body), struts]));
-
-  root.userData.steering = grip;
-  return root;
+  return assembleKart(kart, setup, GT_BUILDERS);
 }

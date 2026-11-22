@@ -66,6 +66,7 @@ same guide and handoff rather than introducing another set of rules.
 40. (22 November 2026) **Fix: Karts buttons in the Test Lab.** Owner: tapping F1 GoKart sometimes did not work. Cause: the Test Lab copies a page's side panel once at load and then follows each button's pressed/hidden state; the Karts page rebuilt its buttons on every kart switch, so the copy pointed at removed buttons. Now every kart's buttons are built once and hidden/shown, notes are `<output>` so they update, and each kart's model is built once and kept. Rule for any Test Lab page: never rebuild the side panel; hide and show instead. Regression check in `kart-parts/browser.mjs`.
 41. (22 November 2026) **Fresh set of three karts built** (owner: "create all of them the exact same way you did with the F1", sizes from the picture with drivers, F1 slightly bigger, F1 wheels same as GT, old kart only for driving tests). Each kart has a `scale`; the driver zone now comes from the avatar's skeleton sizes seated in each kart (`AVATAR`, `driverPose`, `driverZones` in `kart-parts/spec.js`). New `kart-model.js` (shared), `gokart-kart.js`, `gt-kart.js`, `models.js`; PCHIP curves fix the wavy nose; exact wheel-cylinder collision; GT arches lathe-turned. Karts page now shows the three new karts (old kart removed from this page only). 41 code checks, browser checks pass. Codex: the new karts' wheel places differ from the test kart; handling for them is not built.
 42. (22 November 2026) **Full code review of the kart code** (owner: inspect every line, make the karts rock solid for testing, leave room for tuning). Fixed: mirrored parts lost smooth shading (left F1 pods were faceted); symmetric airfoils divided 0/0; zero-length tubes and bad sizes now fail with clear messages; the raised GoKart's axles floated off the frame; the driver dummy did not rise with the body; layoutKart crashed on an impossible choice. Added: deep-frozen kart data, wheel/seat/set-up checks (`setupProblems`), every build validates its data first, the Karts page reports a kart that fails instead of going blank, and a fine-tuning guide (`kart-parts/README.md`, E). 51 code checks and the browser checks pass.
+43. (22 November 2026) **Every car part is its own part** (owner: "make each car part its own", not swapping yet). Kart data now lists `chassis` parts (frame, floor, seat, steering, wheels, suspension, axles, roll bar, mirrors, engine cover; catalogue `CHASSIS_STYLES`) next to `design` body parts; steering reach moved into `seat` data. Each style id has its own builder (`GOKART_BUILDERS`, `GT_BUILDERS`, `F1_BUILDERS`); `assembleKart` in `kart-model.js` builds each into `part:<slot>`. Karts page: "Look at one part". 55 code checks and the browser checks pass.
 
 ## Open items from the owner (for when each movement returns)
 A nose (small triangle) on the head for the look pose; the ball in the middle of the palm (the palm point sits about 12 cm too far toward the wrist); sit with hands grabbing the knees; whether the squat should spread the legs first.
@@ -108,5 +109,24 @@ owner review before the next chunk. Resume when the owner returns to it.
 Later discussion: a measured F1-inspired test course and five experimental
 upgrade steps. No final performance budgets, tier statistics or starter-kart
 assignment have been approved. Do not implement those later chunks from these
-notes alone. The separate Motion Lab cleanup is also unimplemented. The
-current preparation changes documentation only; preserve game code and assets.
+notes alone. The separate Motion Lab cleanup is also unimplemented. That
+preparation changed documentation only; preserve game code and assets.
+
+### Shared-lab foundation follow-up
+
+The owner subsequently authorized foundation work before the keyboard/Isometric
+chunk. Codex preserved the current `cf4e6ec` avatar/kart work and approved Fast
+handling. Shared input now has complete neutral samples and interruption/reset
+guards. The Test Lab's Tracks workspace links to actual driving; old driving
+bookmarks redirect there. README distinguishes current work from old demos.
+
+`npm run test:lab-foundations` runs 61 Node checks. After a build,
+`npm run test:lab-foundations-browser` runs nine actual-page suites, including
+Chromium/WebKit return-to-app checks. These gate publication and PR checks;
+PRs never publish. Test results and decisions are in the final section of
+`racing-core/PLAN.md`, with the contract in `test-lab/FOUNDATIONS.md`. The local
+full build, 233 racing checks, 8 official-avatar checks and browser suites pass.
+
+This is a foundation milestone, not a new driving-feel or character approval.
+The next keyboard/Isometric chunk is still unimplemented. No need to ask the
+owner for an immediate phone feel test just for this infrastructure change.

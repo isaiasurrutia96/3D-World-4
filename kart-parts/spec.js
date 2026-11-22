@@ -20,11 +20,18 @@
 
 /** Every kind of part a kart can have. */
 export const SLOTS = Object.freeze({
-  // Built with the chassis (real geometry).
-  frame:       {group:'chassis', label:'Frame', note:'The metal tubes everything bolts onto.'},
+  // Chassis parts: each is its own part with its own builder, placed by the
+  // kart's design (not on a mount).
+  frame:       {group:'chassis', label:'Frame', note:'The tube frame or body tub everything bolts onto.'},
+  floor:       {group:'chassis', label:'Floor', note:'The floor pan under the driver.'},
   seat:        {group:'chassis', label:'Seat', note:'Swappable for other seat styles.'},
   steering:    {group:'chassis', label:'Steering wheel', note:'Swappable for other steering wheels.'},
   wheels:      {group:'chassis', label:'Rims and tires', note:'Rims and tires are swappable; off-road tires fit any kart.'},
+  suspension:  {group:'chassis', label:'Suspension', note:'Upgradable; holds the wheels to the kart.'},
+  axles:       {group:'chassis', label:'Axles', note:'The GoKart\'s solid rear axle (real karts have no suspension).'},
+  rollHoop:    {group:'chassis', label:'Roll bar', note:'Above and behind the driver\'s head.'},
+  mirrors:     {group:'chassis', label:'Mirrors', note:'On stalks beside the cockpit.'},
+  engineCover: {group:'chassis', label:'Engine cover', note:'Covers the engine and gearbox; carries the rear wing mount.'},
   // Body parts: each snaps onto its mount and comes in several styles.
   nose:        {group:'body', label:'Nose', note:'The front of the kart.'},
   hood:        {group:'body', label:'Hood', note:'The top panel in front of the steering wheel. Airflow versions add downforce.'},
@@ -141,6 +148,33 @@ export const STYLES = deepFreeze({
   },
 });
 
+/** Chassis part styles: each is one part with its own builder in the kart's
+ *  model file. Listed here so the data checks know every part a kart uses. */
+export const CHASSIS_STYLES = deepFreeze({
+  'gokart-frame':    {slot:'frame', label:'GoKart tube frame', modes:['gokart']},
+  'gokart-floor':    {slot:'floor', label:'GoKart floor pan', modes:['gokart']},
+  'gokart-axles':    {slot:'axles', label:'GoKart rear axle', modes:['gokart']},
+  'gokart-seat':     {slot:'seat', label:'GoKart bucket seat', modes:['gokart']},
+  'gokart-steering': {slot:'steering', label:'GoKart round wheel', modes:['gokart']},
+  'gokart-wheels':   {slot:'wheels', label:'Five-spoke silver wheels', modes:['gokart']},
+  'gt-tub':          {slot:'frame', label:'GT body tub', modes:['gt']},
+  'gt-floor':        {slot:'floor', label:'GT floor', modes:['gt']},
+  'gt-roll-bar':     {slot:'rollHoop', label:'GT roll bar', modes:['gt']},
+  'gt-seat':         {slot:'seat', label:'GT seat', modes:['gt']},
+  'gt-steering':     {slot:'steering', label:'GT round wheel', modes:['gt']},
+  'gt-wheels':       {slot:'wheels', label:'Eight-spoke yellow wheels', modes:['gt']},
+  'gt-wishbones':    {slot:'suspension', label:'GT double wishbones', modes:['gt']},
+  'f1-tub':          {slot:'frame', label:'F1 survival cell', modes:['f1']},
+  'f1-floor':        {slot:'floor', label:'F1 floor', modes:['f1']},
+  'f1-engine-cover': {slot:'engineCover', label:'F1 engine cover and airbox', modes:['f1']},
+  'f1-roll-hoop':    {slot:'rollHoop', label:'F1 roll hoop', modes:['f1']},
+  'f1-mirrors':      {slot:'mirrors', label:'F1 mirrors', modes:['f1']},
+  'f1-seat':         {slot:'seat', label:'F1 reclined seat', modes:['f1']},
+  'f1-steering':     {slot:'steering', label:'F1 steering wheel', modes:['f1']},
+  'f1-wheels':       {slot:'wheels', label:'Six-spoke orange wheels', modes:['f1']},
+  'f1-wishbones':    {slot:'suspension', label:'F1 double wishbones', modes:['f1']},
+});
+
 /** Mount kinds: a point (optionally mirrored left/right), the top of every
  *  tire (fenders) or the back of each rear tire (mud flaps). */
 const point = (x, y, z, mirrored = false) => ({kind:'point', at:v(x, y, z), mirrored});
@@ -150,9 +184,11 @@ const REAR_WHEELS = Object.freeze({kind:'rearWheels'});
 /** The three approved base karts (a fresh set; the old test kart is only for
  *  driving tests). Numbers are design units, multiplied by `scale`. `design`
  *  is which style the approved design uses for each part; every other mount
- *  is a place for optional parts. `seat` is where the driver's hips sit and
- *  how far the back leans (radians); the driver zone is worked out from it
- *  and the avatar's body sizes. */
+ *  is a place for optional parts. `chassis` lists the kart's chassis parts.
+ *  `seat` is where the driver's hips sit, how far the back leans (radians)
+ *  and where the hands hold the wheel (`reach` forward of and `reachHeight`
+ *  above the shoulders, metres); the driver zone is worked out from it and
+ *  the avatar's body sizes. */
 export const GOKART = deepFreeze({
   id:'gokart-base', label:'GoKart', mode:'gokart', size:'small', scale:.64,
   wheels:{front:{radius:.38, width:.30}, rear:{radius:.38, width:.34}, halfTrack:.81, frontZ:1.03, rearZ:-1.0},
@@ -164,7 +200,8 @@ export const GOKART = deepFreeze({
     mudFlaps:REAR_WHEELS, exhaust:point(0,.42,-1.24), lights:point(0,.40,1.90),
   },
   design:{nose:'gokart-nose', frontBumper:'tube-bumper', sidePanels:'gokart-pods', rearBumper:'gokart-rear'},
-  seat:{hip:v(0,.64,-.38), recline:.26},
+  chassis:{frame:'gokart-frame', floor:'gokart-floor', axles:'gokart-axles', seat:'gokart-seat', steering:'gokart-steering', wheels:'gokart-wheels'},
+  seat:{hip:v(0,.64,-.38), recline:.26, reach:.62, reachHeight:-.10},
   upgrades:STOCK,
 });
 
@@ -179,7 +216,8 @@ export const GT_GOKART = deepFreeze({
     mudFlaps:REAR_WHEELS, exhaust:point(0,.35,-1.20), lights:point(0,.45,1.78),
   },
   design:{nose:'gt-nose', hood:'gt-hood', frontBumper:'gt-front-bumper', sidePanels:'gt-skirts', rearBumper:'gt-rear', fenders:'arch', wing:'gt-wing'},
-  seat:{hip:v(0,.26,.26), recline:.44},
+  chassis:{frame:'gt-tub', floor:'gt-floor', rollHoop:'gt-roll-bar', seat:'gt-seat', steering:'gt-steering', wheels:'gt-wheels', suspension:'gt-wishbones'},
+  seat:{hip:v(0,.26,.26), recline:.44, reach:.43, reachHeight:.16},
   upgrades:STOCK,
 });
 
@@ -195,7 +233,8 @@ export const F1_GOKART = deepFreeze({
     mudFlaps:REAR_WHEELS, exhaust:point(0,.40,-1.30), lights:point(0,.50,1.90),
   },
   design:{nose:'f1-nose', frontWing:'f1-front-wing', sidePanels:'f1-pods', wing:'f1-wing'},
-  seat:{hip:v(0,.26,.35), recline:.61, feetY:.36},// feet rest inside the nose
+  chassis:{frame:'f1-tub', floor:'f1-floor', engineCover:'f1-engine-cover', rollHoop:'f1-roll-hoop', mirrors:'f1-mirrors', seat:'f1-seat', steering:'f1-steering', wheels:'f1-wheels', suspension:'f1-wishbones'},
+  seat:{hip:v(0,.26,.35), recline:.61, feetY:.36, reach:.27, reachHeight:0},// feet rest inside the nose
   upgrades:STOCK,
 });
 
@@ -272,6 +311,12 @@ export function driverPose(kart, setup = STOCK) {
   return {hip:v(hx, hy + lift, hz), shoulder:along(AVATAR.hipToShoulder), head:along(AVATAR.hipToHead), recline:r};
 }
 
+/** Where the driver's hands hold the steering wheel (real metres). */
+export function steeringPoint(kart, setup = STOCK) {
+  const {shoulder} = driverPose(kart, setup);
+  return v(0, shoulder[1] + kart.seat.reachHeight, shoulder[2] + kart.seat.reach);
+}
+
 /** The space the seated driver takes up (boxes, real metres): hips, torso
  *  with shoulders, legs reaching forward with bent knees, and the head.
  *  (Arms reaching the steering wheel are not included.) */
@@ -336,6 +381,15 @@ export function checkKart(kart, setup = kart.upgrades) {
   if (!(kart.scale > 0)) fail('scale must be a positive number');
   if (!kart.seat?.hip?.every(Number.isFinite) || !(kart.seat?.recline >= 0 && kart.seat.recline < Math.PI/2)) fail('seat needs a hip position and a recline between 0 and 90 degrees');
   if (kart.seat?.feetY !== undefined && !(kart.seat.feetY > 0)) fail('seat feetY must be above the ground');
+  if (!(kart.seat?.reach > .1 && kart.seat.reach < .75) || !Number.isFinite(kart.seat?.reachHeight)) fail('seat reach must put the steering wheel within the avatar\'s arm reach');
+  for (const [slot, styleId] of Object.entries(kart.chassis ?? {})) {
+    const style = CHASSIS_STYLES[styleId];
+    if (!style) fail(`unknown chassis part "${styleId}"`);
+    else if (style.slot !== slot) fail(`chassis part "${styleId}" is a ${style.slot}, not a ${slot}`);
+    else if (!style.modes.includes(kart.mode)) fail(`chassis part "${styleId}" is not made for ${kart.mode} karts`);
+    if (SLOTS[slot]?.group !== 'chassis') fail(`"${slot}" is not a chassis part`);
+  }
+  for (const needed of ['frame', 'seat', 'steering', 'wheels']) if (!kart.chassis?.[needed]) fail(`every kart needs a ${needed}`);
   const w = kart.wheels ?? {};
   for (const axle of ['front', 'rear']) if (!(w[axle]?.radius > 0 && w[axle]?.width > 0)) fail(`${axle} wheels need a positive radius and width`);
   if (!(w.frontZ > w.rearZ)) fail('front wheels must be ahead of the rear wheels');
