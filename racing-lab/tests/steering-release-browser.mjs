@@ -1,4 +1,4 @@
-import{chromium}from'playwright';
+import {launchTestBrowser} from '../../scripts/test-browser.mjs';
 import{createServer}from'node:http';
 import{readFile,writeFile}from'node:fs/promises';
 import{resolve,extname}from'node:path';
@@ -9,7 +9,7 @@ import{createHash}from'node:crypto';
 const baseline=process.env.BASELINE_HTML;
 const server=createServer(async(q,r)=>{try{let path=new URL(q.url,'http://local').pathname;if(path.endsWith('/'))path+='index.html';r.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.png':'image/png','.webmanifest':'application/manifest+json'})[extname(path)]||'application/octet-stream');r.end(await readFile(path==='/baseline/index.html'&&baseline?baseline:resolve('dist','.'+path)));}catch{r.statusCode=404;r.end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
-const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']}),base=`http://127.0.0.1:${server.address().port}`,rows=[],errors=[];
+const browser=await launchTestBrowser(),base=`http://127.0.0.1:${server.address().port}`,rows=[],errors=[];
 async function fixture(version,mode){
  const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true});page.on('pageerror',e=>errors.push(e.message));
  if(mode==='early-pointer'||mode==='early-all')await page.addInitScript(mode=>{

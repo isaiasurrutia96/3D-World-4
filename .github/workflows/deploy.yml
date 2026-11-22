@@ -4,18 +4,22 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,11 +27,23 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run test:inspection-zoom
+      - run: npm run test:lab-foundations
       - run: npm run test:official-avatar
       - run: npm run test:racing-core
       - run: npm run build
+      - name: Install pinned test browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Check actual pages before publishing
+        run: npm run test:lab-foundations-browser
+      - name: Save browser check results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab-foundation-checks
+          path: .test-results/lab-foundations/
+          if-no-files-found: ignore
       - uses: peaceiris/actions-gh-pages@v4
+        if: github.event_name != 'pull_request'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: dist

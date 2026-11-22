@@ -62,6 +62,7 @@ function mirrorControls(doc){
 async function setTest(id){
  setMotionOpen(false);$('#motion-toggle').disabled=true;syncMotion=()=>{};
  if(!tests[id])return;subject=id;ready=false;window.testLabReady=false;const token=++generation;clock=null;syncControls=()=>{};controls.replaceChildren();loading.hidden=false;loading.textContent='Preparing '+tests[id].name.toLowerCase()+'…';$('#subject').value=id;$('#subject-status').textContent=tests[id].name;
+ $('#driving-help').hidden=id!=='tracks';
  $('#test-context').textContent=$('#subject').selectedOptions[0].textContent;
  const url=new URL(location.href);if(id==='avatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
  const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=fast-approved-joints-2026-11-19';frame=node;host.replaceChildren(node);
@@ -110,4 +111,10 @@ new IntersectionObserver(entries=>{stageVisible=entries[0].intersectionRatio>.5;
 document.addEventListener('visibilitychange',()=>clock?.setActive(!document.hidden&&stageVisible));
 setInterval(()=>{if(ready&&!document.hidden){syncControls();syncMotion();}},150);
 window.testLab={setTest,setView,setMode,setInspection,setMotionOpen,getState:()=>({subject,mode,view,inspection,motionOpen,ready,active:clock?.active??false}),get frame(){return frame;}};
-const initial=new URLSearchParams(location.search).get('test');setTest(initial==='driving'?'tracks':tests[initial]?initial:'avatar');
+const params=new URLSearchParams(location.search),initial=params.get('test');
+if(initial==='driving'){
+ // Old driving bookmarks must open driving, not silently become inspection.
+ const url=new URL('../racing-lab/',location.href);url.searchParams.set('drive','1');
+ for(const key of ['track','handling','debug'])if(params.has(key))url.searchParams.set(key,params.get(key));
+ location.replace(url.href);
+}else setTest(tests[initial]?initial:'avatar');
