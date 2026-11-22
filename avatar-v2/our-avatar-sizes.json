@@ -24,5 +24,6 @@
   "thigh": 0.3671,
   "calf": 0.3089
  },
- "hipBallGap": 0.0696
+ "hipBallGap": 0.0696,
+ "shoulderBallX": 0.2979
 }

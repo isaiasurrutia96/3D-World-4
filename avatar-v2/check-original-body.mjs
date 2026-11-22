@@ -132,6 +132,14 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
  check('separated: the hip balls are as close together as Our avatar\'s (the same gap between their inner edges)',()=>{
   const l=sg('ball-hip','left'),r2=sg('ball-hip','right'),gap=(l.centre[0]-l.radius)-(r2.centre[0]+r2.radius);
   assert(Math.abs(gap-ourAvatar.hipBallGap)<.001,`gap ${(gap*100).toFixed(2)} cm, Our avatar ${(ourAvatar.hipBallGap*100).toFixed(2)} cm`);return `${(gap*100).toFixed(1)} cm apart (Our avatar ${(ourAvatar.hipBallGap*100).toFixed(1)} cm)`;});
+ check('put together: the shoulder balls sit as far from the middle as Our avatar\'s (not wide shoulders); apart they still clear the torso by 2 cm',()=>{
+  const pv=pressedPreviewBody('boy'),l=pv.parts.find(p=>p.name==='ball-shoulder'&&p.side==='left'),r2=pv.parts.find(p=>p.name==='ball-shoulder'&&p.side==='right');
+  assert(Math.abs(l.centre[0]-ourAvatar.shoulderBallX)<1e-9&&Math.abs(-r2.centre[0]-ourAvatar.shoulderBallX)<1e-9,`left ${l.centre[0]}, right ${r2.centre[0]}, Our avatar ${ourAvatar.shoulderBallX}`);
+  // Test of the test: the separated ball (2 cm clear of the torso) is further out, so the rule really moved it.
+  const apart=sg('ball-shoulder','left').centre[0];assert(apart>ourAvatar.shoulderBallX+.05,`apart ${apart}`);
+  // Only across: height and depth as before.
+  assert(Math.abs(l.centre[1]-sg('ball-shoulder','left').centre[1])<1e-9&&Math.abs(l.centre[2]-sg('ball-shoulder','left').centre[2])<1e-9,'moved only across');
+  return `${(l.centre[0]*100).toFixed(1)} cm from the middle (Our avatar ${(ourAvatar.shoulderBallX*100).toFixed(1)}; apart ${(apart*100).toFixed(1)})`;});
  check('separated: the right side is the exact mirror of the left',()=>{for(const p of sep.parts.filter(p=>p.side==='left')){const q=sg(p.name,'right');for(let i=0;i<p.positions.length;i+=3)assert(p.positions[i]===-q.positions[i]&&p.positions[i+1]===q.positions[i+1]&&p.positions[i+2]===q.positions[i+2],p.name);}return 'mirrored';});
  check('separated: reports his height apart',()=>`${(sep.height*100).toFixed(1)} cm with every piece apart (shorter once pressed together); ${sep.parts.reduce((n,p)=>n+p.index.length/3,0).toLocaleString()} triangles`);
 }

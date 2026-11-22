@@ -275,9 +275,12 @@ export function separatedOriginalBody(bodyId='boy',{press=0}={}){
  const upper=get('upper-arm'),fore=get('forearm'),hand=get('hand');
  // Pressed: from 2 cm clear, back in until the ball sinks TORSO_PRESS of its radius past the torso's surface.
  const intoTorso=(c,r,dir)=>press?c.map((v,k)=>v-dir[k]*(SHOULDER_TORSO_GAP+TORSO_PRESS*r)):c;
+ // Put together, the shoulder ball's centre sits as far from the body's middle as Our avatar's (owner: "more inward
+ // towards the torso so it doesn't look like it has wide shoulders"); apart, it keeps the 2 cm clear rule.
+ const shoulderIn=c=>press?[ourAvatar.shoulderBallX,c[1],c[2]]:c;
  // Ball sizes come from the joined avatar (sized from the limbs before they were slimmed), so slimming keeps them.
  const B=whole.ballR;
- const rS=B.shoulder,S=intoTorso(clearOfTorso(torsoShape,[...SHOULDER],rS,[1,0,0],SHOULDER_TORSO_GAP),rS,[1,0,0]);
+ const rS=B.shoulder,S=shoulderIn(clearOfTorso(torsoShape,[...SHOULDER],rS,[1,0,0],SHOULDER_TORSO_GAP));
  const arm=chain({centre:S,radius:rS},[upper,fore,hand],[null,()=>B.elbow,()=>B.wrist],['ball-shoulder','ball-elbow','ball-wrist']);
  // Leg: hip ball as thick as the thigh's top, pushed straight down until 2 cm clear of the torso.
  const thigh=get('thigh'),calf=get('calf'),foot=get('foot');
