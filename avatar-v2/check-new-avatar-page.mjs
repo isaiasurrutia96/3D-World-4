@@ -26,18 +26,19 @@ try{
    item.group.traverse(o=>{if(!o.isMesh)return;const P=o.geometry.attributes.position;for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(o.matrixWorld);[v.x,v.y,v.z].forEach((x,k)=>{b.min[k]=Math.min(b.min[k],x);b.max[k]=Math.max(b.max[k],x);});}});
    // Test of the test: the same group with one more shape in it (a torso) gives a different list.
    const extra=item.group.children.find(o=>o.isMesh).clone();extra.name='torso';item.group.add(extra);const withExtra=names(item.group);item.group.remove(extra);
-   const pair=L.options.find(o=>o.id==='torso-shoulders'),pushed=L.options.find(o=>o.id==='torso-shoulders-pushed');
-   return {group:L.getGroup(),ids:L.options.map(o=>o.id),names:names(item.group),withExtra,box:b,pairNames:pair?names(pair.group):null,pushedNames:pushed?names(pushed.group):null,ourAvatar:'ourAvatarLoaded' in window};});
+   const pair=L.options.find(o=>o.id==='torso-shoulders'),pushed=L.options.find(o=>o.id==='torso-shoulders-pushed'),softened=L.options.find(o=>o.id==='torso-shoulders-softened');
+   return {group:L.getGroup(),ids:L.options.map(o=>o.id),names:names(item.group),withExtra,box:b,pairNames:pair?names(pair.group):null,pushedNames:pushed?names(pushed.group):null,softenedNames:softened?names(softened.group):null,ourAvatar:'ourAvatarLoaded' in window};});
   assert.deepEqual(errors,[],'page errors');
   assert.equal(m.group,'together','the Put together tab opens first');
-  assert.deepEqual(m.ids,['together-boy','torso-shoulders','torso-shoulders-pushed'],'the limbs, the torso with its shoulder balls apart, then the sockets they left (no Our avatar)');
+  assert.deepEqual(m.ids,['together-boy','torso-shoulders','torso-shoulders-pushed','torso-shoulders-softened'],'the limbs, the torso with its shoulder balls apart, the sockets they left, then softened (no Our avatar)');
+  assert.deepEqual(m.softenedNames,['ball-shoulder.left','ball-shoulder.right','torso'],'softened: the torso and both shoulder balls only');
   assert.deepEqual(m.pushedNames,['ball-shoulder.left','ball-shoulder.right','torso'],'sockets left: the torso and both shoulder balls only');
   assert.deepEqual(m.pairNames,['ball-shoulder.left','ball-shoulder.right','torso'],'the torso and both shoulder balls only');assert.equal(m.ourAvatar,false,'Our avatar is still loaded');
   assert.deepEqual(m.names,want,'only the eight limb pieces');assert.notDeepEqual(m.withExtra,want,'test of the test: an extra piece was not caught');
   // In their places: as high off the floor as in the put-together avatar (not dropped to the floor), and the same size.
   assert(Math.abs(m.box.min[1]-limbs.lowest)<1e-4,`the calves' bottoms are at ${m.box.min[1]} m, wanted ${limbs.lowest}`);
   for(let k=0;k<3;k++)assert(Math.abs(m.box.max[k]-m.box.min[k]-size[k])<1e-4,`size along ${'xyz'[k]} is ${m.box.max[k]-m.box.min[k]}, wanted ${size[k]}`);
-  results.push(`${w}px: ${m.names.length} pieces (${m.names.join(', ')}), the calves' bottoms ${(m.box.min[1]*100).toFixed(1)} cm off the floor, ${(size[0]*100).toFixed(1)} × ${(size[1]*100).toFixed(1)} × ${(size[2]*100).toFixed(1)} cm, then the torso and both shoulder balls apart, and the sockets they left; no Our avatar, no errors; an extra piece is caught`);
+  results.push(`${w}px: ${m.names.length} pieces (${m.names.join(', ')}), the calves' bottoms ${(m.box.min[1]*100).toFixed(1)} cm off the floor, ${(size[0]*100).toFixed(1)} × ${(size[1]*100).toFixed(1)} × ${(size[2]*100).toFixed(1)} cm, then the torso and both shoulder balls apart, the sockets they left, and softened; no Our avatar, no errors; an extra piece is caught`);
   await page.close();}
 }finally{await browser.close();server.close();}
-console.log(results.join('\n'));console.log('PASS: the Put together tab shows only the eight limb pieces, in their places, and the torso with both shoulder balls, apart and with the sockets they left.');
+console.log(results.join('\n'));console.log('PASS: the Put together tab shows only the eight limb pieces, in their places, and the torso with both shoulder balls, apart, with the sockets they left, and softened.');

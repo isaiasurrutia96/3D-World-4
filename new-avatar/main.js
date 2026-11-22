@@ -26,7 +26,7 @@ import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
-import {separatedOriginalBody,pressedPreviewBody,limbsOnlyBody,torsoShoulderBalls,pushShoulderBalls} from '../avatar-v2/original-body.js';
+import {separatedOriginalBody,pressedPreviewBody,limbsOnlyBody,torsoShoulderBalls,pushShoulderBalls,softenShoulderRims,SHOULDER_RIM_ROUND} from '../avatar-v2/original-body.js';
 import {elbowTest,ELBOW_TEST_POSES,CLOSER_DEPTHS,CLAY_LIP} from '../avatar-v2/elbow-test.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
@@ -98,14 +98,16 @@ GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put togethe
 // the torso and the ball next to each other but not together, u can do both sides").
 // Then both balls pushed into the clay torso and pulled back out, leaving the sockets they made (owner: "push the ball
 // in and let it form the sockets naturally ... once you push the ball in pull it back out and leave it").
-const pressed=pressedPreviewBody('boy'),together=limbsOnlyBody('boy',pressed),mix=separatedOriginalBody('boy'),shoulderPair=torsoShoulderBalls('boy',{pressed,apart:mix}),pushedIn=pushShoulderBalls('boy',pressed,{apart:mix});
-GROUPS.push({id:'together',label:'Put together',intro:'Only his upper arms, forearms, thighs and calves, each exactly where and how it is when he is put together. Next to them, his torso and both shoulder balls, side by side but not pressed together, and then the same balls pushed into the clay torso and pulled back out, leaving the sockets they made.',
+const pressed=pressedPreviewBody('boy'),together=limbsOnlyBody('boy',pressed),mix=separatedOriginalBody('boy'),shoulderPair=torsoShoulderBalls('boy',{pressed,apart:mix}),pushedIn=pushShoulderBalls('boy',pressed,{apart:mix}),softened=softenShoulderRims(pushedIn);
+GROUPS.push({id:'together',label:'Put together',intro:'Only his upper arms, forearms, thighs and calves, each exactly where and how it is when he is put together. Next to them, his torso and both shoulder balls, side by side but not pressed together, then the same balls pushed into the clay torso and pulled back out, leaving the sockets they made, and last those sockets with their rims chiselled and softened.',
  items:[{id:'together-boy',label:'Boy · limbs only',tag:'Boy',note:`His ${together.parts.length} limb pieces, in their places. ${(together.height*100).toFixed(0)} cm from the bottom of the calves to the top of the upper arms.`,
   parts:together.parts.map(p=>({name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
   {id:'torso-shoulders',label:'Torso · shoulder balls',tag:'Torso',note:`His torso, exactly as when he is put together, and both shoulder balls (${(shoulderPair.balls[0].radius*200).toFixed(1)} cm, their usual size and height) beside it, not pressed in: each ${(shoulderPair.clear*100).toFixed(1)} cm clear of the torso.`,
   parts:shoulderPair.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
   {id:'torso-shoulders-pushed',label:'Torso · sockets left by the balls',tag:'Sockets',note:`Both shoulder balls were pushed straight into the clay torso, to where they sit when he is put together, then pulled straight back out to where they started. The sockets are exactly what the balls left (the ball plus the usual 6 mm gap; ${Math.round(pushedIn.displaced/2*1e6)} cm³ of clay each). Nothing smoothed or rounded.`,
-  parts:pushedIn.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+  parts:pushedIn.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
+  {id:'torso-shoulders-softened',label:'Torso · rims chiselled and softened',tag:'Softened',note:`The same sockets with the thin sliver of clay over the top chiselled away and every rim rounded: a ${Math.round(SHOULDER_RIM_ROUND*1000)} mm ball rolled along the inside of the clay, and whatever it could not reach was cut off (${softened.removed*1e6>=1?Math.round(softened.removed*1e6):(softened.removed*1e6).toFixed(1)} cm³ of clay). Nothing else changed.`,
+  parts:softened.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const elbowItems=[];
 for(const share of CLOSER_DEPTHS){const e=elbowTest(share,'boy',{lip:CLAY_LIP}),name=`${Math.round(share*100)}% deep`;
  for(const deg of ELBOW_TEST_POSES)elbowItems.push({id:`elbow-${Math.round(share*100)}-${deg}`,label:`${name} · ${deg?deg+'°':'straight'}`,tag:`${Math.round(share*100)}% ${deg}°`,
