@@ -2,10 +2,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import {KARTS, GOKART, GT_GOKART, F1_GOKART, LIMITS, MAX_OFFROAD, wheelsOf, placePart, driverZones, driverPose, AVATAR} from './spec.js';
+import {KARTS, GOKART, GT_GOKART, F1_GOKART, LIMITS, MAX_OFFROAD, STYLES, CHASSIS_STYLES, SLOTS, wheelsOf, placePart, driverZones, driverPose, AVATAR} from './spec.js';
 import {naca4, loft, superellipse, mirrorX, wing, pchip, stationCurve, tube} from './shapes.js';
 import {MODELS, buildKart} from './models.js';
-import {driverDummy} from './kart-model.js';
+import {driverDummy, partsOf, assembleKart} from './kart-model.js';
+import {GOKART_BUILDERS} from './gokart-kart.js';
+import {GT_BUILDERS} from './gt-kart.js';
+import {F1_BUILDERS} from './f1-kart.js';
 
 const close = (a, b, tolerance) => Math.abs(a - b) <= tolerance;
 const MAX_TRIANGLES = 20000, MAX_MESHES = 24;// per kart: light enough for phones with a grid of karts
@@ -105,7 +108,7 @@ for (const kart of KARTS) {
       allowed.expandByScalar(.02);
       for (const mesh of group.children.filter(m => !m.userData.strut)) assert.ok(allowed.containsBox(boxOf(mesh)), `${slot}: ${mesh.name} reaches outside its box`);
     }
-    for (const name of ['chassis', 'wheels', 'cockpit']) assert.ok(model.getObjectByName(name), `missing ${name}`);
+    for (const slot of Object.keys(kart.chassis)) assert.ok(partsOf(model)[slot], `missing ${slot}`);
   });
 
   test(`${kart.label}: nothing in the driver's head space; body parts stay out of the hips and body`, () => {
@@ -114,10 +117,9 @@ for (const kart of KARTS) {
       let hits = 0; for (const v of worldVertices(model.getObjectByName(`part:${slot}`))) if (inside(v, zones.head) || inside(v, zones.body) || inside(v, zones.hips)) hits++;
       assert.equal(hits, 0, `${slot} enters the driver zone`);
     }
-    for (const name of ['chassis', 'cockpit', 'wheels', 'suspension']) {
-      const o = model.getObjectByName(name); if (!o) continue;
-      let head = 0; for (const v of worldVertices(o)) if (inside(v, zones.head)) head++;
-      assert.equal(head, 0, `${name} enters the head space`);
+    for (const slot of Object.keys(kart.chassis)) {
+      let head = 0; for (const v of worldVertices(partsOf(model)[slot])) if (inside(v, zones.head)) head++;
+      assert.equal(head, 0, `${slot} enters the head space`);
     }
   });
 
@@ -223,7 +225,7 @@ test('the GoKart stays connected when raised: axle hangers and stub axles reach 
   const axle = boxOf(raised.getObjectByName('rear axle')), hub = wheelsOf(GOKART, MAX_OFFROAD)[2].radius;
   assert.ok(axle.max.y >= frameY - .02, `rear axle hangers reach the frame (${axle.max.y.toFixed(3)} vs ${frameY.toFixed(3)})`);
   assert.ok(axle.min.y <= hub, 'and the axle stays at the hubs');
-  let lowest = Infinity; for (const v of worldVertices(raised.getObjectByName('chassis'))) if (v.z > .55 && v.z < .8) lowest = Math.min(lowest, v.y);
+  let lowest = Infinity; for (const v of worldVertices(partsOf(raised).frame)) if (v.z > .55 && v.z < .8) lowest = Math.min(lowest, v.y);
   assert.ok(lowest <= hub + .06, `front stub axles come down to the hubs (${lowest.toFixed(3)})`);
 });
 
@@ -244,4 +246,47 @@ test('building a kart twice gives exactly the same model (no hidden randomness o
     assert.equal(count(a), count(b));
     assert.deepEqual(boxOf(a).min.toArray(), boxOf(b).min.toArray()); assert.deepEqual(boxOf(a).max.toArray(), boxOf(b).max.toArray());
   }
+});
+
+// --- Every car part is its own part -----------------------------------------
+
+const BUILDERS = {gokart: GOKART_BUILDERS, gt: GT_BUILDERS, f1: F1_BUILDERS};
+
+test('every car part is its own named group, and nothing is left outside a part', () => {
+  for (const kart of KARTS) {
+    const model = built[kart.mode], parts = partsOf(model), list = {...kart.chassis, ...kart.design};
+    assert.deepEqual(Object.keys(parts).sort(), Object.keys(list).sort(), `${kart.label} parts`);
+    for (const [slot, style] of Object.entries(list)) {
+      assert.equal(parts[slot].userData.style, style); assert.equal(parts[slot].userData.kind, SLOTS[slot].group);
+    }
+    let loose = 0;
+    model.traverse(o => { if (!o.isMesh) return; let p = o.parent; while (p && !p.name.startsWith('part:')) p = p.parent; if (!p) loose++; });
+    assert.equal(loose, 0, `${kart.label} has pieces outside a part`);
+    assert.deepEqual(model.userData.parts, list);
+  }
+});
+
+test('every listed part has its own builder, and every builder belongs to a known part', () => {
+  for (const kart of KARTS) {
+    for (const style of Object.values({...kart.chassis, ...kart.design})) assert.equal(typeof BUILDERS[kart.mode][style], 'function', `${kart.label}: ${style}`);
+    for (const style of Object.keys(BUILDERS[kart.mode])) assert.ok(CHASSIS_STYLES[style] || Object.values(STYLES).some(slot => slot[style]), `${style} is not a known part style`);
+  }
+});
+
+test('each part builds on its own, and a kart still builds with a body part left out', () => {
+  for (const kart of KARTS) {
+    for (const slot of Object.keys(kart.design)) {
+      const {[slot]: _, ...rest} = kart.design;
+      const model = assembleKart({...kart, design: rest}, undefined, BUILDERS[kart.mode]), parts = partsOf(model);
+      assert.equal(parts[slot], undefined, `${kart.label} without its ${slot}`);
+      assert.equal(Object.keys(parts).length, Object.keys(kart.chassis).length + Object.keys(rest).length);
+    }
+  }
+});
+
+test('a part whose builder is missing or broken is named in the error', () => {
+  const {['f1-mirrors']: _, ...noMirrors} = F1_BUILDERS;
+  assert.throws(() => assembleKart(F1_GOKART, undefined, noMirrors), /no builder for the mirrors part "f1-mirrors"/);
+  assert.throws(() => assembleKart(F1_GOKART, undefined, {...F1_BUILDERS, 'f1-mirrors': () => ({space: 'moon', parts: []})}), /mirrors builder "f1-mirrors" returned nothing usable/);
+  assert.throws(() => assembleKart({...F1_GOKART, chassis: {...F1_GOKART.chassis, mirrors: 'gt-roll-bar'}}, undefined, F1_BUILDERS), /is a rollHoop, not a mirrors/);
 });

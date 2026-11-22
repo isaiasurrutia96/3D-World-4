@@ -5,6 +5,21 @@ A fresh set of three karts (owner, 22 Nov 2026): GoKart (small), GT GoKart
 (medium) and F1 GoKart (large), all close in size, sized around the avatar.
 The old test kart is only for driving tests and is not part of this set.
 
+## A0. Every car part is its own part
+
+1. Each kart's data lists all its parts: `chassis` (frame, floor, seat,
+   steering wheel, wheels, suspension, axles, roll bar, mirrors, engine
+   cover) and `design` (nose, hood, bumpers, side panels, arches, wings).
+   Every entry is a slot and a style id.
+2. Each style id has its own small builder in the kart's model file
+   (`GOKART_BUILDERS`, `GT_BUILDERS`, `F1_BUILDERS`). `assembleKart` builds
+   each part into its own group named `part:<slot>`; nothing is left outside
+   a part, and a kart still builds with a body part left out.
+3. To replace a part later: add a style (to `STYLES` or `CHASSIS_STYLES`),
+   give it a builder, and list it for that slot. The checks name any part
+   whose builder is missing or broken.
+4. The Karts page's "Look at one part" list shows any part on its own.
+
 ## A. How parts snap on
 
 1. **Mounts.** Each kart has the points where a kind of part bolts on: a
@@ -58,10 +73,10 @@ The old test kart is only for driving tests and is not part of this set.
 ## D. Files and checks
 
 1. `spec.js`: data and checks (no three.js). `shapes.js`: shape methods.
-   `kart-model.js`: shared pieces (wheels, suspension, seats, steering,
-   driver dummy). `gokart-kart.js`, `gt-kart.js`, `f1-kart.js`: the models;
+   `kart-model.js`: the assembler and shared pieces (wheels, suspension,
+   seats, steering, driver dummy). `gokart-kart.js`, `gt-kart.js`, `f1-kart.js`: the models;
    `models.js`: `buildKart(kart)`. `build.js`: part boxes and driver zone.
-2. `npm run test:karts`: 51 checks (`check.mjs`, `models-check.mjs`).
+2. `npm run test:karts`: 55 checks (`check.mjs`, `models-check.mjs`).
 3. After building: `node kart-parts/browser.mjs` (page at three sizes and
    inside the Test Lab, including the copied side panel).
 4. Page: `karts/` (Test Lab section "Karts"), built by `npm run build:karts`.

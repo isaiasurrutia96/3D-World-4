@@ -46,6 +46,11 @@ try {
     const after = await page.evaluate(() => ({at: kartLab.current.outlines.getObjectByName('slot:wing').position.toArray(), style: kartLab.choices.wing, shown: kartLab.current.outlines.visible}));
     assert.equal(after.style, 'tall-wing'); assert.ok(after.shown, 'part boxes shown');
     assert.ok(after.at[2] < before[2] && after.at[1] > before[1], 'extended wing sits further back and higher');
+    // Each part is its own piece: look at one part alone, then the whole kart again.
+    await page.getByRole('button', {name: 'Frame', exact: true}).click();
+    assert.deepEqual(await page.evaluate(() => Object.entries(kartLab.current.model.userData.parts).filter(([slot]) => kartLab.current.model.getObjectByName('part:' + slot).visible).map(([slot]) => slot)), ['frame']);
+    await page.getByRole('button', {name: 'Frame', exact: true}).click();
+    assert.equal(await page.evaluate(() => kartLab.getIsolated()), null);
     await page.getByRole('button', {name: 'Fenders (optional)'}).click();
     assert.match(await page.locator('#note').textContent(), /^Fenders:/);
     for (const name of ['Front', 'Side', 'Back', 'Top', 'Angled']) {

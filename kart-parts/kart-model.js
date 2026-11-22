@@ -2,19 +2,23 @@
 // F1 GoKart): materials, part groups, wheels in each kart's rim style,
 // double-wishbone suspension, seats and steering wheels placed from the
 // seated driver's real pose, and a grey driver dummy built from the avatar's
-// body sizes (to judge scale). Every model follows the same layout:
+// body sizes (to judge scale).
+//
+// Every car part is its own part: a small builder function in the kart's
+// model file, named by its style id (for example 'f1-roll-hoop'). The kart's
+// data lists its parts (`chassis` and `design` in spec.js) and assembleKart
+// builds each one into its own group named `part:<slot>`. Replacing a part
+// later means listing another style for that slot and giving it a builder.
+// Every model follows the same layout:
 //   root
 //   ├─ body (raised by the off-road set-up)
-//   │   ├─ design space (scaled by kart.scale; holds the lofted bodywork,
-//   │   │   built in the design units measured from the approved pictures)
-//   │   │   ├─ chassis
-//   │   │   └─ part:<slot> (one group per swappable body part)
-//   │   └─ cockpit (seat and steering wheel, in real metres)
-//   ├─ wheels (real metres, always on the ground)
-//   └─ suspension (real metres, joins the body to the wheels)
+//   │   ├─ design space (scaled by kart.scale; parts built in the design units
+//   │   │   measured from the approved pictures): frame, floor, body parts...
+//   │   └─ cockpit (real metres): seat, steering wheel
+//   └─ parts on the ground (real metres): wheels, suspension, axles
 import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
-import {STOCK, AVATAR, wheelsOf, driverPose, checkKart, setupProblems} from './spec.js';
+import {STOCK, AVATAR, SLOTS, wheelsOf, driverPose, steeringPoint, checkKart, setupProblems} from './spec.js';
 import {tube, curvedTube, paint, merge} from './shapes.js';
 
 /** Surface finish, easy to tune: paint is slightly glossy, rubber is matte. */
@@ -46,19 +50,43 @@ export function roundedBlock(centre, size, radius, color, segments = 2) {
   g.translate(...centre); return paint(g, color);
 }
 
-/** The skeleton of a model (see the layout at the top of this file). The
- *  kart's data and the set-up are checked first: a wrongly tuned number stops
- *  the build with a clear message instead of making a broken kart. */
-export function modelSkeleton(kart, setup = STOCK) {
+/** Everything a part builder needs about the kart it is building for. */
+function partContext(kart, setup) {
+  const pose = driverPose(kart), k = kart.scale;
+  return {kart, setup, k, lift: setup.rideHeight ?? 0, materials: kartMaterials(), pose, wheels: wheelsOf(kart, setup),
+    grip: steeringPoint(kart),// where the hands hold the wheel (real metres, stock pose)
+    head: {top: (pose.head[1] + AVATAR.headRadius)/k, back: (pose.head[2] - AVATAR.headRadius)/k}};// in design units
+}
+
+/** Builds a kart from its parts list. `builders` maps style ids to part
+ *  builders: (context) => {space: 'design' | 'cockpit' | 'ground', parts:
+ *  [three.js objects]}. The kart's data and the set-up are checked first: a
+ *  wrongly tuned number stops the build with a clear message. */
+export function assembleKart(kart, setup = STOCK, builders) {
   const problems = [...checkKart(kart, {...STOCK, ...setup}), ...setupProblems(setup)];
   if (problems.length) throw new Error(`Cannot build ${kart.label ?? 'kart'}: ${problems.join('; ')}`);
   const root = new T.Group(); root.name = `${kart.id} model`;
   const body = new T.Group(); body.name = 'body'; body.position.y = setup.rideHeight ?? 0; root.add(body);
   const design = new T.Group(); design.name = 'design space'; design.scale.setScalar(kart.scale); body.add(design);
   const cockpit = new T.Group(); cockpit.name = 'cockpit'; body.add(cockpit);
-  const wheels = new T.Group(); wheels.name = 'wheels'; root.add(wheels);
-  root.userData = {kartId: kart.id, mode: kart.mode};
-  return {root, body, design, cockpit, wheels};
+  const spaces = {design, cockpit, ground: root}, ctx = partContext(kart, setup), list = {...kart.chassis, ...kart.design};
+  for (const [slot, styleId] of Object.entries(list)) {
+    const build = builders[styleId];
+    if (!build) throw new Error(`${kart.label}: no builder for the ${slot} part "${styleId}"`);
+    const made = build(ctx);
+    if (!spaces[made?.space] || !made.parts?.length) throw new Error(`${kart.label}: the ${slot} builder "${styleId}" returned nothing usable`);
+    const group = partGroup(slot, styleId, made.parts); group.userData.kind = SLOTS[slot].group;
+    spaces[made.space].add(group);
+  }
+  root.userData = {kartId: kart.id, mode: kart.mode, steering: ctx.grip, parts: list};
+  return root;
+}
+
+/** Every part group of a built kart, by slot. */
+export function partsOf(model) {
+  const found = {};
+  model.traverse(o => { if (o.name.startsWith('part:')) found[o.userData.slot] = o; });
+  return found;
 }
 
 /** Rim styles of the three approved designs. */
@@ -88,9 +116,11 @@ export function buildWheel(w, rimStyle, materials) {
   return g;
 }
 
-/** All four wheels of a kart. */
-export function addWheels(group, kart, setup, rimStyle, materials) {
-  for (const w of wheelsOf(kart, setup)) group.add(buildWheel(w, rimStyle, materials));
+/** All four wheels of a kart, in one group named 'wheels'. */
+export function wheelSet(ctx, rimStyle) {
+  const group = new T.Group(); group.name = 'wheels';
+  for (const w of ctx.wheels) group.add(buildWheel(w, rimStyle, ctx.materials));
+  return group;
 }
 
 /** Double-wishbone suspension for one wheel (real metres): upper and lower
@@ -121,12 +151,6 @@ export function seat(kart, color, trim) {
     parts.push(curvedTube([[-.28, top.y - .25, top.z + .1], [-.27, top.y, top.z], [0, top.y + .03, top.z - .01], [.27, top.y, top.z], [.28, top.y - .25, top.z + .1]], .018, trim));
   }
   return parts;
-}
-
-/** Where the hands hold the wheel: in front of the shoulders, within reach. */
-export function steeringPoint(kart, reachForward, height) {
-  const {shoulder} = driverPose(kart);
-  return [0, shoulder[1] + height, shoulder[2] + reachForward];
 }
 
 /** A round steering wheel facing the driver, with spokes and a column. */

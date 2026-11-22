@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import {SLOTS, UPGRADES, STYLES, KARTS, GOKART, GT_GOKART, F1_GOKART, LIMITS, STOCK, MAX_OFFROAD, AVATAR,
+import {SLOTS, UPGRADES, STYLES, KARTS, GOKART, GT_GOKART, F1_GOKART, STOCK, MAX_OFFROAD, AVATAR,
   stylesFor, defaultChoices, wheelsOf, placePart, fitProblems, layoutKart, checkKart, setupProblems, driverZones, driverPose, overlaps, hitsWheel} from './spec.js';
 import {buildOutlines, buildDriverZone, countTriangles} from './build.js';
 import {CENTRE, SIDE} from '../motion-core/skeleton/bones.js';
