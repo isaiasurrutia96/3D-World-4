@@ -312,8 +312,9 @@ export const BALL_SIZE={shoulder:1.1,neck:1.1,wrist:.9,ankle:.9,hip:1.1};
  * 4.6 cm wider across the balls), and the thigh keeps its width.
  */
 export const HIP_BALL_GROW=1.1;
-/** The new socket style tried on the knees first (template; owner, 22 November 2026). */
-export const KNEE_CUPS=true;
+/** The new socket style tried on the knees first (template; owner, 22 November 2026). Off: the owner turned the
+ * round cups down ("No not round cups"), so the thigh and calf keep their own ends. */
+export const KNEE_CUPS=false;
 /**
  * Hips (owner, 22 November 2026: hip balls "slightly bigger and closer together", the thigh's top "a little bit
  * wider"): hip balls 10% bigger (BALL_SIZE.hip); the gap between their inner edges Our avatar's divided by the
@@ -398,6 +399,15 @@ export function sinkIntoTorso(shape,clear,radius,dir,depth){
  return at(lo);
 }
 export function pressedPreviewBody(bodyId='boy',press=PREVIEW_PRESS){return separatedOriginalBody(bodyId,{press});}
+// Only the upper arms, forearms, thighs and calves (owner, 22 November 2026: "take away every part minus the upper
+// arm, forearm, thighs and calves"): the put-together avatar is built as before and everything else is left out,
+// so each limb keeps exactly its place and shape (the limbs' places are worked out from the torso and the balls).
+export const LIMBS_ONLY=['upper-arm','forearm','thigh','calf'];
+export function limbsOnlyBody(bodyId='boy'){
+ const whole=pressedPreviewBody(bodyId),parts=whole.parts.filter(p=>LIMBS_ONLY.includes(p.name));
+ let lo=Infinity,hi=-Infinity;for(const p of parts)for(let i=1;i<p.positions.length;i+=3){lo=Math.min(lo,p.positions[i]);hi=Math.max(hi,p.positions[i]);}
+ return {body:bodyId,parts,height:hi-lo,lowest:lo,whole};
+}
 
 /**
  * Rounds out every edge and rim near sockets (owner, 22 November 2026: no sharp edges, only smooth soft rims): the

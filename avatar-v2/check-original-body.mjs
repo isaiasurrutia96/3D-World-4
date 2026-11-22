@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,HIP_BALL_GROW,straightLowerSides,LOWER_SIDES_FROM,LOWER_SIDES_BLEND,cupLimbEnd,KNEE_CUPS,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,HIP_BALL_GROW,straightLowerSides,LOWER_SIDES_FROM,LOWER_SIDES_BLEND,cupLimbEnd,KNEE_CUPS,limbsOnlyBody,LIMBS_ONLY,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
@@ -216,33 +216,25 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
   const plain=pv.whole.torsoShape?pv.whole.parts.find(p=>p.name==='torso').positions:null;let inside=0;for(let i=0;i<plain.length;i+=3)for(const c of [C,Cr])if(Math.hypot(plain[i]-c[0],plain[i+1]-c[1],plain[i+2]-c[2])<R)inside++;
   assert(inside>0,'the torso before its sockets did not reach the gap');
   return out.join('; ')+`; thighs' tops unchanged in shape; without the sockets ${inside} torso points would be inside the gap`;});
- check('put together: the knees in the new socket style (the template): the thigh and the calf end in cups round the knee ball, each catching a third of it, with a rolled round rim and the side flush with the ball',()=>{
-  assert(KNEE_CUPS);const pv=pressedPreviewBody('boy'),pg=(n,s='left')=>pv.parts.find(p=>p.name===n&&p.side===s),K=pg('ball-knee'),r=K.radius,R=r+SOCKET_GAP,out=[];
-  for(const [name,end] of [['thigh','bottom'],['calf','top']]){
-   const part=pg(name),P=part.positions,I=part.index,cup=part.cup;assert.equal(cup.end,end);
-   // Nothing inside the gap: every point at least R from the ball's centre, every triangle's middle within 1 mm of it.
-   let near=Infinity,mid=Infinity;for(let i=0;i<P.length;i+=3)near=Math.min(near,Math.hypot(P[i]-K.centre[0],P[i+1]-K.centre[1],P[i+2]-K.centre[2]));
-   for(let t=0;t<I.length;t+=3){const m=[0,1,2].map(k=>(P[3*I[t]+k]+P[3*I[t+1]+k]+P[3*I[t+2]+k])/3);mid=Math.min(mid,Math.hypot(m[0]-K.centre[0],m[1]-K.centre[1],m[2]-K.centre[2]));}
-   assert(near>=R-1e-9,`${name}: inside the gap by ${((R-near)*1000).toFixed(2)} mm`);assert(mid>=R-.001,`${name}: a triangle ${((R-mid)*1000).toFixed(2)} mm inside the gap`);
-   // How deep it catches the ball: from the cup's rim (where the cup leaves the ball's sphere) to the ball's far side.
-   // (Heights measured from the ball's centre into the limb: against the limb's line for its bottom end.)
-   const L=limbLine(P,part.axis),toward=end==='bottom'?-1:1;let rimH=Infinity;
-   for(let i=0;i<P.length;i+=3){const v=[0,1,2].map(k=>P[i+k]-K.centre[k]),q=Math.hypot(...v);if(Math.abs(q-R)>1e-6)continue;const h=toward*(v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2]);rimH=Math.min(rimH,h);}
-   const caught=r-rimH;assert(Math.abs(caught-2*r/3)<.001,`${name} catches ${(caught*100).toFixed(2)} cm, wanted ${(2*r/3*100).toFixed(2)}`);
-   // Sealed, facing out, and smooth everywhere near the knee (the rim is a round curve, no edge).
-   const e=new Map(),fn=t=>{const q=k=>[P[3*I[t+k]],P[3*I[t+k]+1],P[3*I[t+k]+2]],a=q(0),u=q(1).map((v,j)=>v-a[j]),w=q(2).map((v,j)=>v-a[j]);return [u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];};
-   let vol=0;for(let t=0;t<I.length;t+=3){const n=fn(t);vol+=(P[3*I[t]]*n[0]+P[3*I[t]+1]*n[1]+P[3*I[t]+2]*n[2])/6;for(let k=0;k<3;k++){const a=I[t+k],c=I[t+(k+1)%3],key=a<c?a+','+c:c+','+a;(e.get(key)??e.set(key,[]).get(key)).push(t);}}
-   assert([...e.values()].every(ts=>ts.length===2),`${name}: not sealed`);assert(vol>0,`${name}: faces in`);
-   let worst=0;for(const [key,ts] of e){const x=+key.split(',')[0];if(Math.hypot(P[3*x]-K.centre[0],P[3*x+1]-K.centre[1],P[3*x+2]-K.centre[2])>.2)continue;const a=fn(ts[0]),c=fn(ts[1]),la=Math.hypot(...a),lc=Math.hypot(...c);if(!la||!lc)continue;worst=Math.max(worst,Math.acos(Math.max(-1,Math.min(1,(a[0]*c[0]+a[1]*c[1]+a[2]*c[2])/(la*lc))))*180/Math.PI);}
-   assert(worst<30,`${name}: a ${worst.toFixed(0)}° turn by the knee`);
-   // Flush: the straight side just past the rim (its first 3 cm) is the stated width.
-   let side=0;for(let i=0;i<P.length;i+=3){const v=[0,1,2].map(k=>P[i+k]-K.centre[k]),sv=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2],h=toward*sv;if(h>=(cup.R+cup.bead)*Math.cos(cup.angle)-1e-6&&h<=(cup.R+cup.bead)*Math.cos(cup.angle)+.03+1e-6)side=Math.max(side,Math.hypot(...v.map((x,k)=>x-L.dir[k]*sv)));}
-   assert(Math.abs(side-cup.wall)<.001,`${name}: side ${(side*100).toFixed(2)} cm, wanted ${(cup.wall*100).toFixed(2)}`);
-   out.push(`${name}: catches ${(caught*100).toFixed(1)} cm, rim ${(cup.bead*1000).toFixed(0)} mm round, side ${(side*200).toFixed(1)} cm across (ball ${(r*200).toFixed(1)}), sharpest turn ${worst.toFixed(0)}°`);}
-  // Test of the test: the calf without its cup, at the same place, does reach into the gap.
-  const plain=sg('calf','left'),Lp=limbLine(plain.positions,plain.axis),Lc=limbLine(pg('calf').positions,pg('calf').axis),tipTo=[0,1,2].map(k=>K.centre[k]+Lp.dir[k]*(1-PREVIEW_PRESS)*r-(Lp.centre[k]+Lp.dir[k]*Lp.start));
-  let inside=0;for(let i=0;i<plain.positions.length;i+=3)if(Math.hypot(...[0,1,2].map(k=>plain.positions[i+k]+tipTo[k]-K.centre[k]))<R)inside++;assert(inside>0,'the plain calf did not reach the gap');
-  return out.join('; ')+`; without its cup ${inside} calf points would be inside the gap`;});
+ check('put together: no knee cups (the owner turned the round cups down): the thigh and the calf keep their own shapes, only moved into place',()=>{
+  assert.equal(KNEE_CUPS,false);const pv=pressedPreviewBody('boy'),pg=(n,s='left')=>pv.parts.find(p=>p.name===n&&p.side===s);
+  // How far a piece is from being the other one only moved: the same points, all shifted by one and the same amount.
+  const shiftOnly=(a,c)=>{if(a.positions.length!==c.positions.length)return Infinity;const d=[0,1,2].map(k=>a.positions[k]-c.positions[k]);let worst=0;for(let i=0;i<a.positions.length;i++)worst=Math.max(worst,Math.abs(a.positions[i]-c.positions[i]-d[i%3]));return worst;};
+  const out=[];for(const n of ['thigh','calf']){const off=shiftOnly(pg(n),sg(n));assert(off<1e-9,`${n}: its shape changed by ${(off*1000).toFixed(3)} mm`);assert(!pg(n).cup,`${n} has a cup`);out.push(`${n}: same shape, only moved`);}
+  // Test of the test: a calf with a cup on it is caught.
+  const cupped=cupLimbEnd(pg('calf'),pg('ball-knee'),{end:'top'});assert(shiftOnly(cupped,sg('calf'))>.001,'a cupped calf passed');
+  return out.join('; ')+'; a calf with a cup is caught';});
+ check('put together, limbs only (owner: "take away every part minus the upper arm, forearm, thighs and calves"): exactly the eight limb pieces, each identical to the put-together avatar\'s, point for point',()=>{
+  const pv=pressedPreviewBody('boy'),lo=limbsOnlyBody('boy'),want=LIMBS_ONLY.flatMap(n=>[n+'.left',n+'.right']).sort(),names=body=>body.parts.map(p=>p.name+'.'+p.side).sort();
+  assert.deepEqual(LIMBS_ONLY,['upper-arm','forearm','thigh','calf']);assert.deepEqual(names(lo),want);
+  const same=(a,c)=>a.positions.length===c.positions.length&&a.index.length===c.index.length&&Array.from(a.positions).every((v,i)=>v===c.positions[i])&&Array.from(a.index).every((v,i)=>v===c.index[i]);
+  const twin=p=>pv.parts.find(q=>q.name===p.name&&q.side===p.side);for(const p of lo.parts)assert(same(p,twin(p)),`${p.name}.${p.side} changed`);
+  let low=Infinity,high=-Infinity;for(const p of lo.parts)for(let i=1;i<p.positions.length;i+=3){low=Math.min(low,p.positions[i]);high=Math.max(high,p.positions[i]);}
+  assert(Math.abs(lo.height-(high-low))<1e-12&&lo.lowest===low,'height reported wrongly');
+  // Tests of the test: the whole avatar is not "limbs only", and a limb with one point moved by 0.1 mm is caught.
+  assert.notDeepEqual(names(pv),want,'the whole avatar passed as limbs only');
+  const t=lo.parts[0],moved={...t,positions:Array.from(t.positions)};moved.positions[0]+=1e-4;assert(!same(moved,twin(t)),'a moved point was not caught');
+  return `${lo.parts.length} pieces (${want.join(', ')}), every point identical; ${(lo.height*100).toFixed(1)} cm from the bottom of the calves to the top of the upper arms; the whole avatar (${pv.parts.length} pieces) and a limb with one point moved 0.1 mm are both caught`;});
  check(`put together: the torso's hip socket rims are rounded out (no sharp edges): on the outer sides every bend by the sockets rounds over at least 12 mm, and only the rims change`,()=>{
   const pv=pressedPreviewBody('boy'),{centre:C,radius:r,R,soft}=pv.hipSocket,Cr=[-C[0],C[1],C[2]],base=pv.whole.parts.find(p=>p.name==='torso');
   // Tightest rounding by the sockets on their outer sides: each edge's length over the angle its two triangles bend by.
