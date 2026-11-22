@@ -62,7 +62,7 @@ const scale=(a,s)=>[a[0]*s,a[1]*s,a[2]*s],length=a=>Math.hypot(...a),unit=a=>sca
 const mirror=p=>[-p[0],p[1],p[2]];
 
 /** Moves a ball out along `direction` until it clears the torso by `gap` (default: the limb gap). */
-function pushClear(shape,centre,radius,direction,gap=BALL_GAP){
+export function pushClear(shape,centre,radius,direction,gap=BALL_GAP){
  const probes=Array.from({length:400},(_,i)=>{const y=1-2*(i+.5)/400,r=Math.sqrt(1-y*y),a=i*Math.PI*(3-Math.sqrt(5));return [Math.cos(a)*r,y,Math.sin(a)*r];});
  for(let d=0;d<=.3;d+=.0005){
   const c=add(centre,scale(direction,d));
