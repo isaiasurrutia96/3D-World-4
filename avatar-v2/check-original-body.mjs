@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE} from './original-body.js';
+import {originalLimbBody,limbLine,stretchLimb,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_LIMB_LENGTHEN,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import {HAND_FEET_SOURCE,CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS} from './hands-feet.js';
 import {buildHeadSet,CHOSEN_NECK} from './head-options.js';
 import {makeTorsoOption,CHOSEN_TORSO} from './torso-variants.js';
@@ -28,10 +28,28 @@ check('the original pieces come from the original avatar (Avatar Checkpoint 1, f
  assert.equal(src.source.checkpoint,'avatar-approved-2026-11-17');assert.equal(src.source.viewer,'avatar/index.html');assert.match(src.source.from,/3D-WORLD-3/);
  assert(Math.abs(src.source.offset[0])<1e-6&&Math.abs(src.source.offset[1]-.9891)<1e-3&&Math.abs(src.source.offset[2]-.043)<1e-3);
  return `offset ${src.source.offset.map(v=>(v*100).toFixed(2)).join(', ')} cm (checked on every point of the upper arm)`;});
-check('the original neck and limbs are exactly as copied (not moved, not reshaped)',()=>{
- assert.deepEqual(g('neck','centre').positions,src.parts.neck.positions);
- for(const s of ['left','right'])for(const n of ['upper-arm','forearm','thigh','calf'])assert.deepEqual(g(n,s).positions,src.parts[s][n].positions,n+' '+s);
- return 'neck, upper arms, forearms, thighs, calves unchanged';});
+check('the original neck is exactly as copied',()=>{assert.deepEqual(g('neck','centre').positions,src.parts.neck.positions);return 'unchanged';});
+// Each limb: its top end unchanged (after the chain's move), its bottom end moved rigidly by the extra length, only the middle stretched.
+const along=(p,L)=>(p[0]-L.centre[0])*L.dir[0]+(p[1]-L.centre[1])*L.dir[1]+(p[2]-L.centre[2])*L.dir[2];
+const thick=(pos,L,from,to)=>{let r=0;for(let i=0;i<pos.length;i+=3){const p=P(pos,i/3),s=along(p,L),t=(s-L.start)/L.length;if(t<from||t>to)continue;const side=[0,1,2].map(k=>p[k]-L.centre[k]-L.dir[k]*s);r=Math.max(r,Math.hypot(...side));}return r;};
+for(const [n,above] of [['upper-arm',null],['forearm','upper-arm'],['thigh',null],['calf','thigh']])check(`${n}: ${Math.round((ORIGINAL_LIMB_LENGTHEN-1)*100)}% longer, same thickness, ends unchanged in shape`,()=>{
+ const before=src.parts.left[n].positions,L0=limbLine(before),now=g(n,'left').positions;
+ const prior=above?b.stretched['left:'+above].shift:[0,0,0],base=before.map((x,i)=>x+prior[i%3]),L=limbLine(base),extra=(ORIGINAL_LIMB_LENGTHEN-1)*L.length;
+ // Length measured along the limb's line before stretching (the forearm's hand socket makes it lopsided, so a fresh fit would tilt slightly).
+ const span=pos=>{let lo=Infinity,hi=-Infinity;for(let i=0;i<pos.length;i+=3){const v=along(P(pos,i/3),L);lo=Math.min(lo,v);hi=Math.max(hi,v);}return hi-lo;};
+ assert(Math.abs(span(now)-ORIGINAL_LIMB_LENGTHEN*span(base))<1e-6,'length '+span(now)/span(base));
+ for(let i=0;i<base.length/3;i++){const p=P(base,i),t=(along(p,L)-L.start)/L.length,q=P(now,i);
+  if(t<=STRETCH_FROM)assert(dist(p,q)<1e-9,'top end moved');if(t>=STRETCH_TO)assert(Math.abs(dist(p,q)-extra)<1e-9,'bottom end not moved rigidly');}
+ // Thickness: the widest the limb gets around its line (these capsules have no points in the stretched middle, so measure the whole limb).
+ const t0=thick(base,L,0,1),t1=thick(now,L,-.1,1.2);assert(Math.abs(t0-t1)<1e-6,'thickness changed');
+ return `${(span(base)*100).toFixed(1)} → ${(span(now)*100).toFixed(1)} cm; thickness ${(t0*200).toFixed(1)} cm unchanged`;});
+check('test of the test: stretching a limb by zero changes nothing; by 10% moves its bottom end exactly that far',()=>{
+ const pos=src.parts.left.calf.positions,z=stretchLimb(pos,0);assert.deepEqual(z.positions,pos);const L=limbLine(pos),o=stretchLimb(pos,.1*L.length);
+ assert(Math.abs(Math.hypot(...o.shift)-.1*L.length)<1e-12);return 'checked';});
+check('the hands and feet follow the end of their lengthened arm and leg',()=>{
+ const arm=b.chainShift['left:forearm'],leg=b.chainShift['left:calf'],wrist=SIDE.find(x=>x.name==='hand').head,ankle=SIDE.find(x=>x.name==='foot').head;
+ assert(dist(g('hand','left').pivot,wrist.map((v,k)=>v+arm[k]))<1e-12);assert(dist(g('foot','left').pivot,ankle.map((v,k)=>v+leg[k]))<1e-12);
+ return `hand ${(Math.hypot(...arm)*100).toFixed(1)} cm lower, foot ${(Math.hypot(...leg)*100).toFixed(1)} cm lower`;});
 check('the forearms were simplified within the limit (shape change at most 0.4%); the others are whole',()=>{
  assert(src.source.forearmSimplifiedError<=.004);assert.equal(src.source.forearmOriginalTriangles,50944);
  return `forearm 50,944 → ${src.parts.left.forearm.index.length/3} triangles (${(src.source.forearmSimplifiedError*100).toFixed(2)}%)`;});
@@ -41,13 +59,12 @@ check('the head is the approved head (unchanged shape), centred where the origin
  const h=buildHeadSet(CHOSEN_NECK,makeTorsoOption(torsoBase.shape,CHOSEN_TORSO)).head,m=g('head','centre');
  assert(sameShape(m.positions,h.positions)<1e-9);const c=[0,0,0];for(let i=0;i<m.positions.length;i+=3)for(let k=0;k<3;k++)c[k]+=m.positions[i+k]/(m.positions.length/3);
  assert(dist(c,ORIGINAL_HEAD_CENTRE)<.01,'head off centre by '+dist(c,ORIGINAL_HEAD_CENTRE));return `centre within ${(dist(c,ORIGINAL_HEAD_CENTRE)*1000).toFixed(1)} mm of the original head's`;});
-check('the hands and feet are the approved ones, at the original wrists and ankles (the skeleton\'s joints), at their latest sizes',()=>{
+check('the hands and feet are the approved ones, scaled about their joints: hands 10% smaller again (owner), feet 3 inches longer than the head',()=>{
  assert.equal(CHOSEN_HAND_FOOT,HAND_FOOT_OPTIONS[1]);
- assert.deepEqual(g('hand','left').pivot,SIDE.find(x=>x.name==='hand').head);assert.deepEqual(g('foot','left').pivot,SIDE.find(x=>x.name==='foot').head);
- assert(Math.abs(b.handSize-1.08*LIMB_SCALE*HAND_SCALE)<1e-12);
+ assert.equal(ORIGINAL_HAND_SHRINK,.9);assert(Math.abs(b.handSize-1.08*LIMB_SCALE*HAND_SCALE*ORIGINAL_HAND_SHRINK)<1e-12);
  assert(sameShape(g('hand','left').positions,HAND_FEET_SOURCE.hand.positions,b.handSize)<1e-9,'hand reshaped');assert(sameShape(g('foot','left').positions,HAND_FEET_SOURCE.foot.positions,b.footSize)<1e-9,'foot reshaped');
  assert(Math.abs(b.footLength-(b.headHeight+FOOT_OVER_HEAD))<1e-12);
- return `hands ×${b.handSize.toFixed(3)} of the original, feet ${(b.footLength*100).toFixed(1)} cm long (3 inches longer than the head)`;});
+ return `hands ×${b.handSize.toFixed(3)} of the original hand, feet ${(b.footLength*100).toFixed(1)} cm long`;});
 check('every part faces outward (closed surfaces with positive volume)',()=>{for(const p of b.parts)assert(volume(p)>0,p.name+'.'+p.side+' faces inward');return 'all outward';});
 check('test of the test: a part turned inside out is caught',()=>{const p=g('thigh','left'),flip={...p,index:p.index.map((v,i,I)=>i%3===1?I[i+1]:i%3===2?I[i-1]:v)};assert(volume(flip)<0);return 'caught';});
 check('both sides match (the same size; the right a mirror image of the left, within 2 mm, as the original had them)',()=>{
@@ -55,7 +72,7 @@ check('both sides match (the same size; the right a mirror image of the left, wi
   const ca=[0,0,0],cc=[0,0,0];for(let i=0;i<a.positions.length;i+=3)for(let k=0;k<3;k++)ca[k]+=a.positions[i+k];for(let i=0;i<c.positions.length;i+=3)for(let k=0;k<3;k++)cc[k]+=c.positions[i+k];
   for(let k=0;k<3;k++){ca[k]/=a.positions.length/3;cc[k]/=c.positions.length/3;}assert(dist(ca,[-cc[0],cc[1],cc[2]])<.002,n+' not mirrored');}
  return 'mirrored';});
-check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm tall (soles ${(b.sole*100).toFixed(1)} cm above the original floor: the latest feet are a little smaller than the originals); ${b.parts.reduce((n,p)=>n+p.index.length/3,0).toLocaleString()} triangles`);
+check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm tall (the page stands him on the floor); ${b.parts.reduce((n,p)=>n+p.index.length/3,0).toLocaleString()} triangles`);
 console.table(results);
 const failed=results.filter(r=>r.result!=='PASS').length;
 console.log(failed?`FAIL: ${failed} check(s) failed.`:'PASS: the original limbs with the athletic torso, approved head, hands and feet check out.');
