@@ -419,6 +419,121 @@ export function torsoShoulderBalls(bodyId='boy',{pressed=pressedPreviewBody(body
  for(let i=0;i<T.length;i+=3)near=Math.min(near,Math.hypot(T[i]-b.centre[0],T[i+1]-b.centre[1],T[i+2]-b.centre[2]));
  return {body:bodyId,parts:[torso,...balls],torso,balls,clear:near-b.radius};
 }
+// Both shoulder balls pushed into the torso like a hard ball into clay (owner, 22 November 2026: "push the balls into
+// the torso, imagine the torso is clay and the ball is hard, let the ball naturally sculpt the socket ... dont try to
+// fix the socket or the lip, just let the ball shape it"). Each ball travels straight in along its push line (x),
+// from beside the torso (torsoShoulderBalls) to its put-together place, so the clay it passes through is cleared from
+// its path: the ball plus the usual 6 mm gap (SOCKET_GAP, so the ball never touches the clay) ahead of its centre,
+// and the tube it travelled along behind it. Each point of clay inside that path goes to the nearest point on the
+// path's edge (the standard way to push out clay a hard body has gone into: away from the ball's centre on the
+// ball, straight out from the travel line on the tube); nothing else moves. No soft edge, no layer over the ball,
+// no rounding of the rim, no lip shaping. (Pushing every point only along the travel line gives the same socket but
+// bunches the clay's points where the ball's side runs along the push, and they zig-zag and fold there.) Before the
+// push the torso gets the usual socket triangles (refineNear, SOCKET_EDGE 1.2 cm) near each ball, so the clay can
+// take the ball's round shape. Then (owner: "once you push the ball in pull it back out and leave it don't try to do
+// anything else") each ball is pulled straight back out along the same line to where it started, beside the torso
+// (torsoShoulderBalls), and the sockets are left exactly as the balls made them. `inBalls`: the balls where they were
+// pushed to; `balls`: pulled back out. `displaced`: the clay the two balls cleared (m^3); `moved`: points moved.
+export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId),cut=true}={}){
+ const torso=pressed.parts.find(p=>p.name==='torso'),balls=pressed.parts.filter(p=>p.name==='ball-shoulder');
+ const r=balls[0].radius,R=r+SOCKET_GAP,centres=balls.map(b=>b.centre),dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ const reach=R+6*SOCKET_EDGE,fade=6*SOCKET_EDGE;
+ const weight=m=>Math.max(...centres.map(c=>{const d=dist(m,c),f=Math.min(1,Math.max(0,(reach-d)/fade));return f>0?f*f*(3-2*f):(d<reach?1e-9:0);}));
+ const refined=refineNear(torso.normals?torso:{...torso,normals:pointNormals(torso)},centres[0],reach,SOCKET_EDGE,6,weight);
+ // Where each ball has been on its way in: below 0 inside its path (ahead of its centre, inside the ball plus the
+ // gap; behind its centre, inside the tube it travelled along), 0 on the edge of the path, above 0 outside.
+ const ways=centres.map(c=>{const d=-Math.sign(c[0]);return p=>{const u=d*(p[0]-c[0]),rho=Math.hypot(p[1]-c[1],p[2]-c[2]);return u>0?Math.hypot(u,rho)-R:rho-R;};});
+ // The clay's triangles are cut exactly along the edge of each ball's path (the standard first step when one shape
+ // cuts another: put the line where they meet into the mesh). Otherwise the rim follows the 1.2 cm triangles instead
+ // of the ball and comes out saw-toothed, which a ball pressed into clay never does.
+ let part=refined;if(cut)for(const phi of ways)part=cutAlong(part,phi);
+ const EPS=1e-9,inWay=p=>ways.findIndex(phi=>phi(p)<-EPS);
+ // Where a point of clay ends up: in a ball's path, at the nearest point of the path's edge (ahead of the centre, on
+ // the ball plus the gap; behind it, on the tube); anywhere else, where it is.
+ const pushOf=p=>{const b=inWay(p);if(b<0)return p;const c=centres[b],d=-Math.sign(c[0]),v=[p[0]-c[0],p[1]-c[1],p[2]-c[2]];
+  if(d*v[0]>0){const q=Math.hypot(...v);return [c[0]+v[0]*R/q,c[1]+v[1]*R/q,c[2]+v[2]*R/q];}
+  const rho=Math.hypot(v[1],v[2]);return [p[0],c[1]+v[1]*R/rho,c[2]+v[2]*R/rho];};
+ // Deep in the socket the push spreads the clay's 1.2 cm triangles over a much larger cup, and the rim triangles get
+ // stretched. As for the hip sockets, the stretched triangles in the socket are split again; here the split is made
+ // on the clay before the push (so the new points lie on the torso's own surface) and the new points are pushed like
+ // the rest.
+ if(cut)part=refineInWay(part,inWay,pushOf,SOCKET_EDGE,.0005,8);
+ const P=[...part.positions];let moved=0;
+ for(let i=0;i<P.length;i+=3){const q=pushOf([P[i],P[i+1],P[i+2]]);if(q[0]!==P[i]||q[1]!==P[i+1]||q[2]!==P[i+2]){P[i]=q[0];P[i+1]=q[1];P[i+2]=q[2];moved++;}}
+ // Shading: carried directions where the clay did not move, the new surface's directions where it did (blended over
+ // the first 5 mm of movement, as for the hip sockets).
+ const A=angleNormals({positions:P,index:part.index}),C=part.normals,N=new Array(P.length);
+ for(let i=0;i<P.length;i+=3){const Q=part.positions,m=Math.hypot(P[i]-Q[i],P[i+1]-Q[i+1],P[i+2]-Q[i+2]),x=Math.min(1,m/.005),t=x*x*(3-2*x);
+  const n=[0,1,2].map(k=>C[i+k]*(1-t)+A[i+k]*t),l=Math.hypot(...n)||1;for(let k=0;k<3;k++)N[i+k]=n[k]/l;}
+ const vol=(Q,I)=>{let v=0;for(let t=0;t<I.length;t+=3){const a=3*I[t],b=3*I[t+1],e=3*I[t+2];v+=(Q[a]*(Q[b+1]*Q[e+2]-Q[b+2]*Q[e+1])-Q[a+1]*(Q[b]*Q[e+2]-Q[b+2]*Q[e])+Q[a+2]*(Q[b]*Q[e+1]-Q[b+1]*Q[e]))/6;}return v;};
+ const pushed={...torso,positions:P,index:part.index,normals:N};
+ const out=apart.parts.filter(p=>p.name==='ball-shoulder');
+ return {body:bodyId,parts:[pushed,...out],torso:pushed,refined,before:part,ways,balls:out,inBalls:balls,R,moved,displaced:vol(part.positions,part.index)-vol(P,part.index)};
+}
+/**
+ * Splits, in rounds, the edges inside the balls' ways that the push would stretch past `maxEdge`, at their middles on
+ * the clay before the push (flat, so the torso's surface keeps its shape), until none is left or the edge before the
+ * push is shorter than `minEdge`. Only edges with both ends in a way or on its edge, and at least one strictly inside,
+ * are split: the clay outside, and the rim line itself, are never touched. Same split patterns and winding as
+ * refineNear; new points get the blend of their ends' carried directions.
+ */
+export function refineInWay(part,inWay,pushOf,maxEdge,minEdge,rounds){
+ let P=[...part.positions],I=[...part.index];const N=[...part.normals],key=(a,b)=>a<b?a+','+b:b+','+a,pt=i=>[P[3*i],P[3*i+1],P[3*i+2]];
+ const side=new Map(),sideOf=i=>{if(!side.has(i))side.set(i,inWay(pt(i))>=0);return side.get(i);};
+ for(let round=0;round<rounds;round++){
+  const split=new Map();
+  for(let t=0;t<I.length;t+=3){
+   // A triangle in a way: every corner in it or on its edge (the cut left no triangle across the edge).
+   if(![0,1,2].some(k=>sideOf(I[t+k])))continue;
+   for(let e=0;e<3;e++){
+    const a=I[t+e],b=I[t+(e+1)%3],k=key(a,b);if(split.has(k)||!(sideOf(a)||sideOf(b)))continue;
+    const A=pt(a),B=pt(b),pa=pushOf(A),pb=pushOf(B);
+    if(Math.hypot(pa[0]-pb[0],pa[1]-pb[1],pa[2]-pb[2])<=maxEdge||Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2])<minEdge)continue;
+    split.set(k,P.length/3);P.push((A[0]+B[0])/2,(A[1]+B[1])/2,(A[2]+B[2])/2);
+    const n=[0,1,2].map(j=>N[3*a+j]+N[3*b+j]),l=Math.hypot(...n)||1;N.push(n[0]/l,n[1]/l,n[2]/l);
+   }
+  }
+  if(!split.size)break;
+  const out=[];
+  for(let t=0;t<I.length;t+=3){
+   const v=[I[t],I[t+1],I[t+2]],m=[0,1,2].map(e=>split.get(key(v[e],v[(e+1)%3]))),n=m.filter(x=>x!==undefined).length;
+   if(n===0){out.push(...v);continue;}
+   if(n===3){out.push(v[0],m[0],m[2],m[0],v[1],m[1],m[2],m[1],v[2],m[0],m[1],m[2]);continue;}
+   const r=n===1?m.findIndex(x=>x!==undefined):[0,1,2].find(e=>m[e]!==undefined&&m[(e+1)%3]!==undefined);
+   const V=[0,1,2].map(k=>v[(k+r)%3]),M=[0,1,2].map(k=>m[(k+r)%3]);
+   if(n===1)out.push(V[0],M[0],V[2],M[0],V[1],V[2]);else out.push(V[1],M[1],M[0],V[0],M[0],M[1],V[0],M[1],V[2]);
+  }
+  I=out;
+ }
+ return {positions:P,index:I,normals:N};
+}
+/**
+ * Splits every edge that crosses `phi = 0` (phi(point) < 0 inside) at the exact crossing (bisection on the edge),
+ * so the mesh has a line of points exactly where it meets that boundary. Triangles are split with the same patterns
+ * as refineNear (same winding); the new points lie on the old flat triangles, so the surface does not change shape,
+ * and get the blend of their ends' carried directions. A point exactly on the boundary counts as outside.
+ */
+export function cutAlong(part,phi){
+ const P=[...part.positions],I=part.index,N=[...part.normals],pt=i=>[P[3*i],P[3*i+1],P[3*i+2]],split=new Map(),key=(a,b)=>a<b?a+','+b:b+','+a;
+ const inside=new Map(),isIn=i=>{if(!inside.has(i))inside.set(i,phi(pt(i))<0);return inside.get(i);};
+ for(let t=0;t<I.length;t+=3)for(let e=0;e<3;e++){
+  const a=I[t+e],b=I[t+(e+1)%3],k=key(a,b);if(split.has(k)||isIn(a)===isIn(b))continue;
+  const A=pt(a),B=pt(b),at=s=>A.map((v,j)=>v+s*(B[j]-v));let lo=0,hi=1;const inA=isIn(a);
+  for(let n=0;n<60;n++){const m=(lo+hi)/2;if((phi(at(m))<0)===inA)lo=m;else hi=m;}
+  const s=(lo+hi)/2;split.set(k,P.length/3);P.push(...at(s));
+  const n=[0,1,2].map(j=>N[3*a+j]*(1-s)+N[3*b+j]*s),l=Math.hypot(...n)||1;N.push(n[0]/l,n[1]/l,n[2]/l);
+ }
+ const out=[];
+ for(let t=0;t<I.length;t+=3){
+  const v=[I[t],I[t+1],I[t+2]],m=[0,1,2].map(e=>split.get(key(v[e],v[(e+1)%3]))),n=m.filter(x=>x!==undefined).length;
+  if(n===0){out.push(...v);continue;}
+  if(n===3){out.push(v[0],m[0],m[2],m[0],v[1],m[1],m[2],m[1],v[2],m[0],m[1],m[2]);continue;}
+  const r=n===1?m.findIndex(x=>x!==undefined):[0,1,2].find(e=>m[e]!==undefined&&m[(e+1)%3]!==undefined);
+  const V=[0,1,2].map(k=>v[(k+r)%3]),M=[0,1,2].map(k=>m[(k+r)%3]);
+  if(n===1)out.push(V[0],M[0],V[2],M[0],V[1],V[2]);else out.push(V[1],M[1],M[0],V[0],M[0],M[1],V[0],M[1],V[2]);
+ }
+ return {positions:P,index:out,normals:N};
+}
 
 /**
  * Rounds out every edge and rim near sockets (owner, 22 November 2026: no sharp edges, only smooth soft rims): the

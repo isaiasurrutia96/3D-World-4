@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,HIP_BALL_GROW,straightLowerSides,LOWER_SIDES_FROM,LOWER_SIDES_BLEND,cupLimbEnd,KNEE_CUPS,limbsOnlyBody,LIMBS_ONLY,torsoShoulderBalls,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,HIP_BALL_GROW,straightLowerSides,LOWER_SIDES_FROM,LOWER_SIDES_BLEND,cupLimbEnd,KNEE_CUPS,limbsOnlyBody,LIMBS_ONLY,torsoShoulderBalls,pushShoulderBalls,sinkIntoTorso,angleNormals,mouldSockets,HIP_SOCKET_SKIN,HIP_RIM_ROUNDS,HIP_RIM_BAND,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,nearOffset,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
@@ -253,6 +253,59 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
   const L=ts.balls.find(p=>p.side==='left').centre,R=ts.balls.find(p=>p.side==='right').centre;assert(Math.abs(L[0]+R[0])<1e-12&&L[1]===R[1]&&L[2]===R[2],'not mirrored');
   assert(Math.abs(ts.clear-space(ts.balls.find(p=>p.side==='left')))<1e-12,'clear reported wrongly');
   return `torso unchanged; balls ${(ts.balls[0].radius*200).toFixed(1)} cm, same height and depth; `+out.join('; ');});
+ check('shoulder balls pushed into the clay torso, then pulled back out (owner: "push the ball in and let it form the sockets naturally ... once you push the ball in pull it back out and leave it don\'t try to do anything else"): only the clay in each ball\'s path moved, onto the edge of the path; the balls back where they started; sealed',()=>{
+  const pv=pressedPreviewBody('boy'),ps=pushShoulderBalls('boy',pv,{apart:sep}),torso=pv.parts.find(p=>p.name==='torso'),T=torso.positions;
+  assert.deepEqual(ps.parts.map(p=>p.name+'.'+p.side).sort(),['ball-shoulder.left','ball-shoulder.right','torso.centre']);
+  // Pushed in to their put-together places, then pulled back out to where they started, beside the torso.
+  for(const b of ps.inBalls)assert(b===pv.parts.find(p=>p.name==='ball-shoulder'&&p.side===b.side),`${b.side}: not pushed to its put-together place`);
+  for(const b of ps.balls)assert(b===sep.parts.find(p=>p.name==='ball-shoulder'&&p.side===b.side),`${b.side}: not pulled back out to where it started`);
+  const r=ps.inBalls[0].radius,R=r+SOCKET_GAP;assert(Math.abs(ps.R-R)<1e-15);
+  // The triangles were only split (near the balls, exactly along each path's edge, then stretched ones in the paths):
+  // every point the torso had is still there, unchanged, before the push, and the splits did not change the surface.
+  const Q=ps.before.positions,P=ps.torso.positions,I=ps.torso.index;for(let i=0;i<T.length;i++)assert.equal(Q[i],T[i],'splitting moved an original point');
+  const volOf=(X,J)=>{let v=0;for(let t=0;t<J.length;t+=3){const a=3*J[t],b=3*J[t+1],e=3*J[t+2];v+=(X[a]*(X[b+1]*X[e+2]-X[b+2]*X[e+1])-X[a+1]*(X[b]*X[e+2]-X[b+2]*X[e])+X[a+2]*(X[b]*X[e+1]-X[b+1]*X[e]))/6;}return v;};
+  assert(Math.abs(volOf(Q,ps.before.index)-volOf(ps.refined.positions,ps.refined.index))<1e-10,'the splits changed the surface');
+  // Each ball's path: ahead of its centre the ball plus the gap, behind it the tube it travelled along (re-measured here).
+  const path=ps.inBalls.map(b=>{const c=b.centre,d=-Math.sign(c[0]);return {c,d,phi:p=>{const u=d*(p[0]-c[0]),rho=Math.hypot(p[1]-c[1],p[2]-c[2]);return u>0?Math.hypot(u,rho)-R:rho-R;},
+   nearest:p=>{const v=[p[0]-c[0],p[1]-c[1],p[2]-c[2]];if(d*v[0]>0){const q=Math.hypot(...v);return v.map((x,k)=>c[k]+x*R/q);}const rho=Math.hypot(v[1],v[2]);return [p[0],c[1]+v[1]*R/rho,c[2]+v[2]*R/rho];}};});
+  // Each point: untouched, or it was inside a ball's path and now sits at the nearest point of that path's edge.
+  let moved=0,stayed=0;const was=i=>P[3*i]!==Q[3*i]||P[3*i+1]!==Q[3*i+1]||P[3*i+2]!==Q[3*i+2];
+  for(let i=0;i<P.length;i+=3){
+   const q=[Q[i],Q[i+1],Q[i+2]];if(!was(i/3)){stayed++;assert(path.every(w=>w.phi(q)>=-1e-9),'clay left inside a path');continue;}
+   moved++;const w=path.find(w=>w.phi(q)<-1e-9);assert(w,'a point moved that was not in a ball\'s path');
+   const n=w.nearest(q);assert(Math.hypot(P[i]-n[0],P[i+1]-n[1],P[i+2]-n[2])<1e-12,'a pushed point is not at the nearest point of the path\'s edge');
+  }
+  assert.equal(moved,ps.moved);
+  // Where the balls were pushed to: every point at least R (ball plus gap) from each centre, and every triangle's
+  // middle at least half the gap (3 mm) from the ball itself (flat triangles across the round cup sag a little).
+  let near=Infinity,mid=Infinity;
+  for(const {c} of path){for(let i=0;i<P.length;i+=3)near=Math.min(near,Math.hypot(P[i]-c[0],P[i+1]-c[1],P[i+2]-c[2]));
+   for(let t=0;t<I.length;t+=3){const m=[0,1,2].map(k=>(P[3*I[t]+k]+P[3*I[t+1]+k]+P[3*I[t+2]+k])/3);mid=Math.min(mid,Math.hypot(m[0]-c[0],m[1]-c[1],m[2]-c[2]));}}
+  assert(near>=R-1e-9,`clay ${((R-near)*1000).toFixed(2)} mm inside the gap`);assert(mid-r>=SOCKET_GAP/2,`a triangle only ${((mid-r)*1000).toFixed(1)} mm from the ball`);
+  // Sealed, facing out, no flat triangles.
+  const fn=t=>{const q=k=>[P[3*I[t+k]],P[3*I[t+k]+1],P[3*I[t+k]+2]],a=q(0),u=q(1).map((v,j)=>v-a[j]),w=q(2).map((v,j)=>v-a[j]);return [u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];};
+  const e=new Map();let vol=0,flat=0;
+  for(let t=0;t<I.length;t+=3){const n=fn(t);if(Math.hypot(...n)<1e-14)flat++;vol+=(P[3*I[t]]*n[0]+P[3*I[t]+1]*n[1]+P[3*I[t]+2]*n[2])/6;
+   for(let k=0;k<3;k++){const a=I[t+k],c=I[t+(k+1)%3],key=a<c?a+','+c:c+','+a;(e.get(key)??e.set(key,[]).get(key)).push(t);}}
+  assert([...e.values()].every(ts=>ts.length===2),'not sealed');assert(vol>0,'faces in');assert.equal(flat,0,'flat triangles');
+  // The rim follows each ball exactly: every untouched point next to a pushed one lies on the edge of a ball's path.
+  // Test of the test: without the cut, the rim zig-zags along the triangles, off the path's edge.
+  const rimOff=(X,Y,J,ways)=>{const mv=i=>X[3*i]!==Y[3*i]||X[3*i+1]!==Y[3*i+1]||X[3*i+2]!==Y[3*i+2],seen=new Set();let off=0;
+   for(let t=0;t<J.length;t+=3)for(let k=0;k<3;k++){const a=J[t+k],c=J[t+(k+1)%3];for(const [x,y] of [[a,c],[c,a]])if(!mv(x)&&mv(y)&&!seen.has(x)){seen.add(x);off=Math.max(off,Math.min(...ways.map(f=>Math.abs(f([X[3*x],X[3*x+1],X[3*x+2]])))));}}return off;};
+  const off=rimOff(P,Q,I,ps.ways);assert(off<1e-6,`a rim point ${(off*1000).toFixed(2)} mm off the ball's edge`);
+  const raw=pushShoulderBalls('boy',pv,{apart:sep,cut:false}),rawOff=rimOff(raw.torso.positions,raw.before.positions,raw.torso.index,raw.ways);assert(rawOff>.001,'without the cut the rim was already on the path\'s edge');
+  // Left as the balls made them (owner: don't try to do anything else), so measured and reported, not changed: the
+  // sharpest bend at the rims, and the small triangles that ended up facing away from the socket (where the ball's
+  // side meets the torso steeply, near the rims, and where the path cuts through the top of each shoulder's corner).
+  let rim=0,back=0,backArea=0;for(const ts of e.values()){if(!ts.some(t=>[0,1,2].some(k=>was(I[t+k]))))continue;const a=fn(ts[0]),c=fn(ts[1]);rim=Math.max(rim,Math.acos(Math.max(-1,Math.min(1,(a[0]*c[0]+a[1]*c[1]+a[2]*c[2])/(Math.hypot(...a)*Math.hypot(...c)))))*180/Math.PI);}
+  for(let t=0;t<I.length;t+=3){if(![0,1,2].every(k=>was(I[t+k])))continue;const m=[0,1,2].map(k=>(P[3*I[t]+k]+P[3*I[t+1]+k]+P[3*I[t+2]+k])/3),w=path.find(w=>Math.sign(w.c[0])===Math.sign(m[0])),n=fn(t);
+   const inward=w.d*(m[0]-w.c[0])>0?[w.c[0]-m[0],w.c[1]-m[1],w.c[2]-m[2]]:[0,w.c[1]-m[1],w.c[2]-m[2]];if(n[0]*inward[0]+n[1]*inward[1]+n[2]*inward[2]<=0){back++;backArea+=Math.hypot(...n)/2;}}
+  // Pulled out: each ball back beside the torso, at least the usual 2 cm from the clay.
+  let gap=Infinity;for(const b of ps.balls)for(let i=0;i<P.length;i+=3)gap=Math.min(gap,Math.hypot(P[i]-b.centre[0],P[i+1]-b.centre[1],P[i+2]-b.centre[2])-b.radius);
+  assert(gap>=SHOULDER_TORSO_GAP-.001,`a pulled-out ball only ${(gap*100).toFixed(2)} cm from the torso`);
+  // Test of the test: before the push, the torso had clay inside the paths (so the 'no clay left inside' check can fail).
+  let inside=0;for(let i=0;i<Q.length;i+=3)if(path.some(w=>w.phi([Q[i],Q[i+1],Q[i+2]])<-1e-9))inside++;assert(inside>0,'nothing was in the balls\' paths');
+  return `${moved} points pushed to the edge of the balls' paths, ${stayed} untouched; ${Math.round(ps.displaced/2*1e6)} cm³ of clay per ball; balls pulled back out, ${(gap*100).toFixed(1)} cm from the torso; rim exactly on each ball's edge (without the cut up to ${(rawOff*1000).toFixed(1)} mm off); left as made: sharpest bend ${rim.toFixed(0)}°, ${back} small triangles facing away from the socket (${(backArea*1e4).toFixed(1)} cm² in all); clay at least ${((mid-r)*1000).toFixed(1)} mm from where the balls were; ${(I.length/3).toLocaleString()} torso triangles; before the push ${inside} points were inside the paths`;});
  check(`put together: the torso's hip socket rims are rounded out (no sharp edges): on the outer sides every bend by the sockets rounds over at least 12 mm, and only the rims change`,()=>{
   const pv=pressedPreviewBody('boy'),{centre:C,radius:r,R,soft}=pv.hipSocket,Cr=[-C[0],C[1],C[2]],base=pv.whole.parts.find(p=>p.name==='torso');
   // Tightest rounding by the sockets on their outer sides: each edge's length over the angle its two triangles bend by.
