@@ -125,14 +125,17 @@ weapon parts, Codex builds how they work.
    kit.
 3. **Owner decision (22 November 2026): start with one model per class** to
    get the driving fundamentals right first. Later models are fine-tuned to
-   their own body shape. Starting models: S Kart style 11, GT style 3, F1
-   style 1 (`docs/karts/styles/`), unless the owner picks others. Three
-   styles per body part per model to start.
+   their own body shape. The initial references were S Kart style 11, GT
+   style 3, and F1 style 1 (`docs/karts/styles/`). Start with three styles
+   per body part for each selected stock model.
 4. On 22 November 2026, the owner selected **S Kart option 01, Wraparound
    Bumper (style 11)**, as the stock body. [S Kart stock lineup](styles/s-kart-stock-lineup-review.png)
-5. The GT stock-body review has twelve numbered concepts. Option 01 is the
-   existing style 3, and option 05 draws on the 2026 Porsche 911 GT3 R.
+5. On 22 November 2026, the owner selected **GT option 05, GT3 R-inspired**,
+   as the stock body. The concept takes its cues from the 2026 Porsche 911 GT3 R.
    [GT Kart stock lineup](styles/gt-kart-stock-lineup-review.png) ·
    [Porsche Motorsport reference](https://racing.porsche.com/en-US/cars/911-gt3-r-2026)
-6. More models can be added later without changing anything already built,
+6. The F1 stock-body review has twelve numbered concepts on the current
+   prototype proportions. Option 01 is Classic Formula, based on style 1.
+   [F1 Kart stock lineup](styles/f1-kart-stock-lineup-review.png)
+7. More models can be added later without changing anything already built,
    because they use the same class base.
