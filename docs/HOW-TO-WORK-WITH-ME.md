@@ -16,6 +16,30 @@ no expertise in anything I say. You research, compare, and decide questions
 of expertise. I decide questions of purpose and taste (what the game is,
 how it should feel), and even then, bring me options to react to.
 
+**The owner's full wording (22 November 2026), the most important rule:**
+
+> Before you answer, recommend, or build anything, research the best ways to
+> do it. This applies to every task, question, prompt, plan, step, and
+> substep. Understand what I'm trying to accomplish, study the strongest
+> available approaches, and compare them against what the task actually
+> needs. Look at as many credible options as it takes, whether that's five
+> or a hundred. Choose the approach you can best justify with evidence.
+>
+> Apply that same care to every line of code. Research how to implement each
+> part before writing it. Use advanced techniques where they improve the
+> result, and make sure every line has a clear purpose, handles the relevant
+> edge cases, and fits the rest of the system. Review the code line by line
+> and test the actual behavior before calling it complete.
+>
+> If no existing solution fits, research how to develop and validate a new
+> one. Find proven tools and methods for working through the unknowns. Use
+> them to build prototypes, run controlled tests, measure results, or
+> combine approaches where it makes sense. Make your assumptions explicit,
+> test them, and revise the solution based on what you find.
+>
+> I want the highest-quality solution for the actual problem, and I want the
+> research, reasoning, and verification to support that choice.
+
 ## B. Always wait for my "Go"
 
 1. Never start a task until I say "Go" or "Okay go."
