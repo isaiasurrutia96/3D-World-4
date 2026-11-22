@@ -101,6 +101,12 @@ A nose (small triangle) on the head for the look pose; the ball in the middle of
 
 ## Codex driving handoff
 
+**Classic Formula research (22 November 2026).** F1 option 01 uses the
+4.60 m playable prototype and the first F1-inspired Fast tune. The 2026
+hardware specs, race telemetry, matched-speed braking tests, comparison
+chart, and proposed corner-entry experiment are in the
+[F1 driving reference](karts/F1-DRIVING-REFERENCE.md).
+
 Approved reference: Driving Checkpoint 2, source
 `97d2ba878f4a4ba4f0cbcb02b3613f97fc1e8b73`, frozen in
 `checkpoints/driving-2/`. Tags: `driving-source-2-2026-11-20` and
