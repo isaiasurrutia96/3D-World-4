@@ -1,10 +1,12 @@
 import { sampleDrivingPedals } from './driving-pedals.js';
 import { DRIVING_PROFILES } from '../../racing-core/kart/profiles.ts';
+import { KART_PROTOTYPES, isKartPrototype } from '../../racing-core/kart/prototypes.ts';
 import { createDrivingTest, TRACK_IDS, PARKED_KARTS, readDrivingInput } from '../../racing-core/testing/drive.ts';
 import { createCheckedTrackView, createStartLine } from './checked-track-view.js';
 import { createOriginalKartView } from './kart-view.js';
+import { createPrototypeKartView } from './prototype-kart-view.js';
 import { bindDrivingButtons } from './driving-controls.js';
-import { createDrivingCameraRig } from './driving-camera.js';
+import { FPV, createDrivingCameraRig } from './driving-camera.js';
 const $ = s => document.querySelector(s);
 export function createDrivingSimulation({ scene, stage, floor }) {
     document.body.classList.add('driving-test-page');
@@ -12,9 +14,14 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     const params = new URLSearchParams(location.search), requested = params.get('track'), requestedProfile = params.get('handling');
     const profile = ['original','balanced','fast'].includes(requestedProfile) ? requestedProfile : 'fast';
     const selection = TRACK_IDS.includes(requested) || requested === PARKED_KARTS ? requested : 'original';
-    const test = createDrivingTest(selection, { profile }), kart = createOriginalKartView();
+    const requestedKart = params.get('kart');
+    let prototype = isKartPrototype(requestedKart) ? requestedKart : undefined;
+    let test = createDrivingTest(selection, { profile, prototype });
+    const original = createOriginalKartView();
+    const views = new Map();
+    let kart = original;
     const parkedKarts = [];
-    scene.add(kart.root);
+    scene.add(original.root);
     const picker = document.createElement('label');
     picker.className = 'track-picker';
     picker.innerHTML = 'Track <select id="race-track" aria-label="Choose track"></select>';
@@ -26,11 +33,38 @@ export function createDrivingSimulation({ scene, stage, floor }) {
         picker.querySelector('select').append(o);
     }
     picker.querySelector('select').append(new Option('Parked Karts', PARKED_KARTS));
+    const kartPicker = document.createElement('label');
+    kartPicker.className = 'track-picker kart-picker';
+    kartPicker.innerHTML = 'Kart <select id="driving-kart" aria-label="Choose kart"></select>';
+    const kartSelect = kartPicker.querySelector('select');
+    kartSelect.append(new Option('Original Kart', 'original'));
+    for (const [id, dimensions] of Object.entries(KART_PROTOTYPES))
+        kartSelect.append(new Option(dimensions.label, id));
+    picker.after(kartPicker);
+
+    function showKart() {
+        kart.root.visible = false;
+        const isParked = test.selection === PARKED_KARTS;
+        const id = isParked ? undefined : prototype;
+        kartSelect.disabled = isParked;
+        kartSelect.value = id ?? 'original';
+        if (id && !views.has(id)) {
+            const made = createPrototypeKartView(id);
+            scene.add(made.root);
+            views.set(id, made);
+        }
+        kart = id ? views.get(id) : original;
+        kart.root.visible = true;
+    }
+
     const fpvButton=document.createElement('button');fpvButton.dataset.view='fpv';fpvButton.textContent='FPV';fpvButton.title='First-person view';fpvButton.setAttribute('aria-pressed','false');document.querySelector('nav[aria-label="Camera views"]').append(fpvButton);
     const hud = document.createElement('output');
     hud.className = 'race-hud';
     hud.setAttribute('aria-label', 'Driving information');
     hud.innerHTML = '<strong id="drive-speed">0 mph</strong><span id="drive-state">Ready</span>';
+    const lapDisplay = document.createElement('span');
+    lapDisplay.hidden = true;
+    hud.append(lapDisplay);
     stage.append(hud);
     const debug = params.get('debug') === '1' ? document.createElement('output') : null;
     if (debug) { debug.className = 'drive-debug'; debug.setAttribute('aria-label','Driving diagnostics'); stage.append(debug); }
@@ -60,8 +94,25 @@ export function createDrivingSimulation({ scene, stage, floor }) {
             o.material.dispose();
         } });
     } drawn = test.track; view = createCheckedTrackView(drawn); line = createStartLine(drawn); scene.add(view.root, line); api.cameraObstacles = view.root.children.slice(0, 3); }
-    function reset() { holds?.clear(); test.reset(); pose = test.sample(); draw(); picker.querySelector('select').value = test.selection; sync(); }
-    function sync() { const h = test.controller.state.handling; if (debug) debug.textContent = h ? `${test.controller.profile.label} · ${Math.hypot(pose.speed,pose.lateralSpeed).toFixed(1)} m/s\nAcceleration ${h.acceleration.toFixed(2)} m/s² · braking ${h.brakingG.toFixed(2)} G\nSideways ${h.lateralG.toFixed(2)} G · wheels ${(pose.steering*180/Math.PI).toFixed(2)}°\nSlip indicator ${h.tireSlip.toFixed(3)} · slip angle ${(h.slipAngle*180/Math.PI).toFixed(1)}°` : 'Original handling'; kart.update(pose); syncParked(); holds?.sync(); $('#drive-speed').textContent = `${Math.round(Math.hypot(test.controller.state.speed,test.controller.state.lateralSpeed) / .44704)} mph`; $('#drive-state').textContent = pose.y < -10 ? 'Use Reset to return to the track' : test.controller.state.boostTime > 0 ? 'Boosting' : Math.abs(pose.speed) < .05 ? 'Ready' : pose.speed < 0 ? 'Reversing' : 'Driving'; }
+    function reset() {
+        holds?.clear();
+        test.reset();
+        pose = test.sample();
+        draw();
+        showKart();
+        picker.querySelector('select').value = test.selection;
+        sync();
+    }
+    function sync() {
+        const lap = test.lap;
+        lapDisplay.hidden = !lap;
+        if (lap) {
+            const current = lap.running ? 'Lap ' + (lap.laps + 1) + ' · ' + lap.elapsed.toFixed(2) + ' s' : 'Cross the line to start';
+            const best = lap.best === null ? '' : ' · Best ' + lap.best.toFixed(2) + ' s';
+            const lapText = current + best;
+            if (lapDisplay.textContent !== lapText) lapDisplay.textContent = lapText;
+        }
+        const h = test.controller.state.handling; if (debug) debug.textContent = h ? `${test.controller.profile.label} · ${Math.hypot(pose.speed,pose.lateralSpeed).toFixed(1)} m/s\nAcceleration ${h.acceleration.toFixed(2)} m/s² · braking ${h.brakingG.toFixed(2)} G\nSideways ${h.lateralG.toFixed(2)} G · wheels ${(pose.steering*180/Math.PI).toFixed(2)}°\nSlip indicator ${h.tireSlip.toFixed(3)} · slip angle ${(h.slipAngle*180/Math.PI).toFixed(1)}°` : 'Original handling'; kart.update(pose); syncParked(); holds?.sync(); $('#drive-speed').textContent = `${Math.round(Math.hypot(test.controller.state.speed,test.controller.state.lateralSpeed) / .44704)} mph`; $('#drive-state').textContent = pose.y < -10 ? 'Use Reset to return to the track' : test.controller.state.boostTime > 0 ? 'Boosting' : Math.abs(pose.speed) < .05 ? 'Ready' : pose.speed < 0 ? 'Reversing' : 'Driving'; }
     function syncParked() {
         const states = test.sampleParked();
         if (states.length && !parkedKarts.length) {
@@ -77,13 +128,30 @@ export function createDrivingSimulation({ scene, stage, floor }) {
             if (states[i]) parked.update(states[i]);
         }
     }
-    const cameraRig=createDrivingCameraRig(()=>pose);
-    const api = { zoomEnabled: false, cameraRig,marker: kart.root, recenterOnView: true, onPause: () => { holds?.clear(); test.cancelInput(); }, chase: true, chaseRate: 5, chasePitch: Math.atan2(3.5, 10), fov: 45, distance: Math.hypot(10, 3.5), minDistance: 4, maxDistance: 100, maxFrameSeconds: .25, targetHeight: 1, cameraObstacles: [], controller: { get state() { return { ...pose, facing: pose.yaw, mode: 'Driving test' }; }, place: reset }, advance(seconds, sample, cameraYaw) { if (!bindings.input.focused)
+    const cameraRig=createDrivingCameraRig(() => pose, () => kart.eye ?? FPV);
+    const api = { zoomEnabled: false, cameraRig,marker: original.root, recenterOnView: true, onPause: () => { holds?.clear(); test.cancelInput(); }, chase: true, chaseRate: 5, chasePitch: Math.atan2(3.5, 10), fov: 45, distance: Math.hypot(10, 3.5), minDistance: 4, maxDistance: 100, maxFrameSeconds: .25, targetHeight: 1, cameraObstacles: [], controller: { get state() { return { ...pose, facing: pose.yaw, mode: 'Driving test' }; }, place: reset }, advance(seconds, sample, cameraYaw) { if (!bindings.input.focused)
             return; test.advance(seconds, readDrivingInput(sampleDrivingPedals(sample, bindings.input), cameraYaw)); pose = test.sample(); }, afterFrame() { sync(); }, bind(value) { bindings = value; value.canvas.tabIndex = 0; value.input.setTouchStick(false); holds = bindDrivingButtons(value.input, value.canvas, buttons);for(const button of document.querySelectorAll('#topbar button'))button.addEventListener('click',()=>value.canvas.focus({preventScroll:true})); } };
-    picker.querySelector('select').onchange = () => { test.selectTrack(picker.querySelector('select').value); bindings.reset(); bindings.canvas.focus({ preventScroll: true }); };
+    function refresh() {
+        if (bindings) {
+            bindings.reset();
+            bindings.canvas.focus({ preventScroll: true });
+        } else reset();
+    }
+    function selectTrack(id) {
+        test.selectTrack(id);
+        refresh();
+    }
+    picker.querySelector('select').onchange = event => selectTrack(event.currentTarget.value);
+    kartSelect.onchange = () => {
+        const id = kartSelect.value;
+        prototype = isKartPrototype(id) ? id : undefined;
+        test = createDrivingTest(test.selection, { profile, prototype });
+        refresh();
+    };
     window.addEventListener('blur', () => test.cancelInput());
     reset();
-    window.drivingLab = { test, kart, profiles: DRIVING_PROFILES, get trackView() { return view; }, getState: () => test.getState(), getCameraState:()=>cameraRig.getState(), selectTrack(id) { test.selectTrack(id); bindings.reset(); } };
+    window.drivingLab = { get test() { return test; }, get kart() { return kart; }, profiles: DRIVING_PROFILES,
+        get trackView() { return view; }, getState: () => test.getState(), getCameraState: () => cameraRig.getState(), selectTrack };
     window.drivingLabReady = true;
     return api;
 }

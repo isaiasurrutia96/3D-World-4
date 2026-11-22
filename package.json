@@ -47,7 +47,7 @@
     "test:racing-core": "node --test racing-core/tests/core.test.mjs",
     "test:racing-kart": "node --test racing-core/kart/check.test.mjs",
     "test:racing-contacts": "node --test racing-core/contacts/check.test.mjs",
-    "test:racing-drive": "node --test racing-core/testing/check.test.mjs",
+    "test:racing-drive": "node --test racing-core/testing/check.test.mjs racing-core/testing/prototypes.test.mjs",
     "test:racing-drive-browser": "node racing-lab/tests/driving-browser.mjs",
     "test:racing-camera": "node --test racing-lab/tests/chase-camera.test.mjs && node racing-lab/tests/chase-camera-browser.mjs",
     "test:racing-app": "node --test racing-lab/tests/app.test.mjs && node racing-lab/tests/app-browser.mjs",

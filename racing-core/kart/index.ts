@@ -38,6 +38,23 @@ export const KART = Object.freeze({
     maxBank: .3,
     boostDuration: 2,
 });
+export type KartGeometry = Readonly<{
+    wheelbase: number;
+    wheelRadius: number;
+    frontProbe: number;
+    rearProbe: number;
+    halfTrackWidth: number;
+}>;
+
+function resolveGeometry(geometry: KartGeometry | undefined): KartGeometry {
+    if (geometry === undefined) return KART;
+    const { wheelbase, wheelRadius, frontProbe, rearProbe, halfTrackWidth } = geometry;
+    if (![wheelbase, wheelRadius, frontProbe, rearProbe, halfTrackWidth].every(n => Number.isFinite(n) && n > 0) ||
+        Math.abs(frontProbe + rearProbe - wheelbase) > 1e-8)
+        throw new RangeError('Invalid kart geometry');
+    return Object.freeze({ wheelbase, wheelRadius, frontProbe, rearProbe, halfTrackWidth });
+}
+
 /** +Z forward, +Y up, yaw positive towards +X. Positive steer turns right from the chase view, as in LetsGo. */
 export type KartInput = Readonly<{
     throttle?: number;
@@ -142,9 +159,11 @@ function support(world: SurfaceWorld, x: number, z: number, maximum: number): nu
     return y;
 }
 /** Shared first half of a physics tick, also used by the simultaneous kart-contact step. */
-export function prepareKartStep(source: KartState, raw: KartInput, activateBoost = false, profile: KartProfile = resolveKartProfile(), world?: SurfaceWorld): KartMotion {
+export function prepareKartStep(source: KartState, raw: KartInput, activateBoost = false, profile: KartProfile = resolveKartProfile(), world?: SurfaceWorld, geometry: KartGeometry = KART): KartMotion {
     profile = resolveKartProfile(profile);
-    if (profile.mode === 'tuned') return prepareTunedStep(source, normalizeKartInput(raw), activateBoost, profile, world, KART);
+    if (profile.mode === 'tuned') return prepareTunedStep(source, normalizeKartInput(raw), activateBoost, profile, world, {
+        step: KART.step, boostDuration: KART.boostDuration, wheelbase: geometry.wheelbase,
+    });
     if (source.handling) throw new Error('Tuned kart state requires its matching profile');
     const state = { ...source }, input = normalizeKartInput(raw), t = KART, dt = t.step;
     state.railContactTime = Math.max(0, state.railContactTime - dt);
@@ -179,7 +198,7 @@ export function prepareKartStep(source: KartState, raw: KartInput, activateBoost
     const building = input.steer * state.steering >= 0 && Math.abs(target) > Math.abs(state.steering);
     state.steering += (target - state.steering) * (1 - Math.exp(-(building ? t.steeringBuild : t.steeringRelease) * dt));
     const turnSpeed = state.railContactTime > 0 && throttle > 0 ? Math.max(state.speed, 2) : state.speed;
-    const travelYaw = state.yaw - (state.grounded ? turnSpeed / t.wheelbase * Math.tan(state.steering) * dt : 0);
+    const travelYaw = state.yaw - (state.grounded ? turnSpeed / geometry.wheelbase * Math.tan(state.steering) * dt : 0);
     state.yaw = travelYaw + state.impactYawRate * dt;
     let vx = Math.sin(travelYaw) * state.speed + Math.cos(travelYaw) * state.lateralSpeed;
     let vz = Math.cos(travelYaw) * state.speed - Math.sin(travelYaw) * state.lateralSpeed;
@@ -191,7 +210,7 @@ export function prepareKartStep(source: KartState, raw: KartInput, activateBoost
     return Object.freeze({ state: Object.freeze(state), vx, vz });
 }
 /** Complete the same tick after free motion or a shared contact solve, then query the actual road. */
-export function finishKartStep(motion: KartMotion, movement: KartMovement, world: SurfaceWorld): KartState {
+export function finishKartStep(motion: KartMotion, movement: KartMovement, world: SurfaceWorld, geometry: KartGeometry = KART): KartState {
     const state = { ...motion.state }, t = KART, dt = t.step;
     const oldX = state.x, oldZ = state.z, sin = Math.sin(state.yaw), cos = Math.cos(state.yaw);
     for (const key of ['x', 'z', 'vx', 'vz'] as const)
@@ -207,7 +226,7 @@ export function finishKartStep(motion: KartMotion, movement: KartMovement, world
     state.z = movement.z;
     state.speed = vx * sin + vz * cos;
     state.lateralSpeed = vx * cos - vz * sin;
-    state.wheelRotation += ((state.x - oldX) * sin + (state.z - oldZ) * cos) / t.wheelRadius;
+    state.wheelRotation += ((state.x - oldX) * sin + (state.z - oldZ) * cos) / geometry.wheelRadius;
     const ground = support(world, state.x, state.z, state.y + t.supportReach);
     if (state.grounded && ground !== null && ground >= state.y - t.supportReach) {
         state.y = ground;
@@ -226,12 +245,12 @@ export function finishKartStep(motion: KartMotion, movement: KartMovement, world
         }
     }
     if (state.grounded) {
-        const front = support(world, state.x + sin * t.frontProbe, state.z + cos * t.frontProbe, state.y + t.orientationReach);
-        const back = support(world, state.x - sin * t.rearProbe, state.z - cos * t.rearProbe, state.y + t.orientationReach);
-        const left = support(world, state.x - cos * t.halfTrackWidth, state.z + sin * t.halfTrackWidth, state.y + t.orientationReach);
-        const right = support(world, state.x + cos * t.halfTrackWidth, state.z - sin * t.halfTrackWidth, state.y + t.orientationReach);
-        const pitch = front !== null && back !== null ? Math.atan2(back - front, t.wheelbase) : 0;
-        const bank = left !== null && right !== null ? Math.atan2(right - left, t.halfTrackWidth * 2) : 0;
+        const front = support(world, state.x + sin * geometry.frontProbe, state.z + cos * geometry.frontProbe, state.y + t.orientationReach);
+        const back = support(world, state.x - sin * geometry.rearProbe, state.z - cos * geometry.rearProbe, state.y + t.orientationReach);
+        const left = support(world, state.x - cos * geometry.halfTrackWidth, state.z + sin * geometry.halfTrackWidth, state.y + t.orientationReach);
+        const right = support(world, state.x + cos * geometry.halfTrackWidth, state.z - sin * geometry.halfTrackWidth, state.y + t.orientationReach);
+        const pitch = front !== null && back !== null ? Math.atan2(back - front, geometry.wheelbase) : 0;
+        const bank = left !== null && right !== null ? Math.atan2(right - left, geometry.halfTrackWidth * 2) : 0;
         const blend = 1 - Math.exp(-t.orientationResponse * dt);
         state.pitch += (clamp(pitch, -t.maxPitch, t.maxPitch) - state.pitch) * blend;
         state.bank += (clamp(bank, -t.maxBank, t.maxBank) - state.bank) * blend;
@@ -241,10 +260,10 @@ export function finishKartStep(motion: KartMotion, movement: KartMovement, world
             finite(value, key);
     return Object.freeze(state);
 }
-function step(state: KartState, input: Controls, world: SurfaceWorld, activateBoost: boolean, resolveMotion?: KartMotionResolver, profile: KartProfile = resolveKartProfile()): KartState {
-    const motion = prepareKartStep(state, input, activateBoost, profile, world);
+function step(state: KartState, input: Controls, world: SurfaceWorld, activateBoost: boolean, resolveMotion: KartMotionResolver | undefined, profile: KartProfile, geometry: KartGeometry): KartState {
+    const motion = prepareKartStep(state, input, activateBoost, profile, world, geometry);
     const movement = resolveMotion ? resolveMotion(motion) : { x: state.x + motion.vx * KART.step, z: state.z + motion.vz * KART.step, vx: motion.vx, vz: motion.vz };
-    return finishKartStep(motion, movement, world);
+    return finishKartStep(motion, movement, world, geometry);
 }
 export function interpolateKartState(previous: KartState, current: KartState, alpha: number): KartState {
     finite(alpha, 'alpha');
@@ -261,14 +280,16 @@ export function createKartController(options: Readonly<{
     initial?: KartInitial;
     resolveMotion?: KartMotionResolver;
     profile?: ProfileId | KartProfile;
+    geometry?: KartGeometry;
 }>) {
     if (typeof options?.world?.heightAt !== 'function')
         throw new TypeError('A numeric heightAt world is required');
     const world = options.world, start = Object.freeze({ ...options.initial }), profile = resolveKartProfile(options.profile);
+    const geometry = resolveGeometry(options.geometry);
     const initialize = (initial: KartInitial) => Object.freeze({ ...initialState(initial), ...(profile.mode === 'tuned' ? { handling: initialHandling(profile) } : {}) });
     let current: KartState = initialize(start), previous = current;
     let ticks = 0, remainder = 0, lastBoost = false, pendingBoost = false;
-    function advance(frameSeconds: number, input: KartInput | InputScript = {}): KartState {
+    function advance(frameSeconds: number, input: KartInput | InputScript = {}, trace?: KartState[]): KartState {
         finite(frameSeconds, 'frameSeconds');
         if (frameSeconds < 0 || frameSeconds > KART.maxFrameSeconds)
             throw new RangeError('frameSeconds must be between 0 and 0.25; pause/reset the clock after a suspended tab');
@@ -291,11 +312,12 @@ export function createKartController(options: Readonly<{
             if (!literal)
                 accept(controls);
             prior = Object.freeze({ ...next });
-            next = { ...step(next, controls, world, queued, options.resolveMotion, profile) };
+            next = { ...step(next, controls, world, queued, options.resolveMotion, profile, geometry) };
             queued = false;
             for (const [key, value] of Object.entries(next))
                 if (typeof value === 'number')
                     finite(value, key);
+            if (trace) trace.push(Object.freeze(next));
         }
         // Commit only after the complete batch succeeds. Invalid scripts/worlds cannot corrupt state.
         if (count) {
@@ -315,7 +337,15 @@ export function createKartController(options: Readonly<{
         profile,
         get state() { return current; },
         get clock() { return Object.freeze({ ticks, seconds: ticks * KART.step, remainder, alpha: remainder / KART.step }); },
-        advance, sample,
+        advance(frameSeconds: number, input?: KartInput | InputScript) { return advance(frameSeconds, input); },
+        /** Successful fixed ticks for consumers which need sub-frame positions. */
+        advanceWithTrace(frameSeconds: number, input?: KartInput | InputScript) {
+            const from = current, firstTick = ticks;
+            const states: KartState[] = [];
+            advance(frameSeconds, input, states);
+            return { from, firstTick, states };
+        },
+        sample,
         cancelInput() { lastBoost = pendingBoost = false; },
         reset(initial: KartInitial = start) { const state = initialize(initial); current = previous = state; ticks = remainder = 0; lastBoost = pendingBoost = false; return current; },
     });

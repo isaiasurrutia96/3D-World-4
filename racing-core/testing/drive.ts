@@ -2,6 +2,9 @@
 import { createTrack, TRACK_IDS } from '../track/index.ts';
 import type { TrackId } from '../track/index.ts';
 import { createKartController, normalizeKartInput } from '../kart/index.ts';
+import { KART_PROTOTYPES, PROTOTYPE_HANDLING, isKartPrototype } from '../kart/prototypes.ts';
+import type { PrototypeId } from '../kart/prototypes.ts';
+import { createPrototypeLapClock } from './prototype-laps.ts';
 import { resolveKartProfile } from '../kart/profiles.ts';
 import type { KartProfile, ProfileId } from '../kart/profiles.ts';
 import type { KartInput, InputScript } from '../kart/index.ts';
@@ -50,38 +53,67 @@ export function readDrivingInput(sample: DrivingSample, cameraYaw: number): Kart
         steer = Number(Boolean(a.right)) - Number(Boolean(a.left));
     return normalizeKartInput({ throttle, steer, brake: sample.pedals ? false : Boolean(a.brake || a.gas && a.reverse), ...(sample.pedals ? { brakeAmount: sample.pedals.brake } : sample.analogBrake !== undefined ? { brakeAmount: sample.analogBrake } : {}), boost: Boolean(a.boost) });
 }
-export function createDrivingTest(initialSelection: DrivingSelection = 'original', options: Readonly<{ profile?: ProfileId | KartProfile }> = {}) {
-    const profile = resolveKartProfile(options.profile);
+export function createDrivingTest(initialSelection: DrivingSelection = 'original', options: Readonly<{
+    profile?: ProfileId | KartProfile;
+    prototype?: PrototypeId;
+}> = {}) {
+    const originalProfile = resolveKartProfile(options.profile);
+    const kart = options.prototype;
+    if (kart !== undefined && !isKartPrototype(kart)) throw new RangeError('Unknown kart prototype');
     const empty = Object.freeze([]);
     function createScenario(selection: DrivingSelection) {
-        const track = createTrack(selection === PARKED_KARTS ? 'original' : selection);
-        const parked = selection === PARKED_KARTS ? createParkedKartController(track, profile) : null;
-        const controller = parked ?? createKartController({
-            profile, world: track, initial: { ...track.start.point, yaw: track.start.yaw },
-            resolveMotion: createKartContactResolver(trackBarriers(track)),
+        const isParked = selection === PARKED_KARTS;
+        const track = createTrack(isParked ? 'original' : selection);
+        const prototype = isParked ? undefined : kart;
+        const geometry = prototype ? KART_PROTOTYPES[prototype] : undefined;
+        const profile = prototype ? PROTOTYPE_HANDLING[prototype] : originalProfile;
+        const parked = isParked ? createParkedKartController(track, profile) : null;
+        const footprint = geometry && Object.freeze({
+            radius: geometry.width / 2,
+            halfLength: (geometry.length - geometry.width) / 2,
+            height: geometry.height,
+            offsetZ: (geometry.tail + geometry.nose) / 2,
         });
-        return { selection, track, controller, parked };
+        const clock = prototype ? createPrototypeLapClock(track) : null;
+        const controller = parked ?? createKartController({
+            profile, world: track, geometry,
+            initial: { ...(prototype ? track.sample(-4.5).point : track.start.point), yaw: track.start.yaw },
+            resolveMotion: createKartContactResolver(trackBarriers(track), footprint),
+        });
+        return { selection, track, controller, profile, prototype, parked, clock };
     }
     let scenario = createScenario(initialSelection);
     return Object.freeze({
         get selection() { return scenario.selection; },
         get track() { return scenario.track; },
         get controller() { return scenario.controller; },
-        advance(seconds: number, input: KartInput | InputScript = {}) { return scenario.controller.advance(seconds, input); },
+        get lap() { return scenario.clock?.read(scenario.controller.clock.seconds); },
+        advance(seconds: number, input: KartInput | InputScript = {}) {
+            const { clock, controller } = scenario;
+            if (!clock || !('advanceWithTrace' in controller)) return controller.advance(seconds, input);
+            const trace = controller.advanceWithTrace(seconds, input);
+            clock.observe(trace.from, trace.firstTick, trace.states);
+            return controller.state;
+        },
         sample() { return scenario.controller.sample(); },
         sampleParked() { return scenario.parked?.sampleParked() ?? empty; },
         cancelInput() { scenario.controller.cancelInput(); },
-        reset() { return scenario.controller.reset(); },
+        reset() {
+            const state = scenario.controller.reset();
+            scenario.clock?.reset();
+            return state;
+        },
         selectTrack(selection: DrivingSelection) {
             scenario = createScenario(selection);
             return scenario.controller.state;
         },
         getState() {
-            const { selection, track, controller, parked } = scenario;
+            const { selection, track, controller, parked, profile, prototype, clock } = scenario;
             const parkedKarts = parked?.parkedStates ?? empty;
             return Object.freeze({
                 selection, trackId: track.id, profile: profile.id, fingerprint: profile.fingerprint,
                 karts: 1 + parkedKarts.length, avatars: 0, opponents: 0, parkedKarts,
+                ...(prototype ? { prototype, lap: clock?.read(controller.clock.seconds) } : {}),
                 physics: controller.state, clock: controller.clock, pose: controller.sample(),
             });
         },

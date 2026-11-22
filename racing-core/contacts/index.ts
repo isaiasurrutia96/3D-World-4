@@ -7,6 +7,7 @@ export { NO_BARRIERS } from './world.ts';
 export type { BarrierWorld, BarrierHit, Capsule, V2 };
 /** Original LetsGo footprint and bounded, dissipative contact tuning. */
 export const CONTACT = Object.freeze({ radius: 1.18, halfLength: .35, height: 1.8, inverseInertia: .65, restitution: .075, maxRebound: 1.5, friction: .10, cooldown: .3, recovery: .12, maxYawRate: .8, skin: 1e-7, iterations: 20, maxEvents: 64, maxTravel: 4 });
+export type ContactFootprint = Readonly<{ radius: number; halfLength: number; height: number; offsetZ: number }>;
 export type ContactBody = Readonly<{
     id: string;
     x: number;
@@ -19,10 +20,11 @@ export type ContactBody = Readonly<{
     cooldown?: number;
     recovery?: number;
     inverseMass?: number;
+    footprint?: ContactFootprint;
 }>;
 type Body = {
-    -readonly [P in keyof Required<ContactBody>]: Required<ContactBody>[P];
-};
+    -readonly [P in keyof Required<Omit<ContactBody, 'footprint'>>]: Required<ContactBody>[P];
+} & { footprint?: ContactFootprint };
 export type ContactEvent = Readonly<{
     kind: 'barrier' | 'kart';
     a: string;
@@ -46,8 +48,14 @@ type Constraint = {
     rb: V2;
 };
 const clamp = (x: number, a: number, b: number) => Math.max(a, Math.min(b, x));
-const pose = (b: Body): Capsule => ({ x: b.x, y: b.y, z: b.z, yaw: b.yaw, radius: CONTACT.radius, halfLength: CONTACT.halfLength, height: CONTACT.height });
-const overlapY = (a: Body, b: Body) => a.y + CONTACT.height > b.y + 1e-9 && b.y + CONTACT.height > a.y + 1e-9;
+const originalFootprint: ContactFootprint = Object.freeze({
+    radius: CONTACT.radius, halfLength: CONTACT.halfLength, height: CONTACT.height, offsetZ: 0,
+});
+function pose(b: Body): Capsule {
+    const { radius, halfLength, height, offsetZ } = b.footprint ?? originalFootprint;
+    return { x: b.x + Math.sin(b.yaw) * offsetZ, y: b.y, z: b.z + Math.cos(b.yaw) * offsetZ, yaw: b.yaw, radius, halfLength, height };
+}
+const overlapY = (a: Capsule, b: Capsule) => a.y + a.height > b.y + 1e-9 && b.y + b.height > a.y + 1e-9;
 const velocity = (b: Body): V2 => ({ x: b.vx, z: b.vz });
 const lever = (r: V2, n: V2) => r.z * n.x - r.x * n.z;
 function validateHit(hit: BarrierHit): void {
@@ -59,15 +67,16 @@ function barrierConstraint(a: Body, hit: BarrierHit): Constraint {
     return { a, b: null, id: hit.id, normal: hit.normal, point: hit.point, depth: hit.depth, fraction: hit.fraction, target: 0, ia: 0, ib: 0, ra: { x: 0, z: 0 }, rb: { x: 0, z: 0 } };
 }
 function pairConstraint(a: Body, b: Body, seconds: number, nearContacts = false): Constraint | null {
-    if (!overlapY(a, b))
+    const ap = pose(a), bp = pose(b);
+    if (!overlapY(ap, bp))
         return null;
-    const [a0, a1] = ends(pose(a)), [b0, b1] = ends(pose(b)), relative = { x: (a.vx - b.vx) * seconds, z: (a.vz - b.vz) * seconds };
+    const [a0, a1] = ends(ap), [b0, b1] = ends(bp), relative = { x: (a.vx - b.vx) * seconds, z: (a.vz - b.vz) * seconds };
     const margin = nearContacts ? 1e-6 : 0;
-    const hit = sweepCapsules(a0, a1, relative, b0, b1, CONTACT.radius * 2 + margin, nearContacts);
+    const hit = sweepCapsules(a0, a1, relative, b0, b1, ap.radius + bp.radius + margin, nearContacts);
     if (!hit)
         return null;
     const worldPoint = plus(hit.a, { x: b.vx * seconds, z: b.vz * seconds }, hit.fraction);
-    return { a, b, id: b.id, normal: hit.normal, point: { x: worldPoint.x - hit.normal.x * CONTACT.radius, z: worldPoint.z - hit.normal.z * CONTACT.radius }, depth: Math.max(0, hit.depth - margin), fraction: hit.fraction, target: 0, ia: 0, ib: 0, ra: { x: 0, z: 0 }, rb: { x: 0, z: 0 } };
+    return { a, b, id: b.id, normal: hit.normal, point: { x: worldPoint.x - hit.normal.x * ap.radius, z: worldPoint.z - hit.normal.z * ap.radius }, depth: Math.max(0, hit.depth - margin), fraction: hit.fraction, target: 0, ia: 0, ib: 0, ra: { x: 0, z: 0 }, rb: { x: 0, z: 0 } };
 }
 function shift(c: Constraint, depth: number): void {
     const total = c.a.inverseMass + (c.b?.inverseMass ?? 0), a = depth * c.a.inverseMass / total, b = depth * (c.b?.inverseMass ?? 0) / total;
@@ -146,6 +155,11 @@ export function solveKartContacts(input: readonly ContactBody[], seconds: number
         const copy = { ...b, angularVelocity: b.angularVelocity ?? 0, cooldown: b.cooldown ?? 0, recovery: b.recovery ?? 0, inverseMass: b.inverseMass ?? 1 };
         if (typeof copy.id !== 'string' || !copy.id || ![copy.x, copy.y, copy.z, copy.yaw, copy.vx, copy.vz, copy.angularVelocity, copy.cooldown, copy.recovery, copy.inverseMass].every(Number.isFinite) || copy.inverseMass <= 0 || copy.cooldown < 0 || copy.recovery < 0 || Math.abs(copy.angularVelocity) > CONTACT.maxYawRate + 1e-9)
             throw new TypeError('Invalid contact body');
+        if (copy.footprint) {
+            const { radius, halfLength, height, offsetZ } = copy.footprint;
+            if (![radius, halfLength, height, offsetZ].every(Number.isFinite) || radius <= 0 || halfLength < 0 || height <= 0)
+                throw new RangeError('Invalid kart contact footprint');
+        }
         if (Math.hypot(copy.vx, copy.vz) * seconds > CONTACT.maxTravel)
             throw new RangeError('Contact movement exceeds the 4 m fixed-step budget');
         return copy;
