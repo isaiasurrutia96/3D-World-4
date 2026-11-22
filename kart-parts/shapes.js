@@ -13,9 +13,12 @@ const UP = new T.Vector3(0, 1, 0);
 
 /** A superellipse ring: `count` points, counter-clockwise seen from the front
  *  (+Z), starting at the bottom. halfWidth/halfHeight are the half sizes;
- *  exponent 2 is an ellipse, higher is boxier. `shapeTop(x, y, t)` can move
- *  points (used to open a cockpit in the top). */
+ *  exponent 2 is an ellipse, higher is boxier. `shapeTop(x, y, s)` may move
+ *  points on the top half (x from the ring's centre, s = sine of the angle);
+ *  it is used to open a cockpit in the top. */
 export function superellipse({cx = 0, cy, halfWidth, halfHeight, exponent = 2.6, count = 32, shapeTop}) {
+  if (!(halfWidth > 0 && halfHeight > 0 && exponent > 0 && count >= 3) || ![cx, cy].every(Number.isFinite))
+    throw new Error(`superellipse: bad size (${halfWidth} x ${halfHeight}, exponent ${exponent}, ${count} points)`);
   const ring = [], e = 2/exponent;
   for (let i = 0; i < count; i++) {
     const t = -Math.PI/2 + i*2*Math.PI/count, c = Math.cos(t), s = Math.sin(t);
@@ -33,9 +36,11 @@ export function superellipse({cx = 0, cy, halfWidth, halfHeight, exponent = 2.6,
  *  .5 = top, .75 = left side; -1 for the end caps). Colouring by `u` makes
  *  stripes follow the body lengthwise with clean, straight edges. */
 export function loft(sections, color) {
+  if (sections.length < 2) throw new Error('loft: needs at least two rings');
   const n = sections[0].ring.length;
   if (!sections.every(s => s.ring.length === n)) throw new Error('loft: every ring needs the same number of points');
   for (let i = 1; i < sections.length; i++) if (!(sections[i].z > sections[i - 1].z)) throw new Error('loft: rings must go from back to front');
+  if (!sections.every(s => Number.isFinite(s.z) && s.ring.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y)))) throw new Error('loft: a ring has a point that is not a number');
   const positions = [], index = [], faceU = [];
   const push = (x, y, z) => { positions.push(x, y, z); return positions.length/3 - 1; };
   sections.forEach(({z, ring}) => ring.forEach(([x, y]) => push(x, y, z)));
@@ -73,12 +78,15 @@ export function loft(sections, color) {
  *  Returns points going over the top from the trailing edge, then back
  *  underneath, as [x, y] with x from 0 (leading edge) to 1. */
 export function naca4(m, p, t, count = 16) {
+  if (!(t > 0 && t < .5 && m >= 0 && m < .2 && count >= 4)) throw new Error(`naca4: bad airfoil (${m}, ${p}, ${t})`);
+  if (m > 0 && !(p > 0 && p < 1)) throw new Error('naca4: a cambered airfoil needs its camber position between 0 and 1');
   const upper = [], lower = [];
   for (let i = 0; i <= count; i++) {
     const x = (1 - Math.cos(Math.PI*i/count))/2;
     const yt = 5*t*(.2969*Math.sqrt(x) - .126*x - .3516*x*x + .2843*x**3 - .1036*x**4);
-    const yc = x < p ? m/(p*p)*(2*p*x - x*x) : m/((1 - p)**2)*(1 - 2*p + 2*p*x - x*x);
-    const slope = x < p ? 2*m/(p*p)*(p - x) : 2*m/((1 - p)**2)*(p - x), th = Math.atan(slope);
+    // Symmetric airfoils (m = 0) have no camber line, whatever p is (avoids 0/0).
+    const yc = m === 0 ? 0 : x < p ? m/(p*p)*(2*p*x - x*x) : m/((1 - p)**2)*(1 - 2*p + 2*p*x - x*x);
+    const slope = m === 0 ? 0 : x < p ? 2*m/(p*p)*(p - x) : 2*m/((1 - p)**2)*(p - x), th = Math.atan(slope);
     upper.push([x - yt*Math.sin(th), yc + yt*Math.cos(th)]);
     lower.push([x + yt*Math.sin(th), yc - yt*Math.cos(th)]);
   }
@@ -104,6 +112,7 @@ export function wing({span, chord, y, leadingZ, airfoil = [.06, .4, .12], invert
 /** A flat plate with rounded corners, `thickness` thick across X (endplates). */
 export function plate({x, zMin, zMax, yMin, yMax, thickness = .02, radius = .04}, color) {
   const w = zMax - zMin, h = yMax - yMin, r = Math.min(radius, w/2, h/2), s = new T.Shape();
+  if (!(w > 0 && h > 0 && thickness > 0)) throw new Error('plate: needs a positive length, height and thickness');
   s.moveTo(r, 0); s.lineTo(w - r, 0); s.quadraticCurveTo(w, 0, w, r); s.lineTo(w, h - r); s.quadraticCurveTo(w, h, w - r, h);
   s.lineTo(r, h); s.quadraticCurveTo(0, h, 0, h - r); s.lineTo(0, r); s.quadraticCurveTo(0, 0, r, 0);
   const g = new T.ExtrudeGeometry(s, {depth: thickness, bevelEnabled: false, curveSegments: 3});
@@ -115,6 +124,7 @@ export function plate({x, zMin, zMax, yMin, yMax, thickness = .02, radius = .04}
 /** A round tube between two points. */
 export function tube(a, b, radius, color, segments = 8) {
   const start = new T.Vector3(...a), end = new T.Vector3(...b), d = end.clone().sub(start);
+  if (!(d.length() > 1e-6) || !(radius > 0)) throw new Error(`tube: needs two different points and a positive radius (${a} to ${b})`);
   const g = new T.CylinderGeometry(radius, radius, d.length(), segments, 1);
   g.applyQuaternion(new T.Quaternion().setFromUnitVectors(UP, d.normalize()));
   g.translate(...start.add(end).multiplyScalar(.5).toArray());
@@ -140,7 +150,9 @@ export function paint(geometry, color) {
   return geometry;
 }
 
-/** Mirrors a geometry to the other side (x -> -x), keeping faces outward. */
+/** Mirrors a geometry to the other side (x -> -x), keeping faces outward.
+ *  Normals are mirrored too (scaling transforms them), not recalculated, so a
+ *  smooth part stays smooth on the other side. */
 export function mirrorX(geometry) {
   const g = geometry.clone(); g.scale(-1, 1, 1);
   const index = g.index;
@@ -152,7 +164,7 @@ export function mirrorX(geometry) {
       attr.needsUpdate = true;
     }
   }
-  g.computeVertexNormals();
+  if (!g.attributes.normal) g.computeVertexNormals();
   return g;
 }
 
@@ -208,6 +220,7 @@ export function pchip(xs, ys) {
  *  returns a function giving every value at any z, using PCHIP per value. */
 export function stationCurve(list) {
   const zs = list.map(s => s.z), keys = Object.keys(list[0]).filter(k => k !== 'z');
+  for (const s of list) for (const k of keys) if (!Number.isFinite(s[k])) throw new Error(`stationCurve: station at z ${s.z} is missing "${k}"`);
   const curves = Object.fromEntries(keys.map(k => [k, pchip(zs, list.map(s => s[k]))]));
   return z => Object.fromEntries([['z', z], ...keys.map(k => [k, curves[k](z)])]);
 }

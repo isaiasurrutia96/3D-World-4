@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
 import {SLOTS, UPGRADES, STYLES, KARTS, GOKART, GT_GOKART, F1_GOKART, LIMITS, STOCK, MAX_OFFROAD, AVATAR,
-  stylesFor, defaultChoices, wheelsOf, placePart, fitProblems, layoutKart, checkKart, driverZones, driverPose, overlaps, hitsWheel} from './spec.js';
+  stylesFor, defaultChoices, wheelsOf, placePart, fitProblems, layoutKart, checkKart, setupProblems, driverZones, driverPose, overlaps, hitsWheel} from './spec.js';
 import {buildOutlines, buildDriverZone, countTriangles} from './build.js';
 import {CENTRE, SIDE} from '../motion-core/skeleton/bones.js';
 
@@ -165,4 +165,27 @@ test('outlines: one named box per part, coloured by design, optional or blocked'
     assert.equal(countTriangles(outlines), 0, 'outlines are not counted as kart geometry');
     assert.equal(buildDriverZone(kart).children.length, 4);
   }
+});
+
+test('kart data is frozen deep inside, so nothing can change it by accident', () => {
+  for (const kart of KARTS) for (const o of [kart, kart.wheels, kart.wheels.front, kart.mounts, kart.mounts.nose, kart.seat, kart.seat.hip, kart.design]) assert.ok(Object.isFrozen(o));
+  assert.ok(Object.isFrozen(STYLES.wing['tall-wing'].size));
+});
+
+test('kart data checks catch bad wheels, seats and set-ups', () => {
+  const problems = kart => checkKart(kart).join('\n');
+  assert.match(problems({...GOKART, wheels: {...GOKART.wheels, frontZ: -2}}), /front wheels must be ahead/);
+  assert.match(problems({...GOKART, wheels: {...GOKART.wheels, rear: {radius: 0, width: .3}}}), /rear wheels need a positive radius/);
+  assert.match(problems({...GOKART, wheels: {...GOKART.wheels, halfTrack: .1}}), /must not overlap in the middle/);
+  assert.match(problems({...GOKART, seat: {...GOKART.seat, recline: 2}}), /recline between 0 and 90/);
+  assert.match(problems({...F1_GOKART, seat: {...F1_GOKART.seat, feetY: -1}}), /feetY/);
+  assert.deepEqual(setupProblems({rideHeight: .1}), []);
+  assert.match(setupProblems({tires: 'slicks'}).join(), /tires/);
+});
+
+test('an impossible style choice is reported, not a crash', () => {
+  const layout = layoutKart(GOKART, {...defaultChoices(GOKART), wing: 'no-such-wing', frontWing: 'slim-front-wing'});
+  const wing = layout.find(p => p.slot === 'wing'), frontWing = layout.find(p => p.slot === 'frontWing');
+  assert.deepEqual(wing.boxes, []); assert.match(wing.problems.join(), /unknown style/);
+  assert.deepEqual(frontWing.boxes, []); assert.match(frontWing.problems.join(), /not made for gokart|no mount/);
 });

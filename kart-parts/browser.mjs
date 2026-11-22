@@ -24,13 +24,13 @@ try {
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(`${base}/karts/`); await page.waitForFunction(() => window.kartLabReady, undefined, {timeout: 60000});
     const state = await page.evaluate(() => ({
-      karts: kartLab.karts.map(k => k.kart.label),
+      karts: kartLab.karts.map(k => k.kart.label), buildErrors: kartLab.buildErrors,
       wheels: kartLab.karts.map(k => k.model.getObjectByName('wheels').children.length),
       dummies: kartLab.karts.every(k => k.dummy.visible),
       parts: kartLab.karts.every(k => Object.keys(k.kart.design).every(s => !!k.model.getObjectByName('part:' + s))),
       overflow: document.documentElement.scrollWidth > innerWidth,
     }));
-    assert.deepEqual(state, {karts: ['GoKart', 'GT GoKart', 'F1 GoKart'], wheels: [4, 4, 4], dummies: true, parts: true, overflow: false}, JSON.stringify(viewport));
+    assert.deepEqual(state, {karts: ['GoKart', 'GT GoKart', 'F1 GoKart'], buildErrors: [], wheels: [4, 4, 4], dummies: true, parts: true, overflow: false}, JSON.stringify(viewport));
     // Picking a kart looks at it alone; All three shows every kart again.
     await page.getByRole('button', {name: 'GT GoKart', exact: true}).click();
     assert.deepEqual(await page.evaluate(() => [kartLab.kart.label, kartLab.getFocus(), kartLab.karts.map(k => k.group.visible)]), ['GT GoKart', 'kart', [false, true, false]]);

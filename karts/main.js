@@ -35,16 +35,21 @@ function tag(text, scale = .16) {
 const dispose = object => object.traverse(o => { o.geometry?.dispose(); if (o.material) [o.material].flat().forEach(m => { m.map?.dispose(); m.dispose(); }); });
 
 // Build every kart once, side by side, each with its driver dummy and zone.
-const karts = [];
+// A kart that fails to build (for example after a tuning change) is reported
+// on the page and skipped, so the other karts can still be tested.
+const karts = [], buildErrors = [];
 let cursor = 0;
 for (const kart of KARTS) {
-  const model = buildKart(kart); model.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  let model;
+  try { model = buildKart(kart); } catch (error) { buildErrors.push(error.message); console.error(error); continue; }
+  model.traverse(o => { if (o.isMesh) o.castShadow = true; });
   const size = new T.Box3().setFromObject(model), width = size.max.x - size.min.x;
   const group = new T.Group(); group.name = `kart ${kart.id}`;
   cursor += (karts.length ? GAP : 0) + width/2; group.position.x = cursor; cursor += width/2;
   const dummy = driverDummy(kart, model.userData.steering), zone = buildDriverZone(kart);
+  model.getObjectByName('body').add(dummy);// rises with the body
   const label = tag(kart.label, .13); label.position.set(0, .02, size.max.z + .25);
-  group.add(model, dummy, zone, label); scene.add(group);
+  group.add(model, zone, label); scene.add(group);
   karts.push({kart, model, dummy, zone, group, size, choices: defaultChoices(kart), outlines: null, labels: null});
 }
 for (const k of karts) k.group.position.x -= cursor/2;
@@ -132,8 +137,8 @@ function setKart(id, look = true) {
   for (const el of document.querySelectorAll('[data-for]')) el.hidden = el.dataset.for !== current.kart.id;
   for (const slot of Object.keys(current.kart.mounts)) pressed(mine(`[data-swap="${slot}"]`), b => b.dataset.style === current.choices[slot]);
   pressed(mine('[data-part]'), () => false);
-  applyVisibility(); info(); $('#note').textContent = intro();
-  if (look) setFocus('kart'); else if (focus === 'kart') setFocus('kart');
+  applyVisibility(); info(); $('#note').textContent = [...buildErrors, intro()].join(' ');
+  if (look || focus === 'kart') setFocus('kart');
 }
 for (const k of karts) {
   const kart = k.kart;
@@ -158,6 +163,7 @@ controls.addEventListener('start', () => { glide = null; pressed('[data-view]', 
 
 function resize() { const {width, height} = stage.getBoundingClientRect(); if (!width || !height) return; camera.aspect = width/height; camera.fov = camera.aspect < .7 ? 50 : 36; camera.updateProjectionMatrix(); renderer.setSize(width, height); }
 new ResizeObserver(resize).observe(stage); resize();
+if (!karts.length) throw new Error(`No kart could be built: ${buildErrors.join(' ')}`);
 setKart(karts[0].kart.id, false); setFocus('all'); view('angled');
 camera.position.copy(glide.toPos); controls.target.copy(glide.toTarget); glide = null; controls.update();
 installTestLabScene({scene, camera, renderer, floors: [slab], getTarget: () => controls.target, updateControls: () => controls.update()});
@@ -169,6 +175,6 @@ renderer.setAnimationLoop(ms => {
     camera.position.lerpVectors(glide.fromPos, glide.toPos, e); controls.target.lerpVectors(glide.fromTarget, glide.toTarget, e); if (glide.t >= 1) glide = null; }
   controls.update(); renderer.render(scene, camera);
 });
-window.kartLab = {scene, camera, controls, renderer, karts, setKart, selectStyle, setFocus, view, highlight,
+window.kartLab = {scene, camera, controls, renderer, karts, buildErrors, setKart, selectStyle, setFocus, view, highlight,
   get kart() { return current.kart; }, get current() { return current; }, get choices() { return current.choices; }, getFocus: () => focus};
 $('#loading').hidden = true; window.kartLabReady = true;

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
 import {KARTS, GOKART, GT_GOKART, F1_GOKART, LIMITS, MAX_OFFROAD, wheelsOf, placePart, driverZones, driverPose, AVATAR} from './spec.js';
-import {naca4, loft, superellipse, mirrorX, wing, pchip, stationCurve} from './shapes.js';
+import {naca4, loft, superellipse, mirrorX, wing, pchip, stationCurve, tube} from './shapes.js';
 import {MODELS, buildKart} from './models.js';
 import {driverDummy} from './kart-model.js';
 
@@ -181,4 +181,67 @@ test('the driver dummy is the avatar\'s size and sits in each seat', () => {
   }
   assert.deepEqual(Object.keys(MODELS), ['gokart', 'gt', 'f1']);
   assert.throws(() => MODELS.f1(GOKART), /needs an F1 kart/);
+});
+
+// --- Hardening (full code review, 22 Nov 2026) -------------------------------
+
+const volumeOf = geom => { const p = geom.attributes.position; let v = 0; for (let i = 0; i < p.count; i += 3) {
+  const a = new T.Vector3().fromBufferAttribute(p, i), b = new T.Vector3().fromBufferAttribute(p, i + 1), c = new T.Vector3().fromBufferAttribute(p, i + 2);
+  v += a.dot(b.cross(c))/6; } return v; };
+
+test('mirrored parts keep smooth shading: each normal is the exact mirror of its twin', () => {
+  const rings = [0, .4, .8].map(z => ({z, ring: superellipse({cx: .5, cy: .4, halfWidth: .2, halfHeight: .15, exponent: 3, count: 24})}));
+  const right = loft(rings, () => '#fff'), left = mirrorX(right), pr = right.attributes.position, nr = right.attributes.normal, pl = left.attributes.position, nl = left.attributes.normal;
+  const key = (p, i, flip) => [flip*p.getX(i), p.getY(i), p.getZ(i)].map(c => c.toFixed(5)).join();
+  const normals = new Map(); for (let i = 0; i < pr.count; i++) normals.set(key(pr, i, 1) + '|' + [nr.getX(i), nr.getY(i), nr.getZ(i)].map(c => c.toFixed(4)).join(), true);
+  let matched = 0;
+  for (let i = 0; i < pl.count; i++) if (normals.has(key(pl, i, -1) + '|' + [-nl.getX(i), nl.getY(i), nl.getZ(i)].map(c => c.toFixed(4)).join())) matched++;
+  assert.equal(matched, pl.count, 'every mirrored vertex has the mirrored normal of its twin');
+  assert.ok(volumeOf(left) > 0, 'still faces outward');
+});
+
+test('shape methods reject bad numbers with clear messages instead of making broken shapes', () => {
+  const sym = naca4(0, 0, .12);// symmetric airfoil, camber position irrelevant
+  assert.ok(sym.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y)), 'symmetric airfoil has no 0/0');
+  assert.throws(() => naca4(.06, 0, .12), /camber position/);
+  assert.throws(() => naca4(0, .4, 0), /bad airfoil/);
+  assert.throws(() => tube([0, 0, 0], [0, 0, 0], .02, '#fff'), /two different points/);
+  assert.throws(() => superellipse({cy: 0, halfWidth: 0, halfHeight: .1}), /bad size/);
+  assert.throws(() => stationCurve([{z: 0, w: 1}, {z: 1}]), /missing "w"/);
+  assert.throws(() => loft([{z: 0, ring: [[0, 0], [1, 0], [NaN, 1]]}, {z: 1, ring: [[0, 0], [1, 0], [0, 1]]}], () => '#fff'), /not a number/);
+});
+
+test('a wrongly tuned kart or set-up stops the build with a clear message', () => {
+  assert.throws(() => buildKart({...GT_GOKART, scale: 0}), /Cannot build GT GoKart: .*scale/);
+  assert.throws(() => buildKart(F1_GOKART, {rideHeight: 2}), /rideHeight/);
+  assert.throws(() => buildKart(GOKART, {rideHieght: .1}), /unknown upgrade "rideHieght"/);
+  assert.doesNotThrow(() => buildKart(GOKART, {rideHeight: .1}), 'a partial set-up counts the rest as stock');
+});
+
+test('the GoKart stays connected when raised: axle hangers and stub axles reach the frame and the hubs', () => {
+  const lift = MAX_OFFROAD.rideHeight, raised = buildKart(GOKART, MAX_OFFROAD), frameY = GOKART.frameHeight*GOKART.scale + lift;
+  const axle = boxOf(raised.getObjectByName('rear axle')), hub = wheelsOf(GOKART, MAX_OFFROAD)[2].radius;
+  assert.ok(axle.max.y >= frameY - .02, `rear axle hangers reach the frame (${axle.max.y.toFixed(3)} vs ${frameY.toFixed(3)})`);
+  assert.ok(axle.min.y <= hub, 'and the axle stays at the hubs');
+  let lowest = Infinity; for (const v of worldVertices(raised.getObjectByName('chassis'))) if (v.z > .55 && v.z < .8) lowest = Math.min(lowest, v.y);
+  assert.ok(lowest <= hub + .06, `front stub axles come down to the hubs (${lowest.toFixed(3)})`);
+});
+
+test('the driver dummy rises with the body when added to it', () => {
+  const lift = .12, raised = buildKart(GT_GOKART, {rideHeight: lift}), dummy = driverDummy(GT_GOKART, raised.userData.steering);
+  raised.getObjectByName('body').add(dummy);
+  const top = boxOf(dummy).max.y, {head} = driverPose(GT_GOKART);
+  assert.ok(close(top, head[1] + AVATAR.headRadius + lift, .01));
+});
+
+test('GT wheel arches are closed solids that face outward', () => {
+  assert.ok(volumeOf(built.gt.getObjectByName('wheel arches').geometry) > 0);
+});
+
+test('building a kart twice gives exactly the same model (no hidden randomness or shared state)', () => {
+  for (const kart of KARTS) {
+    const a = buildKart(kart), b = buildKart(kart), count = m => { let n = 0; m.traverse(o => { if (o.isMesh) n += o.geometry.attributes.position.count; }); return n; };
+    assert.equal(count(a), count(b));
+    assert.deepEqual(boxOf(a).min.toArray(), boxOf(b).min.toArray()); assert.deepEqual(boxOf(a).max.toArray(), boxOf(b).max.toArray());
+  }
 });

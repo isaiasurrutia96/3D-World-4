@@ -61,9 +61,32 @@ The old test kart is only for driving tests and is not part of this set.
    `kart-model.js`: shared pieces (wheels, suspension, seats, steering,
    driver dummy). `gokart-kart.js`, `gt-kart.js`, `f1-kart.js`: the models;
    `models.js`: `buildKart(kart)`. `build.js`: part boxes and driver zone.
-2. `npm run test:karts`: 41 checks (`check.mjs`, `models-check.mjs`).
+2. `npm run test:karts`: 51 checks (`check.mjs`, `models-check.mjs`).
 3. After building: `node kart-parts/browser.mjs` (page at three sizes and
    inside the Test Lab, including the copied side panel).
 4. Page: `karts/` (Test Lab section "Karts"), built by `npm run build:karts`.
    Never rebuild its side panel; hide and show buttons instead (the Test Lab
    copies the panel once).
+
+## E. Fine-tuning guide (where each thing lives)
+
+Every number below can be changed safely: the checks catch a value that makes
+a part hit the driver or a wheel, and a kart that cannot be built says why on
+the Karts page instead of breaking it. Run `npm run test:karts` after a change.
+
+1. **Kart size:** `scale` on each kart in `spec.js` (GoKart, GT, F1).
+2. **Wheels:** `wheels` on each kart (radius, width, track, front and rear
+   places), in design units.
+3. **Where the driver sits:** `seat` on each kart (hip place, recline, and
+   `feetY` for the F1's footwell). Roll bars, cockpits and steering wheels
+   follow the driver automatically.
+4. **The avatar's body sizes:** `AVATAR` in `spec.js` (a test compares them
+   with the avatar's skeleton).
+5. **Where parts bolt on:** `mounts` on each kart; **part shapes and sizes:**
+   `STYLES` (add a new bumper or wing as one more line).
+6. **Upgrade ranges** (off-road raise, wheels sticking out, chassis weight,
+   suspension, tires): `UPGRADES`; Codex decides what they do when driving.
+7. **Body shapes:** the station lists (`NOSE`, `TUB`, `POD`...) at the top of
+   each `*-kart.js` file: each line is one measured cross-section.
+8. **Colours:** `GOKART_COLORS`, `GT_COLORS`, `F1_COLORS`; **rims:** `RIMS`;
+   **gloss:** `FINISH` in `kart-model.js`.
