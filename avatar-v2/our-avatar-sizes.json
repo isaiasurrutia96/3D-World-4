@@ -1,0 +1,27 @@
+{
+ "source": "avatar/official.json (Test Lab: Our avatar), left side",
+ "limbs": {
+  "upper-arm": {
+   "length": 0.2466,
+   "thickness": 0.2227
+  },
+  "forearm": {
+   "length": 0.2274,
+   "thickness": 0.2137
+  },
+  "thigh": {
+   "length": 0.2932,
+   "thickness": 0.3002
+  },
+  "calf": {
+   "length": 0.2556,
+   "thickness": 0.2734
+  }
+ },
+ "jointToJoint": {
+  "upper-arm": 0.3099,
+  "forearm": 0.2871,
+  "thigh": 0.3671,
+  "calf": 0.3089
+ }
+}
