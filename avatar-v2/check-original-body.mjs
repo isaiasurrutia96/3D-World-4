@@ -5,7 +5,7 @@
 // their latest sizes) complete him; every part faces outward; both sides match.
 // Usage: node avatar-v2/check-original-body.mjs   (part of npm run test:new-avatar)
 import assert from 'node:assert/strict';
-import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
+import {originalLimbBody,separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,SLIM_OVER_BALL,SLIM_LIMBS,SLIM_OVER,HIP_EXTRA_PRESS,pressAt,sinkIntoTorso,TORSO_PRESS,roundForearmEnd,FOREARM_ROUND_FROM,BALL_SIZE,endRadius,limbLine,stretchLimb,thickenTo,widenTop,THIGH_TOP_WIDER,THIGH_WIDEN_UNTIL,HIP_BALL_GAP,GOLDEN,ORIGINAL_LIMBS as src,ORIGINAL_HEAD_CENTRE,ORIGINAL_HAND_SHRINK,STRETCH_FROM,STRETCH_TO} from './original-body.js';
 import ourAvatar from './our-avatar-sizes.json' with {type:'json'};
 import {insideTorso,SHOULDER_TORSO_GAP} from './assembly.js';
 import {BALL_GAP} from './limb-options.js';
@@ -40,10 +40,8 @@ const thick=(pos,L,from,to)=>{let r=0;for(let i=0;i<pos.length;i+=3){const p=P(p
 // Each limb's thickness: the upper arm as thick as Our avatar's; the forearm, thigh and calf slimmed to SLIM_OVER_BALL times the bigger of their two balls.
 const neighbours={'upper-arm':['shoulder','elbow'],forearm:['elbow','wrist'],thigh:['hip','knee'],calf:['knee','ankle']};
 for(const n of ['upper-arm','forearm','thigh','calf']){const slim=SLIM_LIMBS.includes(n);
- check(`${n}: ${slim?`slimmed to ${Math.round((SLIM_OVER_BALL-1)*100)}% wider than its bigger ball`:"as thick as Our avatar's"}, ends unchanged in shape`,()=>{
-  // The slim width uses the hip ball's size before it was made bigger (only the thigh's top widens with it).
-  const base=k=>k==='hip'?b.ballR.hip/BALL_SIZE.hip:b.ballR[k];
-  const want=slim?SLIM_OVER_BALL*2*Math.max(...neighbours[n].map(base)):ourAvatar.limbs[n].thickness;
+ check(`${n}: ${slim?`slimmed to ${Math.round((SLIM_OVER[n]-1)*100)}% wider than its bigger ball`:"as thick as Our avatar's"}, ends unchanged in shape`,()=>{
+  const want=slim?SLIM_OVER[n]*2*Math.max(...neighbours[n].map(k=>b.ballR[k])):ourAvatar.limbs[n].thickness;
   const now=g(n,'left').positions,L=limbLine(now);let r=0;for(let i=0;i<now.length;i+=3){const v=[now[i]-L.centre[0],now[i+1]-L.centre[1],now[i+2]-L.centre[2]],sa=v[0]*L.dir[0]+v[1]*L.dir[1]+v[2]*L.dir[2];r=Math.max(r,Math.hypot(v[0]-L.dir[0]*sa,v[1]-L.dir[1]*sa,v[2]-L.dir[2]*sa));}
   assert(Math.abs(2*r-want)<.003,`thickness ${(2*r*100).toFixed(1)} cm, wanted ${(want*100).toFixed(1)}`);return `thickness ${(2*r*100).toFixed(1)} cm, length ${(L.length*100).toFixed(1)} cm`;});}
 check(`thigh: its top ${Math.round((THIGH_TOP_WIDER-1)*100)}% wider at the end, fading smoothly to unchanged by its middle; length unchanged`,()=>{
@@ -148,6 +146,32 @@ check('reports his height and triangles',()=>`${(b.height*100).toFixed(1)} cm ta
     const axial=[0,1,2].reduce((t,k)=>t+(c[k]-B.centre[k])*B.dir[k],0);const gap=B.start-axial-m.radius;assert(Math.abs(gap-BALL_GAP)<1e-6,`${bn}: gap above the ${below} ${(gap*1000).toFixed(2)} mm`);}
    out.push(bn.slice(5));}
   return 'centred: '+out.join(', ');});
+ check('the thigh 10% wider than the hip ball and the calf a hair more (13%) than its bigger ball; the forearm unchanged at 10%',()=>{
+  assert.deepEqual(SLIM_OVER,{forearm:1.1,thigh:1.1,calf:1.1+.03});return 'forearm 10%, thigh 10% (of the bigger hip ball), calf 13%';});
+ check('the deeper hip press and the thicker limbs leave every ball its size (measured with every joint pressed alike)',()=>{
+  // The sizes before this change (22 November 2026), in cm across: the deeper hip press shortens the thigh 1.2 cm and must not change them.
+  const was={shoulder:21.1808,elbow:18.0171,wrist:15.5476,hip:23.1053,knee:19.8728,ankle:19.9069};
+  for(const [k,v] of Object.entries(was))assert(Math.abs(b.ballR[k]*200-v)<1e-3,`${k}: ${(b.ballR[k]*200).toFixed(4)} vs ${v}`);return 'unchanged';});
+ check(`put together: the hip ball sinks ${Math.round(TORSO_PRESS*100)}% of its radius into the torso and ${Math.round(pressAt('hip')*100)}% into the thigh (the other joints ${Math.round(PREVIEW_PRESS*100)}%)`,()=>{
+  const pv=pressedPreviewBody('boy'),pg=(n,s='left')=>pv.parts.find(p=>p.name===n&&p.side===s),H=pg('ball-hip'),shape=pv.whole.torsoShape;
+  // How deep a ball sits past the torso's surface, measured on its own: the smallest d for which a ball d smaller touches nothing inside (4,000 test points).
+  const probes=Array.from({length:4000},(_,i)=>{const y=1-2*(i+.5)/4000,q=Math.sqrt(1-y*y),a=i*Math.PI*(3-Math.sqrt(5));return [Math.cos(a)*q,y,Math.sin(a)*q];});
+  const sunk=m=>{let lo=-.3,hi=m.radius;for(let k=0;k<40;k++){const d=(lo+hi)/2;if(probes.every(p=>insideTorso(shape,m.centre.map((v,j)=>v+p[j]*(m.radius-d)))<=0))hi=d;else lo=d;}return hi;};
+  const into=sunk(H);assert(Math.abs(into-TORSO_PRESS*H.radius)<.001,`hip ball ${(into*100).toFixed(2)} cm into the torso, wanted ${(TORSO_PRESS*H.radius*100).toFixed(2)}`);
+  // Test of the test: the separated hip ball (clear of the torso) measures as not in it at all.
+  assert(sunk(sg('ball-hip','left'))<0,'the separated ball measured as inside');
+  // Into the thigh: the thigh's top tip (on its line) sits (1 - press) of the radius from the ball's centre, on the ball's far side.
+  const tipGap=(ball,limb,end)=>{const L=limbLine(limb.positions),tip=[0,1,2].map(k=>L.centre[k]+L.dir[k]*(end==='top'?L.start:L.end)),toward=end==='top'?1:-1;return toward*[0,1,2].reduce((a,k)=>a+(tip[k]-ball.centre[k])*L.dir[k],0);};
+  const hipTip=tipGap(H,pg('thigh'),'top'),kneeTip=tipGap(pg('ball-knee'),pg('calf'),'top');
+  assert(Math.abs(hipTip-(1-pressAt('hip'))*H.radius)<1e-6,`thigh tip ${(hipTip*100).toFixed(2)} cm from the hip ball's centre`);
+  assert(Math.abs(kneeTip-(1-PREVIEW_PRESS)*pg('ball-knee').radius)<1e-6,`calf tip ${(kneeTip*100).toFixed(2)} cm from the knee ball's centre`);
+  assert.equal(pressAt('hip'),PREVIEW_PRESS+HIP_EXTRA_PRESS);assert.equal(pressAt('knee'),PREVIEW_PRESS);
+  return `into the torso ${(into*100).toFixed(2)} cm (radius ${(H.radius*100).toFixed(2)}); thigh's tip at ${(hipTip*100).toFixed(2)} cm from its centre; calf's ${(kneeTip*100).toFixed(2)} cm`;});
+ check('test of the test: sinkIntoTorso to depth 0 just touches, and refuses a start inside the torso',()=>{
+  const shape=sep.whole.torsoShape,H=sg('ball-hip','left'),c=sinkIntoTorso(shape,H.centre,H.radius,[0,-1,0],0);
+  const probes=Array.from({length:2000},(_,i)=>{const y=1-2*(i+.5)/2000,q=Math.sqrt(1-y*y),a=i*Math.PI*(3-Math.sqrt(5));return [Math.cos(a)*q,y,Math.sin(a)*q];});
+  const worst=r=>Math.max(...probes.map(p=>insideTorso(shape,c.map((v,j)=>v+p[j]*r))));assert(worst(H.radius)<=0&&worst(H.radius+.001)>0,'not touching');
+  assert.throws(()=>sinkIntoTorso(shape,[H.centre[0],1,H.centre[2]],H.radius,[0,-1,0],0));return 'touches within 1 mm; inside start refused';});
  check('separated: the hip balls closer together than Our avatar\'s: its gap between their inner edges divided by the golden ratio',()=>{
   const l=sg('ball-hip','left'),r2=sg('ball-hip','right'),gap=(l.centre[0]-l.radius)-(r2.centre[0]+r2.radius);
   assert(Math.abs(HIP_BALL_GAP-ourAvatar.hipBallGap/GOLDEN)<1e-12);assert(Math.abs(gap-HIP_BALL_GAP)<.001,`gap ${(gap*100).toFixed(2)} cm, wanted ${(HIP_BALL_GAP*100).toFixed(2)} cm`);return `${(gap*100).toFixed(1)} cm apart (Our avatar ${(ourAvatar.hipBallGap*100).toFixed(1)} cm)`;});
