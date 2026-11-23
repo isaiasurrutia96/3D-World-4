@@ -4,7 +4,7 @@ import { sampleCurve, steeringLimit, steeringResponse, STANDARD_GRAVITY } from '
 import type { HandlingProfile } from './profiles.ts';
 import { F1_2026_SYSTEMS, initialF12026Systems, prepareF12026Systems, finishF12026Systems } from './f1-2026-systems.ts';
 import type { F12026SystemState } from './f1-2026-systems.ts';
-import { gt3BrakeDemand, gt3FrontLoad, gt3MechanicalSpeedLimit, initialGt3Systems, resolveGt3TireDemand, stepGt3Gear } from './gt3-systems.ts';
+import { GT3_REFERENCE_WHEELBASE, gt3BrakeDemand, gt3FrontLoad, gt3MechanicalSpeedLimit, initialGt3Systems, resolveGt3TireDemand, stepGt3Gear } from './gt3-systems.ts';
 import type { Gt3SystemState } from './gt3-systems.ts';
 export type SurfaceSample = Readonly<{ grip?: number; speed?: number; resistance?: number }>;
 export type HandlingState = Readonly<{
@@ -107,8 +107,12 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     s.steering = demand * h.steeringLimit;
     const turnSpeed = s.railContactTime > 0 && requested > 0 && !opposingBrake ? Math.max(source.speed, 2) : source.speed;
     const yawTarget = source.grounded ? -turnSpeed / geometry.wheelbase * Math.tan(s.steering) : 0;
-    const requestedYaw = h.yawRate + (yawTarget - h.yawRate) * (1 - Math.exp(-dt / profile.yawResponseSeconds));
-    h.yawRate = source.grounded ? approach(h.yawRate, requestedYaw, profile.yawAcceleration * dt) : 0;
+    // Scale the GT3 yaw transient by distance in wheelbases at equal speed.
+    // The steering and tire-force limits set the available turn.
+    const yawTimeScale = gt3Balance ? geometry.wheelbase / GT3_REFERENCE_WHEELBASE : 1;
+    const yawResponseSeconds = profile.yawResponseSeconds * yawTimeScale;
+    const requestedYaw = h.yawRate + (yawTarget - h.yawRate) * (1 - Math.exp(-dt / yawResponseSeconds));
+    h.yawRate = source.grounded ? approach(h.yawRate, requestedYaw, profile.yawAcceleration * dt / yawTimeScale) : 0;
     const yawDelta = (h.yawRate + s.impactYawRate) * dt;
     const midYaw = source.yaw + yawDelta / 2;
     s.yaw += yawDelta;

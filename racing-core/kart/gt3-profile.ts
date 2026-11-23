@@ -40,10 +40,10 @@ export const GT3_PROFILE = createHandlingProfile({
     throttleRiseSeconds: .19, throttleReleaseSeconds: .12,
     brakeRiseSeconds: .13, brakeReleaseSeconds: .10,
     steeringLock: 29 * Math.PI / 180,
-    // Shorten the input ramp and chassis response so brief digital
-    // steering commands start turning the kart sooner.
-    steeringResponse: { lowSpeedRiseSeconds: .26, lowSpeedExponent: 1.08, blendStart: 7, blendEnd: 23 },
-    steeringRiseSeconds: .21, steeringReleaseSeconds: .16,
+    // Digital steering unwinds quickly for direction changes. The lower
+    // speed input still builds progressively near mechanical lock.
+    steeringResponse: { lowSpeedRiseSeconds: .23, lowSpeedExponent: 1.08, blendStart: 7, blendEnd: 23 },
+    steeringRiseSeconds: .21, steeringReleaseSeconds: .11,
     // Complete the speed-based limit before the 2.10 m chassis reaches the
     // dry tire limit under full steering lock.
     steeringBlendStart: 3, steeringBlendEnd: 6.9,

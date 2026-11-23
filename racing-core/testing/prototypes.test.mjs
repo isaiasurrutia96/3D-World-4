@@ -4,6 +4,7 @@ import { Box3, Vector3 } from 'three';
 import { buildKartPrototype } from '../../kart-parts/product-prototypes.js';
 import { F1_2026_PROFILE } from '../kart/f1-2026-profile.ts';
 import { GT3_PROFILE } from '../kart/gt3-profile.ts';
+import { KART } from '../kart/index.ts';
 import { KART_PROTOTYPES, PROTOTYPE_HANDLING } from '../kart/prototypes.ts';
 import { ORIGINAL_PROFILE, PREVIOUS_FAST_PROFILE, steeringLimit, steeringResponse } from '../kart/profiles.ts';
 import { createDrivingTest, PARKED_KARTS } from './drive.ts';
@@ -216,6 +217,36 @@ test('GT3 turns into the first tightening corner on Original with a held steerin
     assert.equal(contacts + end.contacts, 0);
     assert.ok(speed > 99 && speed < 101, `Speed after 1 s: ${speed} km/h`);
     assert.ok(line && Math.abs(line.offset) < 3.2, `Offset after 1 s: ${line?.offset} m`);
+});
+
+test('GT3 changes travel direction promptly through the Original S-bend', () => {
+    const driving = createDrivingTest('original', { prototype: 'gt', gtTune: 'gt3' });
+    const station = 610;
+    const { point, forward } = driving.track.sample(station);
+    driving.controller.reset({ ...point, yaw: Math.atan2(forward.x, forward.z), speed: 75 / 3.6 });
+
+    const firstTurnTicks = 50;
+    const travelHeading = state => state.yaw + Math.atan2(state.lateralSpeed, state.speed);
+    let heading = travelHeading(driving.controller.state);
+    let reversalSeconds;
+    for (let tick = 1; tick <= 145; tick++) {
+        const state = driving.advance(KART.step, { steer: tick <= firstTurnTicks ? 1 : -1 });
+        const nextHeading = travelHeading(state);
+        assert(state.grounded);
+        assert.equal(state.contacts, 0);
+        if (tick === firstTurnTicks) assert(nextHeading < heading);
+        if (tick > firstTurnTicks && reversalSeconds === undefined && nextHeading > heading) {
+            reversalSeconds = (tick - firstTurnTicks) * KART.step;
+        }
+        heading = nextHeading;
+    }
+
+    const end = driving.controller.state;
+    const line = driving.track.project(end, { hintDistance: station, maxDelta: 55 });
+    const speed = Math.hypot(end.speed, end.lateralSpeed) * 3.6;
+    assert.ok(reversalSeconds !== undefined && reversalSeconds < .25, `Travel direction reversed after ${reversalSeconds} s`);
+    assert.ok(speed > 69.5 && speed < 71.5, `S-bend exit speed: ${speed} km/h`);
+    assert.ok(line && Math.abs(line.offset) < 2.5, `S-bend exit offset: ${line?.offset} m`);
 });
 
 function replayLap(options, fps) {

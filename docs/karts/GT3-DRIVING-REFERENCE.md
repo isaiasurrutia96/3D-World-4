@@ -151,3 +151,32 @@ reference. [Stock body](PARTS-KIT.md#h-models-per-class) ·
    slowed to 120 km/h in **38.1 m**. The first release took **0.217 s**
    and **45.3 m**. Explicit braking takes precedence over a simultaneous
    direction command. [Pedal and reversal checks](../../racing-core/kart/gt3-systems.test.mjs)
+
+## E. Chassis-scaled steering response
+
+1. The 2026 Porsche 911 GT3 R has a **2.507 m** wheelbase. The GT
+   GoKart's **2.10 m** wheelbase gives a **0.838** ratio. The controller
+   already uses the actual wheelbase to calculate the path from road-wheel
+   angle. At the same 29° lock, that geometry gives **3.79 m** and **4.52 m**
+   low-speed radii respectively. At race speeds the shared tire-force
+   limit governs the available curvature. [Porsche technical sheet](https://newsroom.porsche.com/dam/jcr%3A3b5e8287-01fb-481f-9d5c-2add88364f30/250808e_Technical%20Data%20911%20GT3%20R26.pdf)
+2. The GT3 chassis response uses wheelbase divided by reference wheelbase
+   to scale transient time at equal speed. The **0.135 s** yaw setting
+   yields **0.113 s** on the playable kart. Its angular acceleration limit
+   scales inversely so it can make the same rate change in scaled time.
+   The earlier game parameter is the calibration starting point. The
+   published Porsche data give geometry and hardware, and measuring
+   physical yaw response also requires tire data and rotational inertia.
+   The steering release was set to **0.11 s** based on control tests.
+   [Dimensionless vehicle model, equations 3–5](https://www.me.psu.edu/toboldlygo/Publications/Conferences/2000_Brennan_RobustStabilizationOfAGeneralizedVehicleANondimensionalApproach.pdf) ·
+   [Chassis code](../../racing-core/kart/dynamics.ts)
+3. In Original Circuit's S-bend, the kart's direction of travel began
+   turning the opposite way **0.233 s** after the steering switch, down
+   from **0.292 s**. Both entries were **75 km/h** and both exited at
+   **70.58 km/h**. The distance from the centerline after the maneuver
+   dropped from **2.82 to 2.32 m**. At 120 km/h in a flat-road pulse test,
+   lateral acceleration after steering release fell below **0.05 g**
+   in **0.392 s**, down from **0.492 s**. The held-turn check measured
+   **1.74 g**.
+   [S-bend regression](../../racing-core/testing/prototypes.test.mjs) ·
+   [Two-wheelbase grip and response check](../../racing-core/kart/gt3-profile.test.mjs)

@@ -3,14 +3,14 @@ import test from 'node:test';
 import { createKartController, KART } from './index.ts';
 import { F1_2026_PROFILE } from './f1-2026-profile.ts';
 import { GT3_PROFILE } from './gt3-profile.ts';
+import { GT3_REFERENCE_WHEELBASE } from './gt3-systems.ts';
 import { KART_PROTOTYPES, PROTOTYPE_HANDLING } from './prototypes.ts';
 import { STANDARD_GRAVITY } from './profiles.ts';
 
 const flatRoad = { heightAt: () => 0 };
 const velocity = state => Math.hypot(state.speed, state.lateralSpeed);
-const makeController = (speedKmh = 0, profile = GT3_PROFILE) => createKartController({
-    geometry: KART_PROTOTYPES.gt, profile, world: flatRoad, initial: { speed: speedKmh / 3.6 },
-});
+const makeController = (speedKmh = 0, profile = GT3_PROFILE, geometry = KART_PROTOTYPES.gt) =>
+    createKartController({ geometry, profile, world: flatRoad, initial: { speed: speedKmh / 3.6 } });
 
 function inRange(measured, min, max, label) {
     assert.ok(measured >= min && measured <= max, `${label}: ${measured}, expected ${min}–${max}`);
@@ -105,9 +105,9 @@ test('GT3 has a progressive lift response between steady power and full braking'
     assert.ok(fast.peak > medium.peak && fast.peak < .6);
 });
 
-function heldTurn(kmh, profile = GT3_PROFILE) {
+function heldTurn(kmh, profile = GT3_PROFILE, geometry = KART_PROTOTYPES.gt) {
     const initialSpeed = kmh / 3.6;
-    const kart = makeController(kmh, profile);
+    const kart = makeController(kmh, profile, geometry);
     const turnInTick = Math.round(.2 / KART.step);
     const heldTicks = Math.round(2 / KART.step);
     const totalTicks = heldTicks + Math.round(.3 / KART.step);
@@ -139,6 +139,18 @@ test('GT3 holds the dry grip envelope with a responsive turn-in and release', ()
     assert.ok(gt.initialLateral > firstDrive.initialLateral * 1.25, 'GT3 responds sooner than First-drive GT');
     assert.ok(gt.initialLateral < formula.initialLateral * .95, 'F1 retains a faster turn-in');
     assert.ok(gt.afterRelease < firstDrive.afterRelease * .85, 'GT3 unwinds promptly when steering is released');
+});
+
+test('GT3 short wheelbase quickens the transient while settling at the same dry grip', () => {
+    const wheelbase = GT3_REFERENCE_WHEELBASE;
+    const referenceGeometry = {
+        ...KART_PROTOTYPES.gt, wheelbase, frontProbe: wheelbase / 2, rearProbe: wheelbase / 2,
+    };
+    const shortKart = heldTurn(120);
+    const comparison = heldTurn(120, GT3_PROFILE, referenceGeometry);
+    assert.ok(shortKart.initialLateral > comparison.initialLateral * 1.08);
+    assert.ok(shortKart.afterRelease < comparison.afterRelease * .80);
+    assert.ok(Math.abs(shortKart.handling.lateralG - comparison.handling.lateralG) < .02);
 });
 
 test('GT3 trail braking transfers tire capacity from braking to steering', () => {

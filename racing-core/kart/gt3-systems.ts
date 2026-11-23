@@ -2,6 +2,9 @@
 import { STANDARD_GRAVITY } from './profiles.ts';
 import type { Gt3Balance } from './profiles.ts';
 
+// 2026 Porsche 911 GT3 R technical data, in metres.
+export const GT3_REFERENCE_WHEELBASE = 2.507;
+
 // The 2026 911 GT3 R data sheet gives six forward ratios and a 9,250-rpm
 // maximum. The ratios themselves and torque cut are prototype estimates.
 const rpmLimit = 9_250;
