@@ -26,7 +26,8 @@ import {drawFace} from '../avatar-v2/face.js';
 import {assemble,shoulderPreview,wristPreview,legPreview,fullBodyPreview,BODIES} from '../avatar-v2/assembly.js';
 import {shoulderSocketPreview} from '../avatar-v2/sockets.js';
 import {socketedBody} from '../avatar-v2/body-sockets.js';
-import {separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,pushShoulderBalls,softenShoulderRims,SHOULDER_RIM_ROUND,pushBallsIn,closerHipBalls,limbSockets,elbowKneeSockets,wristAnkleSockets,assembledSockets} from '../avatar-v2/original-body.js';
+import {separatedOriginalBody,pressedPreviewBody,PREVIEW_PRESS,HIP_TORSO_PRESS,HIP_THIGH_EXTRA,SHOULDER_RIM_ROUND} from '../avatar-v2/original-body.js';
+import {unpackTorsoSockets} from './torso-sockets-file.js';
 import {elbowTest,ELBOW_TEST_POSES,CLOSER_DEPTHS,CLAY_LIP} from '../avatar-v2/elbow-test.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
@@ -50,7 +51,7 @@ function label(text){
 // Everything on show: each item is a set of parts (geometry and height), with
 // its centre and width for framing the camera.
 const geometryOf=({positions,index,normals})=>{
- const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(index);
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setIndex(Array.isArray(index)?index:new T.BufferAttribute(index,1));
  if(normals)g.setAttribute('normal',new T.Float32BufferAttribute(normals,3));else g.computeVertexNormals();
  return g;
 };
@@ -107,45 +108,27 @@ for(const share of CLOSER_DEPTHS){const e=elbowTest(share,'boy',{lip:CLAY_LIP}),
   parts:e.pose(deg).map(p=>({name:p.name,geometry:geometryOf(p),y:0}))});}
 GROUPS.push({id:'elbow-test',label:'Elbow test',intro:'One elbow (his left), the limbs pressed closer with thick clay around the hard ball, three depths: the ball sits 70%, 80% or 90% of its radius into each limb, the clay staying thick around it like pushed clay. Each shown straight, bent 90° and bent 120°.',items:elbowItems});
 const mix=separatedOriginalBody('boy');
-// The torso with its shoulder sockets and both shoulder balls beside it (owner, 22 November 2026: "just put the torso
-// with the socket and the ball, but the ball separated in the new avatar, and that's it"): each ball pushed straight
-// into the clay torso and pulled back out, the sockets' rims then chiselled and softened.
-const shoulderCut=pushShoulderBalls('boy',together,{apart:mix}),shoulderSoft=softenShoulderRims(shoulderCut);
-// The hips restarted (owner, 22 November 2026: "restart with the hip joints again, and just imagine that we have not
-// pressed the balls into the [torso]"; visuals only for now): the same torso and shoulder sockets, but the torso's hips
-// as they were before any press, and both hip balls below it, not pressed in (where the separated avatar has them).
-const plainTorso=mix.parts.find(p=>p.name==='torso'),hipsApart=softenShoulderRims(pushShoulderBalls('boy',{...together,parts:together.parts.map(p=>p.name==='torso'?plainTorso:p)},{apart:mix})),hipBalls=mix.parts.filter(p=>p.name==='ball-hip');
-// Then the hip balls brought closer together and pushed straight up into the torso and back out, the same way as the
-// shoulders, with the same softened lip (owner: "bring the ball hips closer together, but not to where they touch, then
-// press the balls up against the torso, same process ... make sure the lip is the same as the shoulders").
-const closerHips=closerHipBalls('boy',undefined,{pressed:together}),hipSockets=softenShoulderRims(pushBallsIn(hipsApart.torso,closerHips.inBalls,closerHips.outBalls));
-// Then the upper arms and thighs added in line with their balls, each ball pushed into its limb and pulled back out,
-// with the same softened lip (owner: "add the upper arm to both sides and the thighs ... the same process").
-const limbs=limbSockets('boy',{apart:mix,hips:closerHips});
-// Then the elbow and knee balls pressed into the bottoms of the upper arms and thighs the same way (owner: "now the
-// elbows and knees, press them into the limbs").
-const elbowsKnees=elbowKneeSockets('boy',{apart:mix,hips:closerHips,limbs});
-// Then the forearms, calves, wrist and ankle balls, hands and feet, every ball pressed into the pieces on both sides
-// of it (owner: "now the ankles and wrist", "use also the feet and hands to press against the limbs").
-const wristsAnkles=wristAnkleSockets('boy',{apart:mix,hips:closerHips});
-// Then everything put together, each ball back where it was pushed to and each piece on its ball, the same size as
-// the put-together avatar (owner: "now put everything part together, and make sure its the overall same size").
-const assembled=assembledSockets({torso:hipSockets.torso,shoulderIn:together.parts.find(p=>p.name==='ball-shoulder'&&p.side==='left'),hipIn:closerHips.inBalls.find(b=>b.side==='left'),limbs,elbowsKnees,wristsAnkles});
+// The Torso sockets tab's shapes: every step (owner requests in docs/HANDOFF.md items 62 to 70) is built once during
+// the build by bake-torso-sockets.mjs and loaded here from one small file; building them on every load had made the page
+// take about 30 s on a computer and much longer on a phone (owner: "Its not loading in the test lab").
+const torsoFile=unpackTorsoSockets(await (await fetch('./torso-sockets.bin?v='+TORSO_SOCKETS_VERSION)).arrayBuffer()),TF=torsoFile.facts;
+const torsoParts=id=>torsoFile.items[id].map(p=>({name:p.name,geometry:geometryOf(p),y:0}));
+const hipBalls=mix.parts.filter(p=>p.name==='ball-hip');
 GROUPS.push({id:'torso-sockets',label:'Torso sockets',intro:'His torso with the shoulder sockets: each shoulder ball was pushed straight into the clay torso, to where it sits when he is put together, then pulled back out beside it. The thin sliver of clay over the top of each socket is chiselled off and every rim softened. Next to it, the hips restarted: the torso before any hip ball was pressed in, with both hip balls below it; then the hip balls brought closer together and pushed in and back out the same way, with the same softened lip; then the upper arms and thighs, each pressed onto its ball the same way; then the elbow and knee balls pressed into the bottoms of the upper arms and thighs; then the forearms, calves, hands and feet, with every ball pressed into the pieces on both sides of it; last everything put together.',
- items:[{id:'torso-sockets-boy',label:'Torso · shoulder sockets',tag:'Torso',note:`Each socket is exactly what its ball left (the ball plus the usual 6 mm gap; ${Math.round(shoulderSoft.displaced/2*1e6)} cm³ of clay each). Then a ${Math.round(SHOULDER_RIM_ROUND*1000)} mm ball rolled along the inside of the clay and whatever it could not reach was cut off (${(shoulderSoft.removed*1e6).toFixed(1)} cm³ in all). The balls sit beside the torso where they started.`,
-  parts:shoulderSoft.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
+ items:[{id:'torso-sockets-boy',label:'Torso · shoulder sockets',tag:'Torso',note:`Each socket is exactly what its ball left (the ball plus the usual 6 mm gap; ${Math.round(TF.shoulderDisplaced/2*1e6)} cm³ of clay each). Then a ${Math.round(SHOULDER_RIM_ROUND*1000)} mm ball rolled along the inside of the clay and whatever it could not reach was cut off (${(TF.shoulderRemoved*1e6).toFixed(1)} cm³ in all). The balls sit beside the torso where they started.`,
+  parts:torsoParts('torso-sockets-boy')},
   {id:'torso-hips-apart',label:'Torso · hips not pressed yet',tag:'Hips apart',note:`The same torso and shoulder sockets, but the hips restarted: the torso as it was before any hip ball was pressed in, and both hip balls (${(hipBalls[0].radius*200).toFixed(1)} cm) below it, not pressed in.`,
-  parts:[...hipsApart.parts,...hipBalls].map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
-  {id:'torso-hip-sockets',label:'Torso · hip sockets',tag:'Hip sockets',note:`The hip balls brought closer together (${(closerHips.gap*100).toFixed(1)} cm apart instead of ${(hipBalls[0].centre[0]*200-hipBalls[0].radius*200).toFixed(1)}), then pushed straight up into the torso to where they sit when he is put together and pulled back down, the same way as the shoulders. Each socket is what its ball left (${Math.round(hipSockets.displaced/2*1e6)} cm³ of clay each), with the same softened lip as the shoulders.`,
-  parts:[...hipSockets.parts.slice(0,1),...hipsApart.parts.slice(1),...hipSockets.parts.slice(1)].map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
-  {id:'torso-limb-sockets',label:'Torso · limbs with sockets',tag:'Limbs',note:`The upper arms and thighs added in line with their balls, one small gap away, where they belong. Each ball was pushed into its limb as deep as when he is put together, then pulled back out, leaving a socket in the top of each limb (${Math.round(limbs[0].cut.displaced*1e6)} cm³ out of each upper arm, ${Math.round(limbs[2].cut.displaced*1e6)} cm³ out of each thigh), with the same softened lip.`,
-  parts:[...hipSockets.parts.slice(0,1),...hipsApart.parts.slice(1),...hipSockets.parts.slice(1),...limbs.map(l=>l.part)].map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
-  {id:'torso-elbow-knee-sockets',label:'Torso · elbows and knees pressed',tag:'Elbows & knees',note:`The elbow balls below the upper arms and the knee balls below the thighs, one small gap away on each limb's line. Each was pushed up into its limb's bottom as deep as when he is put together, then pulled back out, leaving a socket there too (${Math.round(elbowsKnees[0].cut.displaced*1e6)} cm³ out of each upper arm, ${Math.round(elbowsKnees[2].cut.displaced*1e6)} cm³ out of each thigh), with the same softened lip.`,
-  parts:[...hipSockets.parts.slice(0,1),...hipsApart.parts.slice(1),...hipSockets.parts.slice(1),...elbowsKnees.map(l=>l.part),...elbowsKnees.map(l=>l.ball)].map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
+  parts:torsoParts('torso-hips-apart')},
+  {id:'torso-hip-sockets',label:'Torso · hip sockets',tag:'Hip sockets',note:`The hip balls brought closer together (${(TF.closerGap*100).toFixed(1)} cm apart instead of ${(hipBalls[0].centre[0]*200-hipBalls[0].radius*200).toFixed(1)}), then pushed straight up into the torso to where they sit when he is put together and pulled back down, the same way as the shoulders. Each socket is what its ball left (${Math.round(TF.hipDisplaced/2*1e6)} cm³ of clay each), with the same softened lip as the shoulders.`,
+  parts:torsoParts('torso-hip-sockets')},
+  {id:'torso-limb-sockets',label:'Torso · limbs with sockets',tag:'Limbs',note:`The upper arms and thighs added in line with their balls, one small gap away, where they belong. Each ball was pushed into its limb as deep as when he is put together, then pulled back out, leaving a socket in the top of each limb (${Math.round(TF.limbArm*1e6)} cm³ out of each upper arm, ${Math.round(TF.limbThigh*1e6)} cm³ out of each thigh), with the same softened lip.`,
+  parts:torsoParts('torso-limb-sockets')},
+  {id:'torso-elbow-knee-sockets',label:'Torso · elbows and knees pressed',tag:'Elbows & knees',note:`The elbow balls below the upper arms and the knee balls below the thighs, one small gap away on each limb's line. Each was pushed up into its limb's bottom as deep as when he is put together, then pulled back out, leaving a socket there too (${Math.round(TF.ekArm*1e6)} cm³ out of each upper arm, ${Math.round(TF.ekThigh*1e6)} cm³ out of each thigh), with the same softened lip.`,
+  parts:torsoParts('torso-elbow-knee-sockets')},
   {id:'torso-wrist-ankle-sockets',label:'Torso · whole arms and legs',tag:'Wrists & ankles',note:`The forearms and calves below the elbow and knee balls, the wrist and ankle balls below them, and the hands and feet below those, each one small gap away on the limb's line. Every ball was pushed into the pieces on both sides of it as deep as when he is put together, then pulled back out: the elbows and knees into the tops of the forearms and calves, the wrists and ankles into their bottoms and into the hands and feet, all with the same softened lip.`,
-  parts:[...hipSockets.parts.slice(0,1),...hipsApart.parts.slice(1),...hipSockets.parts.slice(1),...elbowsKnees.map(l=>l.part),...elbowsKnees.map(l=>l.ball),...wristsAnkles.map(l=>l.part)].map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))},
+  parts:torsoParts('torso-wrist-ankle-sockets')},
   {id:'torso-assembled',label:'Torso · everything put together',tag:'Put together',ground:true,note:`Every ball back where it was pushed to and every piece seated on its ball, exactly as when that ball was pushed in. The thighs pressed 2 cm closer into the hip balls and the upper arms, forearms and calves 2.5 mm deeper onto their balls at both ends (hands and feet as they were); to keep him the same size, each of those limbs is that much longer through its middle. The same size as the put-together avatar without his head: ${(together.height*100).toFixed(1)} cm tall with the head; the only difference is the legs, a little closer together as you asked.`,
-  parts:assembled.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
+  parts:torsoParts('torso-assembled')}]});
 GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet with the original avatar\'s limbs (each 10% longer, calves 50 cm), every piece separated and the original neck removed, with a ball at every joint: as thick as the ends it joins (shoulders, neck and hips 10% bigger, wrists and ankles 10% smaller), 300 triangles each.',
  items:[{id:'original-boy',label:'Boy · pieces and joint balls',tag:'Boy',face:mix.face,ground:true,note:`Balls: neck ${(mix.balls['ball-neck'].radius*200).toFixed(1)} cm (approved size), shoulders ${(mix.balls['ball-shoulder'].radius*200).toFixed(1)}, elbows ${(mix.balls['ball-elbow'].radius*200).toFixed(1)}, wrists ${(mix.balls['ball-wrist'].radius*200).toFixed(1)}, hips ${(mix.balls['ball-hip'].radius*200).toFixed(1)}, knees ${(mix.balls['ball-knee'].radius*200).toFixed(1)}, ankles ${(mix.balls['ball-ankle'].radius*200).toFixed(1)} cm. Balls 2 cm from the torso, every other piece 6 mm from its ball. ${(mix.height*100).toFixed(0)} cm tall with everything apart.`,
   parts:mix.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
