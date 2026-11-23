@@ -348,7 +348,10 @@ export function pressedPreviewBody(bodyId='boy',press=PREVIEW_PRESS){return sepa
 export const HIP_BALL_GAP_CLOSER=HIP_BALL_GAP/GOLDEN;
 export function closerHipBalls(bodyId='boy',gap=HIP_BALL_GAP_CLOSER,{pressed=pressedPreviewBody(bodyId)}={}){
  const whole=pressed.whole,shape=whole.torsoShape,rH=whole.ballR.hip,start=[gap/2+rH,HIP[1],HIP[2]];
- const out=clearOfTorso(shape,start,rH,[0,-1,0],SHOULDER_TORSO_GAP),into=sinkIntoTorso(shape,out,rH,[0,-1,0],HIP_TORSO_PRESS*rH);
+ const out=clearOfTorso(shape,start,rH,[0,-1,0],SHOULDER_TORSO_GAP),sunk=sinkIntoTorso(shape,out,rH,[0,-1,0],HIP_TORSO_PRESS*rH);
+ // Pushed up to the same height as the put-together avatar's hip balls (owner: "make sure its the overall same size"):
+ // closer to the middle the torso's underside is lower, so the usual press depth left them 3.7 mm lower and him 3.7 mm taller.
+ const keep=pressed.parts.find(p=>p.name==='ball-hip'&&p.side==='left'),into=keep?[sunk[0],keep.centre[1],sunk[2]]:sunk;
  const pair=c=>[ballPart('ball-hip','left',rH,c),ballPart('ball-hip','right',rH,[-c[0],c[1],c[2]])];
  return {gap,radius:rH,inBalls:pair(into),outBalls:pair(out)};
 }
@@ -415,6 +418,28 @@ export function wristAnkleSockets(bodyId='boy',{apart=separatedOriginalBody(body
   out.push({name:endBall,side:'left',part:end,ball:true},{name:endBall,side:'right',part:ballR,ball:true});
  }
  return out;
+}
+// Everything put together (owner, 23 November 2026: "now put everything part together, and make sure its the overall
+// same size"): every ball back where it was pushed to, and every piece moved so its socket sits on its ball exactly as
+// it did when that ball was pushed in. Going down each arm and leg from the torso, which stays put: each piece moves by
+// (where its ball now is) minus (where that ball was pushed to in the piece's own place), and the next ball moves with
+// the piece. That is the same arrangement as the put-together avatar (the same press depth at every joint). The right
+// side is the mirror of the left, as everywhere on this tab.
+export function assembledSockets({torso,shoulderIn,hipIn,limbs,elbowsKnees,wristsAnkles}){
+ const parts=[torso],at=c=>c.inBalls[0].centre,find=(list,n)=>list.find(e=>e.name===n&&e.side==='left');
+ const both=(e,v)=>{parts.push(moveBy(e.part,v));const r=moveBy(find2(e).part,[-v[0],v[1],v[2]]);parts.push(r);};
+ const find2=e=>[...limbs,...elbowsKnees,...wristsAnkles].find(x=>x.part.name===e.part.name&&x.side==='right'&&x.part!==e.part&&x.name===e.name);
+ const balls=(name,r,c)=>{parts.push(ballPart(name,'left',r,c),ballPart(name,'right',r,[-c[0],c[1],c[2]]));};
+ for(const [top,upper,mid,lower,end,tip,topIn] of [['ball-shoulder','upper-arm','ball-elbow','forearm','ball-wrist','hand',shoulderIn],['ball-hip','thigh','ball-knee','calf','ball-ankle','foot',hipIn]]){
+  const up=find(limbs,upper),upEnd=find(elbowsKnees,upper),lo=find(wristsAnkles,lower),hand=find(wristsAnkles,tip);
+  balls(top,topIn.radius,topIn.centre);
+  const upMove=sub3(topIn.centre,at(up.cut));both(upEnd,upMove);
+  const midC=add3(at(upEnd.cut),upMove);balls(mid,upEnd.cut.inBalls[0].radius,midC);
+  const loMove=sub3(midC,at(lo.cuts[0]));both(lo,loMove);
+  const endC=add3(at(lo.cuts[1]),loMove);balls(end,lo.cuts[1].inBalls[0].radius,endC);
+  both(hand,sub3(endC,at(hand.cuts[0])));
+ }
+ return parts;
 }
 export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
  return pushBallsIn(pressed.parts.find(p=>p.name==='torso'),pressed.parts.filter(p=>p.name==='ball-shoulder'),apart.parts.filter(p=>p.name==='ball-shoulder'),bodyId);
