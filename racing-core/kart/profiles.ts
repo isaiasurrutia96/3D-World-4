@@ -12,10 +12,17 @@ export type ProgressiveSteering = Readonly<{
     blendStart: number;
     blendEnd: number;
 }>;
+export type Gt3Balance = Readonly<{
+    frontWeightFraction: number;
+    centerOfGravityHeight: number;
+    frontBrakeBias: number;
+}>;
 export type HandlingSettings = {
     id: string;
     label: string;
     formula?: '2026';
+    grandTouring?: 'gt3';
+    gt3Balance?: Gt3Balance;
     topSpeed: number;
     boostSpeed: number;
     reverseSpeed: number;
@@ -92,7 +99,10 @@ const curveKeys = ['acceleration', 'boostAcceleration', 'braking', 'cornering', 
 const unitKeys = ['liftStrength', 'tractionAssistance', 'brakeStrength'] as const;
 const nonnegativeKeys = ['coastConstant', 'coastQuadratic', 'boostRecoveryDeceleration', 'steeringBlendStart'] as const;
 const numericKeys = Object.keys(defaults).filter(key => typeof defaults[key as keyof HandlingSettings] === 'number') as (keyof HandlingSettings)[];
-const fields = new Set([...Object.keys(defaults), 'formula']);
+const fields = new Set([...Object.keys(defaults), 'formula', 'grandTouring', 'gt3Balance']);
+// Prototype assumptions from the rear-engine layout, seated hip height in
+// KART_PROTOTYPES, and the adjustable brake balance on the 911 GT3 R.
+const defaultGt3Balance = Object.freeze({ frontWeightFraction: .43, centerOfGravityHeight: .4, frontBrakeBias: .58 });
 
 function finite(value: unknown, field: string): asserts value is number {
     if (typeof value !== 'number' || !Number.isFinite(value)) throw new TypeError(field + ' must be finite');
@@ -121,6 +131,16 @@ function copySteeringResponse(value: ProgressiveSteering | undefined, baseRise: 
     // Construct in canonical field order; callers cannot mutate shared tuning.
     return Object.freeze({lowSpeedRiseSeconds,lowSpeedExponent,blendStart,blendEnd});
 }
+function copyGt3Balance(value: Gt3Balance): Gt3Balance {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('gt3Balance must be a settings object');
+    const keys = ['frontWeightFraction', 'centerOfGravityHeight', 'frontBrakeBias'] as const;
+    for (const key of Object.keys(value)) if (!(keys as readonly string[]).includes(key)) throw new TypeError('Unknown gt3Balance setting: ' + key);
+    for (const key of keys) finite(value[key], 'gt3Balance.' + key);
+    const { frontWeightFraction, centerOfGravityHeight, frontBrakeBias } = value;
+    if (frontWeightFraction <= 0 || frontWeightFraction >= 1 || centerOfGravityHeight < 0 || frontBrakeBias <= 0 || frontBrakeBias >= 1)
+        throw new RangeError('Invalid GT3 balance');
+    return Object.freeze({ frontWeightFraction, centerOfGravityHeight, frontBrakeBias });
+}
 // Stable content identity for saved runs/custom profiles, not a security hash.
 function fingerprint(data: object): string {
     // Names/cosmetics do not change a run's physics. Sort ASCII keys without
@@ -138,6 +158,11 @@ export function createHandlingProfile(changes: Partial<HandlingSettings> = {}): 
     if (typeof data.id !== 'string' || !/^[a-z][a-z0-9-]{0,63}$/.test(data.id) || data.id === 'original') throw new TypeError('Invalid tuning profile id');
     if (typeof data.label !== 'string' || !data.label.trim() || data.label.length > 80) throw new TypeError('Invalid tuning profile label');
     if (data.formula !== undefined && data.formula !== '2026') throw new RangeError('Unknown formula systems version');
+    if (data.grandTouring !== undefined && data.grandTouring !== 'gt3') throw new RangeError('Unknown grand touring systems version');
+    if (data.grandTouring === 'gt3') {
+        if (data.formula !== undefined) throw new RangeError('A kart cannot combine Formula and GT3 systems');
+        data.gt3Balance = data.gt3Balance === undefined ? defaultGt3Balance : copyGt3Balance(data.gt3Balance);
+    } else if (data.gt3Balance !== undefined) throw new RangeError('GT3 balance requires GT3 systems');
     for (const key of numericKeys) finite(data[key], key);
     for (const key of curveKeys) data[key] = copyCurve(data[key], key);
     data.steeringResponse = copySteeringResponse(data.steeringResponse, data.steeringRiseSeconds);

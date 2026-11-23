@@ -6,7 +6,7 @@
 .driving-test-page .race-hud{display:flex;flex-direction:column;gap:3px;z-index:2;left:max(12px,env(safe-area-inset-left))}
 .driving-test-page .race-hud strong{font-size:18px}
 #race-sound{min-width:44px;padding-inline:8px;font-size:13px}
-#drive-f1-revs,#drive-f1-systems{font-variant-numeric:tabular-nums}
+#drive-f1-revs,#drive-f1-systems,#drive-gt-revs{font-variant-numeric:tabular-nums}
 .drive-boost{position:absolute;right:max(12px,env(safe-area-inset-right));top:12px;z-index:2;background:#f3f0e9;touch-action:none}
 .drive-controls{position:absolute;left:max(24px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));bottom:max(36px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;gap:16px;pointer-events:none;z-index:2}
 .drive-steering,.drive-pedals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:clamp(120px,42%,220px);pointer-events:auto}
@@ -19,6 +19,7 @@
 @media(max-width:760px){
  .driving-test-page .identity span{display:none}
  .driving-test-page .track-picker select{max-width:110px}
+ .driving-test-page .with-gt-picker .track-picker select{max-width:142px}
  .driving-test-page nav{order:4;grid-template-columns:repeat(6,minmax(0,1fr))}
  .drive-pedals{width:48%}
  .drive-steering{width:42%}
@@ -31,9 +32,13 @@
  .driving-test-page #topbar .identity{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
  .driving-test-page #topbar .track-picker{flex:1 1 0;min-width:0}
  .driving-test-page #topbar .track-picker select{width:100%;max-width:none}
+ .driving-test-page #topbar.with-gt-picker{column-gap:4px;padding-inline:max(6px,env(safe-area-inset-left)) max(6px,env(safe-area-inset-right))}
+ .driving-test-page #topbar.with-gt-picker .track-picker{gap:0}
+ .driving-test-page #topbar.with-gt-picker select{padding-inline:2px;font-size:14px}
+ .driving-test-page #topbar.with-gt-picker #reset{padding-inline:9px}
 }
 @media(max-width:600px){
- .driving-test-page #topbar.with-f1-sound .identity{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .driving-test-page #topbar:is(.with-f1-sound,.with-gt-picker) .identity{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
  .driving-test-page #topbar.with-f1-sound .track-picker{flex:1 1 0;min-width:0;font-size:0;gap:0}
  .driving-test-page #topbar.with-f1-sound select{width:100%;max-width:none;padding-inline:3px;font-size:14px}
 }
@@ -53,4 +58,4 @@
 
 /* Opt-in diagnostics never intercept driving controls. */
 .drive-debug{position:absolute;left:12px;top:88px;z-index:2;max-width:calc(100% - 24px);white-space:pre-wrap;font:11px/1.45 monospace;background:#f3f0e9ed;color:#353b3e;padding:8px;border-radius:4px;pointer-events:none}
-.with-formula-hud .drive-debug{top:132px}
+.with-powertrain-hud .drive-debug{top:132px}

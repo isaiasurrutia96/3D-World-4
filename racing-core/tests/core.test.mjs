@@ -12,6 +12,8 @@ import '../testing/check.test.mjs';
 import '../testing/prototypes.test.mjs';
 import '../kart/f1-2026-profile.test.mjs';
 import '../kart/f1-2026-systems.test.mjs';
+import '../kart/gt3-profile.test.mjs';
+import '../kart/gt3-systems.test.mjs';
 import test from 'node:test';import assert from 'node:assert/strict';import {writeFileSync} from 'node:fs';
 import {TRACK_IDS,getTrack,createRaceSession,createVehicle,stepVehicle,readDriver,createDriver,VEHICLE,createProgress,updateProgress,resolveKartContact,createGhostStore,sampleGhost,validateGhost,fromLabInput} from '../index.js';
 import letsgoHandling from './fixtures/letsgo-handling.json' with {type:'json'};

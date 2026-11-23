@@ -162,7 +162,7 @@ function support(world: SurfaceWorld, x: number, z: number, maximum: number): nu
 export function prepareKartStep(source: KartState, raw: KartInput, activateBoost = false, profile: KartProfile = resolveKartProfile(), world?: SurfaceWorld, geometry: KartGeometry = KART): KartMotion {
     profile = resolveKartProfile(profile);
     if (profile.mode === 'tuned') return prepareTunedStep(source, normalizeKartInput(raw), activateBoost, profile, world, {
-        step: KART.step, boostDuration: KART.boostDuration, wheelbase: geometry.wheelbase,
+        step: KART.step, boostDuration: KART.boostDuration, wheelbase: geometry.wheelbase, wheelRadius: geometry.wheelRadius,
     });
     if (source.handling) throw new Error('Tuned kart state requires its matching profile');
     const state = { ...source }, input = normalizeKartInput(raw), t = KART, dt = t.step;
@@ -286,7 +286,11 @@ export function createKartController(options: Readonly<{
         throw new TypeError('A numeric heightAt world is required');
     const world = options.world, start = Object.freeze({ ...options.initial }), profile = resolveKartProfile(options.profile);
     const geometry = resolveGeometry(options.geometry);
-    const initialize = (initial: KartInitial) => Object.freeze({ ...initialState(initial), ...(profile.mode === 'tuned' ? { handling: initialHandling(profile) } : {}) });
+    const initialize = (initial: KartInitial) => {
+        const state = initialState(initial);
+        if (profile.mode === 'tuned' && profile.grandTouring === 'gt3') state.boostTime = 0;
+        return Object.freeze({ ...state, ...(profile.mode === 'tuned' ? { handling: initialHandling(profile, state.speed, geometry.wheelRadius) } : {}) });
+    };
     let current: KartState = initialize(start), previous = current;
     let ticks = 0, remainder = 0, lastBoost = false, pendingBoost = false;
     function advance(frameSeconds: number, input: KartInput | InputScript = {}, trace?: KartState[]): KartState {

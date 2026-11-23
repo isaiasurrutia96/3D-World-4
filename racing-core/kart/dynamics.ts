@@ -4,6 +4,8 @@ import { sampleCurve, steeringLimit, steeringResponse, STANDARD_GRAVITY } from '
 import type { HandlingProfile } from './profiles.ts';
 import { F1_2026_SYSTEMS, initialF12026Systems, prepareF12026Systems, finishF12026Systems } from './f1-2026-systems.ts';
 import type { F12026SystemState } from './f1-2026-systems.ts';
+import { gt3BrakeDemand, gt3FrontLoad, gt3MechanicalSpeedLimit, initialGt3Systems, resolveGt3TireDemand, stepGt3Gear } from './gt3-systems.ts';
+import type { Gt3SystemState } from './gt3-systems.ts';
 export type SurfaceSample = Readonly<{ grip?: number; speed?: number; resistance?: number }>;
 export type HandlingState = Readonly<{
     fingerprint: string;
@@ -14,15 +16,17 @@ export type HandlingState = Readonly<{
     acceleration: number; brakingG: number; lateralG: number; tireSlip: number;
     slipAngle: number; tireUtilization: number; steeringLimit: number;
     formula?: F12026SystemState & Readonly<{ frontWeightFraction: number }>;
+    gt3?: Gt3SystemState;
 }>;
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 const approach = (n: number, target: number, amount: number) => n < target ? Math.min(target, n + amount) : Math.max(target, n - amount);
 // The Classic Formula hip height is a proxy for the prototype's CG height.
 // The full-size car's actual CG height and suspension settings are team data.
 const FORMULA_CG_HEIGHT = .29;
-export function initialHandling(profile: HandlingProfile): HandlingState {
+export function initialHandling(profile: HandlingProfile, speed: number, wheelRadius: number): HandlingState {
     return Object.freeze({ fingerprint: profile.fingerprint, throttle: 0, brake: 0, lift: 0, steerInput: 0, yawRate: 0, driveAcceleration: 0, recoveryDeceleration: 0, gripMultiplier: 1, surfaceSpeedMultiplier: 1, surfaceResistanceMultiplier: 1, longitudinalLimit: 0, lateralLimit: 0, acceleration: 0, brakingG: 0, lateralG: 0, tireSlip: 0, slipAngle: 0, tireUtilization: 0, steeringLimit: profile.steeringLock,
         ...(profile.formula === '2026' ? { formula: Object.freeze({ ...initialF12026Systems(), frontWeightFraction: F1_2026_SYSTEMS.frontWeightFraction }) } : {}),
+        ...(profile.gt3Balance ? { gt3: initialGt3Systems(profile.gt3Balance, speed, wheelRadius) } : {}),
     });
 }
 function surface(world: SurfaceWorld | undefined, state: KartState): Required<SurfaceSample> {
@@ -35,10 +39,11 @@ function surface(world: SurfaceWorld | undefined, state: KartState): Required<Su
     return value;
 }
 /** Positive steer keeps the approved chase-view direction (negative world yaw). */
-export function prepareTunedStep(source: KartState, input: KartInput, activateBoost: boolean, profile: HandlingProfile, world: SurfaceWorld | undefined, geometry: Readonly<{ step: number; wheelbase: number; boostDuration: number }>): KartMotion {
-    const dt = geometry.step, previous = source.handling ?? initialHandling(profile);
+export function prepareTunedStep(source: KartState, input: KartInput, activateBoost: boolean, profile: HandlingProfile, world: SurfaceWorld | undefined, geometry: Readonly<{ step: number; wheelbase: number; wheelRadius: number; boostDuration: number }>): KartMotion {
+    const dt = geometry.step, previous = source.handling ?? initialHandling(profile, source.speed, geometry.wheelRadius);
     if (previous.fingerprint !== profile.fingerprint) throw new Error('Kart state/profile mismatch; reset with the selected profile');
     const h = { ...previous }, s = { ...source };
+    const gt3Balance = profile.gt3Balance;
     const road = surface(world, source), blend = 1 - Math.exp(-dt / profile.surfaceResponseSeconds);
     h.gripMultiplier += (road.grip - h.gripMultiplier) * blend;
     h.surfaceSpeedMultiplier += (road.speed - h.surfaceSpeedMultiplier) * blend;
@@ -46,12 +51,13 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     s.railContactTime = Math.max(0, s.railContactTime - dt);
     s.impactRecovery = Math.max(0, s.impactRecovery - dt);
     s.impactYawRate *= Math.exp(-6 * dt); s.contacts = 0;
-    if (activateBoost) s.boostTime = geometry.boostDuration;
+    if (gt3Balance) s.boostTime = 0;
+    else if (activateBoost) s.boostTime = geometry.boostDuration;
     const boosting = s.boostTime > 0;
     s.boostTime = Math.max(0, s.boostTime - dt);
     // A held Boost is still an accelerator, but a released pedal can now slow
     // the kart even while the granted boost timer has not expired.
-    const throttle = input.throttle ?? 0, requested = input.boost && throttle >= 0 ? 1 : throttle;
+    const throttle = input.throttle ?? 0, requested = !gt3Balance && input.boost && throttle >= 0 ? 1 : throttle;
     const brake = Math.max(Number(Boolean(input.brake)), input.brakeAmount ?? 0);
     const desiredThrottle = brake > 0 ? 0 : requested;
     const throttleTime = Math.abs(desiredThrottle) > Math.abs(h.throttle) && desiredThrottle * h.throttle >= 0 ? profile.throttleRiseSeconds : profile.throttleReleaseSeconds;
@@ -66,7 +72,9 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     const steer = input.steer ?? 0;
     const opposing = h.throttle * direction < -.001;
     const formula = previous.formula;
-    const cap = (direction < 0 ? profile.reverseSpeed : boosting ? profile.boostSpeed : profile.topSpeed) * h.surfaceSpeedMultiplier;
+    const gt3Gear = previous.gt3 && stepGt3Gear(previous.gt3, Math.abs(source.speed), geometry.wheelRadius, direction < 0, dt);
+    const profileCap = (direction < 0 ? profile.reverseSpeed : boosting ? profile.boostSpeed : profile.topSpeed) * h.surfaceSpeedMultiplier;
+    const cap = gt3Balance ? Math.min(profileCap, gt3MechanicalSpeedLimit(geometry.wheelRadius, direction < 0)) : profileCap;
     // The Formula powertrain can sustain road speed at the governor. Its
     // electrical work there pays for aerodynamic drag even at zero net acceleration.
     const atFormulaCap = Boolean(formula && direction > 0 && Math.abs(v - cap) <= 1e-8);
@@ -99,15 +107,19 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     s.yaw += yawDelta;
     let heading = v > 1e-8 ? Math.atan2(vx0, vz0) : midYaw + (direction < 0 ? Math.PI : 0);
     const alignment = Math.cos(heading - midYaw), sideways = v * Math.sin(heading - midYaw);
-    const lateralLimit = Math.max(1e-9, sampleCurve(profile.cornering, v) * effectiveGrip);
+    const nominalLateral = sampleCurve(profile.cornering, v);
+    const lateralLimit = Math.max(1e-9, nominalLateral * effectiveGrip);
     const longitudinalLimit = Math.max(1e-9, sampleCurve(profile.braking, v) * effectiveGrip);
     let engine = powered ? Math.abs(h.throttle) * driveDemand : 0;
     if (systems && powered && direction > 0) {
         engine += systems.deploymentAccelerationDelta - systems.dragAcceleration * Math.max(0, h.throttle);
     }
+    if (gt3Gear) engine *= gt3Gear.driveMultiplier;
     h.driveAcceleration = approach(h.driveAcceleration, engine, profile.driveJerk * dt);
     if (engine === 0 && (v >= cap || brake > 0 || opposing || s.impactRecovery > 0)) h.driveAcceleration = 0;
-    const service = longitudinalLimit * profile.brakeStrength * Math.max(h.brake, opposing ? Math.abs(h.throttle) : 0);
+    const brakePedal = Math.max(h.brake, opposing ? Math.abs(h.throttle) : 0);
+    const brakeCapacity = longitudinalLimit * profile.brakeStrength;
+    let service = gt3Balance ? gt3BrakeDemand(brakeCapacity, brakePedal) : brakeCapacity * brakePedal;
     const coast = (profile.coastConstant + profile.coastQuadratic * v * v) * h.surfaceResistanceMultiplier * (1 - Math.abs(h.throttle));
     const lift = sampleCurve(profile.liftOff, v) * h.lift * profile.liftStrength;
     const recoveryTarget = v > cap + 1e-8 ? profile.boostRecoveryDeceleration : 0;
@@ -116,14 +128,26 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     let normal = v * h.yawRate - sideways * direction / profile.slipResponseSeconds;
     const slipDrag = Math.min(lateralLimit, Math.abs(sideways) / profile.slipResponseSeconds) * Math.abs(Math.sin(heading - midYaw));
     let drive = Math.max(0, h.driveAcceleration) * Math.max(0, direction * alignment);
-    const sidewaysUse = Math.min(1, Math.abs(normal) / lateralLimit);
-    // Longitudinal load transfer changes the rear-driven axle's traction
-    // relative to the static load used to fit the acceleration curve.
     const staticFront = F1_2026_SYSTEMS.frontWeightFraction;
-    const rearTraction = formula ? (1 - formula.frontWeightFraction) / (1 - staticFront) : 1;
-    const availableDrive = longitudinalLimit * rearTraction * Math.sqrt(Math.max(0, 1 - sidewaysUse * sidewaysUse));
-    const excessDrive = Math.max(0, drive - availableDrive);
-    drive -= excessDrive * (formula ? 1 : profile.tractionAssistance);
+    const gt3Tires = gt3Balance && previous.gt3 && systemsGrounded && resolveGt3TireDemand({
+        lateral: normal, service, drive, lateralLimit, longitudinalLimit,
+        frontWeightFraction: previous.gt3.frontWeightFraction, frontBrakeBias: gt3Balance.frontBrakeBias,
+        tractionAssistance: profile.tractionAssistance,
+    });
+    let driveSlip = 0;
+    if (gt3Tires) {
+        normal = gt3Tires.lateral;
+        service = gt3Tires.service;
+        drive = gt3Tires.drive;
+    } else {
+        const sidewaysUse = Math.min(1, Math.abs(normal) / lateralLimit);
+        // Formula drive demand is fitted to static rear load.
+        const rearTraction = formula ? (1 - formula.frontWeightFraction) / (1 - staticFront) : 1;
+        const availableDrive = longitudinalLimit * rearTraction * Math.sqrt(Math.max(0, 1 - sidewaysUse * sidewaysUse));
+        const excessDrive = Math.max(0, drive - availableDrive);
+        drive -= excessDrive * (formula ? 1 : profile.tractionAssistance);
+        if (formula && source.grounded) driveSlip = excessDrive / longitudinalLimit;
+    }
     const powerShortfall = Math.max(0, -h.driveAcceleration);
     let tangential = drive - Math.max(service, lift + coast, recovery, powerShortfall) - slipDrag;
     if (s.impactRecovery > 0) tangential = Math.min(tangential, -6 * v);
@@ -145,7 +169,6 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     h.brakingG = Math.max(0, -h.acceleration) / STANDARD_GRAVITY;
     h.lateralG = Math.abs(normal) / STANDARD_GRAVITY;
     h.slipAngle = nextSpeed > .1 ? Math.atan2(Math.sin(heading - s.yaw) * direction, Math.cos(heading - s.yaw) * direction) : 0;
-    const driveSlip = formula && source.grounded ? excessDrive / longitudinalLimit : 0;
     const slipTarget = clamp(Math.max(0, requestedUtilization - 1) + Math.abs(h.slipAngle) + driveSlip, 0, 10);
     h.tireSlip += (slipTarget - h.tireSlip) * (1 - Math.exp(-dt / profile.slipResponseSeconds));
     h.tireUtilization = source.grounded ? Math.min(1, requestedUtilization) : 0;
@@ -159,6 +182,19 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
             recoverableDeceleration: Math.max(service, lift) * scale,
         });
         h.formula = Object.freeze({ ...next, frontWeightFraction });
+    }
+    if (gt3Balance && gt3Gear) {
+        // The grip curve already includes fixed aero. Its increase with speed
+        // supplies a normal-load proxy for distributing that same capacity.
+        const normalLoadScale = Math.max(1, nominalLateral / profile.cornering[0][1]);
+        h.gt3 = Object.freeze({
+            gear: gt3Gear.gear, rpm: gt3Gear.rpm, shiftRemainingSeconds: gt3Gear.shiftRemainingSeconds,
+            absIntervention: gt3Tires ? gt3Tires.absIntervention : 0,
+            tractionIntervention: gt3Tires ? gt3Tires.tractionIntervention : 0,
+            frontWeightFraction: systemsGrounded
+                ? gt3FrontLoad(gt3Balance, direction * h.acceleration, geometry.wheelbase, normalLoadScale)
+                : gt3Balance.frontWeightFraction,
+        });
     }
     for (const [key, value] of Object.entries(h)) if (typeof value === 'number' && !Number.isFinite(value)) throw new RangeError('Nonfinite handling ' + key);
     s.handling = Object.freeze(h);

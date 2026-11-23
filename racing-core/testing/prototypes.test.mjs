@@ -3,6 +3,7 @@ import test from 'node:test';
 import { Box3, Vector3 } from 'three';
 import { buildKartPrototype } from '../../kart-parts/product-prototypes.js';
 import { F1_2026_PROFILE } from '../kart/f1-2026-profile.ts';
+import { GT3_PROFILE } from '../kart/gt3-profile.ts';
 import { KART_PROTOTYPES, PROTOTYPE_HANDLING } from '../kart/prototypes.ts';
 import { ORIGINAL_PROFILE, PREVIOUS_FAST_PROFILE, steeringLimit, steeringResponse } from '../kart/profiles.ts';
 import { createDrivingTest, PARKED_KARTS } from './drive.ts';
@@ -102,10 +103,100 @@ test('2026 F1 spends energy on the straight, recharges under braking and resets'
     assert.deepEqual(driving.getState(), start);
 });
 
-function replayLap(prototype, fps, f1Tune) {
-    const driving = createDrivingTest('original', { prototype, f1Tune });
+test('GT3 and First-drive GT start in the same pose and keep their tune on other tracks', () => {
+    const earlyOptions = { prototype: 'gt', gtTune: 'early' };
+    const gt3Options = { prototype: 'gt', gtTune: 'gt3' };
+    const early = createDrivingTest('original', earlyOptions);
+    const gt3 = createDrivingTest('original', gt3Options);
+    const earlyStart = early.getState();
+    const gt3Start = gt3.getState();
+    assert.deepEqual(createDrivingTest('original', { prototype: 'gt' }).getState(), earlyStart);
+    assert.equal(earlyStart.gtTune, 'early');
+    assert.equal(earlyStart.fingerprint, 'kart-v1-2cb884a348f1e733');
+    assert.equal(gt3Start.gtTune, 'gt3');
+    assert.equal(gt3.controller.profile, GT3_PROFILE);
+    assert.notEqual(gt3Start.fingerprint, earlyStart.fingerprint);
+    const { handling: earlyHandling, ...earlyPose } = earlyStart.physics;
+    const { handling: gt3Handling, ...gt3Pose } = gt3Start.physics;
+    assert.deepEqual(gt3Pose, earlyPose);
+    assert.equal(earlyHandling.gt3, undefined);
+    assert.equal(gt3Handling.gt3.gear, 1);
+    assert.throws(() => createDrivingTest('original', { prototype: 'gt', gtTune: 'typo' }), /Unknown GT tune/);
+
+    for (const [driving, options, start] of [[early, earlyOptions, earlyStart], [gt3, gt3Options, gt3Start]]) {
+        driving.selectTrack('skyline');
+        assert.equal(driving.getState().trackId, 'skyline');
+        const skylineStart = createDrivingTest('skyline', options).getState();
+        assert.deepEqual(driving.getState(), skylineStart);
+        driving.advance(.25, { throttle: 1, steer: .2 });
+        driving.reset();
+        assert.deepEqual(driving.getState(), skylineStart);
+        driving.selectTrack('original');
+        assert.deepEqual(driving.getState(), start);
+    }
+});
+
+test('GT3 comparison has no effect on other karts or the Parked Karts course', () => {
+    for (const prototype of [undefined, 'gokart', 'f1']) {
+        const options = { prototype, f1Tune: '2026' };
+        const baseline = createDrivingTest('original', options);
+        const withGT3Option = createDrivingTest('original', { ...options, gtTune: 'gt3' });
+        assert.deepEqual(withGT3Option.getState(), baseline.getState());
+        for (let frame = 0; frame < 30; frame++) {
+            const input = { throttle: .75, steer: .1, brakeAmount: frame > 20 ? .4 : 0, boost: frame === 12 };
+            baseline.advance(1 / 30, input);
+            withGT3Option.advance(1 / 30, input);
+        }
+        assert.deepEqual(withGT3Option.getState(), baseline.getState());
+    }
+
+    const parked = createDrivingTest(PARKED_KARTS);
+    const selectedGT3 = createDrivingTest(PARKED_KARTS, { prototype: 'gt', gtTune: 'gt3' });
+    assert.deepEqual(selectedGT3.getState(), parked.getState());
+    selectedGT3.selectTrack('original');
+    assert.equal(selectedGT3.getState().gtTune, 'gt3');
+    assert.equal(selectedGT3.controller.profile, GT3_PROFILE);
+});
+
+test('GT3 shifts gears, transfers axle load and uses driving aids on the Original circuit', () => {
+    const options = { prototype: 'gt', gtTune: 'gt3' };
+    const driving = createDrivingTest('original', options);
+    const withBoost = createDrivingTest('original', options);
+    const start = driving.getState();
+    for (let frame = 0; frame < 24; frame++) {
+        driving.advance(.25, { throttle: .8 });
+        withBoost.advance(.25, { throttle: .8, boost: frame % 2 === 0 });
+    }
+    // The legacy boost control must leave partial virtual pedal travel alone.
+    assert.deepEqual(withBoost.getState(), driving.getState());
+    const powered = driving.getState().physics;
+    assert.equal(powered.contacts, 0);
+    assert(powered.speed > 100 / 3.6);
+    assert(powered.handling.gt3.gear > 1);
+    assert(powered.handling.gt3.rpm > start.physics.handling.gt3.rpm);
+    assert(powered.handling.gt3.frontWeightFraction < start.physics.handling.gt3.frontWeightFraction);
+
+    driving.advance(.25, { brakeAmount: 1 });
+    const braking = driving.getState().physics;
+    assert.equal(braking.contacts, 0);
+    assert(braking.speed < powered.speed);
+    assert(braking.handling.gt3.absIntervention > 0);
+    assert(braking.handling.gt3.frontWeightFraction > start.physics.handling.gt3.frontWeightFraction);
+
+    for (let frame = 0; frame < 2; frame++) withBoost.advance(.25, { throttle: 1, steer: 1 });
+    const corner = withBoost.getState().physics;
+    assert.equal(corner.contacts, 0);
+    assert(corner.handling.lateralG > 1);
+    assert(corner.handling.gt3.tractionIntervention > 0);
+
+    driving.reset();
+    assert.deepEqual(driving.getState(), start);
+});
+
+function replayLap(options, fps) {
+    const { prototype } = options;
+    const driving = createDrivingTest('original', options);
     const { track } = driving, profile = driving.controller.profile;
-    assert.equal(profile, f1Tune === '2026' ? F1_2026_PROFILE : PROTOTYPE_HANDLING[prototype]);
     const start = driving.getState();
     const wheelbase = KART_PROTOTYPES[prototype].wheelbase;
     let station = -4.5;
@@ -149,10 +240,16 @@ function replayLap(prototype, fps, f1Tune) {
 
 for (const id of ids) {
     test(`${id} races a complete lap and records the same time at 30 and 144 Hz`, () => {
-        assert.equal(replayLap(id, 30), replayLap(id, 144));
+        assert.equal(replayLap({ prototype: id }, 30), replayLap({ prototype: id }, 144));
     });
 }
 
 test('2026 F1 completes and records the same timed lap at 30 and 144 Hz', () => {
-    assert.equal(replayLap('f1', 30, '2026'), replayLap('f1', 144, '2026'));
+    const options = { prototype: 'f1', f1Tune: '2026' };
+    assert.equal(replayLap(options, 30), replayLap(options, 144));
+});
+
+test('GT3 completes and records the same timed lap at 30 and 144 Hz', () => {
+    const options = { prototype: 'gt', gtTune: 'gt3' };
+    assert.equal(replayLap(options, 30), replayLap(options, 144));
 });

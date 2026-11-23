@@ -7,6 +7,7 @@ import type { PrototypeId } from '../kart/prototypes.ts';
 import { createPrototypeLapClock } from './prototype-laps.ts';
 import { resolveKartProfile } from '../kart/profiles.ts';
 import { F1_2026_PROFILE } from '../kart/f1-2026-profile.ts';
+import { GT3_PROFILE } from '../kart/gt3-profile.ts';
 import type { KartProfile, ProfileId } from '../kart/profiles.ts';
 import type { KartInput, InputScript } from '../kart/index.ts';
 import { trackBarriers } from '../contacts/index.ts';
@@ -15,6 +16,7 @@ import { createParkedKartController, PARKED_KARTS } from './parked-karts.ts';
 export { TRACK_IDS, PARKED_KARTS };
 export type DrivingSelection = TrackId | typeof PARKED_KARTS;
 export type F1Tune = 'early' | '2026';
+export type GTTune = 'early' | 'gt3';
 export type DrivingSample = Readonly<{
     moveX?: number;
     moveZ?: number;
@@ -59,20 +61,24 @@ export function createDrivingTest(initialSelection: DrivingSelection = 'original
     profile?: ProfileId | KartProfile;
     prototype?: PrototypeId;
     f1Tune?: F1Tune;
+    gtTune?: GTTune;
 }> = {}) {
     const originalProfile = resolveKartProfile(options.profile);
     const kart = options.prototype;
     const f1Tune = options.f1Tune ?? 'early';
+    const gtTune = options.gtTune ?? 'early';
     if (kart !== undefined && !isKartPrototype(kart)) throw new RangeError('Unknown kart prototype');
     if (f1Tune !== 'early' && f1Tune !== '2026') throw new RangeError('Unknown F1 tune');
+    if (gtTune !== 'early' && gtTune !== 'gt3') throw new RangeError('Unknown GT tune');
     const empty = Object.freeze([]);
     function createScenario(selection: DrivingSelection) {
         const isParked = selection === PARKED_KARTS;
         const track = createTrack(isParked ? 'original' : selection);
         const prototype = isParked ? undefined : kart;
         const geometry = prototype ? KART_PROTOTYPES[prototype] : undefined;
-        const profile = prototype === 'f1' && f1Tune === '2026' ? F1_2026_PROFILE
-            : prototype ? PROTOTYPE_HANDLING[prototype] : originalProfile;
+        let profile = prototype ? PROTOTYPE_HANDLING[prototype] : originalProfile;
+        if (prototype === 'f1' && f1Tune === '2026') profile = F1_2026_PROFILE;
+        if (prototype === 'gt' && gtTune === 'gt3') profile = GT3_PROFILE;
         const parked = isParked ? createParkedKartController(track, profile) : null;
         const footprint = geometry && Object.freeze({
             radius: geometry.width / 2,
@@ -121,6 +127,7 @@ export function createDrivingTest(initialSelection: DrivingSelection = 'original
                 karts: 1 + parkedKarts.length, avatars: 0, opponents: 0, parkedKarts,
                 ...(prototype ? { prototype, lap: clock?.read(controller.clock.seconds) } : {}),
                 ...(prototype === 'f1' ? { f1Tune } : {}),
+                ...(prototype === 'gt' ? { gtTune } : {}),
                 physics: controller.state, clock: controller.clock, pose: controller.sample(),
             });
         },

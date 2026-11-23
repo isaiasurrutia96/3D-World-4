@@ -105,6 +105,14 @@ A nose (small triangle) on the head for the look pose; the ball in the middle of
 
 ## Codex driving handoff
 
+**GT3 driving (22 November 2026).** The standalone Driving Test has
+**First-drive GT** and **GT3** presets for the same 3.25 m GT prototype.
+The GT3 tune uses six sequential gears, speed-dependent grip, longitudinal
+load transfer, rear traction control and brake-slip intervention. The
+comparison uses the established 2.10 m wheelbase after a geometry check.
+Race data, measured checks and modeling decisions are in the
+[GT3 driving reference](karts/GT3-DRIVING-REFERENCE.md).
+
 **Classic Formula driving (22 November 2026).** The 4.60 m F1 option 01 in
 the standalone Driving Test has **Early F1** and **2026 F1** presets. The
 2026 tune applies the measured acceleration and braking curves, tire-limited
