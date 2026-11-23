@@ -30,7 +30,14 @@ Each item: what it is, its measured cause, the proposed fix (not applied), and t
    applied): make the cut a curved surface centred on the hidden joint ball (the pelvis top a gentle dome, the chest's
    underside a matching cup, both concentric with the pivot), the way ball-jointed dolls and action-figure ab joints
    are built, so the chest visibly can tilt forward, back and sideways over the pelvis without a gap opening or the
-   pieces colliding. Owner decision: pending.
+   pieces colliding. Owner: "can you do that and show me a pic".
+   - Tried (23 November 2026), not on the page: `splitTorsoCurved` (a spherical shell cut around the hidden pivot,
+     closed with the sockets' own fill, now shared as `fillRimOnPath`; the sockets checked byte-identical after that
+     change). At 45 degrees, and again at 25, the edge inside the gap came out ragged with streaks: the slanted cut
+     leaves the chest's lower edge a thin wedge that the 5 mm rounding cannot round cleanly. Not solved; the flat waist
+     stays on the page. Paused while the owner decides about an invisible spine and a third torso piece (item 6).
+6. **Bending forward looks odd** (owner, 23 November 2026: "he might need an invisible spine, or something cus it looks
+   odd when he bends forward, let me know what u think before u try to fix that"). Discussed, not started.
 5. **Joint balls stay 300 triangles** (confirmed decision, for smooth movement and frame rate): not on this list as a
    fix. The rebuild makes every piece lean (the prototype is about 517,000 triangles).
 

@@ -601,11 +601,102 @@ export function splitTorsoAtWaist(torso,{y,gap=SOCKET_GAP}={}){
   return {name,side:'centre',positions:pos,normals:nor,index:idx};};
  return {chest:piece('chest',true),pelvis:piece('pelvis',false),y,gap};
 }
+// The waist made curved (owner, 23 November 2026, polish list item 4: the flat, tight cut "looks like it can only
+// rotate"; "can you do that"): the cut is a spherical shell the usual 6 mm thick, centred on the hidden pivot, so the
+// pelvis top is a dome and the chest's underside the matching cup, both concentric with the pivot. That is how
+// ball-jointed doll and action-figure torso joints are made: turning the chest about the pivot slides one surface over
+// the other, so it can bend forward, back and sideways, as well as turn, without a gap opening or the pieces colliding.
+// The pivot is on the torso's middle line, below the waist line by `tan(angle)` times the torso's mean radius there,
+// so the seam meets the outside at the waist line at `angle` (45 degrees: the chest visibly sits over the pelvis).
+// Made like the flat split: cut along the shell (the same boolean), each opening closed on its own sphere (drawn flat
+// round the top, filled, then refined with points put back on the sphere), and both edges rounded with the 5 mm lip.
+export function splitTorsoCurved(torso,{y,gap=SOCKET_GAP,angle=Math.PI/4}={}){
+ const T=torso.positions,ring=[];for(let i=0;i<T.length;i+=3)if(Math.abs(T[i+1]-y)<.01)ring.push([T[i],T[i+2]]);
+ const xs=ring.map(q=>q[0]),zs=ring.map(q=>q[1]),cx=(Math.min(...xs)+Math.max(...xs))/2,cz=(Math.min(...zs)+Math.max(...zs))/2;
+ const a=ring.reduce((s,q)=>s+Math.hypot(q[0]-cx,q[1]-cz),0)/ring.length,d=a*Math.tan(angle),C=[cx,y-d,cz],Rs=Math.hypot(a,d),g2=gap/2;
+ const rel=q=>[q[0]-C[0],q[1]-C[1],q[2]-C[2]],dist=q=>Math.hypot(...rel(q));
+ const path={c:C,R:Rs,dir:[0,1,0],d:0,phi:q=>Math.abs(dist(q)-Rs)-g2,
+  inward:q=>{const v=rel(q),r=Math.hypot(...v),s=r>Rs?-1:1;return v.map(x=>s*x/r);},
+  nearest:q=>{const v=rel(q),r=Math.hypot(...v),rho=r>Rs?Rs+g2:Rs-g2;return v.map((x,k)=>C[k]+x*rho/r);}};
+ const band=.02,where=m=>{const t=Math.min(1,Math.max(0,(band+6*SOCKET_EDGE-Math.abs(dist(m)-Rs))/(6*SOCKET_EDGE)));return t>0?t*t*(3-2*t):0;};
+ const refined=refineNear(torso.normals?torso:{...torso,normals:pointNormals(torso)},C,10,SOCKET_EDGE,6,where);
+ const part=cutAlong(refined,path.phi,0),P=[...part.positions],N=[...part.normals],pt=i=>[P[3*i],P[3*i+1],P[3*i+2]],kind=[];
+ for(let i=0;i<P.length/3;i++){const f0=path.phi(pt(i));kind.push(f0<-1e-9?3:Math.abs(f0)<=1e-7?1:0);}
+ const kept=[];for(let t=0;t<part.index.length;t+=3){const v=[part.index[t],part.index[t+1],part.index[t+2]];if(v.some(i=>kind[i]===3))continue;
+  if(v.every(i=>kind[i]===1)&&path.phi(v.map(pt).reduce((m,q)=>m.map((x,k)=>x+q[k]/3),[0,0,0]))<-1e-9)continue;kept.push(...v);}
+ const key=(a2,b)=>a2<b?a2+','+b:b+','+a2,used=new Map();for(let t=0;t<kept.length;t+=3)for(let e=0;e<3;e++){const k=key(kept[t+e],kept[t+(e+1)%3]);used.set(k,(used.get(k)??0)+1);}
+ const next=new Map();for(let t=0;t<kept.length;t+=3)for(let e=0;e<3;e++){const a2=kept[t+e],b=kept[t+(e+1)%3];if(used.get(key(a2,b))===1)next.set(a2,b);}
+ const loops=[],seen=new Set();for(const s0 of next.keys()){if(seen.has(s0))continue;const loop=[];let v=s0;while(!seen.has(v)){seen.add(v);loop.push(v);v=next.get(v);if(v===undefined)throw Error('splitTorsoCurved: an opening is not closed');}loops.push(loop);}
+ if(loops.length!==2)throw Error('splitTorsoCurved: expected 2 openings, found '+loops.length);
+ // Each opening closed on its own sphere, filled the same proven way as a socket's inside (fillRimOnPath): drawn flat
+ // around the sphere's top (azimuthal equidistant), filled, split with new points put back on the sphere, Lawson
+ // flips and relaxing; facing away from its piece's clay (the chest's cup toward the pivot, the pelvis's dome away).
+ const caps=[];
+ for(const loop of loops){const outer=dist(pt(loop[0]))>Rs,rho=outer?Rs+g2:Rs-g2,face=outer?-1:1;
+  const w={phi:q=>dist(q)-rho,
+   toFlat:q=>{const v=rel(q),r=Math.hypot(...v),th=Math.acos(Math.max(-1,Math.min(1,v[1]/r))),ph=Math.atan2(v[2],v[0]);return [rho*th*Math.cos(ph),rho*th*Math.sin(ph)];},
+   fromFlat:([X,Z])=>{const sl=Math.hypot(X,Z),th=sl/rho,ph=Math.atan2(Z,X);return [C[0]+rho*Math.sin(th)*Math.cos(ph),C[1]+rho*Math.cos(th),C[2]+rho*Math.sin(th)*Math.sin(ph)];},
+   inward:q=>{const v=rel(q),r=Math.hypot(...v);return v.map(x=>face*x/r);}};
+  for(const i of fillRimOnPath(P,N,kind,loop,w))caps.push(i);}
+ const soft=softenShoulderRims({solid:{positions:P,normals:N,index:[...kept,...caps]},kind,paths:[path],balls:[]});
+ // The two pieces are the two connected parts of the result (sorting triangles by which side of the shell their
+ // middle lies on put some long, sagging cup triangles on the wrong side): the chest is the one with the highest point.
+ const S=soft.torso,nv=S.positions.length/3,parent=Int32Array.from({length:nv},(_,i)=>i),find=i=>{while(parent[i]!==i){parent[i]=parent[parent[i]];i=parent[i];}return i;};
+ for(let t=0;t<S.index.length;t+=3){const r0=find(S.index[t]);for(const j of [S.index[t+1],S.index[t+2]]){const r1=find(j);if(r1!==r0)parent[r1]=r0;}}
+ let top=0;for(let i=1;i<nv;i++)if(S.positions[3*i+1]>S.positions[3*top+1])top=i;const chestRoot=find(top);
+ const piece=(name,outside)=>{const map=new Map(),pos=[],nor=[],idx=[];for(let t=0;t<S.index.length;t+=3){const v=[S.index[t],S.index[t+1],S.index[t+2]];if((find(v[0])===chestRoot)!==outside)continue;
+  for(const i of v){if(!map.has(i)){map.set(i,pos.length/3);pos.push(S.positions[3*i],S.positions[3*i+1],S.positions[3*i+2]);nor.push(S.normals[3*i],S.normals[3*i+1],S.normals[3*i+2]);}idx.push(map.get(i));}}
+  return {name,side:'centre',positions:pos,normals:nor,index:idx};};
+ return {chest:piece('chest',true),pelvis:piece('pelvis',false),y,gap,pivot:C,radius:Rs,angle};
+}
 export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
  return pushBallsIn(pressed.parts.find(p=>p.name==='torso'),pressed.parts.filter(p=>p.name==='ball-shoulder'),apart.parts.filter(p=>p.name==='ball-shoulder'),bodyId);
 }
 // Any balls pushed into a torso and pulled back out (`balls`: where they are pushed to; `out`: where they start and
 // end, same sides). Each travels in a straight line from its start to where it is pushed to.
+// One rim filled on its path's surface (a socket's inside, or a cut's closing surface): drawn flat with the path's
+// toFlat, filled (earcut), split to the usual socket triangles with new points put back on the surface (fromFlat),
+// Lawson edge flips, relaxing rounds, flips again. Appends the new points to P/N/kind (kind 2) and returns the triangles.
+// Shared by pushBallsIn (the sockets) and splitTorsoCurved (the curved waist), so both are filled the same proven way.
+function fillRimOnPath(P,N,kind,loop,w){
+ const pt=i=>[P[3*i],P[3*i+1],P[3*i+2]],key=(a,b)=>a<b?a+','+b:b+','+a,dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+ const flat=loop.map(i=>w.toFlat(pt(i)));
+ let faces=ShapeUtils.triangulateShape(flat.map(([x,y])=>new Vector2(x,y)),[]).map(f=>f.map(j=>loop[j]));
+ // Facing into the socket (away from the clay), like the rest of the torso's outside.
+ const face=f=>{const [a,b,c]=f.map(pt),n=[(b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]),(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]),(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])],m=[0,1,2].map(k=>(a[k]+b[k]+c[k])/3),inw=w.inward(m);return n[0]*inw[0]+n[1]*inw[1]+n[2]*inw[2];};
+ if(faces.reduce((s,f)=>s+face(f),0)<0)faces=faces.map(([a,b,c])=>[a,c,b]);
+ // Split to the usual socket triangles; the rim's own edges stay as they are (they are shared with the clay).
+ let T=faces.flat();const rimEdge=new Set();for(let k=0;k<loop.length;k++)rimEdge.add(key(loop[k],loop[(k+1)%loop.length]));const flatOf=new Map(loop.map((i,k)=>[i,flat[k]]));
+ for(let round=0;round<12;round++){const split=new Map();
+  for(let t=0;t<T.length;t+=3)for(let e=0;e<3;e++){const a=T[t+e],b=T[t+(e+1)%3],k=key(a,b);if(split.has(k)||rimEdge.has(k)||dist(pt(a),pt(b))<=SOCKET_EDGE)continue;
+   const fa=flatOf.get(a),fb=flatOf.get(b),fm=[(fa[0]+fb[0])/2,(fa[1]+fb[1])/2],q=w.fromFlat(fm);split.set(k,P.length/3);flatOf.set(P.length/3,fm);P.push(...q);N.push(...w.inward(q));kind.push(2);}
+  if(!split.size)break;const out=[];
+  for(let t=0;t<T.length;t+=3){const v=[T[t],T[t+1],T[t+2]],m=[0,1,2].map(e=>split.get(key(v[e],v[(e+1)%3]))),n=m.filter(x=>x!==undefined).length;
+   if(n===0){out.push(...v);continue;}if(n===3){out.push(v[0],m[0],m[2],m[0],v[1],m[1],m[2],m[1],v[2],m[0],m[1],m[2]);continue;}
+   const rr=n===1?m.findIndex(x=>x!==undefined):[0,1,2].find(e=>m[e]!==undefined&&m[(e+1)%3]!==undefined),V=[0,1,2].map(k=>v[(k+rr)%3]),M=[0,1,2].map(k=>m[(k+rr)%3]);
+   if(n===1)out.push(V[0],M[0],V[2],M[0],V[1],V[2]);else out.push(V[1],M[1],M[0],V[0],M[0],M[1],V[0],M[1],V[2]);}
+  T=out;}
+ // Lawson's edge flips on the drawing (a Delaunay triangulation): well-shaped triangles instead of slivers.
+ const flips=()=>{for(let pass=0;pass<50;pass++){let n=0;const opp=new Map();
+   for(let t=0;t<T.length;t+=3)for(let e=0;e<3;e++){const a=T[t+e],b=T[t+(e+1)%3],k=key(a,b);if(rimEdge.has(k))continue;(opp.get(k)??opp.set(k,[]).get(k)).push([t,e]);}
+   const done=new Set();
+   for(const [k,two] of opp){if(two.length!==2)continue;const [[t1,e1],[t2,e2]]=two;if(done.has(t1)||done.has(t2))continue;
+    const a=T[t1+e1],b=T[t1+(e1+1)%3],c=T[t1+(e1+2)%3],d=T[t2+(e2+2)%3],F=i=>flatOf.get(i),[A,B,Cc,D]=[F(a),F(b),F(c),F(d)];
+    const orient=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),sg=Math.sign(orient(A,B,Cc));
+    // d inside the circle through a, b, c (for the drawing's winding) and the flip keeps both triangles the same way round.
+    const ad=[A[0]-D[0],A[1]-D[1]],bd=[B[0]-D[0],B[1]-D[1]],cd=[Cc[0]-D[0],Cc[1]-D[1]];
+    const det=(ad[0]*ad[0]+ad[1]*ad[1])*(bd[0]*cd[1]-cd[0]*bd[1])-(bd[0]*bd[0]+bd[1]*bd[1])*(ad[0]*cd[1]-cd[0]*ad[1])+(cd[0]*cd[0]+cd[1]*cd[1])*(ad[0]*bd[1]-bd[0]*ad[1]);
+    if(sg*det<=1e-30)continue;if(Math.sign(orient(Cc,A,D))!==sg||Math.sign(orient(D,B,Cc))!==sg)continue;
+    T[t1]=c;T[t1+1]=a;T[t1+2]=d;T[t2]=d;T[t2+1]=b;T[t2+2]=c;done.add(t1);done.add(t2);n++;}
+   if(!n)break;}};
+ flips();
+ // Even out the socket's inner points (on the drawing, so they stay on the ball's surface): a few relaxing rounds.
+ const nb=new Map();for(let t=0;t<T.length;t+=3)for(let e=0;e<3;e++){const a=T[t+e],b=T[t+(e+1)%3];for(const [x,y] of [[a,b],[b,a]])if(kind[x]===2)(nb.get(x)??nb.set(x,new Set()).get(x)).add(y);}
+ for(let it=0;it<10;it++)for(const [x,ys] of nb){let sx=0,sy=0;for(const y of ys){const f=flatOf.get(y);sx+=f[0];sy+=f[1];}const f=flatOf.get(x),g=[f[0]+.5*(sx/ys.size-f[0]),f[1]+.5*(sy/ys.size-f[1])];flatOf.set(x,g);}
+ flips();
+ for(const x of nb.keys()){const q=w.fromFlat(flatOf.get(x));P.splice(3*x,3,...q);N.splice(3*x,3,...w.inward(q));}
+ return T;
+}
 export function pushBallsIn(torso,balls,out,bodyId='boy'){
  const r=balls[0].radius,R=r+SOCKET_GAP,centres=balls.map(b=>b.centre),dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
  const reach=R+6*SOCKET_EDGE,fade=6*SOCKET_EDGE;
@@ -634,41 +725,7 @@ export function pushBallsIn(torso,balls,out,bodyId='boy'){
  const cavity=[];
  for(const loop of sockets){
   const w=paths.find(w=>loop.every(i=>Math.abs(w.phi(pt(i)))<=1e-7));if(!w)throw Error('pushShoulderBalls: a rim on no path');
-  const flat=loop.map(i=>w.toFlat(pt(i)));
-  let faces=ShapeUtils.triangulateShape(flat.map(([x,y])=>new Vector2(x,y)),[]).map(f=>f.map(j=>loop[j]));
-  // Facing into the socket (away from the clay), like the rest of the torso's outside.
-  const face=f=>{const [a,b,c]=f.map(pt),n=[(b[1]-a[1])*(c[2]-a[2])-(b[2]-a[2])*(c[1]-a[1]),(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]),(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])],m=[0,1,2].map(k=>(a[k]+b[k]+c[k])/3),inw=w.inward(m);return n[0]*inw[0]+n[1]*inw[1]+n[2]*inw[2];};
-  if(faces.reduce((s,f)=>s+face(f),0)<0)faces=faces.map(([a,b,c])=>[a,c,b]);
-  // Split to the usual socket triangles; the rim's own edges stay as they are (they are shared with the clay).
-  let T=faces.flat();const rimEdge=new Set();for(let k=0;k<loop.length;k++)rimEdge.add(key(loop[k],loop[(k+1)%loop.length]));const flatOf=new Map(loop.map((i,k)=>[i,flat[k]]));
-  for(let round=0;round<12;round++){const split=new Map();
-   for(let t=0;t<T.length;t+=3)for(let e=0;e<3;e++){const a=T[t+e],b=T[t+(e+1)%3],k=key(a,b);if(split.has(k)||rimEdge.has(k)||dist(pt(a),pt(b))<=SOCKET_EDGE)continue;
-    const fa=flatOf.get(a),fb=flatOf.get(b),fm=[(fa[0]+fb[0])/2,(fa[1]+fb[1])/2],q=w.fromFlat(fm);split.set(k,P.length/3);flatOf.set(P.length/3,fm);P.push(...q);N.push(...w.inward(q));kind.push(2);}
-   if(!split.size)break;const out=[];
-   for(let t=0;t<T.length;t+=3){const v=[T[t],T[t+1],T[t+2]],m=[0,1,2].map(e=>split.get(key(v[e],v[(e+1)%3]))),n=m.filter(x=>x!==undefined).length;
-    if(n===0){out.push(...v);continue;}if(n===3){out.push(v[0],m[0],m[2],m[0],v[1],m[1],m[2],m[1],v[2],m[0],m[1],m[2]);continue;}
-    const rr=n===1?m.findIndex(x=>x!==undefined):[0,1,2].find(e=>m[e]!==undefined&&m[(e+1)%3]!==undefined),V=[0,1,2].map(k=>v[(k+rr)%3]),M=[0,1,2].map(k=>m[(k+rr)%3]);
-    if(n===1)out.push(V[0],M[0],V[2],M[0],V[1],V[2]);else out.push(V[1],M[1],M[0],V[0],M[0],M[1],V[0],M[1],V[2]);}
-   T=out;}
-  // Lawson's edge flips on the drawing (a Delaunay triangulation): well-shaped triangles instead of slivers.
-  const flips=()=>{for(let pass=0;pass<50;pass++){let n=0;const opp=new Map();
-    for(let t=0;t<T.length;t+=3)for(let e=0;e<3;e++){const a=T[t+e],b=T[t+(e+1)%3],k=key(a,b);if(rimEdge.has(k))continue;(opp.get(k)??opp.set(k,[]).get(k)).push([t,e]);}
-    const done=new Set();
-    for(const [k,two] of opp){if(two.length!==2)continue;const [[t1,e1],[t2,e2]]=two;if(done.has(t1)||done.has(t2))continue;
-     const a=T[t1+e1],b=T[t1+(e1+1)%3],c=T[t1+(e1+2)%3],d=T[t2+(e2+2)%3],F=i=>flatOf.get(i),[A,B,Cc,D]=[F(a),F(b),F(c),F(d)];
-     const orient=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),sg=Math.sign(orient(A,B,Cc));
-     // d inside the circle through a, b, c (for the drawing's winding) and the flip keeps both triangles the same way round.
-     const ad=[A[0]-D[0],A[1]-D[1]],bd=[B[0]-D[0],B[1]-D[1]],cd=[Cc[0]-D[0],Cc[1]-D[1]];
-     const det=(ad[0]*ad[0]+ad[1]*ad[1])*(bd[0]*cd[1]-cd[0]*bd[1])-(bd[0]*bd[0]+bd[1]*bd[1])*(ad[0]*cd[1]-cd[0]*ad[1])+(cd[0]*cd[0]+cd[1]*cd[1])*(ad[0]*bd[1]-bd[0]*ad[1]);
-     if(sg*det<=1e-30)continue;if(Math.sign(orient(Cc,A,D))!==sg||Math.sign(orient(D,B,Cc))!==sg)continue;
-     T[t1]=c;T[t1+1]=a;T[t1+2]=d;T[t2]=d;T[t2+1]=b;T[t2+2]=c;done.add(t1);done.add(t2);n++;}
-    if(!n)break;}};
-  flips();
-  // Even out the socket's inner points (on the drawing, so they stay on the ball's surface): a few relaxing rounds.
-  const nb=new Map();for(let t=0;t<T.length;t+=3)for(let e=0;e<3;e++){const a=T[t+e],b=T[t+(e+1)%3];for(const [x,y] of [[a,b],[b,a]])if(kind[x]===2)(nb.get(x)??nb.set(x,new Set()).get(x)).add(y);}
-  for(let it=0;it<10;it++)for(const [x,ys] of nb){let sx=0,sy=0;for(const y of ys){const f=flatOf.get(y);sx+=f[0];sy+=f[1];}const f=flatOf.get(x),g=[f[0]+.5*(sx/ys.size-f[0]),f[1]+.5*(sy/ys.size-f[1])];flatOf.set(x,g);}
-  flips();
-  for(const x of nb.keys()){const q=w.fromFlat(flatOf.get(x));P.splice(3*x,3,...q);N.splice(3*x,3,...w.inward(q));}
+  const T=fillRimOnPath(P,N,kind,loop,w);
   cavity.push(...T);
  }
  // The points that were inside the paths are no longer used; the index keeps only the kept clay and the sockets.
