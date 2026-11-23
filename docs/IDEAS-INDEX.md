@@ -11,6 +11,8 @@ but later), rejected (the owner said no; do not bring back unless the owner does
 **Rule for every session:** record each new idea the moment it comes up, in the file below that fits it, with who
 suggested it, the date and its status. An alternative being discussed is not an approval.
 
+[LetsGo master plan notes](LETSGO-MASTER-PLAN-NOTES.md) gather the working game direction, current kart decisions, and the original six-island board. Skyline Crossing is the owner’s leading world reference.
+
 ## A. How we work
 
 1. `CLAUDE.md` and `AGENTS.md`: entry points for Claude and Codex.
@@ -46,9 +48,10 @@ suggested it, the date and its status. An alternative being discussed is not an 
 
 ## E. Karts and racing (Codex's area)
 
-1. `docs/KARTS.md` and `docs/karts/`: kart designs, parts, driving references and sizes.
+1. [Kart design brief](KART-DESIGN.md#stock-chassis-dimensions): current S, GT and F1 stock wheel spacing, tire sizes, cockpit measurements and drawings. Use these measurements in the master plan. Earlier size examples are visual or development references.
 2. `docs/HANDOFF.md`, section "Codex driving handoff", and the kart items placed after avatar item 82 (they reuse
    the numbers 36 to 43).
+3. [Kart direction](KARTS.md) and [parts kit](karts/PARTS-KIT.md): appearance ideas, stock model choices and swappable parts.
 
 ## F. Ideas still waiting for a decision (23 November 2026)
 
