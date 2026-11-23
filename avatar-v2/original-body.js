@@ -361,6 +361,21 @@ export function closerHipBalls(bodyId='boy',gap=HIP_BALL_GAP_CLOSER,{pressed=pre
 // one gap past its ball along its own line (the thighs moved with the closer hip balls). Each ball is pushed into its
 // limb along that line as deep as when he is put together (shoulders 90% of the radius, hips 105%), then pulled back
 // out; the socket left in each limb gets the same softened lip as the torso's.
+/**
+ * Deeper presses (owner, 23 November 2026: "Press the thighs closer into the hip balls and very very slightly press
+ * every other limb besides the feet and hands into the balls"). Amounts from the owner's own earlier words for the hip
+ * depth: about 1 cm read as "slightly deeper", and "deeper, not slightly deeper" meant 2 cm more. So the thighs go
+ * 2 cm closer into the hip balls (THIGH_CLOSER); "very very slightly" halves "slightly" twice: 2.5 mm (LIMB_SLIGHT)
+ * at both ends of the upper arms, forearms and calves. The thighs' knee ends, hands and feet are not pressed more.
+ * To keep him the same size (owner: "make sure its the overall same size"), every ball stays where it is put
+ * together and each limb is lengthened through its middle by the extra depth at its ends (the way the limbs were
+ * first matched to Our avatar: the ends keep their shape, only the middle stretches).
+ */
+export const THIGH_CLOSER=.02,LIMB_SLIGHT=.0025;
+// A limb lengthened through its middle: its top end (toward the ball `dir` points away from) `top` further toward
+// that ball, its bottom end `bottom` further the other way.
+const lengthenLimb=(p,dir,top,bottom)=>{if(!top&&!bottom)return p;const L=limbLine(p.positions),s=stretchLimb(p.positions,top+bottom).positions,v=dot3(L.dir,dir)>0?scale3(dir,-top):scale3(dir,bottom);
+ return {...p,positions:s.map((x,i)=>x+v[i%3]),normals:undefined};};
 export function limbSockets(bodyId='boy',{apart=separatedOriginalBody(bodyId),hips=null}={}){
  // (Built on the left; the right is its exact mirror, as the separated avatar's right side is.)
  const pick=(n,s)=>apart.parts.find(p=>p.name===n&&p.side===s),out=[],side='left';
@@ -370,6 +385,7 @@ export function limbSockets(bodyId='boy',{apart=separatedOriginalBody(bodyId),hi
   if(ballName==='ball-hip'&&hips){const nb=hips.outBalls.find(b=>b.side===side);limb=moveBy(limb,sub3(nb.centre,ball.centre));ball=nb;}
   const L=limbLine(limb.positions,limb.axis);let dir=L.dir;const toLimb=sub3(L.centre,ball.centre);if(toLimb[0]*dir[0]+toLimb[1]*dir[1]+toLimb[2]*dir[2]<0)dir=dir.map(x=>-x);
   const r=ball.radius,travel=r+BALL_GAP-(1-press)*r,inBall={...ball,centre:add3(ball.centre,scale3(dir,travel))};
+  limb=name==='thigh'?lengthenLimb(limb,dir,THIGH_CLOSER,0):lengthenLimb(limb,dir,LIMB_SLIGHT,LIMB_SLIGHT);
   const cut=pushBallsIn({positions:limb.positions,index:limb.index,normals:limb.normals},[inBall],[ball],bodyId),soft=softenShoulderRims(cut);
   out.push({name,side,ball,part:{...soft.torso,name,side},cut,soft});
   out.push({name,side:'right',ball:apart.parts.find(p=>p.name===ballName&&p.side==='right'),part:{...mirror(soft.torso),name,side:'right'},cut,soft});
@@ -411,7 +427,7 @@ export function wristAnkleSockets(bodyId='boy',{apart=separatedOriginalBody(body
   const shift=legs&&hips?sub3(hips.outBalls.find(b=>b.side==='left').centre,pick('ball-hip','left').centre):[0,0,0];
   const [limb,top,end,tip]=[pick(limbName,'left'),pick(topBall,'left'),pick(endBall,'left'),pick(endName,'left')].map(p=>moveBy(p,shift));
   const L=limbLine(limb.positions,limb.axis);let down=L.dir;if(dot3(sub3(L.centre,top.centre),down)<0)down=neg(down);
-  const a=press(limb,top,down),b=press(a.soft.torso,end,neg(down)),c=press(tip,end,down);
+  const a=press(lengthenLimb(limb,down,LIMB_SLIGHT,LIMB_SLIGHT),top,down),b=press(a.soft.torso,end,neg(down)),c=press(tip,end,down);
   const ballR=ballPart(endBall,'right',end.radius,[-end.centre[0],end.centre[1],end.centre[2]]);
   out.push({name:limbName,side:'left',part:{...b.soft.torso,name:limbName,side:'left'},cuts:[a.cut,b.cut]},{name:limbName,side:'right',part:{...mirror(b.soft.torso),name:limbName,side:'right'},cuts:[a.cut,b.cut]});
   out.push({name:endName,side:'left',part:{...c.soft.torso,name:endName,side:'left'},cuts:[c.cut]},{name:endName,side:'right',part:{...mirror(c.soft.torso),name:endName,side:'right'},cuts:[c.cut]});
