@@ -180,3 +180,28 @@ reference. [Stock body](PARTS-KIT.md#h-models-per-class) ·
    **1.74 g**.
    [S-bend regression](../../racing-core/testing/prototypes.test.mjs) ·
    [Two-wheelbase grip and response check](../../racing-core/kart/gt3-profile.test.mjs)
+
+## F. Held-turn grip and road resistance
+
+1. Driving feedback identified the wide line during a held turn. The
+   revised dry curve puts more lateral force in the low and middle speed
+   range. At **65 mph**, the calculated full-steer radius is **47.4 m**,
+   down from **52.0 m**. The **1.90 g at 120 km/h** target adapts the tune
+   to the kart and its compact circuits. The logged GT3 example in
+   section A observed about **1.65 g** at medium speeds.
+2. The power curve describes net drive at full throttle. When the rear
+   tire limit cuts drive, the solver restores the corresponding share
+   of passive road resistance. A fully held Gas button can therefore
+   coexist with slowing in a tight turn. Rear drive and lateral force
+   share the same tire budget. [Combined-slip and rolling-resistance reference](https://www.mathworks.com/help/vdynblks/ref/combinedslipwheel2dof.html)
+3. In Original's tightening bend at station 443, both runs entered at
+   **82 km/h**. The input held steering for **1.5 s**, with Gas pressed
+   after **0.55 s**. Final distance from the centerline fell from **3.40
+   to 2.22 m**, with **79.8 km/h** exit speed versus **80.3 km/h**.
+   Holding the same steer with the pedal released for the entire run
+   improved the line from **3.17 to 2.04 m**, with both exits at
+   **75.81 km/h**. Both cases finished on the road. The held-turn test
+   isolates radius at a controlled speed. The on-track regression
+   includes road resistance, tire allocation and contacts.
+   [Held-turn test](../../racing-core/kart/gt3-profile.test.mjs) ·
+   [Compound-turn test](../../racing-core/testing/prototypes.test.mjs)

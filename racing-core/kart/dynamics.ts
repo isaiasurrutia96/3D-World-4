@@ -131,7 +131,6 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     const brakePedal = Math.max(h.brake, opposing ? Math.abs(h.throttle) : 0);
     const brakeCapacity = longitudinalLimit * profile.brakeStrength;
     let service = gt3Balance ? gt3BrakeDemand(brakeCapacity, brakePedal) : brakeCapacity * brakePedal;
-    const coast = (profile.coastConstant + profile.coastQuadratic * v * v) * h.surfaceResistanceMultiplier * (1 - Math.abs(h.throttle));
     const lift = sampleCurve(profile.liftOff, v) * h.lift * profile.liftStrength;
     const recoveryTarget = v > cap + 1e-8 ? profile.boostRecoveryDeceleration : 0;
     h.recoveryDeceleration = approach(h.recoveryDeceleration, recoveryTarget, profile.boostRecoveryDeceleration * dt / profile.boostRecoverySeconds);
@@ -145,6 +144,11 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
         frontWeightFraction: previous.gt3.frontWeightFraction, frontBrakeBias: gt3Balance.frontBrakeBias,
         tractionAssistance: profile.tractionAssistance,
     });
+    // The drive curve is net of road resistance at full power. When the
+    // tires cut drive, the same fraction of that resistance is uncovered.
+    const driveDelivery = gt3Tires && drive > 0 ? gt3Tires.drive / drive : 1;
+    const coast = (profile.coastConstant + profile.coastQuadratic * v * v)
+        * h.surfaceResistanceMultiplier * (1 - Math.abs(h.throttle) * driveDelivery);
     let driveSlip = 0;
     if (gt3Tires) {
         normal = gt3Tires.lateral;

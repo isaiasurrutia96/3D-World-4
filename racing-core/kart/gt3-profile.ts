@@ -25,10 +25,10 @@ export const GT3_PROFILE = createHandlingProfile({
     braking: inMetresPerSecond([
         [0, 1.25], [70, 1.39], [120, 1.55], [170, 1.75], [210, 1.96], [250, 2.11], [286, 2.21],
     ]).map(([speed, decelerationG]) => [speed, decelerationG * STANDARD_GRAVITY]),
-    // Bias the dry setup toward grip in tighter corners on this chassis.
-    // The 120 km/h target is 5% above the logged 1.65 g class reference.
+    // Dry grip targets for the kart's tighter corners, fitted against
+    // held-steer radius and the line through Original's compound turn.
     cornering: inMetresPerSecond([
-        [0, 1.32], [50, 1.40], [90, 1.58], [120, 1.74], [155, 1.91],
+        [0, 1.32], [50, 1.49], [90, 1.74], [120, 1.90], [155, 2.01],
         [190, 2.07], [240, 2.25], [286, 2.40],
     ]).map(([speed, gripG]) => [speed, gripG * STANDARD_GRAVITY]),
     liftOff: inMetresPerSecond([

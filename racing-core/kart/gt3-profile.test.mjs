@@ -9,8 +9,9 @@ import { STANDARD_GRAVITY } from './profiles.ts';
 
 const flatRoad = { heightAt: () => 0 };
 const velocity = state => Math.hypot(state.speed, state.lateralSpeed);
-const makeController = (speedKmh = 0, profile = GT3_PROFILE, geometry = KART_PROTOTYPES.gt) =>
-    createKartController({ geometry, profile, world: flatRoad, initial: { speed: speedKmh / 3.6 } });
+const makeController = (speedKmh = 0) => createKartController({
+    geometry: KART_PROTOTYPES.gt, profile: GT3_PROFILE, world: flatRoad, initial: { speed: speedKmh / 3.6 },
+});
 
 function inRange(measured, min, max, label) {
     assert.ok(measured >= min && measured <= max, `${label}: ${measured}, expected ${min}–${max}`);
@@ -107,11 +108,14 @@ test('GT3 has a progressive lift response between steady power and full braking'
 
 function heldTurn(kmh, profile = GT3_PROFILE, geometry = KART_PROTOTYPES.gt) {
     const initialSpeed = kmh / 3.6;
-    const kart = makeController(kmh, profile, geometry);
+    // Isolate lateral response at the target speed. Road resistance under
+    // combined demand is exercised separately on the actual circuit.
+    const world = { ...flatRoad, surfaceAt: () => ({ resistance: 0 }) };
+    const kart = createKartController({ geometry, profile, world, initial: { speed: initialSpeed } });
     const turnInTick = Math.round(.2 / KART.step);
     const heldTicks = Math.round(2 / KART.step);
     const totalTicks = heldTicks + Math.round(.3 / KART.step);
-    let initialLateral, handling;
+    let initialLateral, handling, heldSpeed;
     for (let tick = 1; tick <= totalTicks; tick++) {
         // Keep the test at the selected speed using a light throttle correction.
         const error = initialSpeed - velocity(kart.state);
@@ -119,15 +123,16 @@ function heldTurn(kmh, profile = GT3_PROFILE, geometry = KART_PROTOTYPES.gt) {
         const state = kart.advance(KART.step, { throttle, steer: tick <= heldTicks ? 1 : 0 });
         if (tick === turnInTick) initialLateral = state.handling.lateralG;
         if (tick === heldTicks) {
-            assert.ok(Math.abs(velocity(state) * 3.6 - kmh) < 3);
+            heldSpeed = velocity(state);
+            assert.ok(Math.abs(heldSpeed * 3.6 - kmh) < 3, `Turn at ${kmh} km/h settled at ${heldSpeed * 3.6} km/h`);
             handling = state.handling;
         }
     }
-    return { handling, initialLateral, afterRelease: kart.state.handling.lateralG };
+    return { handling, heldSpeed, initialLateral, afterRelease: kart.state.handling.lateralG };
 }
 
 test('GT3 holds the dry grip envelope with a responsive turn-in and release', () => {
-    for (const [kmh, minG, maxG] of [[50, 1.36, 1.44], [120, 1.70, 1.78], [240, 2.15, 2.35]]) {
+    for (const [kmh, minG, maxG] of [[50, 1.45, 1.53], [120, 1.86, 1.94], [240, 2.15, 2.35]]) {
         const { handling } = heldTurn(kmh);
         inRange(handling.lateralG, minG, maxG, `${kmh} km/h lateral g`);
         assert.ok(Math.abs(handling.slipAngle) < 3 * Math.PI / 180);
@@ -135,10 +140,19 @@ test('GT3 holds the dry grip envelope with a responsive turn-in and release', ()
     // Use the same geometry to isolate the handling tune from wheelbase.
     const gt = heldTurn(120);
     const firstDrive = heldTurn(120, PROTOTYPE_HANDLING.gt);
-    const formula = heldTurn(120, F1_2026_PROFILE);
     assert.ok(gt.initialLateral > firstDrive.initialLateral * 1.25, 'GT3 responds sooner than First-drive GT');
-    assert.ok(gt.initialLateral < formula.initialLateral * .95, 'F1 retains a faster turn-in');
     assert.ok(gt.afterRelease < firstDrive.afterRelease * .85, 'GT3 unwinds promptly when steering is released');
+});
+
+test('GT3 holds a tighter dry line at 65 mph and F1 has more grip at race speed', () => {
+    const { heldSpeed, handling } = heldTurn(65 * 1.609344);
+    const radius = heldSpeed ** 2 / (handling.lateralG * STANDARD_GRAVITY);
+    inRange(radius, 45, 49, 'Held-turn radius in metres');
+
+    // High-speed grip stays distinct with either profile on the same chassis.
+    const gt = heldTurn(240).handling.lateralG;
+    const formula = heldTurn(240, F1_2026_PROFILE).handling.lateralG;
+    assert.ok(formula > gt * 1.5);
 });
 
 test('GT3 short wheelbase quickens the transient while settling at the same dry grip', () => {

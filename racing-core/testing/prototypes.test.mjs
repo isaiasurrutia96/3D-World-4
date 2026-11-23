@@ -225,7 +225,8 @@ test('GT3 changes travel direction promptly through the Original S-bend', () => 
     const { point, forward } = driving.track.sample(station);
     driving.controller.reset({ ...point, yaw: Math.atan2(forward.x, forward.z), speed: 75 / 3.6 });
 
-    const firstTurnTicks = 50;
+    // The stronger first turn reaches the countersteering point one tick earlier.
+    const firstTurnTicks = 49;
     const travelHeading = state => state.yaw + Math.atan2(state.lateralSpeed, state.speed);
     let heading = travelHeading(driving.controller.state);
     let reversalSeconds;
@@ -247,6 +248,31 @@ test('GT3 changes travel direction promptly through the Original S-bend', () => 
     assert.ok(reversalSeconds !== undefined && reversalSeconds < .25, `Travel direction reversed after ${reversalSeconds} s`);
     assert.ok(speed > 69.5 && speed < 71.5, `S-bend exit speed: ${speed} km/h`);
     assert.ok(line && Math.abs(line.offset) < 2.5, `S-bend exit offset: ${line?.offset} m`);
+});
+
+test('GT3 holds its line through the Original compound turn under power', () => {
+    const driving = createDrivingTest('original', { prototype: 'gt', gtTune: 'gt3' });
+    const station = 443;
+    const { point, forward } = driving.track.sample(station);
+    driving.controller.reset({ ...point, yaw: Math.atan2(forward.x, forward.z), speed: 82 / 3.6 });
+
+    const coastTicks = Math.round(.55 / KART.step);
+    const cornerTicks = Math.round(1.5 / KART.step);
+    let maxOffset = 0;
+    for (let tick = 0; tick < cornerTicks; tick++) {
+        const state = driving.advance(KART.step, { steer: 1, throttle: tick < coastTicks ? 0 : 1 });
+        assert(state.grounded);
+        assert.equal(state.contacts, 0);
+        const line = driving.track.project(state, { hintDistance: station, maxDelta: 55 });
+        assert(line);
+        maxOffset = Math.max(maxOffset, Math.abs(line.offset));
+    }
+
+    const { speed, lateralSpeed, handling } = driving.controller.state;
+    const exitKmh = Math.hypot(speed, lateralSpeed) * 3.6;
+    assert.ok(exitKmh > 79.4 && exitKmh < 80.1, `Compound turn exit speed: ${exitKmh} km/h`);
+    assert.ok(maxOffset < 2.55, `Maximum distance from the centerline: ${maxOffset} m`);
+    assert.ok(handling.lateralG > 1.6, `Lateral load at exit: ${handling.lateralG} g`);
 });
 
 function replayLap(options, fps) {
