@@ -7,7 +7,7 @@
 <body>
  <main>
   <section class="viewer" id="viewer" aria-label="Test Lab 3D viewer">
-   <header class="viewer-heading"><a class="brand" href="#viewer" aria-label="Test Lab home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 4h10M13 4v8L6 24a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-7-12V4M10 20h12"/></svg><span>TEST LAB</span></a><span id="test-context" role="status" aria-live="polite">Our avatar</span></header>
+   <header class="viewer-heading"><a class="brand" href="#viewer" aria-label="Test Lab home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M11 4h10M13 4v8L6 24a2 2 0 0 0 2 3h16a2 2 0 0 0 2-3l-7-12V4M10 20h12"/></svg><span>TEST LAB</span></a><span id="test-context" role="status" aria-live="polite">New avatar</span></header>
    <div id="frame-host"></div><div id="loading" role="status">Preparing your avatar…</div>
    <section id="motion-panel" class="motion-panel" aria-label="Motion pose controls" hidden>
     <div class="motion-top"><strong>Motion</strong><div id="motion-tabs" role="tablist" aria-label="Pose type"></div><button id="motion-close" aria-label="Close motion controls">×</button></div>
@@ -18,10 +18,10 @@
    <a class="scroll-link" href="#workspace">Tests & animation <span aria-hidden="true">↓</span></a>
   </section>
   <section class="workspace" id="workspace" aria-label="Test and animation options">
-   <div class="workspace-heading"><h1>Your workspace</h1><span id="subject-status">Avatar</span></div>
+   <div class="workspace-heading"><h1>Your workspace</h1><span id="subject-status">New avatar</span></div>
    <div class="mode-tabs" role="tablist" aria-label="Test mode"><button id="live-tab" role="tab" aria-selected="true" aria-controls="live-panel">Live test</button><button id="video-tab" role="tab" aria-selected="false" aria-controls="video-panel">Video animation</button></div>
    <section id="live-panel" role="tabpanel" aria-labelledby="live-tab">
-    <div class="test-picker"><label for="subject">Choose a test<select id="subject"><optgroup label="Avatar"><option value="avatar">Our avatar</option><option value="newAvatar">New avatar</option><option value="rules">Movement rules (section 1)</option><option value="skeleton">Skeleton (section 2)</option><option value="hands">Hands</option><option value="wrist">Wrist</option><option value="elbow">Elbow</option><option value="feet">Feet</option></optgroup><optgroup label="Racing"><option value="tracks">Tracks (section 1)</option><option value="karts">Karts</option></optgroup><optgroup label="World & other studies"><option value="blocks">Blocks</option><option value="oval">Oval track</option><option value="island">Floating island</option><option value="motion">Motion study</option></optgroup></select></label><button id="reset">Reset</button></div>
+    <div class="test-picker"><label for="subject">Choose a test<select id="subject"><optgroup label="Avatar"><option value="newAvatar">New avatar</option><option value="rules">Movement rules (section 1)</option><option value="skeleton">Skeleton (section 2)</option><option value="hands">Hands</option><option value="wrist">Wrist</option><option value="elbow">Elbow</option><option value="feet">Feet</option></optgroup><optgroup label="Racing"><option value="tracks">Tracks (section 1)</option><option value="karts">Karts</option></optgroup><optgroup label="World & other studies"><option value="blocks">Blocks</option><option value="oval">Oval track</option><option value="island">Floating island</option><option value="motion">Motion study</option></optgroup></select></label><button id="reset">Reset</button></div>
     <p class="help" id="live-help">Drag the model to look around. Use the view buttons for a fixed angle.</p>
     <p class="help" id="driving-help" hidden><a id="driving-link" href="../racing-lab/?drive=1&amp;handling=fast">Open driving test →</a></p>
     <div id="live-controls" aria-label="Selected test controls"></div>

@@ -7,7 +7,7 @@ const server=createServer(async(req,res)=>{try{let path=new URL(req.url,'http://
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 try{
  const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(`http://127.0.0.1:${server.address().port}/test-lab/`);
- const ready=()=>page.waitForFunction(()=>window.testLabReady,undefined,{timeout:60000});await ready();assert.equal(await page.title(),'Test Lab');assert.equal(await page.locator('#test-context').textContent(),'Our avatar');
+ const ready=()=>page.waitForFunction(()=>window.testLabReady,undefined,{timeout:60000});await ready();assert.equal(await page.title(),'Test Lab');assert.equal(await page.locator('#test-context').textContent(),'New avatar');
  const brand=await page.locator('.brand').boundingBox(),views=await page.locator('.views').boundingBox();assert(brand.x<25&&brand.y<30);assert(views.y>700&&views.y+views.height<844);
  for(const name of ['Front','Side','Back','Top','Angle','Isometric']){await page.getByRole('button',{name,exact:true}).tap();assert.equal(await page.getByRole('button',{name,exact:true}).getAttribute('aria-pressed'),'true');}
  await page.waitForFunction(()=>{const a=testLab.frame.contentWindow.testLabScene;return a.getState().isometric&&a.orthographic.position.length()>0;});

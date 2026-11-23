@@ -2,7 +2,6 @@ import {protectPage} from './interactions.js?v=toggle-8';
 protectPage(window);
 const $=selector=>document.querySelector(selector);
 const tests={
- avatar:{name:'Avatar',path:'avatar-test',ready:w=>w.avatarLabReady},
  tracks:{name:'Tracks',path:'racing-lab',ready:w=>w.trackLabReady&&w.motionLabReady,tracks:true},
  skeleton:{name:'Skeleton',path:'skeleton-test',ready:w=>w.skeletonTestReady},
  newAvatar:{name:'New avatar',path:'new-avatar',ready:w=>w.newAvatarReady},
@@ -16,7 +15,7 @@ const tests={
  motion:{name:'Motion study',path:'motion-lab',ready:w=>!!w.motionLab,move:true},
 };
 const controls=$('#live-controls'),host=$('#frame-host'),loading=$('#loading');
-let subject='avatar',mode='live',view='angle',frame=null,clock=null,syncControls=()=>{},generation=0,stageVisible=true,ready=false,inspection=false;
+let subject='newAvatar',mode='live',view='angle',frame=null,clock=null,syncControls=()=>{},generation=0,stageVisible=true,ready=false,inspection=false;
 let motionOpen=false,syncMotion=()=>{},resetMotion=()=>{};
 
 function setMotionOpen(open){
@@ -64,7 +63,7 @@ async function setTest(id){
  if(!tests[id])return;subject=id;ready=false;window.testLabReady=false;const token=++generation;clock=null;syncControls=()=>{};controls.replaceChildren();loading.hidden=false;loading.textContent='Preparing '+tests[id].name.toLowerCase()+'…';$('#subject').value=id;$('#subject-status').textContent=tests[id].name;
  $('#driving-help').hidden=id!=='tracks';
  $('#test-context').textContent=$('#subject').selectedOptions[0].textContent;
- const url=new URL(location.href);if(id==='avatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
+ const url=new URL(location.href);if(id==='newAvatar')url.searchParams.delete('test');else url.searchParams.set('test',id);history.replaceState(null,'',url);
  const node=document.createElement('iframe');node.title=tests[id].name+' live test';node.allow='fullscreen';node.src='../'+tests[id].path+'/?lab=fast-approved-joints-2026-11-19';frame=node;host.replaceChildren(node);
  node.onload=async()=>{
   try{
@@ -117,4 +116,4 @@ if(initial==='driving'){
  const url=new URL('../racing-lab/',location.href);url.searchParams.set('drive','1');
  for(const key of ['track','handling','debug'])if(params.has(key))url.searchParams.set(key,params.get(key));
  location.replace(url.href);
-}else setTest(tests[initial]?initial:'avatar');
+}else setTest(tests[initial]?initial:'newAvatar');// Our avatar was removed from the tests (owner, 23 November 2026); the New avatar opens first
