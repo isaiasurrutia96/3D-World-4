@@ -457,6 +457,29 @@ export function assembledSockets({torso,shoulderIn,hipIn,limbs,elbowsKnees,wrist
  }
  return parts;
 }
+// A plain cylinder neck in place of the neck ball (owner, 23 November 2026: "add a regular cylinder neck and the head"):
+// the cylinder that just holds the approved neck ball where it sits put together (as thick as the ball, from its
+// bottom to its top, standing straight up), so it reaches as far into the torso and the head as the ball did. Its two
+// end edges rounded by the same 5 mm as every lip (owner: no sharp edges); built as a lathe (a profile turned around
+// the upright line), closed, with exact shading directions.
+export function cylinderNeck(pressed,{segments=64,round=SHOULDER_RIM_ROUND,steps=6}={}){
+ const ball=pressed.parts.find(p=>p.name==='ball-neck'),r=ball.radius,[cx,cy,cz]=ball.centre,lo=cy-r,hi=cy+r,f=Math.min(round,r/2);
+ // The profile, bottom middle to top middle: (distance from the line, height, direction out, direction up).
+ const prof=[[0,lo,0,-1]];
+ for(let k=0;k<=steps;k++){const a=-Math.PI/2+k/steps*Math.PI/2;prof.push([r-f+f*Math.cos(a),lo+f+f*Math.sin(a),Math.cos(a),Math.sin(a)]);}
+ for(let k=0;k<=steps;k++){const a=k/steps*Math.PI/2;prof.push([r-f+f*Math.cos(a),hi-f+f*Math.sin(a),Math.cos(a),Math.sin(a)]);}
+ prof.push([0,hi,0,1]);
+ const positions=[],normals=[],index=[],ring=[];
+ positions.push(cx,lo,cz);normals.push(0,-1,0);
+ for(let j=1;j<prof.length-1;j++){const [d,y,nx,ny]=prof[j];ring.push(positions.length/3);
+  for(let s=0;s<segments;s++){const t=s/segments*2*Math.PI,c=Math.cos(t),si=Math.sin(t);positions.push(cx+d*c,y,cz+d*si);normals.push(nx*c,ny,nx*si);}}
+ const top=positions.length/3;positions.push(cx,hi,cz);normals.push(0,1,0);
+ // Faces wound to point outward (counter-clockwise seen from outside).
+ for(let s=0;s<segments;s++){const n=(s+1)%segments;index.push(0,ring[0]+s,ring[0]+n);}
+ for(let j=0;j<ring.length-1;j++)for(let s=0;s<segments;s++){const n=(s+1)%segments,a=ring[j]+s,b=ring[j]+n,c=ring[j+1]+s,d=ring[j+1]+n;index.push(a,c,b,b,c,d);}
+ const L=ring.at(-1);for(let s=0;s<segments;s++){const n=(s+1)%segments;index.push(top,L+n,L+s);}
+ return {name:'neck',side:'centre',positions,normals,index,radius:r,centre:ball.centre,length:hi-lo};
+}
 export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
  return pushBallsIn(pressed.parts.find(p=>p.name==='torso'),pressed.parts.filter(p=>p.name==='ball-shoulder'),apart.parts.filter(p=>p.name==='ball-shoulder'),bodyId);
 }
