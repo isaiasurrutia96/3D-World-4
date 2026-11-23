@@ -37,7 +37,17 @@ Each item: what it is, its measured cause, the proposed fix (not applied), and t
      leaves the chest's lower edge a thin wedge that the 5 mm rounding cannot round cleanly. Not solved; the flat waist
      stays on the page. Paused while the owner decides about an invisible spine and a third torso piece (item 6).
 6. **Bending forward looks odd** (owner, 23 November 2026: "he might need an invisible spine, or something cus it looks
-   odd when he bends forward, let me know what u think before u try to fix that"). Discussed, not started.
+   odd when he bends forward, let me know what u think before u try to fix that"). Then the owner's own idea, an
+   imaginary ball between chest and pelvis that carves sockets like every other joint but is never drawn, and then a
+   spine. Built in pictures on the 6 ft 4 in version (handoff items 83 and 84): three pieces (chest, belly, pelvis) on
+   two imaginary balls, bending shared with the hips by measured human data. **Waiting for the owner's "approved"; not
+   on the page.** This also answers item 4 differently: the flat lines stay, and the hidden balls give the pivots.
+7. **The torso's triangle count grows with every cut** (about 76,600 before any cut, 182,000 with the waist line on
+   the page now, about 263,000 with the spine's two lines): each cut refines the surface around it. Not urgent in the
+   prototype; the rebuild makes every piece lean. Owner decision: pending.
+8. **In deep forward bends the back shows open wedges, like stacked plates** (rigid pieces turning about hidden balls
+   that sit near the back). Front overlap is fine with the owner; the back wedges have not been discussed yet. Owner
+   decision: pending.
 5. **Joint balls stay 300 triangles** (confirmed decision, for smooth movement and frame rate): not on this list as a
    fix. The rebuild makes every piece lean (the prototype is about 517,000 triangles).
 

@@ -575,7 +575,10 @@ export function longerLegs(parts,{height=1.9304,spare=.01}={}){
 // level slab the usual 6 mm (SOCKET_GAP) thick, made like a socket: cut along it (the same mesh boolean), the clay
 // inside removed, each opening closed flat, and both cut edges rounded by the same 5 mm rolling ball as every lip.
 // No ball is shown: the joint would sit inside, hidden; only the line shows. Returns the two closed pieces.
-export function splitTorsoAtWaist(torso,{y,gap=SOCKET_GAP}={}){
+// `evenCaps`: each opening closed with even triangles the usual socket size (the same fill as a socket's inside,
+// fillRimOnPath) instead of a fan from its middle; it looks the same (flat), but leaves room to carve into (the hidden
+// waist joint's sockets: a fan's long thin triangles would be split into many tens of thousands).
+export function splitTorsoAtWaist(torso,{y,gap=SOCKET_GAP,evenCaps=false}={}){
  const g2=gap/2,band=.02;
  // Finer triangles near the cut first (the same refinement as the sockets), fading out over six triangle lengths.
  const where=m=>{const t=Math.min(1,Math.max(0,(band+6*SOCKET_EDGE-Math.abs(m[1]-y))/(6*SOCKET_EDGE)));return t>0?t*t*(3-2*t):0;};
@@ -592,14 +595,65 @@ export function splitTorsoAtWaist(torso,{y,gap=SOCKET_GAP}={}){
  const loops=[],seen=new Set();for(const s0 of next.keys()){if(seen.has(s0))continue;const loop=[];let v=s0;while(!seen.has(v)){seen.add(v);loop.push(v);v=next.get(v);if(v===undefined)throw Error('splitTorsoAtWaist: an opening is not closed');}loops.push(loop);}
  if(loops.length!==2)throw Error('splitTorsoAtWaist: expected 2 openings, found '+loops.length);
  // Each opening closed flat: a fan from its middle (marked like a socket's fill), facing out of its piece.
- const caps=[];for(const loop of loops){const up=P[3*loop[0]+1]>y,c=[0,1,2].map(k=>loop.reduce((a,i)=>a+P[3*i+k],0)/loop.length),m=P.length/3;P.push(...c);N.push(0,up?-1:1,0);kind.push(2);
+ const caps=[];if(evenCaps)for(const loop of loops){const h=P[3*loop[0]+1],out=[0,h>y?-1:1,0];
+  for(const i of fillRimOnPath(P,N,kind,loop,{toFlat:q=>[q[0],q[2]],fromFlat:([X,Z])=>[X,h,Z],inward:()=>out}))caps.push(i);}
+ else for(const loop of loops){const up=P[3*loop[0]+1]>y,c=[0,1,2].map(k=>loop.reduce((a,i)=>a+P[3*i+k],0)/loop.length),m=P.length/3;P.push(...c);N.push(0,up?-1:1,0);kind.push(2);
   for(let k=0;k<loop.length;k++){const a=loop[k],b=loop[(k+1)%loop.length],A=pt(a),B=pt(b),u=A.map((x,j)=>x-c[j]),w=B.map((x,j)=>x-c[j]),ny=u[2]*w[0]-u[0]*w[2];caps.push(...((ny<0)===up?[m,a,b]:[m,b,a]));}}
  const soft=softenShoulderRims({solid:{positions:P,normals:N,index:[...kept,...caps]},kind,paths:[path],balls:[]});
  // Two pieces: every triangle above the middle of the slab is the chest's, below it the pelvis's.
- const S=soft.torso,piece=(name,above)=>{const map=new Map(),pos=[],nor=[],idx=[];for(let t=0;t<S.index.length;t+=3){const v=[S.index[t],S.index[t+1],S.index[t+2]],cy=(S.positions[3*v[0]+1]+S.positions[3*v[1]+1]+S.positions[3*v[2]+1])/3;if((cy>y)!==above)continue;
+ // With even caps, the rounding can fold a speck of the lip (a triangle and its mirror image, about 1 mm across, on
+ // the same three points); both are dropped, the standard clean-up for such a fin, leaving the surface closed.
+ let SI=soft.torso.index;if(evenCaps){const seen=new Map(),sorted=t=>[SI[t],SI[t+1],SI[t+2]].sort((a,b)=>a-b).join(','),drop=new Set();
+  for(let t=0;t<SI.length;t+=3){const k=sorted(t);if(seen.has(k)&&!drop.has(seen.get(k))){drop.add(seen.get(k));drop.add(t);}else seen.set(k,t);}
+  SI=SI.filter((_,i)=>!drop.has(i-i%3));}
+ const S={...soft.torso,index:SI},piece=(name,above)=>{const map=new Map(),pos=[],nor=[],idx=[];for(let t=0;t<S.index.length;t+=3){const v=[S.index[t],S.index[t+1],S.index[t+2]],cy=(S.positions[3*v[0]+1]+S.positions[3*v[1]+1]+S.positions[3*v[2]+1])/3;if((cy>y)!==above)continue;
   for(const i of v){if(!map.has(i)){map.set(i,pos.length/3);pos.push(S.positions[3*i],S.positions[3*i+1],S.positions[3*i+2]);nor.push(S.normals[3*i],S.normals[3*i+1],S.normals[3*i+2]);}idx.push(map.get(i));}}
   return {name,side:'centre',positions:pos,normals:nor,index:idx};};
  return {chest:piece('chest',true),pelvis:piece('pelvis',false),y,gap};
+}
+// Where the lower spine sits front to back, as a share of the torso's depth from the back, at the navel (the L3-L4
+// level): the skin of the back to the back of the spinal canal about 4.6 cm (CT of young adult men at L3-L4), the
+// canal about 1.5 cm deep, then half the vertebral body (canal about 0.57 of the body's depth, so the body about
+// 2.6 cm); about 7.4 cm in all, against a trunk depth of about 22.6 cm there (the sagittal abdominal diameter, US adult
+// mean): a third. Body fat changes both numbers together, so the share holds better than either length.
+export const SPINE_FROM_BACK=1/3;
+// The spine's imaginary balls, as wide as a real lumbar vertebra compared with the trunk: a vertebral body about 5 cm
+// wide (L3-L4 endplates of adult men, 48 to 55 mm) in a trunk about 22.6 cm deep (the sagittal abdominal diameter, US
+// adult mean), so the ball's width is that share of his torso's depth at its line.
+export const SPINE_BALL_SHARE=.05/.226;
+// A hidden spine joint (owner, 23 November 2026: "imagine you separate the bottom of the torso and the top of the torso,
+// and then you put that ball in the middle, and then that ball will create those sockets"; "I say imaginary ball so
+// that you don't actually draw a ball"). The same process as every other joint, with no ball drawn: a ball centred on
+// the cut line where the spine sits (SPINE_FROM_BACK), SPINE_BALL_SHARE of the torso's depth wide, pushed up into the
+// piece above and down into the piece below and pulled back out, leaving a socket in each (the same cut, fill and 5 mm
+// rounded lip). Its centre stays on the line, so both pieces stay exactly where they were, the usual 6 mm apart:
+// standing, only the line shows; bending turns the upper piece about the ball's centre.
+export function spineBallSockets({upper,lower,y,gap}){
+ const P=[...upper.positions,...lower.positions];
+ // The torso's back and front on its middle line, at the cut: where the cut's lips are farthest back and forward.
+ let back=Infinity,front=-Infinity;for(let i=0;i<P.length;i+=3)if(Math.abs(P[i])<.004&&Math.abs(P[i+1]-y)<.02){back=Math.min(back,P[i+2]);front=Math.max(front,P[i+2]);}
+ const radius=SPINE_BALL_SHARE*(front-back)/2,pivot=[0,y,back+SPINE_FROM_BACK*(front-back)],ball={name:'ball-spine',side:'centre',radius,centre:pivot};
+ const press=(piece,dir)=>{const start={...ball,centre:[pivot[0],pivot[1]-dir*(radius+BALL_GAP+gap/2),pivot[2]]};
+  // Finer triangles only on the flat cut face, out to a little past the socket's rim (the inside is filled fine
+  // anyway, and the torso's outside needs nothing new).
+  const face=y+dir*gap/2,reach=radius+SOCKET_GAP+3*SOCKET_EDGE,where=m=>Math.abs(m[1]-face)<5e-4&&Math.hypot(m[0]-pivot[0],m[2]-pivot[2])<reach?1:0;
+  const cut=pushBallsIn({positions:piece.positions,index:piece.index,normals:piece.normals},[ball],[start],'boy',{where}),soft=softenShoulderRims(cut);
+  return {name:piece.name,side:'centre',positions:soft.torso.positions,normals:soft.torso.normals,index:soft.torso.index};};
+ return {upper:press(upper,1),lower:press(lower,-1),pivot,radius,y,back,front};
+}
+// The torso as three pieces on a spine (owner, 23 November 2026: "what about adding a spine ... we're gonna have to
+// have a lot more flexibility"): chest, belly and pelvis, the standard three-part trunk of biomechanics (thorax, lumbar
+// spine, pelvis) with a hidden spine joint at each line. The upper line is the approved waist line (height divided by
+// the golden ratio), which on him sits within 3 cm of where the ribcage meets the lower back (the transpyloric plane,
+// halfway between the top of the breastbone and the pubic bone). The lower line is where the lower back meets the
+// pelvis: anatomy puts it about 9 cm above the pubic bone, which on him would cut into the hip sockets, so it goes as
+// low as it can while keeping one socket triangle (1.2 cm) of clay above them. `hip`: a hip ball {centre, radius}.
+export function threePieceTorso(torso,{waistY,hip,gap=SOCKET_GAP}){
+ const lowY=hip.centre[1]+hip.radius+SOCKET_GAP+SOCKET_EDGE+gap/2;
+ const top=splitTorsoAtWaist(torso,{y:waistY,gap,evenCaps:true}),low=splitTorsoAtWaist(top.pelvis,{y:lowY,gap,evenCaps:true});
+ const upperJoint=spineBallSockets({upper:top.chest,lower:{...low.chest,name:'belly'},y:waistY,gap});
+ const lowerJoint=spineBallSockets({upper:upperJoint.lower,lower:low.pelvis,y:lowY,gap});
+ return {chest:upperJoint.upper,belly:lowerJoint.upper,pelvis:lowerJoint.lower,joints:[upperJoint,lowerJoint].map(({pivot,radius,y,back,front})=>({pivot,radius,y,back,front}))};
 }
 // The waist made curved (owner, 23 November 2026, polish list item 4: the flat, tight cut "looks like it can only
 // rotate"; "can you do that"): the cut is a spherical shell the usual 6 mm thick, centred on the hidden pivot, so the
@@ -697,10 +751,12 @@ function fillRimOnPath(P,N,kind,loop,w){
  for(const x of nb.keys()){const q=w.fromFlat(flatOf.get(x));P.splice(3*x,3,...q);N.splice(3*x,3,...w.inward(q));}
  return T;
 }
-export function pushBallsIn(torso,balls,out,bodyId='boy'){
+// `where` (optional): where to make the triangles finer, in place of the usual ball around each socket (the waist's
+// sockets only need it on the flat cut face; the default leaves every other socket exactly as it was).
+export function pushBallsIn(torso,balls,out,bodyId='boy',{where=null}={}){
  const r=balls[0].radius,R=r+SOCKET_GAP,centres=balls.map(b=>b.centre),dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
  const reach=R+6*SOCKET_EDGE,fade=6*SOCKET_EDGE;
- const weight=m=>Math.max(...centres.map(c=>{const d=dist(m,c),f=Math.min(1,Math.max(0,(reach-d)/fade));return f>0?f*f*(3-2*f):(d<reach?1e-9:0);}));
+ const weight=where??(m=>Math.max(...centres.map(c=>{const d=dist(m,c),f=Math.min(1,Math.max(0,(reach-d)/fade));return f>0?f*f*(3-2*f):(d<reach?1e-9:0);})));
  const refined=refineNear(torso.normals?torso:{...torso,normals:pointNormals(torso)},centres[0],reach,SOCKET_EDGE,6,weight);
  const paths=balls.map(b=>{const o=out.find(x=>x.side===b.side).centre,v=b.centre.map((x,k)=>x-o[k]),l=Math.hypot(...v);return socketPath(b.centre,R,v.map(x=>x/l));});
  // The cut, with snap rounding; a point the snapping would make into a pinch (the rim passing through it twice) is
