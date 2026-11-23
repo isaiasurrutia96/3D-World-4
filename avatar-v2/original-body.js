@@ -373,6 +373,25 @@ export function limbSockets(bodyId='boy',{apart=separatedOriginalBody(bodyId),hi
  }
  return out;
 }
+// Then the elbow and knee balls (owner, 23 November 2026: "now the elbows and knees, press them into the limbs"):
+// each where the separated avatar has it, one gap past its limb's bottom along the limb's line (knees moved with the
+// thighs), pushed up into the limb's bottom as deep as when put together and pulled back out, same softened lip.
+// `limbs` is limbSockets' result, so each limb keeps its top socket. Built on the left and mirrored.
+export function elbowKneeSockets(bodyId='boy',{apart=separatedOriginalBody(bodyId),hips=null,limbs=limbSockets(bodyId,{apart,hips})}={}){
+ const pick=(n,s)=>apart.parts.find(p=>p.name===n&&p.side===s),out=[];
+ const mirror=m=>{const I=[];for(let t=0;t<m.index.length;t+=3)I.push(m.index[t],m.index[t+2],m.index[t+1]);return {...m,positions:m.positions.map((v,i)=>i%3===0?-v:v),normals:m.normals.map((v,i)=>i%3===0?-v:v),index:I};};
+ for(const [name,ballName,topBall] of [['upper-arm','ball-elbow','ball-shoulder'],['thigh','ball-knee','ball-hip']]){
+  let raw=pick(name,'left'),ball=pick(ballName,'left');
+  if(topBall==='ball-hip'&&hips){const shift=sub3(hips.outBalls.find(b=>b.side==='left').centre,pick('ball-hip','left').centre);raw=moveBy(raw,shift);ball=moveBy(ball,shift);}
+  const L=limbLine(raw.positions,raw.axis);let dir=L.dir;const toLimb=sub3(L.centre,ball.centre);if(dot3(toLimb,dir)<0)dir=neg(dir);
+  const r=ball.radius,travel=r+BALL_GAP-(1-PREVIEW_PRESS)*r,inBall={...ball,centre:add3(ball.centre,scale3(dir,travel))};
+  const limb=limbs.find(l=>l.name===name&&l.side==='left').part;
+  const cut=pushBallsIn({positions:limb.positions,index:limb.index,normals:limb.normals},[inBall],[ball],bodyId),soft=softenShoulderRims(cut);
+  out.push({name,side:'left',ball,part:{...soft.torso,name,side:'left'},cut,soft});
+  out.push({name,side:'right',ball:ballPart(ballName,'right',r,[-ball.centre[0],ball.centre[1],ball.centre[2]]),part:{...mirror(soft.torso),name,side:'right'},cut,soft});
+ }
+ return out;
+}
 export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
  return pushBallsIn(pressed.parts.find(p=>p.name==='torso'),pressed.parts.filter(p=>p.name==='ball-shoulder'),apart.parts.filter(p=>p.name==='ball-shoulder'),bodyId);
 }
