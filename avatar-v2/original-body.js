@@ -372,11 +372,14 @@ export function closerHipBalls(bodyId='boy',gap=HIP_BALL_GAP_CLOSER,{pressed=pre
  * first matched to Our avatar: the ends keep their shape, only the middle stretches).
  */
 export const THIGH_CLOSER=.02,LIMB_SLIGHT=.0025;
-// The wrist ball pressed 2 cm deeper into the forearm (owner, 23 November 2026: the wrist showed about half its ball and
-// looked loose; "press the ball more into the forearm"): the forearm's end is wider than the ball, so its cup wraps
-// further round it, and the hand (and its palm) stays exactly as it was. Not made up by a longer forearm: each arm is
-// 2 cm shorter. 2 cm is the owner's own "deeper" from the hip depth.
-export const WRIST_FOREARM_DEEPER=.02;
+// The wrist ball pressed deeper into the forearm (owner, 23 November 2026: the wrist showed about half its ball and
+// looked loose; "press the ball more into the forearm", first 2 cm; then "as much as u need for it not to look like it
+// could flop around"). 5 cm in all: the deepest press that keeps the forearm's soft lip. Measured in 1 cm steps: at 5 cm
+// the forearm's edge reaches to within 1 to 6 mm of the middle (widest part) of the wrist ball all the way round, with a
+// clean, soft lip; at 6 cm it passes the middle but the forearm's end is oval, so on its narrow sides the socket comes
+// out almost to the surface and the lip turns thin and ragged (seen in close-ups), which breaks the no-sharp-edges rule.
+// The hand (and its palm) stays exactly as it was. Not made up by a longer forearm: each arm is 5 cm shorter.
+export const WRIST_FOREARM_DEEPER=.05;
 // A limb lengthened through its middle: its top end (toward the ball `dir` points away from) `top` further toward
 // that ball, its bottom end `bottom` further the other way.
 const lengthenLimb=(p,dir,top,bottom)=>{if(!top&&!bottom)return p;const L=limbLine(p.positions),s=stretchLimb(p.positions,top+bottom).positions,v=dot3(L.dir,dir)>0?scale3(dir,-top):scale3(dir,bottom);
