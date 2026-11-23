@@ -114,7 +114,9 @@ const mix=separatedOriginalBody('boy');
 const torsoFile=unpackTorsoSockets(await (await fetch('./torso-sockets.bin?v='+TORSO_SOCKETS_VERSION)).arrayBuffer()),TF=torsoFile.facts;
 const torsoParts=id=>torsoFile.items[id].map(p=>({name:p.name,geometry:geometryOf(p),y:0}));
 const hipBalls=mix.parts.filter(p=>p.name==='ball-hip');
-GROUPS.push({id:'torso-sockets',label:'Torso sockets',intro:'His torso with the shoulder sockets: each shoulder ball was pushed straight into the clay torso, to where it sits when he is put together, then pulled back out beside it. The thin sliver of clay over the top of each socket is chiselled off and every rim softened. Next to it, the hips restarted: the torso before any hip ball was pressed in, with both hip balls below it; then the hip balls brought closer together and pushed in and back out the same way, with the same softened lip; then the upper arms and thighs, each pressed onto its ball the same way; then the elbow and knee balls pressed into the bottoms of the upper arms and thighs; then the forearms, calves, hands and feet, with every ball pressed into the pieces on both sides of it; last everything put together.',
+// Opens on the finished avatar (owner, 23 November 2026: "I still dont see him": all seven steps in one row were too
+// small to find him on a phone).
+GROUPS.push({id:'torso-sockets',label:'Torso sockets',start:'torso-assembled',intro:'His torso with the shoulder sockets: each shoulder ball was pushed straight into the clay torso, to where it sits when he is put together, then pulled back out beside it. The thin sliver of clay over the top of each socket is chiselled off and every rim softened. Next to it, the hips restarted: the torso before any hip ball was pressed in, with both hip balls below it; then the hip balls brought closer together and pushed in and back out the same way, with the same softened lip; then the upper arms and thighs, each pressed onto its ball the same way; then the elbow and knee balls pressed into the bottoms of the upper arms and thighs; then the forearms, calves, hands and feet, with every ball pressed into the pieces on both sides of it; last everything put together.',
  items:[{id:'torso-sockets-boy',label:'Torso · shoulder sockets',tag:'Torso',note:`Each socket is exactly what its ball left (the ball plus the usual 6 mm gap; ${Math.round(TF.shoulderDisplaced/2*1e6)} cm³ of clay each). Then a ${Math.round(SHOULDER_RIM_ROUND*1000)} mm ball rolled along the inside of the clay and whatever it could not reach was cut off (${(TF.shoulderRemoved*1e6).toFixed(1)} cm³ in all). The balls sit beside the torso where they started.`,
   parts:torsoParts('torso-sockets-boy')},
   {id:'torso-hips-apart',label:'Torso · hips not pressed yet',tag:'Hips apart',note:`The same torso and shoulder sockets, but the hips restarted: the torso as it was before any hip ball was pressed in, and both hip balls (${(hipBalls[0].radius*200).toFixed(1)} cm) below it, not pressed in.`,
@@ -244,7 +246,8 @@ function setGroup(id){
  for(const b of tabs.children)b.setAttribute('aria-pressed',String(b.dataset.group===active.id));
  list.replaceChildren();button(list,'option','all','Compare all').onclick=()=>setFocus(null);
  options.forEach((o,i)=>{button(list,'option',o.id,o.label).onclick=()=>setFocus(i);});
- setFocus(null);
+ // A group can open on one item instead of all of them in a row (`start`).
+ const start=active.start?options.findIndex(o=>o.id===active.start):-1;setFocus(start>=0?start:null);
 }
 for(const g of GROUPS)button(tabs,'group',g.id,g.label).onclick=()=>setGroup(g.id);
 for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>view(b.dataset.view);
