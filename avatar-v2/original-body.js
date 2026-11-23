@@ -352,6 +352,27 @@ export function closerHipBalls(bodyId='boy',gap=HIP_BALL_GAP_CLOSER,{pressed=pre
  const pair=c=>[ballPart('ball-hip','left',rH,c),ballPart('ball-hip','right',rH,[-c[0],c[1],c[2]])];
  return {gap,radius:rH,inBalls:pair(into),outBalls:pair(out)};
 }
+// Upper arms and thighs added and pressed onto their balls (owner, 23 November 2026: "add the upper arm to both sides and
+// the thighs to the underneath the hip balls, and align them to where they're supposed to be at ... the same process.
+// Press the ball into the clay ... and pull it back out"; visuals only). Each limb sits where the separated avatar has it,
+// one gap past its ball along its own line (the thighs moved with the closer hip balls). Each ball is pushed into its
+// limb along that line as deep as when he is put together (shoulders 90% of the radius, hips 105%), then pulled back
+// out; the socket left in each limb gets the same softened lip as the torso's.
+export function limbSockets(bodyId='boy',{apart=separatedOriginalBody(bodyId),hips=null}={}){
+ // (Built on the left; the right is its exact mirror, as the separated avatar's right side is.)
+ const pick=(n,s)=>apart.parts.find(p=>p.name===n&&p.side===s),out=[],side='left';
+ const mirror=m=>{const I=[];for(let t=0;t<m.index.length;t+=3)I.push(m.index[t],m.index[t+2],m.index[t+1]);return {...m,positions:m.positions.map((v,i)=>i%3===0?-v:v),normals:m.normals.map((v,i)=>i%3===0?-v:v),index:I};};
+ for(const [name,ballName,press] of [['upper-arm','ball-shoulder',PREVIEW_PRESS],['thigh','ball-hip',PREVIEW_PRESS+HIP_THIGH_EXTRA]]){
+  let limb=pick(name,side),ball=pick(ballName,side);
+  if(ballName==='ball-hip'&&hips){const nb=hips.outBalls.find(b=>b.side===side);limb=moveBy(limb,sub3(nb.centre,ball.centre));ball=nb;}
+  const L=limbLine(limb.positions,limb.axis);let dir=L.dir;const toLimb=sub3(L.centre,ball.centre);if(toLimb[0]*dir[0]+toLimb[1]*dir[1]+toLimb[2]*dir[2]<0)dir=dir.map(x=>-x);
+  const r=ball.radius,travel=r+BALL_GAP-(1-press)*r,inBall={...ball,centre:add3(ball.centre,scale3(dir,travel))};
+  const cut=pushBallsIn({positions:limb.positions,index:limb.index,normals:limb.normals},[inBall],[ball],bodyId),soft=softenShoulderRims(cut);
+  out.push({name,side,ball,part:{...soft.torso,name,side},cut,soft});
+  out.push({name,side:'right',ball:apart.parts.find(p=>p.name===ballName&&p.side==='right'),part:{...mirror(soft.torso),name,side:'right'},cut,soft});
+ }
+ return out;
+}
 export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
  return pushBallsIn(pressed.parts.find(p=>p.name==='torso'),pressed.parts.filter(p=>p.name==='ball-shoulder'),apart.parts.filter(p=>p.name==='ball-shoulder'),bodyId);
 }
@@ -440,7 +461,7 @@ export function pushBallsIn(torso,balls,out,bodyId='boy'){
  const sp=carved.positions,si=carved.index,phiAt=q=>Math.min(...paths.map(w=>w.phi(q))),dpos=[...sp],dnor=[...carved.normals],copy=new Map(),dindex=[];
  for(let t=0;t<si.length;t+=3){const v=[si[t],si[t+1],si[t+2]],q=k=>[sp[3*k],sp[3*k+1],sp[3*k+2]];
   const socket=v.some(k=>kinds[k]===2)||v.every(k=>kinds[k]===1)&&phiAt([0,1,2].map(j=>(sp[3*v[0]+j]+sp[3*v[1]+j]+sp[3*v[2]+j])/3))<0;
-  dindex.push(...v.map(k=>{if(!socket||kinds[k]!==1)return k;if(!copy.has(k)){const p=q(k),w=paths.find(w=>Math.sign(w.c[0])===Math.sign(p[0]));copy.set(k,dpos.length/3);dpos.push(...p);dnor.push(...w.inward(p));}return copy.get(k);}));}
+  dindex.push(...v.map(k=>{if(!socket||kinds[k]!==1)return k;if(!copy.has(k)){const p=q(k),w=paths.reduce((a,b)=>Math.hypot(p[0]-a.c[0],p[1]-a.c[1],p[2]-a.c[2])<=Math.hypot(p[0]-b.c[0],p[1]-b.c[1],p[2]-b.c[2])?a:b);copy.set(k,dpos.length/3);dpos.push(...p);dnor.push(...w.inward(p));}return copy.get(k);}));}
  const drawn={...carved,positions:dpos,index:dindex,normals:dnor};
  return {body:bodyId,parts:[drawn,...out],torso:drawn,solid:carved,kind:kinds,refined,before:part,paths,ways:paths.map(w=>w.phi),balls:out,inBalls:balls,R,displaced:vol(refined.positions,refined.index)-vol(carved.positions,carved.index)};
 }
@@ -456,7 +477,7 @@ export function collapseShortRimEdges(part,kind,paths,minLen,types=null){
    const nbr=v=>new Set(fan.get(v).filter(x=>!gone.has(x)).flatMap(x=>[I[x],I[x+1],I[x+2]]).filter(u=>u!==v)),na=nbr(a),nb=nbr(b),common=[...na].filter(u=>nb.has(u)&&u!==a&&u!==b);
    const opp=both.map(x=>[I[x],I[x+1],I[x+2]].find(u=>u!==a&&u!==b));if(common.length!==2||!opp.every(u=>common.includes(u)))continue;
    // The merged point: the middle of the edge, put back onto the rim (the edge bows into the path).
-   const m=[0,1,2].map(k=>(P[3*a+k]+P[3*b+k])/2),w=paths.find(w=>Math.sign(w.c[0])===Math.sign(m[0])),q=w.phi(m)<0?w.nearest(m):m;
+   const m=[0,1,2].map(k=>(P[3*a+k]+P[3*b+k])/2),w=paths.reduce((a,b)=>Math.hypot(m[0]-a.c[0],m[1]-a.c[1],m[2]-a.c[2])<=Math.hypot(m[0]-b.c[0],m[1]-b.c[1],m[2]-b.c[2])?a:b),q=w.phi(m)<0?w.nearest(m):m;
    // No triangle around either point may turn over.
    let ok=true;for(const x of [...ta,...tb]){if(both.includes(x))continue;const v=[I[x],I[x+1],I[x+2]],before=nrm(...v.map(pt)),after=nrm(...v.map(u=>u===a||u===b?q:pt(u)));if(before[0]*after[0]+before[1]*after[1]+before[2]*after[2]<=0){ok=false;break;}}
    if(!ok)continue;
@@ -499,7 +520,7 @@ export function socketPath(c,R,dir=[-Math.sign(c[0]),0,0]){
 // rolled along that line. First the clay near the rims gets triangles a third of f long, so the round edge is smooth.
 export const SHOULDER_RIM_ROUND=.005;
 export function softenShoulderRims(ps,f=SHOULDER_RIM_ROUND){
- const {paths}=ps,phi=p=>Math.min(...paths.map(w=>w.phi(p))),pathOf=p=>paths.find(w=>Math.sign(w.c[0])===Math.sign(p[0])),band=4*f;
+ const {paths}=ps,phi=p=>Math.min(...paths.map(w=>w.phi(p))),pathOf=p=>paths.reduce((a,b)=>Math.hypot(p[0]-a.c[0],p[1]-a.c[1],p[2]-a.c[2])<=Math.hypot(p[0]-b.c[0],p[1]-b.c[1],p[2]-b.c[2])?a:b),band=4*f;
  const P=[...ps.solid.positions],N=[...ps.solid.normals],K=[...ps.kind];let I=[...ps.solid.index],TT=[];
  const pt=(X,i)=>[X[3*i],X[3*i+1],X[3*i+2]],sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],len=v=>Math.hypot(...v),key=(a,b)=>a<b?a*4194304+b:b*4194304+a;
  // Which side each triangle is on: the socket (any socket point, or all rim points with the middle inside a path) or the outside.
