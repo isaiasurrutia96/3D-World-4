@@ -1,5 +1,6 @@
-// Browser check of the New avatar page: the Longer legs tab first (him now and at 6 ft 4 in, the 6 ft 4 in one with its
-// torso split into a chest and a pelvis), the Torso sockets tab's steps, and no Our avatar anywhere on the page.
+// Browser check of the New avatar page: the Base avatar tab first (the 6 ft 4 in base, its torso split into a chest and a
+// pelvis, and beside it the same avatar with a spine: chest, belly and pelvis; the 6 ft 1 in one no longer shown), the
+// Torso sockets tab's steps, and no Our avatar anywhere on the page.
 // Usage: npm run build:new-avatar, then node avatar-v2/check-new-avatar-page.mjs
 // (Our avatar was removed from this page on 23 November 2026; the check makes sure it does not come back.)
 import assert from 'node:assert/strict';
@@ -15,18 +16,19 @@ try{
   const page=await browser.newPage({viewport:{width:w,height:h}}),errors=[];
   page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400&&!r.url().endsWith('favicon.ico'))errors.push(r.status()+' '+r.url());});
   await page.goto(`http://localhost:${server.address().port}/new-avatar/`);await page.waitForFunction(()=>window.newAvatarReady,null,{timeout:180000});
-  // The first tab: him now and with longer legs, side by side; the same pieces; the longer one 193.04 cm (6 ft 4 in), as
-  // wide and deep; every right piece the exact mirror of its left piece (this caught right pieces from an earlier step).
+  // The first tab: the base and the spine version side by side; the same pieces but the torso; both 193.04 cm (6 ft 4 in)
+  // and the same width and depth; every right piece the exact mirror of its left piece (this caught right pieces from an
+  // earlier step).
   const legs=await page.evaluate(()=>{const L=window.newAvatarLab,names=g=>{const n=[];g.traverse(o=>{if(o.isMesh)n.push(o.name);});return n.sort();};
    const size=g=>{const v=new (g.position.constructor)(),lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];g.updateMatrixWorld(true);g.traverse(o=>{if(!o.isMesh||o.name==='face')return;const P=o.geometry.attributes.position;for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(o.matrixWorld);[v.x,v.y,v.z].forEach((x,k)=>{lo[k]=Math.min(lo[k],x);hi[k]=Math.max(hi[k],x);});}});return hi.map((h,k)=>h-lo[k]);};
    const mirror=g=>{let worst=0;for(const n of ['upper-arm','forearm','hand','thigh','calf','foot']){const a=g.getObjectByName(n+'.left').geometry.attributes.position,b=g.getObjectByName(n+'.right').geometry.attributes.position;if(a.count!==b.count)return Infinity;for(let i=0;i<a.count;i++)worst=Math.max(worst,Math.abs(a.getX(i)+b.getX(i)),Math.abs(a.getY(i)-b.getY(i)),Math.abs(a.getZ(i)-b.getZ(i)));}return worst;};
    return {group:L.getGroup(),focus:L.getFocus(),ids:L.options.map(o=>o.id),names:L.options.map(o=>names(o.group)),sizes:L.options.map(o=>size(o.group)),mirror:L.options.map(o=>mirror(o.group))};});
-  assert.equal(legs.group,'longer-legs','the Longer legs tab opens first');assert.equal(legs.focus,null,'both in view');assert.deepEqual(legs.ids,['legs-now','legs-6ft4']);
-  assert.deepEqual(legs.names[1],[...legs.names[0].filter(n=>n!=='torso'),'chest','pelvis'].sort(),'the same pieces, the 6 ft 4 in torso split into a chest and a pelvis');
+  assert.equal(legs.group,'base-avatar','the Base avatar tab opens first');assert.equal(legs.focus,null,'both in view');assert.deepEqual(legs.ids,['legs-6ft4','legs-6ft4-spine'],'the base and the spine version; no 6 ft 1 in');
+  assert(legs.names[0].includes('chest')&&legs.names[0].includes('pelvis')&&!legs.names[0].includes('torso'),'the base: torso split into a chest and a pelvis');
+  assert.deepEqual(legs.names[1],[...legs.names[0],'belly'].sort(),'the spine version: the same pieces plus the belly');
   {const all=[0,1,2].map(k=>{let lo=Infinity,hi=-Infinity;for(const p of together.parts)for(let i=k;i<p.positions.length;i+=3){lo=Math.min(lo,p.positions[i]);hi=Math.max(hi,p.positions[i]);}return hi-lo;});
-   // As tall as the put-together avatar; no wider or deeper (the wrists are pressed 2 cm deeper, so the arms are a little shorter).
-   assert(Math.abs(legs.sizes[0][1]-all[1])<1e-4,`now: ${legs.sizes[0][1]} m tall, wanted ${all[1]}`);for(const k of [0,2])assert(legs.sizes[0][k]<=all[k]+1e-4,`now: wider or deeper than the put-together avatar along ${'xyz'[k]}`);
-   assert(Math.abs(legs.sizes[1][1]-1.9304)<1e-4,`longer legs: ${legs.sizes[1][1]} m tall, wanted 1.9304 (6 ft 4 in)`);for(const k of [0,2])assert(Math.abs(legs.sizes[1][k]-legs.sizes[0][k])<1e-4,'longer legs: as wide and deep as him now');}
+   assert(Math.abs(legs.sizes[0][1]-1.9304)<1e-4,`base: ${legs.sizes[0][1]} m tall, wanted 1.9304 (6 ft 4 in)`);for(const k of [0,2])assert(legs.sizes[0][k]<=all[k]+1e-4,`base: wider or deeper than the put-together avatar along ${'xyz'[k]}`);
+   for(const k of [0,1,2])assert(Math.abs(legs.sizes[1][k]-legs.sizes[0][k])<1e-4,`spine version: not the same size as the base along ${'xyz'[k]}`);}
   for(const w of legs.mirror)assert(w<1e-6,`a right piece is not the mirror of its left piece (off by ${w} m)`);
   await page.evaluate(()=>window.newAvatarLab.setGroup('torso-sockets'));
   // The Torso sockets tab: the torso with its shoulder sockets and both balls beside it, nothing else.
@@ -48,7 +50,7 @@ try{
   const m=await page.evaluate(()=>({group:window.newAvatarLab.getGroup(),ids:window.newAvatarLab.options.map(o=>o.id),loader:'ourAvatarLoaded' in window,root:!!window.newAvatarLab.ourAvatar,all:window.newAvatarLab.groups.flatMap(g=>g.options.map(o=>o.id))}));
   assert.deepEqual(errors,[],'page errors');assert.equal(m.group,'together');assert.deepEqual(m.ids,['together-boy'],'Put together: only the new avatar');
   assert.equal(m.loader,false,'Our avatar is still being loaded');assert.equal(m.root,false,'Our avatar is still on the page');assert(!m.all.includes('our-avatar'),'an Our avatar item is still on the page');
-  results.push(`${w}px: Longer legs first (him now and at 6 ft 4 in, its torso split into chest and pelvis; the right side mirrors the left), the Torso sockets steps, no Our avatar, no errors`);
+  results.push(`${w}px: Base avatar first (the 6 ft 4 in base and the spine version, the same size; the right side mirrors the left), the Torso sockets steps, no Our avatar, no errors`);
   await page.close();}
 }finally{await browser.close();server.close();}
-console.log(results.join('\n'));console.log('PASS: Longer legs first with both versions (the 6 ft 4 in torso split at the waist), the Torso sockets steps, and no Our avatar on the page.');
+console.log(results.join('\n'));console.log('PASS: Base avatar first (the 6 ft 4 in base and beside it the spine version, chest, belly and pelvis; no 6 ft 1 in), the Torso sockets steps, and no Our avatar on the page.');

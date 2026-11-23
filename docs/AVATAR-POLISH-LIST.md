@@ -19,7 +19,7 @@ Each item: what it is, its measured cause, the proposed fix (not applied), and t
      built from finer rings (twice as many each way, including its straight lower part). The original profile is kept.
    - Result: the sharpest change in shading down the visible forearm is 0.9 degrees per 2 mm (was 3.6 on the version
      beside it, 12.6 on the first attempt); before-and-after close-ups show the line gone. Sealed; page check passes.
-   - Still to do when the owner says: put it on the shorter version too (or keep only the 6 ft 4 in version).
+   - Settled (owner, 23 November 2026): only the 6 ft 4 in version is kept, as the base avatar (handoff item 99).
 2. **Hand: a small flaw near the fingertips** (four edges shared by more than two triangles, in the original hand
    shape). Cause and fix to be looked at in the review. Owner decision: pending.
 3. **Some limbs look slightly faceted along their outline in close-ups** (the original limb shapes have few sides).
@@ -39,12 +39,13 @@ Each item: what it is, its measured cause, the proposed fix (not applied), and t
 6. **Bending forward looks odd** (owner, 23 November 2026: "he might need an invisible spine, or something cus it looks
    odd when he bends forward, let me know what u think before u try to fix that"). Then the owner's own idea, an
    imaginary ball between chest and pelvis that carves sockets like every other joint but is never drawn, and then a
-   spine. Built in pictures on the 6 ft 4 in version (handoff items 83 and 84): three pieces (chest, belly, pelvis) on
-   two imaginary balls, bending shared with the hips by measured human data. **Waiting for the owner's "approved"; not
-   on the page.** This also answers item 4 differently: the flat lines stay, and the hidden balls give the pivots.
+   spine. Built on the 6 ft 4 in version (handoff items 83 and 84): three pieces (chest, belly, pelvis) on two
+   imaginary balls, bending shared with the hips by measured human data. **On the page as a separate avatar beside the
+   base (owner, handoff item 99); the base keeps its single waist line.** This also answers item 4 differently: the flat lines stay, and the hidden balls give the pivots.
 7. **The torso's triangle count grows with every cut** (about 76,600 before any cut, 182,000 with the waist line on
    the page now, about 263,000 with the spine's two lines): each cut refines the surface around it. Not urgent in the
-   prototype; the rebuild makes every piece lean. Owner decision: pending.
+   prototype; the rebuild makes every piece lean. The page's baked file is now 11.4 MB with the spine avatar. Owner
+   decision: pending.
 8. **In deep forward bends the back shows open wedges, like stacked plates** (rigid pieces turning about hidden balls
    that sit near the back). Front overlap is fine with the owner; the back wedges have not been discussed yet. Owner
    decision: pending.
@@ -54,6 +55,7 @@ Each item: what it is, its measured cause, the proposed fix (not applied), and t
 ## B. Working rules for this list
 
 1. When two versions are side by side, change only the new one unless the owner says otherwise (owner, 23 November
-   2026: "I wish u did it only to the new one so i can see the difference").
+   2026: "I wish u did it only to the new one so i can see the difference"). Since handoff item 99: the 6 ft 4 in base
+   avatar stays as it is, and every change is shown on a separate avatar right next to it.
 2. How to ask for approval (owner, 23 November 2026): "check the pics, let me know what u think, if u like it say
    approved". Then push once the owner says approved.

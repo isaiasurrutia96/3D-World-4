@@ -33,7 +33,7 @@ suggested it, the date and its status. An alternative being discussed is not an 
 
 1. `docs/HANDOFF.md`, section "Confirmed by the owner": the numbered log of every avatar request, decision, rejection
    and result (avatar items 1 to 82, then 83 onward after the kart items; the newest are the imaginary waist ball, the
-   spine, the research rule and this index, items 83 to 88; items 89 to 98 are 22 November notes recovered from a
+   spine, the research rule, this index and the base-avatar decision, items 83 to 88 and 99; items 89 to 98 are 22 November notes recovered from a
    working branch).
 2. `docs/AVATAR-DIRECTION.md`: how the avatar should look and move (athletic, deliberate weight, no sharp edges,
    golden-ratio proportions). The game-feel wording in handoff item 75 is waiting for approval before it goes here.
@@ -56,13 +56,14 @@ suggested it, the date and its status. An alternative being discussed is not an 
 
 ## F. Ideas still waiting for a decision (23 November 2026)
 
-1. The spine (three-piece torso on two imaginary balls): waiting for "approved" (handoff item 84).
+1. The base avatar is the 6 ft 4 in one; every change goes on a separate avatar beside it; the 6 ft 1 in one is
+   retired (handoff item 99, approved). The spine is on the page beside the base (items 84 and 99).
 2. The game-feel wording: waiting for approval (handoff item 75).
 3. A phone test of the physics engine (Rapier 0.21 with JoltPhysics.js beside it), and hinge elbows and knees:
    from the research report, not decided (handoff item 86).
 4. A range-of-motion test after the spine: proposed (handoff item 88).
-5. The smoothed forearm on the shorter version, or keep only the 6 ft 4 in version; locking in the 6 ft 4 in version;
-   polish items 2, 3, 7 and 8 (`docs/AVATAR-POLISH-LIST.md`).
+5. Polish items 2, 3, 7 and 8 (`docs/AVATAR-POLISH-LIST.md`); whether to remove the older 6 ft 1 in build-step tabs
+   from the New avatar page (kept as history for now).
 6. Deferred: an elbow cut-out for 90-degree bends; players modifying karts.
 7. Later: a ground-up rebuild of the avatar in solid, lean code once the owner is fully satisfied, and near the end of
    the game, a recheck of every line of code.
