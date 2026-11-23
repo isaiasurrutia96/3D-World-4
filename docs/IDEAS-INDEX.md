@@ -33,7 +33,8 @@ suggested it, the date and its status. An alternative being discussed is not an 
 
 1. `docs/HANDOFF.md`, section "Confirmed by the owner": the numbered log of every avatar request, decision, rejection
    and result (avatar items 1 to 82, then 83 onward after the kart items; the newest are the imaginary waist ball, the
-   spine, the research rule and this index, items 83 to 88).
+   spine, the research rule and this index, items 83 to 88; items 89 to 98 are 22 November notes recovered from a
+   working branch).
 2. `docs/AVATAR-DIRECTION.md`: how the avatar should look and move (athletic, deliberate weight, no sharp edges,
    golden-ratio proportions). The game-feel wording in handoff item 75 is waiting for approval before it goes here.
 3. `docs/AVATAR-POLISH-LIST.md`: every small flaw found, its cause, the proposed fix and the owner's decision.
