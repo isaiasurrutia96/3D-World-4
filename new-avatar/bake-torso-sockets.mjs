@@ -1,6 +1,6 @@
 // Builds the Torso sockets tab's shapes once (the same steps the page used to run on every load) and packs them into
 // dist/new-avatar/torso-sockets.bin for the page to load. Run by new-avatar/build.mjs.
-import {separatedOriginalBody,pressedPreviewBody,pushShoulderBalls,softenShoulderRims,pushBallsIn,closerHipBalls,limbSockets,elbowKneeSockets,wristAnkleSockets,assembledSockets,cylinderNeck,longerLegs} from '../avatar-v2/original-body.js';
+import {separatedOriginalBody,pressedPreviewBody,pushShoulderBalls,softenShoulderRims,pushBallsIn,closerHipBalls,limbSockets,elbowKneeSockets,wristAnkleSockets,assembledSockets,cylinderNeck,longerLegs,splitTorsoAtWaist} from '../avatar-v2/original-body.js';
 import {packTorsoSockets} from './torso-sockets-file.js';
 
 // Shading directions for a shape that has none (the balls): each point's triangles' directions weighted by their
@@ -36,7 +36,12 @@ export function bakeTorsoSockets(){
  // else are the same).
  const mixSmooth=separatedOriginalBody('boy',{smoothForearm:true}),wristsSmooth=wristAnkleSockets('boy',{apart:mixSmooth,hips:closerHips});
  const assembledSmooth=[...assembledSockets({torso:hipSockets.torso,shoulderIn:together.parts.find(p=>p.name==='ball-shoulder'&&p.side==='left'),hipIn:closerHips.inBalls.find(b=>b.side==='left'),limbs,elbowsKnees,wristsAnkles:wristsSmooth}),cylinderNeck(together),together.parts.find(p=>p.name==='head')];
- const tall=longerLegs(assembledSmooth);items['legs-now']=items['torso-assembled'];items['legs-6ft4']=tall.parts;
+ const tall=longerLegs(assembledSmooth);items['legs-now']=items['torso-assembled'];
+ // And its torso split at the waist into a chest and a pelvis, only the line showing (owner: "can we not see the ball
+ // joint thats supposed to be in the middle just the lines"): at the navel, height divided by the golden ratio.
+ let floor=Infinity;for(const p of tall.parts)for(let i=1;i<p.positions.length;i+=3)floor=Math.min(floor,p.positions[i]);
+ const waist=splitTorsoAtWaist(tall.parts.find(p=>p.name==='torso'),{y:floor+tall.height/((1+Math.sqrt(5))/2)});
+ items['legs-6ft4']=tall.parts.flatMap(p=>p.name==='torso'?[waist.chest,waist.pelvis]:[p]);
  for(const id in items)items[id]=items[id].map(p=>({...withNormals(p),name:p.side==='centre'?p.name:p.name+'.'+p.side}));
  const facts={shoulderDisplaced:shoulderSoft.displaced,shoulderRemoved:shoulderSoft.removed,closerGap:closerHips.gap,hipDisplaced:hipSockets.displaced,
   thighLonger:tall.thighLonger,calfLonger:tall.calfLonger,limbArm:limbs[0].cut.displaced,limbThigh:limbs[2].cut.displaced,ekArm:elbowsKnees[0].cut.displaced,ekThigh:elbowsKnees[2].cut.displaced};

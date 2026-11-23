@@ -13,8 +13,7 @@
 //    torso; the chosen base face is pressed onto the head (DecalGeometry);
 //  - Torsos / Arms / Legs: the chosen boy's part and the girl's version.
 // Each tab has its own row; "Compare all" frames that row, and each item's
-// button moves the camera in on it and hides the rest. Our avatar (the approved
-// avatar, its phone-ready game copy) stands next to the put-together preview to compare.
+// button moves the camera in on it and hides the rest.
 import * as T from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {DecalGeometry} from 'three/addons/geometries/DecalGeometry.js';
@@ -31,7 +30,6 @@ import {unpackTorsoSockets} from './torso-sockets-file.js';
 import {elbowTest,ELBOW_TEST_POSES,CLOSER_DEPTHS,CLAY_LIP} from '../avatar-v2/elbow-test.js';
 import {HAND_FOOT_OPTIONS,buildHandFoot} from '../avatar-v2/hands-feet.js';
 import {buildTorsoSurface} from '../avatar-v2/torso-shape.js';
-import {loadGameAvatar,GAME_AVATAR} from '../avatar/src/light-avatar.js';
 
 const GAP=.3;// metres of space between items, left to right
 const stage=document.querySelector('#stage');
@@ -95,10 +93,8 @@ GROUPS.push({id:'full',label:'Full body',intro:'Every approved piece put togethe
  items:[{id:'full-boy',label:'Boy · all pieces',tag:'Boy',face:full.face,note:`All ${full.parts.length} pieces, separate with small gaps. Each foot ${(full.footLength*100).toFixed(1)} cm long (the head is ${(full.headHeight*100).toFixed(1)} cm). He stands ${(full.height*100).toFixed(0)} cm tall (your original avatar: about 189 cm), before sockets. Hip balls sit 2 cm below the torso, like the shoulders.`,
   parts:full.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const together=pressedPreviewBody('boy');
-// Room kept for Our avatar while it loads (about its width and height, metres); it is placed in it once loaded.
-const OUR_AVATAR_SPACE={width:1,height:1.9};
-GROUPS.push({id:'together',label:'Put together',intro:`A preview of how he looks put together, using exactly his own pieces: every ball pressed ${Math.round(PREVIEW_PRESS*100)}% of its radius into the limbs, hands, feet and head (the hips ${Math.round((PREVIEW_PRESS+HIP_THIGH_EXTRA)*100)}% into the thighs), the neck ball where it was approved. The hip balls sit ${Math.round(HIP_TORSO_PRESS*100)}% of their radius into the torso, in real sockets moulded into it with a 6 mm gap and soft edges. Elsewhere no sockets are carved yet; where a ball sits inside a limb it is simply hidden, which is how it will look. Our avatar stands on the left to compare.`,
- items:[{id:'our-avatar',label:'Our avatar',tag:'Our avatar',parts:[],reserve:OUR_AVATAR_SPACE,note:`Our avatar (the approved avatar in its phone-ready copy, ${GAME_AVATAR.triangles.toLocaleString()} triangles: same shapes, fewer triangles), exactly as it stands in the Our avatar section, for comparing.`},
+GROUPS.push({id:'together',label:'Put together',intro:`A preview of how he looks put together, using exactly his own pieces: every ball pressed ${Math.round(PREVIEW_PRESS*100)}% of its radius into the limbs, hands, feet and head (the hips ${Math.round((PREVIEW_PRESS+HIP_THIGH_EXTRA)*100)}% into the thighs), the neck ball where it was approved. The hip balls sit ${Math.round(HIP_TORSO_PRESS*100)}% of their radius into the torso, in real sockets moulded into it with a 6 mm gap and soft edges. Elsewhere no sockets are carved yet; where a ball sits inside a limb it is simply hidden, which is how it will look.`,
+ items:[
   {id:'together-boy',label:'Boy · put together',tag:'Boy',face:together.face,ground:true,note:`Exactly his pieces, pressed together. ${(together.height*100).toFixed(0)} cm tall.`,
   parts:together.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
 const elbowItems=[];
@@ -133,7 +129,7 @@ GROUPS.push({id:'torso-sockets',label:'Torso sockets',start:'torso-assembled',in
   parts:torsoParts('torso-assembled')}]});
 // Him now and with longer legs, side by side (owner, 23 November 2026: "make him 6'4" ... lengthen ... the thighs, and
 // also the calves, but the thighs slightly more ... put him next to our new avatar"). Opens first, both in view.
-GROUPS.push({id:'longer-legs',label:'Longer legs',intro:`Left: him now, ${(together.height*100).toFixed(1)} cm (6 ft 1 in). Right: the same avatar with longer legs, 193 cm (6 ft 4 in): the thighs ${(TF.thighLonger*100).toFixed(1)} cm longer and the calves ${(TF.calfLonger*100).toFixed(1)} cm longer, each stretched only through its middle so every cup keeps its exact shape. Everything above the hips is unchanged. The 6 ft 4 in version also has smoothed forearms on finer rings (no line a third of the way down). On both, the wrist balls are pressed 5 cm deeper into the forearms, so each forearm covers its wrist ball almost to the middle and the wrist no longer looks loose, with the same soft lip; the hands are as they were.`,
+GROUPS.push({id:'longer-legs',label:'Longer legs',intro:`Left: him now, ${(together.height*100).toFixed(1)} cm (6 ft 1 in). Right: the same avatar with longer legs, 193 cm (6 ft 4 in): the thighs ${(TF.thighLonger*100).toFixed(1)} cm longer and the calves ${(TF.calfLonger*100).toFixed(1)} cm longer, each stretched only through its middle so every cup keeps its exact shape. Everything above the hips is unchanged. The 6 ft 4 in version also has smoothed forearms on finer rings (no line a third of the way down), and its torso split at the waist into a chest and a pelvis with only the line showing (at the navel, his height divided by the golden ratio; the usual 6 mm gap and soft lips; the joint ball hidden inside). On both, the wrist balls are pressed 5 cm deeper into the forearms, so each forearm covers its wrist ball almost to the middle and the wrist no longer looks loose, with the same soft lip; the hands are as they were.`,
  items:[{id:'legs-now',label:'Now · 6 ft 1 in',tag:'Now',ground:true,face:together.face,note:`Him now: ${(together.height*100).toFixed(1)} cm tall.`,parts:torsoParts('legs-now')},
   {id:'legs-6ft4',label:'Longer legs · 6 ft 4 in',tag:'6 ft 4 in',ground:true,face:together.face,note:`Longer legs: 193 cm (6 ft 4 in). Thighs ${(TF.thighLonger*100).toFixed(1)} cm and calves ${(TF.calfLonger*100).toFixed(1)} cm longer, stretched only between their cups.`,parts:torsoParts('legs-6ft4')}]});
 GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet with the original avatar\'s limbs (each 10% longer, calves 50 cm), every piece separated and the original neck removed, with a ball at every joint: as thick as the ends it joins (shoulders, neck and hips 10% bigger, wrists and ankles 10% smaller), 300 triangles each.',
@@ -199,7 +195,7 @@ for(const group of GROUPS){
   const box=reserved??new T.Box3().setFromObject(g),width=box.max.x-box.min.x,height=box.max.y-box.min.y;
   if(i>0)x+=GAP;x+=width/2;g.position.x=x;x+=width/2;
   const tag=label(item.tag);tag.position.set(0,box.min.y-g.position.y-.1,0);g.add(tag);group.row.add(g);
-  return {...item,group:g,mesh:g.children[0],width,height,centre:box.getCenter(new T.Vector3()).add(new T.Vector3(g.position.x,0,0)),triangles:item.reserve?GAME_AVATAR.triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
+  return {...item,group:g,mesh:g.children[0],width,height,centre:box.getCenter(new T.Vector3()).add(new T.Vector3(g.position.x,0,0)),triangles:item.parts.reduce((n,p)=>n+p.geometry.index.count/3,0)};
  });
  group.row.position.x=-x/2;for(const o of group.options)o.centre.x-=x/2;
  // Faces are pressed on once every item is in its final place.
@@ -275,14 +271,4 @@ renderer.setAnimationLoop(ms=>{
 });
 window.newAvatarLab={scene,camera,controls,renderer,groups:GROUPS,get options(){return options;},setGroup,setFocus,view,torso,getFocus:()=>focus,getGroup:()=>active.id};
 document.querySelector('#loading').hidden=true;window.newAvatarReady=true;
-// Our avatar, loaded after the page is ready (about 2 MB): centred in its kept space, standing on the floor.
-window.ourAvatarLoaded=(async()=>{
- const slot=GROUPS.flatMap(g=>g.options).find(o=>o.id==='our-avatar');
- try{
-  const avatar=await loadGameAvatar(),root=avatar.root;
-  root.traverse(o=>{if(o.isMesh)o.castShadow=true;});slot.group.add(root);slot.group.updateMatrixWorld(true);
-  const box=new T.Box3().setFromObject(root),c=box.getCenter(new T.Vector3()),local=slot.group.worldToLocal(new T.Vector3(c.x,box.min.y,c.z));
-  root.position.sub(local);
-  window.newAvatarLab.ourAvatar=avatar;return true;
- }catch(error){console.error('Our avatar could not load',error);const note=label('Our avatar did not load');note.position.set(0,1,0);slot.group.add(note);return false;}
-})();
+// Our avatar removed from this page (owner, 23 November 2026: "completely remove the our avatar").

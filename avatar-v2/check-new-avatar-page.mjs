@@ -1,7 +1,7 @@
-// Browser check of the New avatar page: the first tab, Torso sockets, shows only the torso and both shoulder balls;
-// on the "Put together" tab Our avatar loads next to the new avatar.
-// Usage: npm run build:new-avatar && npm run build:avatar-test, then node avatar-v2/check-new-avatar-page.mjs
-// (the second build copies Our avatar's files into dist; restore avatar-test/index.html with git checkout after it).
+// Browser check of the New avatar page: the Longer legs tab first (him now and at 6 ft 4 in, the 6 ft 4 in one with its
+// torso split into a chest and a pelvis), the Torso sockets tab's steps, and no Our avatar anywhere on the page.
+// Usage: npm run build:new-avatar, then node avatar-v2/check-new-avatar-page.mjs
+// (Our avatar was removed from this page on 23 November 2026; the check makes sure it does not come back.)
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';import {createServer} from 'node:http';import {extname,join} from 'node:path';import {chromium} from 'playwright';
 import {pressedPreviewBody} from './original-body.js';const together=pressedPreviewBody('boy');
@@ -22,7 +22,7 @@ try{
    const mirror=g=>{let worst=0;for(const n of ['upper-arm','forearm','hand','thigh','calf','foot']){const a=g.getObjectByName(n+'.left').geometry.attributes.position,b=g.getObjectByName(n+'.right').geometry.attributes.position;if(a.count!==b.count)return Infinity;for(let i=0;i<a.count;i++)worst=Math.max(worst,Math.abs(a.getX(i)+b.getX(i)),Math.abs(a.getY(i)-b.getY(i)),Math.abs(a.getZ(i)-b.getZ(i)));}return worst;};
    return {group:L.getGroup(),focus:L.getFocus(),ids:L.options.map(o=>o.id),names:L.options.map(o=>names(o.group)),sizes:L.options.map(o=>size(o.group)),mirror:L.options.map(o=>mirror(o.group))};});
   assert.equal(legs.group,'longer-legs','the Longer legs tab opens first');assert.equal(legs.focus,null,'both in view');assert.deepEqual(legs.ids,['legs-now','legs-6ft4']);
-  assert.deepEqual(legs.names[0],legs.names[1],'the same pieces');
+  assert.deepEqual(legs.names[1],[...legs.names[0].filter(n=>n!=='torso'),'chest','pelvis'].sort(),'the same pieces, the 6 ft 4 in torso split into a chest and a pelvis');
   {const all=[0,1,2].map(k=>{let lo=Infinity,hi=-Infinity;for(const p of together.parts)for(let i=k;i<p.positions.length;i+=3){lo=Math.min(lo,p.positions[i]);hi=Math.max(hi,p.positions[i]);}return hi-lo;});
    // As tall as the put-together avatar; no wider or deeper (the wrists are pressed 2 cm deeper, so the arms are a little shorter).
    assert(Math.abs(legs.sizes[0][1]-all[1])<1e-4,`now: ${legs.sizes[0][1]} m tall, wanted ${all[1]}`);for(const k of [0,2])assert(legs.sizes[0][k]<=all[k]+1e-4,`now: wider or deeper than the put-together avatar along ${'xyz'[k]}`);
@@ -43,18 +43,12 @@ try{
   assert.deepEqual(first.hipNames,['ball-hip.left','ball-hip.right','ball-shoulder.left','ball-shoulder.right','torso'],'hips apart: the torso, both shoulder balls and both hip balls');
   assert.deepEqual(first.hipSocketNames,['ball-hip.left','ball-hip.right','ball-shoulder.left','ball-shoulder.right','torso'],'hip sockets: the torso, both shoulder balls and both hip balls');
   assert.notDeepEqual(first.withExtra,want,'test of the test: an extra piece was not caught');
+  // No Our avatar: not loaded, not on the Put together tab, nothing named for it on the page.
   await page.evaluate(()=>window.newAvatarLab.setGroup('together'));
-  const loaded=await page.evaluate(()=>window.ourAvatarLoaded);
-  assert.equal(loaded,true,'Our avatar did not load: '+errors.join('; '));
-  const m=await page.evaluate(()=>{const L=window.newAvatarLab,box=g=>{const b={min:[1e9,1e9,1e9],max:[-1e9,-1e9,-1e9]};g.updateMatrixWorld(true);const v=new (g.position.constructor)();
-    g.traverse(o=>{if(!o.isMesh)return;const P=o.geometry.attributes.position;for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i).applyMatrix4(o.matrixWorld);[v.x,v.y,v.z].forEach((x,k)=>{b.min[k]=Math.min(b.min[k],x);b.max[k]=Math.max(b.max[k],x);});}});return b;};
-   const ids=L.options.map(o=>o.id),ours=box(L.ourAvatar.root),neu=box(L.options.find(o=>o.id==='together-boy').group);return {group:L.getGroup(),ids,ours,neu};});
-  assert.equal(loaded,true,'Our avatar did not load');assert.deepEqual(errors,[],'page errors');
-  assert.equal(m.group,'together');assert.deepEqual(m.ids,['our-avatar','together-boy'],'Our avatar first, then the new avatar');
-  assert(Math.abs(m.ours.min[1])<.002,`Our avatar not on the floor: lowest ${m.ours.min[1]}`);
-  const tall=m.ours.max[1]-m.ours.min[1];assert(tall>1.8&&tall<2,`Our avatar ${tall} m tall`);
-  assert(m.ours.max[0]<m.neu.min[0],'Our avatar overlaps the new avatar');
-  results.push(`${w}px: Torso sockets first (torso and both shoulder balls only; an extra piece is caught); Our avatar ${(tall*100).toFixed(1)} cm tall on the floor, ${((m.neu.min[0]-m.ours.max[0])*100).toFixed(0)} cm left of the new avatar, no errors`);
+  const m=await page.evaluate(()=>({group:window.newAvatarLab.getGroup(),ids:window.newAvatarLab.options.map(o=>o.id),loader:'ourAvatarLoaded' in window,root:!!window.newAvatarLab.ourAvatar,all:window.newAvatarLab.groups.flatMap(g=>g.options.map(o=>o.id))}));
+  assert.deepEqual(errors,[],'page errors');assert.equal(m.group,'together');assert.deepEqual(m.ids,['together-boy'],'Put together: only the new avatar');
+  assert.equal(m.loader,false,'Our avatar is still being loaded');assert.equal(m.root,false,'Our avatar is still on the page');assert(!m.all.includes('our-avatar'),'an Our avatar item is still on the page');
+  results.push(`${w}px: Longer legs first (him now and at 6 ft 4 in, its torso split into chest and pelvis; the right side mirrors the left), the Torso sockets steps, no Our avatar, no errors`);
   await page.close();}
 }finally{await browser.close();server.close();}
-console.log(results.join('\n'));console.log('PASS: the Torso sockets tab opens first with only the torso and both shoulder balls; Our avatar loads next to the new avatar on the Put together tab.');
+console.log(results.join('\n'));console.log('PASS: Longer legs first with both versions (the 6 ft 4 in torso split at the waist), the Torso sockets steps, and no Our avatar on the page.');

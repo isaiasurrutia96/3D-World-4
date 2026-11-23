@@ -568,6 +568,39 @@ export function longerLegs(parts,{height=1.9304,spare=.01}={}){
  }
  return {parts:out,thighLonger:eT,calfLonger:eC,height};
 }
+// The torso split into a chest and a pelvis at the waist (owner, 23 November 2026: split the torso so it can move,
+// like an action figure's waist joint, "can we not see the ball joint thats supposed to be in the middle just the
+// lines"). His torso has no narrowest point (it widens steadily from the hips to the shoulders), so the split goes at
+// the navel by the classical proportion (height divided by the golden ratio, as used for the hips): `y`. The cut is a
+// level slab the usual 6 mm (SOCKET_GAP) thick, made like a socket: cut along it (the same mesh boolean), the clay
+// inside removed, each opening closed flat, and both cut edges rounded by the same 5 mm rolling ball as every lip.
+// No ball is shown: the joint would sit inside, hidden; only the line shows. Returns the two closed pieces.
+export function splitTorsoAtWaist(torso,{y,gap=SOCKET_GAP}={}){
+ const g2=gap/2,band=.02;
+ // Finer triangles near the cut first (the same refinement as the sockets), fading out over six triangle lengths.
+ const where=m=>{const t=Math.min(1,Math.max(0,(band+6*SOCKET_EDGE-Math.abs(m[1]-y))/(6*SOCKET_EDGE)));return t>0?t*t*(3-2*t):0;};
+ const refined=refineNear(torso.normals?torso:{...torso,normals:pointNormals(torso)},[0,y,0],10,SOCKET_EDGE,6,where);
+ // The slab as a path, with what the cut and the rounding need: how far inside, which way is in, the nearest face.
+ const path={c:[0,y,0],R:gap,dir:[0,1,0],d:0,phi:q=>Math.abs(q[1]-y)-g2,inward:q=>[0,q[1]>y?-1:1,0],nearest:q=>[q[0],q[1]>y?y+g2:y-g2,q[2]]};
+ const part=cutAlong(refined,path.phi,0),P=[...part.positions],N=[...part.normals],pt=i=>[P[3*i],P[3*i+1],P[3*i+2]],kind=[];
+ for(let i=0;i<P.length/3;i++){const f0=path.phi(pt(i));kind.push(f0<-1e-9?3:Math.abs(f0)<=1e-7?1:0);}
+ const kept=[];for(let t=0;t<part.index.length;t+=3){const v=[part.index[t],part.index[t+1],part.index[t+2]];if(v.some(i=>kind[i]===3))continue;
+  if(v.every(i=>kind[i]===1)&&path.phi(v.map(pt).reduce((m,q)=>m.map((x,k)=>x+q[k]/3),[0,0,0]))<-1e-9)continue;kept.push(...v);}
+ // The two openings: edges of the kept clay used once, followed round.
+ const key=(a,b)=>a<b?a+','+b:b+','+a,used=new Map();for(let t=0;t<kept.length;t+=3)for(let e=0;e<3;e++){const k=key(kept[t+e],kept[t+(e+1)%3]);used.set(k,(used.get(k)??0)+1);}
+ const next=new Map();for(let t=0;t<kept.length;t+=3)for(let e=0;e<3;e++){const a=kept[t+e],b=kept[t+(e+1)%3];if(used.get(key(a,b))===1)next.set(a,b);}
+ const loops=[],seen=new Set();for(const s0 of next.keys()){if(seen.has(s0))continue;const loop=[];let v=s0;while(!seen.has(v)){seen.add(v);loop.push(v);v=next.get(v);if(v===undefined)throw Error('splitTorsoAtWaist: an opening is not closed');}loops.push(loop);}
+ if(loops.length!==2)throw Error('splitTorsoAtWaist: expected 2 openings, found '+loops.length);
+ // Each opening closed flat: a fan from its middle (marked like a socket's fill), facing out of its piece.
+ const caps=[];for(const loop of loops){const up=P[3*loop[0]+1]>y,c=[0,1,2].map(k=>loop.reduce((a,i)=>a+P[3*i+k],0)/loop.length),m=P.length/3;P.push(...c);N.push(0,up?-1:1,0);kind.push(2);
+  for(let k=0;k<loop.length;k++){const a=loop[k],b=loop[(k+1)%loop.length],A=pt(a),B=pt(b),u=A.map((x,j)=>x-c[j]),w=B.map((x,j)=>x-c[j]),ny=u[2]*w[0]-u[0]*w[2];caps.push(...((ny<0)===up?[m,a,b]:[m,b,a]));}}
+ const soft=softenShoulderRims({solid:{positions:P,normals:N,index:[...kept,...caps]},kind,paths:[path],balls:[]});
+ // Two pieces: every triangle above the middle of the slab is the chest's, below it the pelvis's.
+ const S=soft.torso,piece=(name,above)=>{const map=new Map(),pos=[],nor=[],idx=[];for(let t=0;t<S.index.length;t+=3){const v=[S.index[t],S.index[t+1],S.index[t+2]],cy=(S.positions[3*v[0]+1]+S.positions[3*v[1]+1]+S.positions[3*v[2]+1])/3;if((cy>y)!==above)continue;
+  for(const i of v){if(!map.has(i)){map.set(i,pos.length/3);pos.push(S.positions[3*i],S.positions[3*i+1],S.positions[3*i+2]);nor.push(S.normals[3*i],S.normals[3*i+1],S.normals[3*i+2]);}idx.push(map.get(i));}}
+  return {name,side:'centre',positions:pos,normals:nor,index:idx};};
+ return {chest:piece('chest',true),pelvis:piece('pelvis',false),y,gap};
+}
 export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
  return pushBallsIn(pressed.parts.find(p=>p.name==='torso'),pressed.parts.filter(p=>p.name==='ball-shoulder'),apart.parts.filter(p=>p.name==='ball-shoulder'),bodyId);
 }
@@ -678,11 +711,11 @@ export function collapseShortRimEdges(part,kind,paths,minLen,types=null){
    if(!ok)continue;
    P.splice(3*a,3,...q);for(const x of tb)for(let k=0;k<3;k++)if(I[x+k]===b)I[x+k]=a;both.forEach(x=>gone.add(x));
    [...na,...nb,a,b].forEach(u=>touched.add(u));n++;break;}}
-  if(!n)break;const out=[],ty=[];for(let t=0;t<I.length;t+=3)if(!gone.has(t)){out.push(I[t],I[t+1],I[t+2]);if(types)ty.push(types[t/3]);}I=out;if(types){types.length=0;types.push(...ty);}
+  if(!n)break;const out=[],ty=[];for(let t=0;t<I.length;t+=3)if(!gone.has(t)){out.push(I[t],I[t+1],I[t+2]);if(types)ty.push(types[t/3]);}I=out;if(types){types.length=0;for(const x of ty)types.push(x);}
  }
  // Unused points dropped (the collapsed ones) and the rest renumbered, kinds kept in step.
  const keep=new Map(),pos=[],nor=[],kinds=[];for(const i of I)if(!keep.has(i)){keep.set(i,kinds.length);pos.push(P[3*i],P[3*i+1],P[3*i+2]);nor.push(N[3*i],N[3*i+1],N[3*i+2]);kinds.push(kind[i]);}
- kind.length=0;kind.push(...kinds);
+ kind.length=0;for(const x of kinds)kind.push(x);
  return {...part,positions:pos,index:I.map(i=>keep.get(i)),normals:nor};
 }
 /**
@@ -768,7 +801,7 @@ export function softenShoulderRims(ps,f=SHOULDER_RIM_ROUND){
   I=out;TT=types;
  }
  // Specks of triangles the splitting left along the rims: rim edges under a fifth of f collapsed (as after the cut).
- {const c=collapseShortRimEdges({positions:P,normals:N,index:I},K,paths,f/5,TT);P.length=0;P.push(...c.positions);N.length=0;N.push(...c.normals);I=c.index;nearCache.length=0;reachCache.length=0;}
+ {const c=collapseShortRimEdges({positions:P,normals:N,index:I},K,paths,f/5,TT);P.length=0;for(const x of c.positions)P.push(x);N.length=0;for(const x of c.normals)N.push(x);I=c.index;nearCache.length=0;reachCache.length=0;}
  // Slivers near the rims (left where the cut passed very close to a point) are cleaned up with edge flips, the standard
  // way to improve triangle shapes: where two triangles on the same side meet almost flat (under 10 degrees) and one has
  // a corner under 10 degrees, their shared edge is swapped for the other diagonal if that gives better corners. The
