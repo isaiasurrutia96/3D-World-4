@@ -62,16 +62,58 @@ function mirrored(p){
  *    wide, like the other limbs' ends, at the original bottom tip, so the length is unchanged.
  */
 export const FOREARM_ROUND_FROM=.5,FOREARM_SEGMENTS=28;
-export function roundForearmEnd(positions){
+// Smoothed version (owner, 23 November 2026, polish list item 1: "smooth it out"): a faint line showed about a third of
+// the way down, where the original forearm's top widens quickly and then suddenly straightens (side slope ring by ring
+// about 40, 32, 21, 13, then 5 degrees), on coarse rings. `step` and `segments` give finer rings; `smooth` (metres)
+// smooths each direction's profile along the forearm by local linear regression with Gaussian weights (LOESS,
+// Cleveland 1979: it softens sudden bends without flattening the slope or biasing the ends), so the slope changes
+// gradually; the straight lower part keeps its width and the length is unchanged.
+/**
+ * Polish list item 1 (owner, 23 November 2026: "smooth it out"): the faint line a third of the way down the forearm.
+ * Measured on the finished forearm by rays down its front: the side widens at about 12 degrees, then flattens to
+ * about 0 within 2 to 4 mm, 14.2 cm below the elbow ball. Cause: the rounded forearm's widening top meets its straight
+ * lower part at the middle of its length (FOREARM_ROUND_FROM), and the shortening to Our avatar's joint-to-joint
+ * length (stretchLimb with a negative extra, smooth ramp over STRETCH_FROM to STRETCH_TO) squeezes that middle the
+ * most (about 3.3 times there), turning a gentle bend into a crease; smoothing before the squeeze cannot help. So the
+ * finished forearm's profile is smoothed around its middle: each column of points (one direction round the forearm;
+ * the nearest of the ring surface's `segments` directions) gets its distance from the line refit
+ * by local linear regression with Gaussian weights (LOESS, Cleveland 1979; `sigma` along the forearm), blended in fully
+ * within `inner` of the middle (share of the length) and faded out by `outer`, so the ends and the rest keep their shape.
+ */
+export function smoothForearmMiddle(positions,{segments=2*FOREARM_SEGMENTS,sigma=.012,inner=.12,outer=.22}={}){
+ const L=limbLine(positions),ref=Math.abs(L.dir[0])<.9?[1,0,0]:[0,0,1],dd=ref[0]*L.dir[0]+ref[1]*L.dir[1]+ref[2]*L.dir[2],u0=ref.map((v,k)=>v-L.dir[k]*dd),lu=Math.hypot(...u0),U=u0.map(v=>v/lu),V=[L.dir[1]*U[2]-L.dir[2]*U[1],L.dir[2]*U[0]-L.dir[0]*U[2],L.dir[0]*U[1]-L.dir[1]*U[0]];
+ const pts=[];for(let i=0;i<positions.length;i+=3){const v=[0,1,2].map(k=>positions[i+k]-L.centre[k]),s=v.reduce((a,x,k)=>a+x*L.dir[k],0),x=v.reduce((a,y,k)=>a+y*U[k],0),y=v.reduce((a,z,k)=>a+z*V[k],0);pts.push({i,s,r:Math.hypot(x,y),a:Math.atan2(y,x)});}
+ // Columns by the nearest of the ring surface's directions (the slimming scales round a line a hair off this one, so
+ // the directions are not exactly equal; grouping by exact angle left one point per column and changed nothing).
+ const cols=new Map();for(const p of pts){if(p.r<1e-6)continue;const key=((Math.round(p.a*segments/(2*Math.PI))%segments)+segments)%segments;(cols.get(key)??cols.set(key,[]).get(key)).push(p);}
+ const out=positions.slice(),mid=L.start+L.length/2;
+ for(const col of cols.values())for(const p of col){const t=Math.abs(p.s-mid)/L.length;if(t>=outer)continue;const f=t<=inner?1:1-((t-inner)/(outer-inner))**2*(3-2*(t-inner)/(outer-inner));
+  let W=0,Ws=0,Wr=0,Wss=0,Wsr=0;for(const q of col){const x=q.s-p.s,w=Math.exp(-x*x/(2*sigma*sigma));W+=w;Ws+=w*x;Wr+=w*q.r;Wss+=w*x*x;Wsr+=w*x*q.r;}
+  const det=W*Wss-Ws*Ws,fit=Math.abs(det)<1e-18?Wr/W:(Wss*Wr-Ws*Wsr)/det,r=p.r+f*(fit-p.r),k=r/p.r;
+  for(let j=0;j<3;j++){const c=L.centre[j]+L.dir[j]*p.s;out[p.i+j]=c+(positions[p.i+j]-c)*k;}}
+ return out;
+}
+export function roundForearmEnd(positions,{step=.04,segments=FOREARM_SEGMENTS,smooth=0,fineLower=false}={}){
  const L=limbLine(positions),Y=L.dir.map(v=>-v),ref=Math.abs(Y[0])<.9?[1,0,0]:[0,0,1],d=ref[0]*Y[0]+ref[1]*Y[1]+ref[2]*Y[2];
  const u0=ref.map((v,k)=>v-Y[k]*d),lu=Math.hypot(...u0),u=u0.map(v=>v/lu),w=[u[1]*Y[2]-u[2]*Y[1],u[2]*Y[0]-u[0]*Y[2],u[0]*Y[1]-u[1]*Y[0]];// u × Y = w: same handedness, so triangles still face out
- const mesh={positions,index:ORIGINAL_LIMBS.parts.left.forearm.index},n=FOREARM_SEGMENTS,at=t=>L.start+t*L.length;
+ const mesh={positions,index:ORIGINAL_LIMBS.parts.left.forearm.index},n=segments,at=t=>L.start+t*L.length;
  const ringAt=t=>{const s0=at(t),axis=L.centre.map((c,k)=>c+L.dir[k]*s0);
   return Array.from({length:n},(_,k)=>{const [dx,dz]=direction(k,n),ray=u.map((v,j)=>v*dx+w[j]*dz),hit=rayHit(mesh,axis,ray);if(!isFinite(hit))throw Error('forearm ray found no surface');return hit;});};
- const upper=[];for(let t=.04;t<=FOREARM_ROUND_FROM+1e-9;t+=.04)upper.push({t,r:ringAt(t)});
- const middle=ringAt(FOREARM_ROUND_FROM),capLength=middle.reduce((a,b)=>a+b,0)/n,tCap=1-capLength/L.length;
+ const upper=[];for(let t=step;t<=FOREARM_ROUND_FROM+1e-9;t+=step)upper.push({t,r:ringAt(t)});
+ let middle=ringAt(FOREARM_ROUND_FROM);
+ if(smooth>0){
+  // Each direction's profile, with the straight part below the middle continuing at the middle's width.
+  const samples=[...upper.map(g=>({s:at(g.t),r:g.r}))];for(let t=FOREARM_ROUND_FROM+step;t<=FOREARM_ROUND_FROM+3*smooth/L.length+1e-9;t+=step)samples.push({s:at(t),r:middle});
+  const fit=(s0,k)=>{let W=0,Ws=0,Wr=0,Wss=0,Wsr=0;for(const q of samples){const x=q.s-s0,w=Math.exp(-x*x/(2*smooth*smooth));W+=w;Ws+=w*x;Wr+=w*q.r[k];Wss+=w*x*x;Wsr+=w*x*q.r[k];}
+   const det=W*Wss-Ws*Ws;return Math.abs(det)<1e-18?Wr/W:(Wss*Wr-Ws*Wsr)/det;};
+  for(const g of upper){const s0=at(g.t);g.r=g.r.map((_,k)=>fit(s0,k));}
+  middle=middle.map((_,k)=>fit(at(FOREARM_ROUND_FROM),k));upper[upper.length-1].r=middle;
+ }
+ const capLength=middle.reduce((a,b)=>a+b,0)/n,tCap=1-capLength/L.length;
  if(!(tCap>FOREARM_ROUND_FROM))throw Error('forearm too short for a rounded end');
- const lower=[{t:(FOREARM_ROUND_FROM+tCap)/2,r:middle},{t:tCap,r:middle}];
+ // `fineLower`: rings every `step` down the straight part too (it had only two, about 1 cm apart once the forearm is
+ // shortened, so its long flat triangles left a step in the shading where they meet the finer rings above).
+ const lower=fineLower?[...Array.from({length:Math.max(1,Math.floor((tCap-FOREARM_ROUND_FROM)/step))},(_,k)=>({t:FOREARM_ROUND_FROM+(k+1)*(tCap-FOREARM_ROUND_FROM)/Math.max(1,Math.floor((tCap-FOREARM_ROUND_FROM)/step)),r:middle}))]:[{t:(FOREARM_ROUND_FROM+tCap)/2,r:middle},{t:tCap,r:middle}];
  // Local frame: y up the limb (y = -s), x along u, z along w; rings listed bottom first.
  const rings=[...upper,...lower].map(g=>({y:-at(g.t),r:g.r})).sort((a,b)=>a.y-b.y);
  const shape={center:[0,0],segments:n,capRings:4,bottom:{y:-L.end},top:{y:-L.start},rings};
@@ -144,7 +186,7 @@ export function widenTop(positions,factor,until=THIGH_WIDEN_UNTIL){
 }
 const shifted=(p,v)=>({...p,positions:p.positions.map((x,i)=>x+v[i%3]),...(p.pivot?{pivot:p.pivot.map((x,k)=>x+v[k])}:{})});
 
-export function originalLimbBody(bodyId='boy'){
+export function originalLimbBody(bodyId='boy',{smoothForearm=false}={}){
  const body=BODIES[bodyId],torsoShape=makeTorsoOption(torsoBase.shape,body.torso,body.torsoList);
  const parts=[{name:'torso',side:'centre',...buildTorsoSurface(torsoShape)}];
  // Head: the approved shape, only moved so its centre is where the original head's centre was.
@@ -157,7 +199,8 @@ export function originalLimbBody(bodyId='boy'){
  // Everything below a limb moves with it (a chain).
  const chainShift={},stretched={};
  // The forearms with rounded wrist ends (built for his left, mirrored for his right).
- const roundLeft=roundForearmEnd(source.parts.left.forearm.positions),roundRight=mirrored(roundLeft);
+ // `smoothForearm`: the smoothed forearm on finer rings (polish list item 1), for the 6 ft 4 in version only for now.
+ const roundLeft=roundForearmEnd(source.parts.left.forearm.positions,smoothForearm?{step:.02,segments:2*FOREARM_SEGMENTS,fineLower:true}:{}),roundRight=mirrored(roundLeft);
  const raw=(side,name)=>name==='forearm'?(side==='left'?roundLeft:roundRight):source.parts[side][name];
  const piece=(side,name)=>{const p=raw(side,name);return {...p,positions:thickenTo(p.positions,ourAvatar.limbs[name].thickness)};};
  // Ball sizes follow the (thickened) limb ends, by the same rules as the separated avatar.
@@ -193,7 +236,7 @@ export function originalLimbBody(bodyId='boy'){
  const shaped=(name,pos)=>name==='thigh'?widenTop(pos,THIGH_TOP_WIDER):pos;
  for(const side of ['left','right'])for(const name of ['upper-arm','forearm','thigh','calf']){
   const pos=built[side+':'+name],slim=SLIM_LIMBS.includes(name)?thickenTo(pos,slimTo(name)):pos;
-  parts.push({name,side,positions:shaped(name,slim),index:raw(side,name).index,axis:limbLine(slim).dir});}
+  parts.push({name,side,positions:name==='forearm'&&smoothForearm?smoothForearmMiddle(shaped(name,slim)):shaped(name,slim),index:raw(side,name).index,axis:limbLine(slim).dir});}
  // Hands and feet: approved shapes and sizes, at the original joints; the right side mirrors the left.
  const handSize=CHOSEN_HAND_FOOT.size*LIMB_SCALE*HAND_SCALE*ORIGINAL_HAND_SHRINK;
  const foot0=HAND_FEET_SOURCE.foot,flat=[foot0.axes.length[0],0,foot0.axes.length[2]],lf=Math.hypot(...flat),along=flat.map(v=>v/lf);
@@ -861,11 +904,11 @@ export function mouldSockets(part,centres,R,soft,skin,roundRims=0,rimBand=HIP_RI
   const n=[0,1,2].map(k=>(i<nOld?C[i+k]:0)*(1-t)+A[i+k]*t),l=Math.hypot(...n)||1;for(let k=0;k<3;k++)N[i+k]=n[k]/l;}
  return {positions:P,index:out.index,normals:N};
 }
-export function separatedOriginalBody(bodyId='boy',{press=0}={}){
+export function separatedOriginalBody(bodyId='boy',{press=0,smoothForearm=false}={}){
  // How far a piece's near end sits from its ball's centre: one gap past the ball when apart; inside it when pressed.
  // Per ball when pressed: nearOffset (the hip a little deeper into the thigh).
  const offset=(r,ball)=>press?nearOffset(ball.replace('ball-',''),r,press):r+BALL_GAP;
- const whole=originalLimbBody(bodyId),get=(n,s='left')=>whole.parts.find(p=>p.name===n&&p.side===s),torsoShape=whole.torsoShape;
+ const whole=originalLimbBody(bodyId,{smoothForearm}),get=(n,s='left')=>whole.parts.find(p=>p.name===n&&p.side===s),torsoShape=whole.torsoShape;
  const parts=[get('torso','centre')],balls={};
  const lineOf=p=>limbLine(p.positions,p.axis);
  // A chain from the torso: ball, piece, ball, piece, ... each piece moved so its near tip is one gap past the ball.

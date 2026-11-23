@@ -7,16 +7,19 @@ Each item: what it is, its measured cause, the proposed fix (not applied), and t
 
 ## A. Items
 
-1. **Forearm: a faint line about a third of the way down, just below the elbow cup.**
-   - Cause (measured): a shape feature from the original avatar's forearm. The top is a dome that widens quickly and
-     then straightens; the slope of its side, ring by ring, goes about 40°, 32°, 21°, 13°, then drops suddenly to 5°
-     and 4°. The forearm is built from coarse rings (1.3 cm apart, 28 points round), so that sudden flattening catches
-     the light as a line. Part shape, part coarse surface.
-   - Proposed fix (not applied): smooth that part of the profile so the slope changes gradually (same length, widest
-     width and overall look), and build the forearm from finer rings (about twice as many each way) so the shading
-     stays smooth. Check with before-and-after close-ups and the slope measured ring by ring. Apply to the 6 ft 4 in
-     version only, so the owner can compare.
-   - Owner decision: pending (review first).
+1. **Forearm: a faint line about a third of the way down, just below the elbow cup.** Fixed on the 6 ft 4 in version
+   (owner, 23 November 2026: "Lets do the forearm first, smooth it out").
+   - First diagnosis (the original forearm's profile, coarse rings) was wrong: smoothing the original shape left the
+     line. Measured cause, by rays down the finished forearm's front: the side widens at about 12 degrees and then
+     flattens to about 0 within 2 to 4 mm, 14.2 cm below the elbow ball, at the forearm's middle. The rounded forearm's
+     widening top meets its straight lower part at its middle, and the shortening to Our avatar's joint-to-joint length
+     squeezes that middle the most (about 3.3 times), turning a gentle bend into a crease.
+   - Fix (`smoothForearmMiddle`, on the 6 ft 4 in version only): the finished forearm's profile smoothed around its
+     middle (local linear regression with Gaussian weights, 1.2 cm, per direction round the forearm), and the forearm
+     built from finer rings (twice as many each way, including its straight lower part). The original profile is kept.
+   - Result: the sharpest change in shading down the visible forearm is 0.9 degrees per 2 mm (was 3.6 on the version
+     beside it, 12.6 on the first attempt); before-and-after close-ups show the line gone. Sealed; page check passes.
+   - Still to do when the owner says: put it on the shorter version too (or keep only the 6 ft 4 in version).
 2. **Hand: a small flaw near the fingertips** (four edges shared by more than two triangles, in the original hand
    shape). Cause and fix to be looked at in the review. Owner decision: pending.
 3. **Some limbs look slightly faceted along their outline in close-ups** (the original limb shapes have few sides).

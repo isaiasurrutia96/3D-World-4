@@ -31,7 +31,12 @@ export function bakeTorsoSockets(){
   // Then the plain cylinder neck and the head where they sit put together (owner: "add a regular cylinder neck and the head").
   'torso-assembled':[...assembled,cylinderNeck(together),together.parts.find(p=>p.name==='head')]};
  // Side by side: him now, and with longer legs at 6 ft 4 in (owner: "make him 6'4" ... the thighs slightly more ... put him next to our new avatar").
- const tall=longerLegs(items['torso-assembled']);items['legs-now']=items['torso-assembled'];items['legs-6ft4']=tall.parts;
+ // The 6 ft 4 in version also gets the smoothed forearm on finer rings (polish list item 1), on it only so the owner can
+ // compare: the same steps with a separated body whose forearms are smoothed (the upper arms, elbows and everything
+ // else are the same).
+ const mixSmooth=separatedOriginalBody('boy',{smoothForearm:true}),wristsSmooth=wristAnkleSockets('boy',{apart:mixSmooth,hips:closerHips});
+ const assembledSmooth=[...assembledSockets({torso:hipSockets.torso,shoulderIn:together.parts.find(p=>p.name==='ball-shoulder'&&p.side==='left'),hipIn:closerHips.inBalls.find(b=>b.side==='left'),limbs,elbowsKnees,wristsAnkles:wristsSmooth}),cylinderNeck(together),together.parts.find(p=>p.name==='head')];
+ const tall=longerLegs(assembledSmooth);items['legs-now']=items['torso-assembled'];items['legs-6ft4']=tall.parts;
  for(const id in items)items[id]=items[id].map(p=>({...withNormals(p),name:p.side==='centre'?p.name:p.name+'.'+p.side}));
  const facts={shoulderDisplaced:shoulderSoft.displaced,shoulderRemoved:shoulderSoft.removed,closerGap:closerHips.gap,hipDisplaced:hipSockets.displaced,
   thighLonger:tall.thighLonger,calfLonger:tall.calfLonger,limbArm:limbs[0].cut.displaced,limbThigh:limbs[2].cut.displaced,ekArm:elbowsKnees[0].cut.displaced,ekThigh:elbowsKnees[2].cut.displaced};
