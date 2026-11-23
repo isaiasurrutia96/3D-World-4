@@ -392,6 +392,30 @@ export function elbowKneeSockets(bodyId='boy',{apart=separatedOriginalBody(bodyI
  }
  return out;
 }
+// Then the rest of each arm and leg (owner, 23 November 2026: "now the ankles and wrist", then "use also the feet and
+// hands to press against the limbs"): the forearms and calves below the elbow and knee balls, the wrist and ankle
+// balls below them, and the hands and feet below those, each where the separated avatar has it (legs moved with the
+// thighs). Every ball pushed into the pieces on both sides of it as deep as when put together and pulled back out,
+// same softened lip: elbow and knee into the forearm's and calf's tops, wrist and ankle into their bottoms and into
+// the hand and foot. Built on the left and mirrored.
+export function wristAnkleSockets(bodyId='boy',{apart=separatedOriginalBody(bodyId),hips=null}={}){
+ const pick=(n,s)=>apart.parts.find(p=>p.name===n&&p.side===s),out=[];
+ const mirror=m=>{const I=[];for(let t=0;t<m.index.length;t+=3)I.push(m.index[t],m.index[t+2],m.index[t+1]);return {...m,positions:m.positions.map((v,i)=>i%3===0?-v:v),normals:m.normals.map((v,i)=>i%3===0?-v:v),index:I};};
+ // One ball pushed into one piece along `dir` (pointing from the ball into the piece) and pulled back out.
+ const press=(piece,ball,dir)=>{const r=ball.radius,inBall={...ball,centre:add3(ball.centre,scale3(dir,r+BALL_GAP-(1-PREVIEW_PRESS)*r))};
+  const cut=pushBallsIn({positions:piece.positions,index:piece.index,normals:piece.normals},[inBall],[ball],bodyId);return {cut,soft:softenShoulderRims(cut)};};
+ for(const [limbName,topBall,endBall,endName,legs] of [['forearm','ball-elbow','ball-wrist','hand',false],['calf','ball-knee','ball-ankle','foot',true]]){
+  const shift=legs&&hips?sub3(hips.outBalls.find(b=>b.side==='left').centre,pick('ball-hip','left').centre):[0,0,0];
+  const [limb,top,end,tip]=[pick(limbName,'left'),pick(topBall,'left'),pick(endBall,'left'),pick(endName,'left')].map(p=>moveBy(p,shift));
+  const L=limbLine(limb.positions,limb.axis);let down=L.dir;if(dot3(sub3(L.centre,top.centre),down)<0)down=neg(down);
+  const a=press(limb,top,down),b=press(a.soft.torso,end,neg(down)),c=press(tip,end,down);
+  const ballR=ballPart(endBall,'right',end.radius,[-end.centre[0],end.centre[1],end.centre[2]]);
+  out.push({name:limbName,side:'left',part:{...b.soft.torso,name:limbName,side:'left'},cuts:[a.cut,b.cut]},{name:limbName,side:'right',part:{...mirror(b.soft.torso),name:limbName,side:'right'},cuts:[a.cut,b.cut]});
+  out.push({name:endName,side:'left',part:{...c.soft.torso,name:endName,side:'left'},cuts:[c.cut]},{name:endName,side:'right',part:{...mirror(c.soft.torso),name:endName,side:'right'},cuts:[c.cut]});
+  out.push({name:endBall,side:'left',part:end,ball:true},{name:endBall,side:'right',part:ballR,ball:true});
+ }
+ return out;
+}
 export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
  return pushBallsIn(pressed.parts.find(p=>p.name==='torso'),pressed.parts.filter(p=>p.name==='ball-shoulder'),apart.parts.filter(p=>p.name==='ball-shoulder'),bodyId);
 }
