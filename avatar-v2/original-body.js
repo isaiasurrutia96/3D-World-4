@@ -443,17 +443,18 @@ export function wristAnkleSockets(bodyId='boy',{apart=separatedOriginalBody(body
 // side is the mirror of the left, as everywhere on this tab.
 export function assembledSockets({torso,shoulderIn,hipIn,limbs,elbowsKnees,wristsAnkles}){
  const parts=[torso],at=c=>c.inBalls[0].centre,find=(list,n)=>list.find(e=>e.name===n&&e.side==='left');
- const both=(e,v)=>{parts.push(moveBy(e.part,v));const r=moveBy(find2(e).part,[-v[0],v[1],v[2]]);parts.push(r);};
- const find2=e=>[...limbs,...elbowsKnees,...wristsAnkles].find(x=>x.part.name===e.part.name&&x.side==='right'&&x.part!==e.part&&x.name===e.name);
+ // Each piece and its right-side twin from the same step's list (the right twin of the latest version of the piece:
+ // searching every step's list found the upper arm's and thigh's earlier versions, without their elbow and knee cups).
+ const both=(list,e,v)=>{parts.push(moveBy(e.part,v));parts.push(moveBy(list.find(x=>x.name===e.name&&x.side==='right').part,[-v[0],v[1],v[2]]));};
  const balls=(name,r,c)=>{parts.push(ballPart(name,'left',r,c),ballPart(name,'right',r,[-c[0],c[1],c[2]]));};
  for(const [top,upper,mid,lower,end,tip,topIn] of [['ball-shoulder','upper-arm','ball-elbow','forearm','ball-wrist','hand',shoulderIn],['ball-hip','thigh','ball-knee','calf','ball-ankle','foot',hipIn]]){
   const up=find(limbs,upper),upEnd=find(elbowsKnees,upper),lo=find(wristsAnkles,lower),hand=find(wristsAnkles,tip);
   balls(top,topIn.radius,topIn.centre);
-  const upMove=sub3(topIn.centre,at(up.cut));both(upEnd,upMove);
+  const upMove=sub3(topIn.centre,at(up.cut));both(elbowsKnees,upEnd,upMove);
   const midC=add3(at(upEnd.cut),upMove);balls(mid,upEnd.cut.inBalls[0].radius,midC);
-  const loMove=sub3(midC,at(lo.cuts[0]));both(lo,loMove);
+  const loMove=sub3(midC,at(lo.cuts[0]));both(wristsAnkles,lo,loMove);
   const endC=add3(at(lo.cuts[1]),loMove);balls(end,lo.cuts[1].inBalls[0].radius,endC);
-  both(hand,sub3(endC,at(hand.cuts[0])));
+  both(wristsAnkles,hand,sub3(endC,at(hand.cuts[0])));
  }
  return parts;
 }
@@ -479,6 +480,42 @@ export function cylinderNeck(pressed,{segments=64,round=SHOULDER_RIM_ROUND,steps
  for(let j=0;j<ring.length-1;j++)for(let s=0;s<segments;s++){const n=(s+1)%segments,a=ring[j]+s,b=ring[j]+n,c=ring[j+1]+s,d=ring[j+1]+n;index.push(a,c,b,b,c,d);}
  const L=ring.at(-1);for(let s=0;s<segments;s++){const n=(s+1)%segments;index.push(top,L+n,L+s);}
  return {name:'neck',side:'centre',positions,normals,index,radius:r,centre:ball.centre,length:hi-lo};
+}
+// Longer legs (owner, 23 November 2026: "make him 6'4" ... lengthen the overall size of the thighs, and also the calves,
+// but the thighs slightly more"): the put-together avatar's thighs and calves lengthened through their middles until he
+// stands `height` tall (6 ft 4 in = 1.9304 m), the extra shared in proportion to their joint-to-joint lengths (the thigh
+// is the longer, so it gets a little more). Everything above the hips stays; the knee balls, calves, ankle balls and
+// feet move down along the leg. Each limb stretches only between its two cups (with 1 cm to spare past each cup and
+// its lip), so both cups move rigidly and keep their exact shape.
+export function longerLegs(parts,{height=1.9304,spare=.01}={}){
+ const get=(n,s)=>parts.find(p=>p.name===n&&p.side===s),dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]),unit=v=>{const l=Math.hypot(...v);return v.map(x=>x/l);};
+ let lo=Infinity,hi=-Infinity;for(const p of parts)for(let i=1;i<p.positions.length;i+=3){lo=Math.min(lo,p.positions[i]);hi=Math.max(hi,p.positions[i]);}
+ const C=n=>get(n,'left').centre,dT=unit(sub3(C('ball-knee'),C('ball-hip'))),dC=unit(sub3(C('ball-ankle'),C('ball-knee')));
+ const lt=dist(C('ball-hip'),C('ball-knee')),lc=dist(C('ball-knee'),C('ball-ankle')),st=lt/(lt+lc),sc=1-st;
+ // Length to add so the height grows by exactly the difference (the legs lean very slightly).
+ const add=(height-(hi-lo))/(st*-dT[1]+sc*-dC[1]),eT=add*st,eC=add*sc;
+ // One limb stretched between its cups: `from` = the upper ball's centre, `dir` down the limb.
+ const stretch=(p,from,dir,upper,lower,extra)=>{
+  const P=p.positions,s=i=>(P[i]-from[0])*dir[0]+(P[i+1]-from[1])*dir[1]+(P[i+2]-from[2])*dir[2],pt=i=>[P[i],P[i+1],P[i+2]];
+  let a=-Infinity,b=Infinity;for(let i=0;i<P.length;i+=3){if(dist(pt(i),upper.centre)<upper.radius+SOCKET_GAP+spare)a=Math.max(a,s(i));if(dist(pt(i),lower.centre)<lower.radius+SOCKET_GAP+spare)b=Math.min(b,s(i));}
+  if(!(a<b))throw Error('longerLegs: no room between the cups of '+p.name);
+  // Shading directions carried through the stretch (a surface direction transforms by the inverse transpose of the
+  // stretch: x' = x + dir m(s) has J = I + m'(s) dir dirT, so n' ~ n - m'/(1 + m') (n.dir) dir), keeping the limb's
+  // own smooth shading; recomputing them from the triangles showed flat facets and a seam.
+  const Q=new Array(P.length),N=new Array(P.length),n0=p.normals;
+  for(let i=0;i<P.length;i+=3){const t=Math.min(1,Math.max(0,(s(i)-a)/(b-a))),m=extra*t*t*(3-2*t),dm=t>0&&t<1?extra*6*t*(1-t)/(b-a):0;
+   for(let k=0;k<3;k++)Q[i+k]=P[i+k]+dir[k]*m;
+   const nd=n0[i]*dir[0]+n0[i+1]*dir[1]+n0[i+2]*dir[2],f=dm/(1+dm),n=[0,1,2].map(k=>n0[i+k]-f*nd*dir[k]),l=Math.hypot(...n)||1;for(let k=0;k<3;k++)N[i+k]=n[k]/l;}
+  return {...p,positions:Q,normals:N,stretchedBetween:[a,b]};};
+ const out=parts.slice(),put=(n,s,q)=>{out[out.findIndex(x=>x.name===n&&x.side===s)]=q;};
+ for(const side of ['left','right']){
+  const m=side==='left'?1:-1,dt=[m*dT[0],dT[1],dT[2]],dc=[m*dC[0],dC[1],dC[2]],g=n=>out.find(x=>x.name===n&&x.side===side);
+  const hip=g('ball-hip'),knee=g('ball-knee');put('thigh',side,stretch(g('thigh'),hip.centre,dt,hip,knee,eT));
+  for(const n of ['ball-knee','calf','ball-ankle','foot'])put(n,side,moveBy(g(n),scale3(dt,eT)));
+  const k2=g('ball-knee'),ankle=g('ball-ankle');put('calf',side,stretch(g('calf'),k2.centre,dc,k2,ankle,eC));
+  for(const n of ['ball-ankle','foot'])put(n,side,moveBy(g(n),scale3(dc,eC)));
+ }
+ return {parts:out,thighLonger:eT,calfLonger:eC,height};
 }
 export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
  return pushBallsIn(pressed.parts.find(p=>p.name==='torso'),pressed.parts.filter(p=>p.name==='ball-shoulder'),apart.parts.filter(p=>p.name==='ball-shoulder'),bodyId);

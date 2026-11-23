@@ -131,6 +131,11 @@ GROUPS.push({id:'torso-sockets',label:'Torso sockets',start:'torso-assembled',in
   parts:torsoParts('torso-wrist-ankle-sockets')},
   {id:'torso-assembled',label:'Torso · everything put together',tag:'Put together',ground:true,face:together.face,note:`Every ball back where it was pushed to and every piece seated on its ball, exactly as when that ball was pushed in. A plain cylinder neck (as thick as the neck ball and as long as it is wide, both ends softly rounded and hidden in the torso and head, the way Our avatar's neck is) and his head, where they sit put together. The thighs pressed 2 cm closer into the hip balls and the upper arms, forearms and calves 2.5 mm deeper onto their balls at both ends (hands and feet as they were); to keep him the same size, each of those limbs is that much longer through its middle. The same size as the put-together avatar: ${(together.height*100).toFixed(1)} cm tall; the only difference is the legs, a little closer together as you asked.`,
   parts:torsoParts('torso-assembled')}]});
+// Him now and with longer legs, side by side (owner, 23 November 2026: "make him 6'4" ... lengthen ... the thighs, and
+// also the calves, but the thighs slightly more ... put him next to our new avatar"). Opens first, both in view.
+GROUPS.push({id:'longer-legs',label:'Longer legs',intro:`Left: him now, ${(together.height*100).toFixed(1)} cm (6 ft 1 in). Right: the same avatar with longer legs, 193 cm (6 ft 4 in): the thighs ${(TF.thighLonger*100).toFixed(1)} cm longer and the calves ${(TF.calfLonger*100).toFixed(1)} cm longer, each stretched only through its middle so every cup keeps its exact shape. Everything above the hips is unchanged.`,
+ items:[{id:'legs-now',label:'Now · 6 ft 1 in',tag:'Now',ground:true,face:together.face,note:`Him now: ${(together.height*100).toFixed(1)} cm tall.`,parts:torsoParts('legs-now')},
+  {id:'legs-6ft4',label:'Longer legs · 6 ft 4 in',tag:'6 ft 4 in',ground:true,face:together.face,note:`Longer legs: 193 cm (6 ft 4 in). Thighs ${(TF.thighLonger*100).toFixed(1)} cm and calves ${(TF.calfLonger*100).toFixed(1)} cm longer, stretched only between their cups.`,parts:torsoParts('legs-6ft4')}]});
 GROUPS.push({id:'original',label:'Original limbs',intro:'Your athletic torso, head, hands and feet with the original avatar\'s limbs (each 10% longer, calves 50 cm), every piece separated and the original neck removed, with a ball at every joint: as thick as the ends it joins (shoulders, neck and hips 10% bigger, wrists and ankles 10% smaller), 300 triangles each.',
  items:[{id:'original-boy',label:'Boy · pieces and joint balls',tag:'Boy',face:mix.face,ground:true,note:`Balls: neck ${(mix.balls['ball-neck'].radius*200).toFixed(1)} cm (approved size), shoulders ${(mix.balls['ball-shoulder'].radius*200).toFixed(1)}, elbows ${(mix.balls['ball-elbow'].radius*200).toFixed(1)}, wrists ${(mix.balls['ball-wrist'].radius*200).toFixed(1)}, hips ${(mix.balls['ball-hip'].radius*200).toFixed(1)}, knees ${(mix.balls['ball-knee'].radius*200).toFixed(1)}, ankles ${(mix.balls['ball-ankle'].radius*200).toFixed(1)} cm. Balls 2 cm from the torso, every other piece 6 mm from its ball. ${(mix.height*100).toFixed(0)} cm tall with everything apart.`,
   parts:mix.parts.map(p=>({name:p.side==='centre'?p.name:p.name+'.'+p.side,geometry:geometryOf(p),y:0}))}]});
@@ -177,6 +182,7 @@ GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='original'),1));
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='elbow-test'),1));
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='together'),1));
 GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='torso-sockets'),1));
+GROUPS.unshift(...GROUPS.splice(GROUPS.findIndex(g=>g.id==='longer-legs'),1));
 
 // Lay out each tab's row, centred on x = 0; only the active tab's row shows.
 let widest=0;
