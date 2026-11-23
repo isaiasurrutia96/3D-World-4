@@ -14,6 +14,7 @@ const suites=[
     ['Track inspection and device layouts','racing-lab/tests/browser.mjs'],
     ['Driving controls, FPV and device layouts','racing-lab/tests/driving-browser.mjs'],
     ['GT3 driving comparison and device layouts','racing-lab/tests/gt3-driving-browser.mjs'],
+    ['Neighborhood menus and phone controls','racing-lab/tests/neighborhood-driving-browser.mjs'],
     ['Interrupted and repeated mobile steering release','racing-lab/tests/steering-release-browser.mjs'],
     ['Bridge-approach camera regression','racing-lab/tests/chase-camera-browser.mjs'],
     ['Installed-app URLs and assets','racing-lab/tests/app-browser.mjs'],

@@ -27,7 +27,7 @@ try {
     await p.waitForFunction(() => window.drivingLabReady && window.motionLabReady);
     const read = () => p.evaluate(() => drivingLab.getState()), reset = async () => { await p.locator('#reset').click(); await p.waitForFunction(() => drivingLab.test.controller.state.speed === 0); };
     assert.equal(await p.title(), 'Driving test');
-    assert.equal(await p.locator('#race-track option').count(), 5);
+    assert.equal(await p.locator('#race-track option').count(), 6);
     assert.equal(await p.evaluate(() => drivingLab.getState().opponents), 0);
     assert.equal(await p.evaluate(() => drivingLab.kart.wheels.length), 4);
     assert(await p.locator('.input-stick').isHidden());

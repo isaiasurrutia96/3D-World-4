@@ -2,8 +2,9 @@ import { sampleDrivingPedals } from './driving-pedals.js';
 import { F1_2026_SYSTEMS } from '../../racing-core/kart/f1-2026-systems.ts';
 import { DRIVING_PROFILES } from '../../racing-core/kart/profiles.ts';
 import { KART_PROTOTYPES, isKartPrototype } from '../../racing-core/kart/prototypes.ts';
-import { createDrivingTest, TRACK_IDS, PARKED_KARTS, readDrivingInput } from '../../racing-core/testing/drive.ts';
+import { createDrivingTest, TRACK_IDS, PARKED_KARTS, NEIGHBORHOOD, readDrivingInput } from '../../racing-core/testing/drive.ts';
 import { createCheckedTrackView, createStartLine } from './checked-track-view.js';
+import { createNeighborhoodView } from './neighborhood-view.js';
 import { createOriginalKartView } from './kart-view.js';
 import { createPrototypeKartView } from './prototype-kart-view.js';
 import { bindDrivingButtons } from './driving-controls.js';
@@ -24,7 +25,7 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     floor.visible = false;
     const params = new URLSearchParams(location.search), requested = params.get('track'), requestedProfile = params.get('handling');
     const profile = ['original','balanced','fast'].includes(requestedProfile) ? requestedProfile : 'fast';
-    const selection = TRACK_IDS.includes(requested) || requested === PARKED_KARTS ? requested : 'original';
+    const selection = TRACK_IDS.includes(requested) || requested === PARKED_KARTS || requested === NEIGHBORHOOD ? requested : 'original';
     const requestedKart = params.get('kart');
     let prototype = isKartPrototype(requestedKart) ? requestedKart : undefined;
     let f1Tune = params.get('f1Tune') === '2026' ? '2026' : 'early';
@@ -45,7 +46,7 @@ export function createDrivingSimulation({ scene, stage, floor }) {
         o.textContent = id === 'original' ? 'Original Circuit' : id === 'skyline' ? 'Skyline Circuit' : id === 'suzuka' ? 'Suzuka Circuit' : 'Winding Circuit';
         picker.querySelector('select').append(o);
     }
-    picker.querySelector('select').append(new Option('Parked Karts', PARKED_KARTS));
+    picker.querySelector('select').append(new Option('Neighborhood', NEIGHBORHOOD), new Option('Parked Karts', PARKED_KARTS));
     const kartPicker = document.createElement('label');
     kartPicker.className = 'track-picker kart-picker';
     kartPicker.innerHTML = 'Kart <select id="driving-kart" aria-label="Choose kart"></select>';
@@ -147,15 +148,35 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     stage.append(boost);
     const buttons = Object.fromEntries(['left', 'right', 'gas', 'reverse', 'boost'].map(name => [name, $('#race-' + name)]));
     let bindings = null, holds = null, view = null, line = null, drawn = null, pose = test.sample();
-    function draw() { if (drawn === test.track)
-        return; if (view) {
-        scene.remove(view.root, line);
-        view.dispose();
-        line.traverse(o => { if (o.isMesh) {
-            o.geometry.dispose();
-            o.material.dispose();
-        } });
-    } drawn = test.track; view = createCheckedTrackView(drawn); line = createStartLine(drawn); scene.add(view.root, line); api.cameraObstacles = view.root.children.slice(0, 3); }
+    function draw() {
+        const track = test.track;
+        if (drawn === track) return;
+        if (view) {
+            scene.remove(view.root);
+            view.dispose();
+        }
+        if (line) {
+            scene.remove(line);
+            line.traverse(object => {
+                if (!object.isMesh) return;
+                object.geometry.dispose();
+                object.material.dispose();
+            });
+            line = null;
+        }
+
+        if (track.id === NEIGHBORHOOD) {
+            view = createNeighborhoodView(track);
+            api.cameraObstacles = [];
+        } else {
+            view = createCheckedTrackView(track);
+            line = createStartLine(track);
+            api.cameraObstacles = view.root.children.slice(0, 3);
+        }
+        scene.add(view.root);
+        if (line) scene.add(line);
+        drawn = track;
+    }
     function reset() {
         holds?.clear();
         engineAudio.mute();

@@ -13,8 +13,9 @@ import type { KartInput, InputScript } from '../kart/index.ts';
 import { trackBarriers } from '../contacts/index.ts';
 import { createKartContactResolver } from '../contacts/karts.ts';
 import { createParkedKartController, PARKED_KARTS } from './parked-karts.ts';
-export { TRACK_IDS, PARKED_KARTS };
-export type DrivingSelection = TrackId | typeof PARKED_KARTS;
+import { NEIGHBORHOOD, NEIGHBORHOOD_WORLD } from './neighborhood.ts';
+export { TRACK_IDS, PARKED_KARTS, NEIGHBORHOOD };
+export type DrivingSelection = TrackId | typeof PARKED_KARTS | typeof NEIGHBORHOOD;
 export type F1Tune = 'early' | '2026';
 export type GTTune = 'early' | 'gt3';
 export type DrivingSample = Readonly<{
@@ -73,12 +74,20 @@ export function createDrivingTest(initialSelection: DrivingSelection = 'original
     const empty = Object.freeze([]);
     function createScenario(selection: DrivingSelection) {
         const isParked = selection === PARKED_KARTS;
-        const track = createTrack(isParked ? 'original' : selection);
+        const track = selection === NEIGHBORHOOD
+            ? NEIGHBORHOOD_WORLD
+            : createTrack(isParked ? 'original' : selection);
         const prototype = isParked ? undefined : kart;
         const geometry = prototype ? KART_PROTOTYPES[prototype] : undefined;
         let profile = prototype ? PROTOTYPE_HANDLING[prototype] : originalProfile;
         if (prototype === 'f1' && f1Tune === '2026') profile = F1_2026_PROFILE;
         if (prototype === 'gt' && gtTune === 'gt3') profile = GT3_PROFILE;
+        if (track.id === NEIGHBORHOOD) {
+            const controller = createKartController({
+                profile, world: track, geometry, initial: { ...track.start.point, yaw: track.start.yaw },
+            });
+            return { selection, track, controller, profile, prototype, parked: null, clock: null };
+        }
         const parked = isParked ? createParkedKartController(track, profile) : null;
         const footprint = geometry && Object.freeze({
             radius: geometry.width / 2,

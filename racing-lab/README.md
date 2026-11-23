@@ -26,6 +26,17 @@ Controls: arrows or E/S/D/F drive; Space brakes; Shift activates a test Boost; J
 
 Run `npm run test:racing-drive` for the 13 headless adapter/model checks, then build and run `npm run test:racing-drive-browser`. Browser checks cover all four tracks, camera visibility/return, real keyboard input, touch combinations/cancellation, reverse, blur/pause, pinch, three standard controller identities and five device layouts. `DRIVING-BROWSER-CHECKS.json` records the successful checks. The existing track-preview/shared-input browser suites remain regression checks. This authorization covers the driving test only; further game features wait for the owner's feel feedback.
 
+## Neighborhood practice
+
+In the standalone Driving Test, choose **Track → Neighborhood**. Four short blocks
+connect through flat, two-lane streets. The roads are 7 m wide, and a low-grip verge
+gives drivers room to run wide. All kart presets use their usual handling. Reset
+returns the kart to the same lane. Open it directly with `?drive=1&track=neighborhood`.
+
+The 3.5 m lanes leave room for the wider prototypes within typical U.S. street
+lane widths. The flat intersections let drivers repeat low-speed turns in either
+direction. [FHWA lane widths](https://highways.dot.gov/safety/other/road-diets/road-diet-informational-guide/4-designing-road-diet)
+
 ## Parked-kart collision test
 
 In the standalone Driving Test, choose **Parked Karts** from the track dropdown.
