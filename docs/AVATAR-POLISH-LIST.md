@@ -25,7 +25,18 @@ Each item: what it is, its measured cause, the proposed fix (not applied), and t
 3. **Some limbs look slightly faceted along their outline in close-ups** (the original limb shapes have few sides).
    Cause and fix to be looked at in the review. Owner decision: pending.
 
+4. **Waist line looks like it can only turn** (owner, 23 November 2026: "it looks like it can only rotate cus the bottom
+   torso and top torso look like the cutout is too sealed"). A flat, level, tight cut reads as a swivel. Proposed (not
+   applied): make the cut a curved surface centred on the hidden joint ball (the pelvis top a gentle dome, the chest's
+   underside a matching cup, both concentric with the pivot), the way ball-jointed dolls and action-figure ab joints
+   are built, so the chest visibly can tilt forward, back and sideways over the pelvis without a gap opening or the
+   pieces colliding. Owner decision: pending.
+5. **Joint balls stay 300 triangles** (confirmed decision, for smooth movement and frame rate): not on this list as a
+   fix. The rebuild makes every piece lean (the prototype is about 517,000 triangles).
+
 ## B. Working rules for this list
 
 1. When two versions are side by side, change only the new one unless the owner says otherwise (owner, 23 November
    2026: "I wish u did it only to the new one so i can see the difference").
+2. How to ask for approval (owner, 23 November 2026): "check the pics, let me know what u think, if u like it say
+   approved". Then push once the owner says approved.
