@@ -118,7 +118,14 @@ try {
     for(const id of ['original','skyline','suzuka','winding']){await p.locator('#race-track').selectOption(id);await p.waitForFunction(id=>drivingLab.getState().trackId===id&&motionLab.camera.fov===76,id);assert.equal(await p.evaluate(()=>motionLab.getState().camera.view),'fpv');}
     await p.getByRole('button',{name:'Behind',exact:true}).click();await p.waitForFunction(()=>motionLab.camera.fov===45);
     results.push('FPV: seated eye, forward view, look/recenter, fixed eye on wheel input, live switches, Reset/track persistence; driving settings unchanged.');
-    await p.evaluate(() => { window.testPad = { id: 'Xbox Controller', connected: true, mapping: 'standard', axes: [.4, 0, 0, 0], buttons: Array.from({ length: 8 }, () => ({ value: 0, pressed: false })) }; testPad.buttons[7] = { value: 1, pressed: true }; Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [testPad] }); });
+    await p.evaluate(() => {
+        // Keep the pad disconnected until Reset has been observed at rest.
+        window.testPad = {
+            id: 'Xbox Controller', connected: false, mapping: 'standard', axes: [0, 0, 0, 0],
+            buttons: Array.from({ length: 8 }, () => ({ value: 0, pressed: false })),
+        };
+        Object.defineProperty(navigator, 'getGamepads', { configurable: true, value: () => [testPad] });
+    });
     for (const id of ['Xbox Controller', 'DualSense Wireless Controller', 'Nintendo Switch Pro Controller']) {
         await reset();
         await p.evaluate(id => { testPad.id = id; testPad.axes = [.4, 0, 0, 0]; testPad.buttons[7] = { value: 1, pressed: true }; testPad.connected = true; }, id);
