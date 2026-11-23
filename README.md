@@ -1,5 +1,7 @@
 # 3D-World-4
 
+Start with the [draft master plan](docs/MASTER-PLAN.md), [ideas index](docs/IDEAS-INDEX.md) and [design archive](docs/design-archive/README.md).
+
 ## A. Current pages
 
 1. [Open Test Lab](https://isaiasurrutia96.github.io/3D-World-4/test-lab/): the shared workspace for avatar, Skeleton, new-avatar, kart and world studies. Choose a subject, inspect it, and open Motion for its available controls. Video animation is intentionally empty while movement is rebuilt.

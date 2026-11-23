@@ -1,0 +1,257 @@
+<section id="f1-size-comparison" aria-labelledby="f1-size-heading">
+  <h2 id="f1-size-heading">F1 car vs. F1 GoKart</h2>
+
+  <div class="viz-controls">
+    <label class="form-label" for="f1-kart-model">Kart model</label>
+    <select class="form-select" id="f1-kart-model">
+      <option value="stock">Stock F1 GoKart (Karts lab)</option>
+      <option value="classic">Classic Formula (Driving Test)</option>
+    </select>
+  </div>
+
+  <div class="f1-figure">
+    <div class="f1-labels">
+      <div class="f1-vehicle f1-audi">
+        <h3>2026 Audi R26</h3>
+        <div class="text-small">5.44 m long × 1.90 m wide</div>
+      </div>
+      <div class="f1-vehicle f1-kart">
+        <h3 data-kart-name>F1 GoKart</h3>
+        <div class="text-small" data-kart-size>2.92 m long × 1.68 m wide</div>
+      </div>
+    </div>
+
+    <svg class="f1-plan" role="img" aria-labelledby="f1-plan-title f1-plan-desc">
+      <title id="f1-plan-title">Top-down comparison at the same scale</title>
+      <desc id="f1-plan-desc"></desc>
+      <g data-plan-content></g>
+    </svg>
+
+    <div class="f1-legend text-small text-muted">
+      <span>Grid squares · 0.25 m</span>
+      <span>Center arrows · wheelbase</span>
+      <span>Rear axles aligned</span>
+    </div>
+  </div>
+  <span class="sr-only" aria-live="polite" data-kart-status></span>
+
+  <script type="application/json" id="f1-kart-plans">
+{"stock":{"length":2915,"width":1680,"tyreCentres":[[-689,-1588],[689,-1588],[-689,0],[689,0]],"wheelbase":1588,"nose":2478,"tail":437,"body":{"frame":"M-384 -815L-386 -489L-379 -456L-368 -423L-334 -358L-311 -326L-252 -260L252 -260L311 -326L334 -358L368 -423L386 -489L385 -750L378 -1010L370 -1043L347 -1076L319 -1108L299 -1141L268 -1206L240 -1271L210 -1369L-210 -1369L-221 -1326L-240 -1271L-299 -1141L-319 -1108L-347 -1076L-370 -1043L-378 -1010Z","floor":"M286 -1302L-286 -1302L-504 -1134L-504 -361L504 -361L504 -1134Z","engineCover":"M-210 -226L-192 -102L-181 -71L-92 106L-90 314L-78 325L-67 328L67 328L78 325L90 314L92 302L92 104L181 -71L192 -102L198 -133L210 -226L208 -257L192 -288L168 -319L81 -319L71 -332L-71 -332L-81 -319L-168 -319L-192 -288L-208 -257Z","rollHoop":"M-180 -311L-165 -279L-140 -268L-118 -263L0 -256L59 -258L118 -263L159 -276L165 -279L172 -290L180 -311L172 -332L151 -340L130 -332L125 -323L0 -315L-125 -323L-130 -332L-151 -340L-172 -332ZM46 -306L43 -308L43 -309ZM170 -289L169 -289L174 -300Z","mirrors":"M-519 -1028L-514 -1022L-508 -1021L-433 -1021L-424 -1024L-420 -1036L-336 -1050L-332 -1052L-331 -1058L-336 -1067L-420 -1053L-424 -1059L-433 -1063L-508 -1063L-517 -1059L-521 -1050ZM420 -1053L336 -1067L331 -1058L332 -1052L336 -1050L420 -1036L424 -1024L433 -1021L508 -1021L517 -1024L521 -1033L519 -1056L508 -1063L433 -1063L424 -1059Z","nose":"M-139 -1924L-210 -1369L210 -1369L112 -2125L79 -2327L46 -2478L-46 -2478L-79 -2327L-97 -2226Z","frontWing":"M-672 -2428L-672 -1907L-655 -1907L-655 -2083L-588 -2083L-588 -1983L588 -1983L588 -2083L655 -2083L655 -1907L672 -1907L672 -2428L655 -2428L655 -2419L-655 -2419L-655 -2428Z","sidePanels":"M-714 -1201L-714 -939L-701 -781L-674 -624L-661 -571L-641 -519L-615 -466L-554 -361L-370 -361L-354 -571L-353 -1201L-395 -1201L-395 -1214L-424 -1214L-424 -1218L-643 -1218L-643 -1214L-672 -1214L-672 -1201ZM353 -1201L354 -571L370 -361L554 -361L615 -466L641 -519L661 -571L684 -676L701 -781L711 -886L714 -939L714 -1201L672 -1201L672 -1214L643 -1214L643 -1218L424 -1218L424 -1214L395 -1214L395 -1201Z","wing":"M-91 59L-91 126L-563 126L-563 101L-580 101L-580 437L-563 437L-563 390L563 390L563 437L580 437L580 101L563 101L563 126L91 126L91 59L86 49L76 45L65 49L60 59L60 126L-60 126L-60 59L-65 49L-76 45L-86 49Z"},"mechanical":{"seat":"M-305 -1305L-305 -747L-302 -736L-295 -725L-287 -720L-260 -719L-260 -681L-257 -670L-250 -659L-240 -653L230 -651L250 -659L260 -681L260 -719L275 -718L289 -721L299 -730L305 -747L305 -1305L302 -1319L288 -1332L275 -1335L249 -1330L247 -1339L241 -1346L233 -1352L220 -1355L-220 -1355L-233 -1352L-241 -1346L-247 -1339L-249 -1330L-275 -1335L-288 -1332L-296 -1326L-302 -1319Z","steering":"M-146 -1118L-154 -1105L-156 -1089L-152 -1078L-120 -1071L-115 -1057L-104 -1053L104 -1053L114 -1056L120 -1071L152 -1078L156 -1089L154 -1105L146 -1118L138 -1119L110 -1113L14 -1114L14 -1243L10 -1248L0 -1250L-10 -1248L-14 -1243L-14 -1114L-110 -1113L-138 -1119Z","suspension":"M-553 -1560L-484 -1553L-146 -1441L-138 -1466L-164 -1475L-164 -1481L-369 -1544L-160 -1527L-155 -1530L-153 -1537L-159 -1547L-455 -1571L-505 -1587L-319 -1643L-168 -1646L-168 -1664L-253 -1662L-147 -1694L-148 -1702L-121 -1710L-125 -1727L-131 -1734L-363 -1661L-548 -1657L-548 -1639L-424 -1641L-513 -1612L-513 -1618L-553 -1618ZM-526 -52L-476 -36L-488 -30L-528 -30L-528 30L-488 30L-488 25L-96 155L-88 130L-107 124L-105 115L-457 8L-401 -11L-120 84L-115 67L-374 -19L-133 -100L-129 -102L-128 -108L-136 -119L-404 -29L-412 -32L-121 -150L-129 -170L-103 -182L-114 -205L-454 -46L-520 -68ZM-437 -23L-431 -20L-482 -4ZM123 -1710L148 -1702L147 -1694L252 -1663L168 -1664L168 -1646L320 -1643L505 -1587L456 -1571L159 -1547L153 -1537L155 -1530L160 -1527L366 -1543L164 -1481L164 -1475L138 -1466L146 -1441L487 -1553L553 -1558L553 -1618L513 -1618L513 -1612L423 -1641L548 -1639L548 -1657L361 -1661L131 -1734L125 -1727ZM104 -181L129 -170L122 -156L123 -149L413 -32L405 -30L136 -119L128 -108L129 -102L133 -100L374 -19L115 67L120 84L401 -11L457 8L105 115L107 124L88 130L96 155L488 24L488 30L528 30L528 -30L490 -30L477 -36L526 -52L520 -68L455 -46L114 -205ZM437 -22L482 -4L432 -20Z"},"tires":["M-815 -1854L-815 -1321L-787 -1296L-742 -1291L-636 -1291L-591 -1296L-563 -1321L-563 -1854L-591 -1880L-636 -1884L-742 -1884L-787 -1880Z","M563 -1854L563 -1321L591 -1296L636 -1291L742 -1291L787 -1296L815 -1321L815 -1854L787 -1880L742 -1884L636 -1884L591 -1880Z","M-840 -267L-840 267L-807 292L-752 296L-625 296L-571 292L-538 267L-538 -267L-571 -292L-625 -296L-752 -296L-807 -292Z","M538 -267L538 267L571 292L625 296L752 296L807 292L840 267L840 -267L807 -292L752 -296L625 -296L571 -292Z"]},"classic":{"length":4600,"width":2020,"tyreCentres":[[-870,-3040],[870,-3040],[-835,0],[835,0]],"wheelbase":3040,"nose":4040,"tail":560,"body":{"nose":"M-316 -1811L-340 -1505L340 -1505L308 -1898L247 -2467L178 -3035L132 -3690L120 -3821L93 -4040L-93 -4040L-120 -3821L-132 -3690L-175 -3064L-247 -2467Z","floor":"M-779 -1205L-768 -988L-752 -815L-723 -599L-688 -382L-671 -296L-646 -209L-615 -123L-557 7L-470 180L470 180L557 7L615 -123L646 -209L671 -296L688 -382L723 -599L752 -815L774 -1075L780 -1248L778 -1334L769 -1421L742 -1551L729 -1594L684 -1724L648 -1810L587 -1940L520 -2070L-520 -2070L-587 -1940L-648 -1810L-700 -1681L-742 -1551L-762 -1464L-775 -1378L-780 -1291ZM-584 -188L-583 -187L-584 -187Z","hood":"M-485 -868L-487 -612L-474 -400L-236 -400L-223 -612L-225 -868L-248 -1462L-272 -1760L-438 -1760L-462 -1462ZM248 -1462L225 -868L222 -655L227 -527L236 -400L474 -400L487 -612L485 -868L462 -1462L438 -1760L272 -1760Z","engineCover":"M-246 -437L-247 -356L-232 -235L-181 48L-140 250L140 250L181 48L232 -235L243 -315L248 -396L241 -477L223 -558L189 -679L145 -800L-145 -800L-189 -679L-223 -558L-241 -477Z","sidePanels":"M-751 -1609L-755 -1181L-745 -967L-721 -711L-690 -540L-636 -284L-585 -70L-475 -70L-424 -284L-353 -626L-339 -711L-318 -925L-309 -1053L-305 -1181L-307 -1566L-317 -1694L-345 -1865L-379 -1865L-378 -1870L-382 -1879L-391 -1883L-412 -1883L-412 -1891L-415 -1894L-635 -1894L-638 -1891L-638 -1883L-659 -1883L-668 -1879L-672 -1870L-671 -1865L-715 -1865L-737 -1737ZM-389 -1882L-389 -1881L-391 -1882ZM305 -1352L307 -1096L329 -797L339 -711L353 -626L424 -284L475 -70L585 -70L636 -284L707 -626L721 -711L742 -925L751 -1053L755 -1181L753 -1566L743 -1694L715 -1865L671 -1865L672 -1870L668 -1879L659 -1883L638 -1883L638 -1891L635 -1894L415 -1894L412 -1891L412 -1883L391 -1883L382 -1879L378 -1870L379 -1865L345 -1865L323 -1737L309 -1609ZM661 -1882L661 -1881L659 -1882ZM380 -1862L381 -1862L374 -1822ZM382 -1873L382 -1874L383 -1874ZM683 -518L682 -515L682 -518Z","frontWing":"M-934 -3959L-934 -3530L-914 -3530L-914 -3959ZM885 -3503L885 -3943L-885 -3943L-885 -3503ZM914 -3959L914 -3530L934 -3530L934 -3959Z","frontBumper":"M-179 -3867L-180 -3700L-176 -3687L-164 -3678L157 -3677L170 -3681L179 -3693L180 -3864L176 -3877L164 -3886L-157 -3887L-170 -3883L-176 -3877Z","fenders":"M-547 -2670L-547 -2500L-533 -2500L-533 -2670ZM533 -2670L533 -2500L547 -2500L547 -2670Z","rollHoop":"M-235 -740L-225 -708L-207 -667L-199 -658L-182 -648L-99 -616L-57 -604L0 -596L57 -604L99 -616L182 -648L199 -658L212 -676L235 -740L225 -764L200 -775L175 -765L158 -724L157 -715L135 -700L111 -689L54 -672L0 -664L-54 -672L-111 -689L-135 -700L-157 -716L-175 -765L-200 -775L-225 -764ZM97 -618L98 -617L96 -618Z","mirrors":"M-521 -1594L-511 -1582L-498 -1578L-394 -1579L-385 -1585L-379 -1594L-379 -1626L-389 -1638L-402 -1642L-506 -1641L-515 -1635L-521 -1626ZM379 -1626L379 -1594L385 -1585L394 -1579L498 -1578L511 -1582L521 -1594L521 -1626L515 -1635L506 -1641L402 -1642L389 -1638Z","lights":"M-793 -3757L-789 -3745L-778 -3737L-659 -3736L-647 -3739L-641 -3745L-637 -3759L-641 -3771L-647 -3777L-656 -3779L-655 -3787L-658 -3790L-682 -3790L-685 -3787L-684 -3780L-701 -3780L-700 -3787L-703 -3790L-727 -3790L-730 -3787L-729 -3780L-746 -3780L-745 -3787L-748 -3790L-772 -3790L-775 -3787L-774 -3780L-783 -3777L-789 -3771ZM-77 491L-71 497L71 497L75 495L78 484L71 475L-71 475L-77 481ZM-76 481L-75 481L-76 482ZM69 477L69 478L68 477ZM639 -3766L637 -3757L641 -3745L647 -3739L659 -3736L778 -3737L789 -3745L793 -3757L789 -3771L783 -3777L774 -3780L775 -3787L772 -3790L748 -3790L745 -3787L746 -3780L729 -3780L730 -3787L727 -3790L703 -3790L700 -3787L701 -3780L684 -3780L685 -3787L682 -3790L658 -3790L655 -3787L656 -3779L647 -3777Z","wing":"M-700 -10L-700 470L-680 470L-680 349L680 349L680 470L700 470L700 -10L680 -10L680 10L-680 10L-680 -10Z","rearBumper":"M-695 529L-684 547L-666 558L-652 560L652 560L666 558L684 547L695 529L697 425L695 411L684 393L666 382L652 380L-652 380L-666 382L-684 393L-695 411Z","diffuser":"M-432 180L-432 525L-416 525L-416 180ZM-220 180L-220 525L-204 525L-204 180ZM-8 180L-8 525L8 525L8 180ZM204 180L204 525L220 525L220 180ZM416 180L416 525L432 525L432 180Z","exhaust":"M200 365L198 520L302 520L302 365L293 365L293 265L207 265L207 365Z","mudFlaps":"M-989 419L-989 437L-979 442L-691 442L-681 437L-679 430L-681 419L-691 414L-979 414ZM-986 437L-986 438L-987 436ZM681 419L681 437L685 440L691 442L979 442L989 437L991 426L989 419L979 414L691 414ZM684 438L685 439L684 439ZM683 437L683 436L684 438Z"},"mechanical":{"seat":"M-345 -1600L-345 -1160L-327 -1154L-327 -1147L-337 -1139L-345 -1127L-350 -1106L-350 -659L-345 -638L-337 -626L-322 -615L-302 -611L302 -611L313 -612L330 -619L345 -638L350 -659L350 -1106L345 -1127L337 -1139L327 -1147L327 -1154L345 -1160L345 -1600L329 -1606L313 -1607L296 -1626L265 -1635L-265 -1635L-296 -1626L-313 -1607L-329 -1606ZM297 -1612L299 -1608L298 -1608Z","pedals":"M-192 -2154L-185 -2149L-102 -2149L-96 -2153L-94 -2162L-100 -2170L-188 -2170L-193 -2165ZM96 -2167L94 -2157L102 -2149L185 -2149L193 -2155L193 -2165L188 -2170L100 -2170Z","steering":"M-189 -1514L-194 -1498L-193 -1430L-189 -1421L-174 -1411L-156 -1411L-146 -1416L-137 -1432L137 -1432L144 -1418L163 -1410L174 -1411L184 -1416L193 -1430L194 -1498L189 -1514L183 -1519L174 -1524L156 -1524L140 -1530L21 -1530L21 -1821L15 -1830L8 -1833L-8 -1833L-15 -1830L-21 -1821L-21 -1530L-140 -1530L-148 -1529L-155 -1524L-174 -1524Z","suspension":"M-714 -3109L-716 -3091L-627 -3084L-680 -3065L-680 -3070L-720 -3070L-720 -3010L-656 -3001L-276 -2838L-271 -2844L-264 -2862L-289 -2872L-286 -2880L-542 -2983L-291 -2943L-286 -2946L-284 -2954L-285 -2960L-289 -2963L-625 -3016L-676 -3038L-548 -3079L-271 -3057L-269 -3075L-500 -3093L-265 -3167L-273 -3192L-289 -3189L-294 -3201L-581 -3100ZM-650 -30L-650 30L-596 39L-275 202L-266 187L-263 179L-288 167L-285 160L-498 58L-291 97L-286 94L-283 86L-289 77L-569 24L-610 4L-610 1L-506 -38L-271 -17L-269 -35L-468 -53L-265 -128L-273 -152L-288 -147L-294 -160L-534 -59L-644 -69L-646 -51L-570 -44L-609 -27L-610 -30ZM273 -3192L265 -3167L500 -3093L269 -3075L271 -3057L548 -3079L676 -3038L624 -3016L289 -2963L285 -2960L284 -2954L286 -2946L291 -2943L542 -2983L286 -2880L289 -2872L264 -2862L275 -2838L656 -3001L720 -3010L720 -3070L680 -3070L680 -3066L626 -3084L716 -3091L714 -3109L584 -3099L294 -3201L290 -3188ZM273 -152L265 -128L466 -53L269 -35L271 -17L506 -38L610 1L610 4L570 24L289 77L283 86L286 94L291 97L498 58L285 160L288 167L263 179L275 202L595 40L650 30L650 -30L610 -30L610 -26L567 -44L646 -51L644 -69L533 -59L294 -160L289 -147Z"},"tires":["M-1010 -3373L-1010 -2707L-979 -2676L-929 -2670L-811 -2670L-761 -2676L-730 -2707L-730 -3373L-761 -3404L-811 -3410L-929 -3410L-979 -3404Z","M730 -3373L730 -2707L761 -2676L811 -2670L929 -2670L979 -2676L1010 -2707L1010 -3373L979 -3404L929 -3410L811 -3410L761 -3404Z","M-1010 -360L-1010 360L-972 394L-908 400L-762 400L-698 394L-660 360L-660 -360L-698 -394L-762 -400L-908 -400L-972 -394Z","M660 -360L660 360L698 394L762 400L908 400L972 394L1010 360L1010 -360L972 -394L908 -400L762 -400L698 -394Z"]}}
+  </script>
+</section>
+
+<style>
+  #f1-size-comparison {
+    --audi: var(--viz-series-1, var(--blue));
+    --kart: var(--viz-series-2, var(--orange));
+    --fine-grid: color-mix(in srgb, var(--foreground) 10%, transparent);
+    --major-grid: color-mix(in srgb, var(--foreground) 23%, transparent);
+    --tire: color-mix(in srgb, var(--foreground) 24%, transparent);
+    --measurement: color-mix(in srgb, var(--foreground) 60%, transparent);
+    display: grid;
+    gap: calc(var(--font-size-base) * .7);
+  }
+  #f1-size-comparison .viz-controls { justify-content: start; align-items: center; }
+  #f1-size-comparison .f1-figure { min-width: 0; }
+  #f1-size-comparison .f1-labels { display: grid; grid-template-columns: 1fr 1fr; }
+  #f1-size-comparison .f1-vehicle {
+    text-align: center;
+    margin-bottom: calc(var(--font-size-base) * .6);
+  }
+  #f1-size-comparison .f1-vehicle h3 { font-weight: 500; }
+  #f1-size-comparison .f1-vehicle h3::before {
+    content: "";
+    display: inline-block;
+    width: .7em;
+    height: .13em;
+    margin-right: .35em;
+    vertical-align: .23em;
+    background: var(--vehicle);
+  }
+  #f1-size-comparison .f1-audi { --vehicle: var(--audi); }
+  #f1-size-comparison .f1-kart { --vehicle: var(--kart); }
+  #f1-size-comparison .f1-plan { display: block; width: 100%; }
+  #f1-size-comparison .f1-plan path,
+  #f1-size-comparison .f1-plan circle { vector-effect: non-scaling-stroke; }
+  #f1-size-comparison .f1-plan text { fill: var(--foreground); font: inherit; }
+  #f1-size-comparison .f1-legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0 calc(var(--font-size-base) * .85);
+    margin-top: calc(var(--font-size-base) * .5);
+  }
+</style>
+
+<script>
+(() => {
+  const root = document.getElementById('f1-size-comparison');
+  const models = JSON.parse(document.getElementById('f1-kart-plans').textContent);
+  const chooser = root.querySelector('#f1-kart-model');
+  const svg = root.querySelector('.f1-plan');
+  const figure = root.querySelector('.f1-figure');
+  const plan = root.querySelector('[data-plan-content]');
+  const stockDetails = { name: 'F1 GoKart', ariaName: 'stock F1 GoKart' };
+  const classicDetails = { name: 'Classic Formula', ariaName: 'Classic Formula driving prototype' };
+  const kartDetails = { stock: stockDetails, classic: classicDetails };
+
+  // Plan coordinates are millimetres relative to the shared rear axle.
+  // The R26 uses its published footprint and maximum wheelbase.
+  // Its body contours and front/rear overhang split are schematic.
+  const audi = {
+    length: 5440,
+    width: 1900,
+    wheelbase: 3400,
+    nose: 4540,
+    tail: 900,
+    tyreCentres: [[-810, -3400], [810, -3400], [-762.5, 0], [762.5, 0]],
+    tires: [
+      'M-950-3715Q-950-3752-914-3752H-705Q-670-3752-670-3715V-3085Q-670-3048-705-3048H-914Q-950-3048-950-3085Z',
+      'M670-3715Q670-3752 705-3752H914Q950-3752 950-3715V-3085Q950-3048 914-3048H705Q670-3048 670-3085Z',
+      'M-950-315Q-950-355-910-355H-615Q-575-355-575-315V315Q-575 355-615 355H-910Q-950 355-950 315Z',
+      'M575-315Q575-355 615-355H910Q950-355 950-315V315Q950 355 910 355H615Q575 355 575 315Z',
+    ],
+    body: {
+      floor: 'M-330-2570L-450-2440-744-1790-751-900-483-420-410-235-422 388-355 551H355L422 388 410-235 483-420 751-900 744-1790 450-2440 330-2570Z',
+      wingFront: 'M-875-4370Q-560-4520 0-4540Q560-4520 875-4370L895-3990 767-3960 490-4090 0-4170-490-4090-767-3960-895-3990Z',
+      wingFrontFlap: 'M-863-4250Q-520-4390-74-4404M74-4404Q520-4390 863-4250M-818-4115Q-515-4260-78-4282M78-4282Q515-4260 818-4115',
+      nose: 'M-57-4510Q-21-4540 0-4540T57-4510L86-4140 110-3725 164-3220Q190-2950 295-2560L344-2120 310-1740 242-1160 155-610 106-265 90 490H-90L-106-265-155-610-242-1160-310-1740-344-2120-295-2560Q-190-2950-164-3220L-110-3725-86-4140Z',
+      leftPod: 'M-321-2340Q-548-2390-644-2185Q-727-2040-724-1735Q-690-1300-488-1000L-243-658Q-404-996-430-1480L-410-1840Z',
+      rightPod: 'M321-2340Q548-2390 644-2185Q727-2040 724-1735Q690-1300 488-1000L243-658Q404-996 430-1480L410-1840Z',
+      cockpit: 'M-163-2430Q0-2505 163-2430L217-2080Q208-1835 119-1745H-119Q-208-1835-217-2080Z',
+      halo: 'M-191-1970Q-258-2380 0-2460Q258-2380 191-1970M0-2460V-2555',
+      spine: 'M-101-1750Q-119-1580-87-1470L-42-703 0-245 42-703 87-1470Q119-1580 101-1750Z',
+      wingRear: 'M-532 457L-492 402H492L532 457V900H-532ZM-532 569H532M-532 733H532',
+    },
+    mechanical: {
+      suspension: 'M-174-3140L-670-3400-133-3655M174-3140L670-3400 133-3655M-153-455L-575 0-136 205M153-455L575 0 136 205',
+    },
+  };
+
+  const ns = 'http://www.w3.org/2000/svg';
+  function element(parent, tag, attrs, value) {
+    const node = document.createElementNS(ns, tag);
+    for (const [name, attr] of Object.entries(attrs)) node.setAttribute(name, attr);
+    if (value !== undefined) node.textContent = value;
+    parent.append(node);
+    return node;
+  }
+
+  function path(parent, d, stroke, width, extras = {}) {
+    return element(parent, 'path', { d, fill: 'none', stroke, 'stroke-width': width, ...extras });
+  }
+
+  function measureLabel(group, x, y, value) {
+    const label = element(group, 'text', {
+      x, y, 'text-anchor': 'middle', 'dominant-baseline': 'central', class: 'text-small tabular-nums',
+    }, value);
+    const box = label.getBBox();
+    const backing = element(group, 'rect', {
+      x: box.x - 4, y: box.y - 2, width: box.width + 8, height: box.height + 4,
+      rx: 3, fill: 'var(--background)', opacity: .95,
+    });
+    group.insertBefore(backing, label);
+  }
+
+  const metres = millimetres => (Math.round(millimetres / 10) / 100).toFixed(2) + ' m';
+
+  function drawVehicle(parent, car, x, y, scale, accent, lengthSide, limit = false) {
+    const group = element(parent, 'g', { transform: `translate(${x} ${y}) scale(${scale})` });
+    const bodyFill = `color-mix(in srgb, ${accent} 5%, transparent)`;
+    for (const [name, outline] of Object.entries(car.body)) {
+      const isDetail = ['floor', 'wingFrontFlap', 'halo', 'lights', 'mirrors', 'exhaust', 'mudFlaps'].includes(name);
+      path(group, outline, accent, isDetail ? .75 : 1.05, {
+        opacity: isDetail ? .60 : .90, fill: isDetail ? 'none' : bodyFill,
+        'fill-rule': 'evenodd', 'stroke-linejoin': 'round',
+      });
+    }
+    for (const outline of Object.values(car.mechanical)) {
+      path(group, outline, 'var(--measurement)', .9);
+    }
+    for (const outline of car.tires) {
+      path(group, outline, 'var(--measurement)', 1.05, { fill: 'var(--tire)' });
+    }
+    const halfWidth = car.width / 2;
+    for (const axle of [-car.wheelbase, 0]) {
+      path(group, `M${-halfWidth - 60} ${axle}h${car.width + 120}`, accent, 1, { 'stroke-dasharray': '4 3' });
+    }
+    for (const [cx, cy] of car.tyreCentres) {
+      element(group, 'circle', { cx, cy, r: 3.1 / scale, fill: 'var(--background)', stroke: accent, 'stroke-width': 1.5 });
+    }
+
+    const edge = lengthSide * (halfWidth + 137);
+    const reach = -lengthSide * 115;
+    path(group, `M${edge + reach} ${-car.nose}H${edge}V${car.tail}h${reach}`, 'var(--measurement)', .85);
+    const widthY = 1070;
+    path(group, `M${-halfWidth} ${widthY - 48}v96m0-48H${halfWidth}m0-48v96`, 'var(--measurement)', .85);
+
+    // The wheelbase arrows terminate on the exact axle centerlines.
+    const head = 5.5 / scale;
+    const flight = 3.2 / scale;
+    const front = -car.wheelbase;
+    path(group,
+      `M0 ${front}V0 M${-flight} ${front + head}L0 ${front} ${flight} ${front + head} M${-flight} ${-head}L0 0 ${flight} ${-head}`,
+      accent, 1.45, { 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+    measureLabel(parent, x, y - car.wheelbase * scale / 2, (limit ? '≤ ' : '') + metres(car.wheelbase));
+  }
+
+  function render() {
+    const width = figure.clientWidth;
+    if (width === 0) return;
+    const key = chooser.value;
+    const kart = models[key];
+    const details = kartDetails[key];
+    const scale = Math.min(.086, (width - 10) / 5500);
+    const center = width / 2;
+    const plotLeft = center - 2750 * scale;
+    const plotRight = center + 2750 * scale;
+    const rearY = 4750 * scale + 6;
+    const plotTop = 6;
+    const plotBottom = rearY + 1250 * scale;
+    const height = plotBottom + 3;
+
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svg.style.height = `${height}px`;
+    // Align the headings with the two vehicle centerlines as the plot narrows.
+    root.querySelector('.f1-labels').style.marginInline = `${plotLeft}px`;
+    root.querySelector('[data-kart-name]').textContent = details.name;
+    root.querySelector('[data-kart-size]').textContent = `${metres(kart.length)} long × ${metres(kart.width)} wide`;
+    root.querySelector('#f1-plan-desc').textContent =
+      `Both vehicles face up and share a rear axle reference line. The Audi R26 is 5.44 metres long and 1.90 metres wide, and drawn at its 3.40 metre wheelbase limit. The ${details.ariaName} is ${metres(kart.length)} long and ${metres(kart.width)} wide with a ${metres(kart.wheelbase)} wheelbase. The grid squares are a quarter metre.`;
+
+    plan.replaceChildren();
+    const grid = { minor: [], major: [] };
+    for (let mm = -2750; mm <= 2750; mm += 250) {
+      const x = center + mm * scale;
+      grid[mm % 1000 ? 'minor' : 'major'].push(`M${x} ${plotTop}V${plotBottom}`);
+    }
+    for (let mm = -4750; mm <= 1250; mm += 250) {
+      const y = rearY + mm * scale;
+      if (mm !== 0) grid[mm % 1000 ? 'minor' : 'major'].push(`M${plotLeft} ${y}H${plotRight}`);
+    }
+    path(plan, grid.minor.join(''), 'var(--fine-grid)', .65);
+    path(plan, grid.major.join(''), 'var(--major-grid)', .85);
+    path(plan, `M${plotLeft} ${rearY}H${plotRight}`, 'var(--measurement)', 1.05, { 'stroke-dasharray': '3 4' });
+    drawVehicle(plan, audi, center - 1375 * scale, rearY, scale, 'var(--audi)', -1, true);
+    drawVehicle(plan, kart, center + 1375 * scale, rearY, scale, 'var(--kart)', 1);
+  }
+
+  chooser.addEventListener('change', () => {
+    render();
+    const kart = models[chooser.value];
+    root.querySelector('[data-kart-status]').textContent =
+      `${kartDetails[chooser.value].name} wheelbase ${metres(kart.wheelbase)}.`;
+    window.openai?.setWidgetState?.({
+      modelContent: { kart: chooser.value, wheelbaseMetres: kart.wheelbase / 1000 }, privateContent: null,
+    })?.catch(() => {});
+  });
+  function restore(state) {
+    const saved = state?.modelContent?.kart;
+    if (Object.hasOwn(models, saved)) chooser.value = saved;
+    render();
+  }
+  window.addEventListener('openai:set_globals', event => restore(event.detail?.globals?.widgetState));
+  new ResizeObserver(render).observe(figure);
+  restore(window.openai?.widgetState);
+})();
+</script>

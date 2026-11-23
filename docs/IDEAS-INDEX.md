@@ -11,6 +11,8 @@ but later), rejected (the owner said no; do not bring back unless the owner does
 **Rule for every session:** record each new idea the moment it comes up, in the file below that fits it, with who
 suggested it, the date and its status. An alternative being discussed is not an approval.
 
+Start the project review with the [draft master plan](MASTER-PLAN.md). The [design archive](design-archive/README.md) gathers earlier visual studies and notes.
+
 ## A. How we work
 
 1. `CLAUDE.md` and `AGENTS.md`: entry points for Claude and Codex.
@@ -49,6 +51,8 @@ suggested it, the date and its status. An alternative being discussed is not an 
 1. `docs/KARTS.md` and `docs/karts/`: kart designs, parts, driving references and sizes.
 2. `docs/HANDOFF.md`, section "Codex driving handoff", and the kart items placed after avatar item 82 (they reuse
    the numbers 36 to 43).
+3. [Kart concept catalog](karts/concepts/README.md): current paired sheets, images and build-reference handoff.
+4. [Kart design decisions](karts/concepts/DECISIONS.md): tiers, racing palettes, owner revisions and deferred ideas.
 
 ## F. Ideas still waiting for a decision (23 November 2026)
 
