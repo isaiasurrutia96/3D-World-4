@@ -12,7 +12,11 @@ import { FPV, createDrivingCameraRig } from './driving-camera.js';
 import { createF1EngineAudio } from './f1-engine-audio.js';
 const $ = s => document.querySelector(s);
 const F1_2026_OPTION = 'f1-2026';
-const GT3_OPTION = 'gt-gt3';
+const GT_OPTIONS = [
+    { id: 'gt', tune: 'early', label: 'First-drive GT' },
+    { id: 'gt-gt3', tune: 'gt3', label: 'GT3' },
+    { id: 'gt-gt3-v3', tune: 'gt3-v3', label: 'GT3 V3' },
+];
 const GT3_AID_DISPLAY_THRESHOLD = .01;
 const GT3_HELP = 'Drive with the arrows or E S D F, brake with Space, and look with J L I K or by dragging. On a phone, hold the steering and pedal buttons. On a gamepad, steer and drive with the left stick or use RT for gas and LT for brake. TC manages wheelspin. ABS helps prevent wheel lock.';
 const showText = (element, text) => { if (element.textContent !== text) element.textContent = text; };
@@ -27,9 +31,10 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     const profile = ['original','balanced','fast'].includes(requestedProfile) ? requestedProfile : 'fast';
     const selection = TRACK_IDS.includes(requested) || requested === PARKED_KARTS || requested === NEIGHBORHOOD ? requested : 'original';
     const requestedKart = params.get('kart');
+    const requestedGTTune = params.get('gtTune');
     let prototype = isKartPrototype(requestedKart) ? requestedKart : undefined;
     let f1Tune = params.get('f1Tune') === '2026' ? '2026' : 'early';
-    let gtTune = params.get('gtTune') === 'gt3' ? 'gt3' : 'early';
+    let gtTune = GT_OPTIONS.find(option => option.tune === requestedGTTune)?.tune ?? 'early';
     let test = createDrivingTest(selection, { profile, prototype, f1Tune, gtTune });
     const original = createOriginalKartView();
     const views = new Map();
@@ -61,7 +66,7 @@ export function createDrivingSimulation({ scene, stage, floor }) {
         } else if (id === 'gt') {
             const gtOptions = document.createElement('optgroup');
             gtOptions.label = dimensions.label;
-            gtOptions.append(new Option('First-drive GT', id), new Option('GT3', GT3_OPTION));
+            for (const option of GT_OPTIONS) gtOptions.append(new Option(option.label, option.id));
             kartSelect.append(gtOptions);
         } else kartSelect.append(new Option(dimensions.label, id));
     }
@@ -90,10 +95,11 @@ export function createDrivingSimulation({ scene, stage, floor }) {
         const isParked = test.selection === PARKED_KARTS;
         const id = isParked ? undefined : prototype;
         const is2026 = id === 'f1' && f1Tune === '2026';
-        const isGT3 = id === 'gt' && gtTune === 'gt3';
+        const gtOption = id === 'gt' ? GT_OPTIONS.find(option => option.tune === gtTune) : undefined;
+        const isGT3 = gtOption !== undefined && gtOption.tune !== 'early';
         const hasPowertrainHud = is2026 || isGT3;
         kartSelect.disabled = isParked;
-        kartSelect.value = is2026 ? F1_2026_OPTION : isGT3 ? GT3_OPTION : id ?? 'original';
+        kartSelect.value = is2026 ? F1_2026_OPTION : gtOption?.id ?? id ?? 'original';
         sound.hidden = !is2026 || !engineAudio.available;
         topbar.classList.toggle('with-f1-sound', !sound.hidden);
         topbar.classList.toggle('with-gt-picker', id === 'gt');
@@ -272,9 +278,10 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     picker.querySelector('select').onchange = event => selectTrack(event.currentTarget.value);
     kartSelect.onchange = () => {
         const id = kartSelect.value;
+        const gtOption = GT_OPTIONS.find(option => option.id === id);
         f1Tune = id === F1_2026_OPTION ? '2026' : 'early';
-        gtTune = id === GT3_OPTION ? 'gt3' : 'early';
-        prototype = id === F1_2026_OPTION ? 'f1' : id === GT3_OPTION ? 'gt' : isKartPrototype(id) ? id : undefined;
+        gtTune = gtOption?.tune ?? 'early';
+        prototype = id === F1_2026_OPTION ? 'f1' : gtOption ? 'gt' : isKartPrototype(id) ? id : undefined;
         test = createDrivingTest(test.selection, { profile, prototype, f1Tune, gtTune });
         refresh();
     };

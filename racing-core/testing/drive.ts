@@ -8,6 +8,7 @@ import { createPrototypeLapClock } from './prototype-laps.ts';
 import { resolveKartProfile } from '../kart/profiles.ts';
 import { F1_2026_PROFILE } from '../kart/f1-2026-profile.ts';
 import { GT3_PROFILE } from '../kart/gt3-profile.ts';
+import { GT3_V3_PROFILE } from '../kart/gt3-v3-profile.ts';
 import type { KartProfile, ProfileId } from '../kart/profiles.ts';
 import type { KartInput, InputScript } from '../kart/index.ts';
 import { trackBarriers } from '../contacts/index.ts';
@@ -17,7 +18,7 @@ import { NEIGHBORHOOD, NEIGHBORHOOD_WORLD } from './neighborhood.ts';
 export { TRACK_IDS, PARKED_KARTS, NEIGHBORHOOD };
 export type DrivingSelection = TrackId | typeof PARKED_KARTS | typeof NEIGHBORHOOD;
 export type F1Tune = 'early' | '2026';
-export type GTTune = 'early' | 'gt3';
+export type GTTune = 'early' | 'gt3' | 'gt3-v3';
 export type DrivingSample = Readonly<{
     moveX?: number;
     moveZ?: number;
@@ -70,7 +71,7 @@ export function createDrivingTest(initialSelection: DrivingSelection = 'original
     const gtTune = options.gtTune ?? 'early';
     if (kart !== undefined && !isKartPrototype(kart)) throw new RangeError('Unknown kart prototype');
     if (f1Tune !== 'early' && f1Tune !== '2026') throw new RangeError('Unknown F1 tune');
-    if (gtTune !== 'early' && gtTune !== 'gt3') throw new RangeError('Unknown GT tune');
+    if (gtTune !== 'early' && gtTune !== 'gt3' && gtTune !== 'gt3-v3') throw new RangeError('Unknown GT tune');
     const empty = Object.freeze([]);
     function createScenario(selection: DrivingSelection) {
         const isParked = selection === PARKED_KARTS;
@@ -81,7 +82,7 @@ export function createDrivingTest(initialSelection: DrivingSelection = 'original
         const geometry = prototype ? KART_PROTOTYPES[prototype] : undefined;
         let profile = prototype ? PROTOTYPE_HANDLING[prototype] : originalProfile;
         if (prototype === 'f1' && f1Tune === '2026') profile = F1_2026_PROFILE;
-        if (prototype === 'gt' && gtTune === 'gt3') profile = GT3_PROFILE;
+        if (prototype === 'gt' && gtTune !== 'early') profile = gtTune === 'gt3' ? GT3_PROFILE : GT3_V3_PROFILE;
         if (track.id === NEIGHBORHOOD) {
             const controller = createKartController({
                 profile, world: track, geometry, initial: { ...track.start.point, yaw: track.start.yaw },

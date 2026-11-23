@@ -121,8 +121,49 @@ try {
     assert.equal(await mobile.evaluate(() => drivingLab.getState().gtTune), 'gt3');
     assert.equal(await gtRevs.textContent(), initialRevs);
 
+    const v2Fingerprint = 'kart-v1-ab5d59ff069b51c6';
+    assert.equal(await mobile.evaluate(() => drivingLab.getState().fingerprint), v2Fingerprint);
+    await mobile.evaluate(() => { window.comparisonGT = { kart: drivingLab.kart.root, start: drivingLab.getState().pose }; });
+    await kartMenu.selectOption({ label: 'GT3 V3' });
+    assert.equal(await kartMenu.inputValue(), 'gt-gt3-v3');
+    assert(await mobile.evaluate(oldFingerprint => {
+        const { gtTune, trackId, prototype, fingerprint, pose } = drivingLab.getState();
+        return gtTune === 'gt3-v3' && trackId === 'original' && prototype === 'gt' && fingerprint !== oldFingerprint
+            && drivingLab.kart.root === comparisonGT.kart && pose.x === comparisonGT.start.x
+            && pose.z === comparisonGT.start.z && pose.yaw === comparisonGT.start.yaw;
+    }, v2Fingerprint));
+    assert(await gtRevs.isVisible());
+    assert(await gtAids.isVisible());
+    assert.equal(await gtAids.textContent(), 'TC ready · ABS ready');
+    assert(await boostControl.isHidden());
+    assert(await boostControl.isDisabled());
+    const v3Revs = await gtRevs.textContent();
+    assert.match(v3Revs, /^Gear 1 · \d+ rpm$/);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [await touch('gas', 44), await touch('left', 45)] });
+    await mobile.waitForFunction(revs => {
+        const { speed, steering, yaw } = drivingLab.getState().physics;
+        return speed > 5 && steering < -.01 && yaw > comparisonGT.start.yaw + .04
+            && document.querySelector('#drive-gt-revs').textContent !== revs;
+    }, v3Revs);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+    await mobile.waitForFunction(() => !motionLab.input.actions.gas && !motionLab.input.actions.left);
+    await mobile.locator('#reset').click();
+    assert.equal(await gtRevs.textContent(), v3Revs);
+
+    const trackMenu = mobile.locator('#race-track');
+    await trackMenu.selectOption('neighborhood');
+    assert.equal(await kartMenu.inputValue(), 'gt-gt3-v3');
+    assert(await mobile.evaluate(() => {
+        const { gtTune, trackId, lap } = drivingLab.getState();
+        return gtTune === 'gt3-v3' && trackId === 'neighborhood' && !lap && drivingLab.kart.root === comparisonGT.kart;
+    }));
+    await trackMenu.selectOption('original');
+    assert.equal(await kartMenu.inputValue(), 'gt-gt3-v3');
+    await kartMenu.selectOption('gt-gt3');
+    assert.equal(await mobile.evaluate(() => drivingLab.getState().fingerprint), v2Fingerprint);
+
     assert.deepEqual(errors, []);
-    console.log('PASS: GT3 phone comparison, unchanged First-drive GT and chassis, direct link, reachable controls, live gear and revs, ABS and TC intervention, boost isolation, and reset.');
+    console.log('PASS: GT3 and GT3 V3 phone comparison, unchanged First-drive GT and chassis, direct GT3 link, reachable controls, live gear and revs, ABS and TC intervention, boost isolation, track switches, and reset.');
 }
 finally {
     await browser.close();

@@ -113,6 +113,11 @@ A nose (small triangle) on the head for the look pose; the ball in the middle of
 
 ## Codex driving handoff
 
+**GT3 V3 (23 November 2026).** Pick **GT3 V3** from the standalone Driving Test’s Kart
+menu to compare the new steering and mid-speed grip tune on the 2.10 m GT chassis.
+The Original Circuit and Neighborhood both support it. See the controlled runs
+and calibration in the [GT3 driving reference](karts/GT3-DRIVING-REFERENCE.md#g-gt3-v3-comparison).
+
 **GT3 driving (22 November 2026).** The standalone Driving Test has
 **First-drive GT** and **GT3** presets for the same 3.25 m GT prototype.
 The GT3 tune uses six sequential gears, speed-dependent grip, longitudinal

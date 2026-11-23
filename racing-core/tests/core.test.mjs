@@ -11,6 +11,7 @@ import '../contacts/check.test.mjs';
 import '../testing/check.test.mjs';
 import '../testing/prototypes.test.mjs';
 import '../testing/neighborhood.test.mjs';
+import '../testing/gt3-v3.test.mjs';
 import '../kart/f1-2026-profile.test.mjs';
 import '../kart/f1-2026-systems.test.mjs';
 import '../kart/gt3-profile.test.mjs';

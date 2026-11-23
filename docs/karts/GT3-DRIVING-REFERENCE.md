@@ -205,3 +205,34 @@ reference. [Stock body](PARTS-KIT.md#h-models-per-class) ·
    includes road resistance, tire allocation and contacts.
    [Held-turn test](../../racing-core/kart/gt3-profile.test.mjs) ·
    [Compound-turn test](../../racing-core/testing/prototypes.test.mjs)
+
+## G. GT3 V3 comparison
+
+1. **GT3 V3** is a separate Kart choice on the same 2.10 m GT chassis. The
+   fixed-step tire model, gear ratios and traction and braking aids are shared.
+   [Open GT3 V3 on Original Circuit](https://isaiasurrutia96.github.io/3D-World-4/racing-lab/?drive=1&kart=gt&gtTune=gt3-v3&track=original)
+2. The archived LetsGo build uses quick steering corrections with a gradual
+   increase in steering authority during a hold. V3 uses the existing steering
+   ramp and tire limit to give quick corrections and a consistent held line.
+   At circuit speeds the input reaches full demand in **0.165 s** and releases
+   in **0.09 s**, compared with **0.21 s** and **0.11 s** on GT3. The reference
+   yaw response is **0.115 s**, scaled to about **0.096 s** on the kart. At low
+   speeds a **0.225 s** rise and **1.18** exponent shape partial steering.
+   [LetsGo steering](https://github.com/isaiasurrutia96/3D-World-3/blob/9a9df46/apps/letsgo-racing/src/vehicle-controller.js#L36-L49)
+3. With an **82 km/h** entry on Original Circuit, the current GT3 and V3 were
+   tested on the same line using **1.5 s** of held steering. Quicker steering
+   alone reduced peak distance from the centerline under late Gas from **2.28
+   to 1.60 m**. Adding a mid-speed dry-grip increase brought it to **1.18 m**.
+   The new targets rise by **0.08 g** at **90 km/h** and **0.04 g** at **120 km/h**,
+   with a smooth return to the prior curve by **155 km/h**. These are game
+   calibration targets for the GT chassis, measured using the prototype.
+
+   | Test at the same entry | GT3 | GT3 V3 |
+   | --- | ---: | ---: |
+   | Travel direction change in 0.2 s | 1.82° | 2.64° |
+   | Lifted turn, widest centerline offset | 2.12 m | 1.11 m |
+   | Gas after 0.55 s, widest centerline offset | 2.28 m | 1.18 m |
+   | Gas after 0.55 s, exit speed | 79.85 km/h | 79.47 km/h |
+
+   [GT3 V3 profile](../../racing-core/kart/gt3-v3-profile.ts) ·
+   [Driving regression checks](../../racing-core/testing/gt3-v3.test.mjs)

@@ -131,8 +131,9 @@ function driveAcrossJunction(options, fps) {
     return physics;
 }
 
-test('Stock, GT3 and 2026 F1 can turn onto a crossing street at 30 and 144 Hz', () => {
-    for (const options of [{}, { prototype: 'gt', gtTune: 'gt3' }, { prototype: 'f1', f1Tune: '2026' }]) {
+test('Stock, GT3, GT3 V3 and 2026 F1 can turn onto a crossing street at 30 and 144 Hz', () => {
+    const choices = [{}, { prototype: 'gt', gtTune: 'gt3' }, { prototype: 'gt', gtTune: 'gt3-v3' }, { prototype: 'f1', f1Tune: '2026' }];
+    for (const options of choices) {
         assert.deepEqual(driveAcrossJunction(options, 144), driveAcrossJunction(options, 30));
     }
 });

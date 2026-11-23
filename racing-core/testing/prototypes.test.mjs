@@ -331,7 +331,9 @@ test('2026 F1 completes and records the same timed lap at 30 and 144 Hz', () => 
     assert.equal(replayLap(options, 30), replayLap(options, 144));
 });
 
-test('GT3 completes and records the same timed lap at 30 and 144 Hz', () => {
-    const options = { prototype: 'gt', gtTune: 'gt3' };
-    assert.equal(replayLap(options, 30), replayLap(options, 144));
-});
+for (const [label, gtTune] of [['GT3', 'gt3'], ['GT3 V3', 'gt3-v3']]) {
+    test(`${label} completes and records the same timed lap at 30 and 144 Hz`, () => {
+        const options = { prototype: 'gt', gtTune };
+        assert.equal(replayLap(options, 30), replayLap(options, 144));
+    });
+}

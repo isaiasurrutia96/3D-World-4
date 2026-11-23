@@ -45,7 +45,7 @@ try {
     }));
 
     const kartChoices = [
-        ['gokart', 'gokart'], ['gt', 'gt', 'early'], ['gt-gt3', 'gt', 'gt3'],
+        ['gokart', 'gokart'], ['gt', 'gt', 'early'], ['gt-gt3', 'gt', 'gt3'], ['gt-gt3-v3', 'gt', 'gt3-v3'],
         ['f1', 'f1', undefined, 'early'], ['f1-2026', 'f1', undefined, '2026'], ['original'],
     ];
     for (const [option, prototype, gtTune, f1Tune] of kartChoices) {
@@ -82,10 +82,11 @@ try {
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     mobile.setDefaultTimeout(15_000);
     mobile.on('pageerror', error => errors.push(error.message));
-    await mobile.goto(`${base}&track=neighborhood&kart=gt&gtTune=gt3`);
+    await mobile.goto(`${base}&track=neighborhood&kart=gt&gtTune=gt3-v3`);
     await mobile.waitForFunction(() => window.drivingLabReady && window.motionLabReady);
     assert.equal(await mobile.locator('#race-track').inputValue(), 'neighborhood');
-    assert.equal(await mobile.locator('#driving-kart').inputValue(), 'gt-gt3');
+    assert.equal(await mobile.locator('#driving-kart').inputValue(), 'gt-gt3-v3');
+    assert.equal(await mobile.evaluate(() => drivingLab.getState().gtTune), 'gt3-v3');
     const mobileStart = await startPose(mobile);
     const cdp = await mobile.context().newCDPSession(mobile);
     async function touch(name, id) {
