@@ -372,6 +372,11 @@ export function closerHipBalls(bodyId='boy',gap=HIP_BALL_GAP_CLOSER,{pressed=pre
  * first matched to Our avatar: the ends keep their shape, only the middle stretches).
  */
 export const THIGH_CLOSER=.02,LIMB_SLIGHT=.0025;
+// The wrist ball pressed 2 cm deeper into the forearm (owner, 23 November 2026: the wrist showed about half its ball and
+// looked loose; "press the ball more into the forearm"): the forearm's end is wider than the ball, so its cup wraps
+// further round it, and the hand (and its palm) stays exactly as it was. Not made up by a longer forearm: each arm is
+// 2 cm shorter. 2 cm is the owner's own "deeper" from the hip depth.
+export const WRIST_FOREARM_DEEPER=.02;
 // A limb lengthened through its middle: its top end (toward the ball `dir` points away from) `top` further toward
 // that ball, its bottom end `bottom` further the other way.
 const lengthenLimb=(p,dir,top,bottom)=>{if(!top&&!bottom)return p;const L=limbLine(p.positions),s=stretchLimb(p.positions,top+bottom).positions,v=dot3(L.dir,dir)>0?scale3(dir,-top):scale3(dir,bottom);
@@ -421,13 +426,13 @@ export function wristAnkleSockets(bodyId='boy',{apart=separatedOriginalBody(body
  const pick=(n,s)=>apart.parts.find(p=>p.name===n&&p.side===s),out=[];
  const mirror=m=>{const I=[];for(let t=0;t<m.index.length;t+=3)I.push(m.index[t],m.index[t+2],m.index[t+1]);return {...m,positions:m.positions.map((v,i)=>i%3===0?-v:v),normals:m.normals.map((v,i)=>i%3===0?-v:v),index:I};};
  // One ball pushed into one piece along `dir` (pointing from the ball into the piece) and pulled back out.
- const press=(piece,ball,dir)=>{const r=ball.radius,inBall={...ball,centre:add3(ball.centre,scale3(dir,r+BALL_GAP-(1-PREVIEW_PRESS)*r))};
+ const press=(piece,ball,dir,deeper=0)=>{const r=ball.radius,inBall={...ball,centre:add3(ball.centre,scale3(dir,r+BALL_GAP-(1-PREVIEW_PRESS)*r+deeper))};
   const cut=pushBallsIn({positions:piece.positions,index:piece.index,normals:piece.normals},[inBall],[ball],bodyId);return {cut,soft:softenShoulderRims(cut)};};
  for(const [limbName,topBall,endBall,endName,legs] of [['forearm','ball-elbow','ball-wrist','hand',false],['calf','ball-knee','ball-ankle','foot',true]]){
   const shift=legs&&hips?sub3(hips.outBalls.find(b=>b.side==='left').centre,pick('ball-hip','left').centre):[0,0,0];
   const [limb,top,end,tip]=[pick(limbName,'left'),pick(topBall,'left'),pick(endBall,'left'),pick(endName,'left')].map(p=>moveBy(p,shift));
   const L=limbLine(limb.positions,limb.axis);let down=L.dir;if(dot3(sub3(L.centre,top.centre),down)<0)down=neg(down);
-  const a=press(lengthenLimb(limb,down,LIMB_SLIGHT,LIMB_SLIGHT),top,down),b=press(a.soft.torso,end,neg(down)),c=press(tip,end,down);
+  const a=press(lengthenLimb(limb,down,LIMB_SLIGHT,LIMB_SLIGHT),top,down),b=press(a.soft.torso,end,neg(down),limbName==='forearm'?WRIST_FOREARM_DEEPER:0),c=press(tip,end,down);
   const ballR=ballPart(endBall,'right',end.radius,[-end.centre[0],end.centre[1],end.centre[2]]);
   out.push({name:limbName,side:'left',part:{...b.soft.torso,name:limbName,side:'left'},cuts:[a.cut,b.cut]},{name:limbName,side:'right',part:{...mirror(b.soft.torso),name:limbName,side:'right'},cuts:[a.cut,b.cut]});
   out.push({name:endName,side:'left',part:{...c.soft.torso,name:endName,side:'left'},cuts:[c.cut]},{name:endName,side:'right',part:{...mirror(c.soft.torso),name:endName,side:'right'},cuts:[c.cut]});
