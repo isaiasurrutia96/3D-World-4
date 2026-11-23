@@ -58,7 +58,12 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     // A held Boost is still an accelerator, but a released pedal can now slow
     // the kart even while the granted boost timer has not expired.
     const throttle = input.throttle ?? 0, requested = !gt3Balance && input.boost && throttle >= 0 ? 1 : throttle;
-    const brake = Math.max(Number(Boolean(input.brake)), input.brakeAmount ?? 0);
+    const movingDirection = source.speed < -.001 ? -1 : source.speed > .001 ? 1 : 0;
+    const explicitBrake = Math.max(Number(Boolean(input.brake)), input.brakeAmount ?? 0);
+    // Brake/Reverse is an opposing pedal command while the GT3 is moving.
+    // Use the service brake immediately, without waiting for gas to decay.
+    const opposingBrake = gt3Balance && movingDirection * requested < 0 ? Math.abs(requested) : 0;
+    const brake = explicitBrake || opposingBrake;
     const desiredThrottle = brake > 0 ? 0 : requested;
     const throttleTime = Math.abs(desiredThrottle) > Math.abs(h.throttle) && desiredThrottle * h.throttle >= 0 ? profile.throttleRiseSeconds : profile.throttleReleaseSeconds;
     h.throttle = approach(h.throttle, desiredThrottle, dt / throttleTime);
@@ -67,7 +72,9 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     h.lift = approach(h.lift, liftTarget, dt / (liftTarget > h.lift ? profile.liftRiseSeconds : profile.liftReleaseSeconds));
     const sin = Math.sin(source.yaw), cos = Math.cos(source.yaw);
     const vx0 = sin * source.speed + cos * source.lateralSpeed, vz0 = cos * source.speed - sin * source.lateralSpeed;
-    const v = Math.hypot(vx0, vz0), direction = source.speed < -.001 ? -1 : source.speed > .001 ? 1 : Math.sign(h.throttle) || 1;
+    const v = Math.hypot(vx0, vz0);
+    // At rest, a direction change must not reapply the old filtered throttle.
+    const direction = movingDirection || (gt3Balance ? Math.sign(desiredThrottle) : 0) || Math.sign(h.throttle) || 1;
     const response = steeringResponse(profile, v);
     const steer = input.steer ?? 0;
     const opposing = h.throttle * direction < -.001;
@@ -98,7 +105,7 @@ export function prepareTunedStep(source: KartState, input: KartInput, activateBo
     // still reaches the existing limit, including the approved high-speed grip.
     const demand = response.exponent===1 ? h.steerInput : Math.sign(h.steerInput)*Math.pow(Math.abs(h.steerInput),response.exponent);
     s.steering = demand * h.steeringLimit;
-    const turnSpeed = s.railContactTime > 0 && requested > 0 ? Math.max(source.speed, 2) : source.speed;
+    const turnSpeed = s.railContactTime > 0 && requested > 0 && !opposingBrake ? Math.max(source.speed, 2) : source.speed;
     const yawTarget = source.grounded ? -turnSpeed / geometry.wheelbase * Math.tan(s.steering) : 0;
     const requestedYaw = h.yawRate + (yawTarget - h.yawRate) * (1 - Math.exp(-dt / profile.yawResponseSeconds));
     h.yawRate = source.grounded ? approach(h.yawRate, requestedYaw, profile.yawAcceleration * dt) : 0;

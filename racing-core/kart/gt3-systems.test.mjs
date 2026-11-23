@@ -149,3 +149,48 @@ test('Spawning or resetting a moving GT3 selects its actual gear without a shift
     close(reverse.rpm, 9_050 * (18 / 105) * (geometry.wheelRadius / wheelRadius) * 1.15);
     assert.equal(reverse.shiftRemainingSeconds, 0);
 });
+
+test('GT3 Brake/Reverse matches the explicit service brake on corner entry', () => {
+    const moving = () => {
+        const kart = createKartController({ world, profile: GT3_PROFILE, geometry, initial: { speed: 170 / 3.6 } });
+        kart.advance(.25, { throttle: 1 });
+        return kart;
+    };
+    const phone = moving(), pedal = moving();
+    const steer = .55;
+    const braking = phone.advanceWithTrace(.25, { throttle: -1, steer });
+    assert.deepEqual(braking, pedal.advanceWithTrace(.25, { brake: true, steer }));
+    assert.ok(braking.states[0].handling.brakingG > 0);
+    assert.deepEqual(phone.advanceWithTrace(.25, { throttle: 1 }), pedal.advanceWithTrace(.25, { throttle: 1 }));
+
+    const mixed = moving(), analog = moving();
+    assert.deepEqual(
+        mixed.advanceWithTrace(.25, { throttle: -1, brakeAmount: .4, steer }),
+        analog.advanceWithTrace(.25, { brakeAmount: .4, steer }),
+    );
+});
+
+test('GT3 brakes and then changes direction smoothly in both directions', () => {
+    for (const sign of [-1, 1]) {
+        const moving = () => {
+            const kart = createKartController({ world, profile: GT3_PROFILE, geometry, initial: { speed: sign } });
+            kart.advance(.25, { throttle: sign });
+            return kart;
+        };
+        const automatic = moving(), explicit = moving();
+        assert.deepEqual(
+            automatic.advanceWithTrace(.10, { throttle: -sign }),
+            explicit.advanceWithTrace(.10, { brake: true }),
+        );
+        assert.ok(automatic.state.speed * sign > 0);
+        let stopped = false;
+        for (let tick = 0; tick < 120; tick++) {
+            const state = automatic.advance(KART.step, { throttle: -sign });
+            if (stopped) assert.ok(state.speed * sign <= 1e-9, 'Old pedal direction must not return after stopping');
+            if (Math.abs(state.speed) < 1e-9) stopped = true;
+        }
+        assert.ok(stopped, 'Opposing pedal must stop before driving the other way');
+        assert.ok(automatic.state.speed * sign < -1);
+        assert.equal(automatic.state.handling.gt3.gear, sign === 1 ? -1 : 1);
+    }
+});

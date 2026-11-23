@@ -193,6 +193,31 @@ test('GT3 shifts gears, transfers axle load and uses driving aids on the Origina
     assert.deepEqual(driving.getState(), start);
 });
 
+test('GT3 turns into the first tightening corner on Original with a held steering button', () => {
+    const driving = createDrivingTest('original', { prototype: 'gt', gtTune: 'gt3' });
+    const station = 356;
+    const { point, forward } = driving.track.sample(station);
+    driving.controller.reset({ ...point, yaw: Math.atan2(forward.x, forward.z), speed: 105 / 3.6 });
+
+    let contacts = 0;
+    function steer(_tick, _seconds, state) {
+        assert(state.grounded);
+        contacts += state.contacts;
+        return { steer: 1 };
+    }
+    const turnIn = driving.advance(.2, steer);
+    assert.ok(turnIn.handling.lateralG >= .65, `Turn-in after 0.2 s: ${turnIn.handling.lateralG} g`);
+    for (let frame = 0; frame < 4; frame++) driving.advance(.2, steer);
+
+    const end = driving.controller.state;
+    const line = driving.track.project(end, { hintDistance: station, maxDelta: 45 });
+    const speed = Math.hypot(end.speed, end.lateralSpeed) * 3.6;
+    assert(end.grounded);
+    assert.equal(contacts + end.contacts, 0);
+    assert.ok(speed > 99 && speed < 101, `Speed after 1 s: ${speed} km/h`);
+    assert.ok(line && Math.abs(line.offset) < 3.2, `Offset after 1 s: ${line?.offset} m`);
+});
+
 function replayLap(options, fps) {
     const { prototype } = options;
     const driving = createDrivingTest('original', options);

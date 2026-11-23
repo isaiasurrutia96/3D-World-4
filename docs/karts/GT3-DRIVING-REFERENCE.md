@@ -116,10 +116,38 @@ reference. [Stock body](PARTS-KIT.md#h-models-per-class) ·
    | Full brake 250→100 km/h | Above normal speed cap | **2.45 s / 117.1 m / 2.10 g peak** |
    | Speed one second after lifting at 150 km/h | 136.2 km/h | **143.4 km/h** |
 
-   The held-turn check delivered **1.65 g at 120 km/h** and **2.25 g at
-   240 km/h**. In a repeatable 175 km/h corner entry, easing the brake
-   from early heavy application to light trail braking brought lateral
+   The first release delivered **1.65 g at 120 km/h** and **2.25 g at
+   240 km/h** in the held-turn check. In a repeatable 175 km/h corner
+   entry, easing the brake from early heavy application to light trail
+   braking brought lateral
    force from **0.43 to 1.36 g** while staying within the combined tire
    limit. These tests check the prototype against representative class
    behavior. The sampled races, simulator comparison and model estimates
    are listed above. [Calibration checks](../../racing-core/kart/gt3-profile.test.mjs)
+
+## D. Handling refinement
+
+1. The first release filtered steering input and chassis rotation in
+   series. It took longer to turn in than First-drive GT at medium
+   speeds. Shortening both responses and the steering release brought
+   the front in sooner. In the Original Circuit fixture, both runs
+   entered the first tightening corner at **105 km/h** and reached
+   **99.9 km/h** after a one-second steering hold. Initial lateral force
+   rose from **0.52 to 0.79 g** at 0.2 s, and the final distance from
+   the centerline fell from **3.59 to 2.78 m**. Both runs finished
+   the maneuver on the road. [Track regression](../../racing-core/testing/prototypes.test.mjs) ·
+   [Transient test method reference](https://www.iso.org/standard/54144.html)
+2. The revised dry grip curve delivered **1.74 g** at 120 km/h in the
+   held-turn check, up from **1.65 g**. The 240 km/h target stays at
+   **2.25 g**. The mid-speed increase is a tuning choice for this
+   chassis. The fixed-step tire limit still shares grip between braking,
+   cornering and rear drive. The timing, launch, braking distance and
+   top-speed checks in section C still agree at their stated precision.
+   [Steering and grip checks](../../racing-core/kart/gt3-profile.test.mjs)
+3. While moving forward, GT3's phone **Brake / Reverse** button now
+   starts the service-brake ramp as soon as it is pressed. At rest the
+   held button selects reverse. From the same **171.4 km/h** gas-to-brake
+   transition, the phone control reached 1 g braking in **0.075 s** and
+   slowed to 120 km/h in **38.1 m**. The first release took **0.217 s**
+   and **45.3 m**. Explicit braking takes precedence over a simultaneous
+   direction command. [Pedal and reversal checks](../../racing-core/kart/gt3-systems.test.mjs)

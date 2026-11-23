@@ -3,7 +3,7 @@ import test from 'node:test';
 import { createKartController, KART } from './index.ts';
 import { F1_2026_PROFILE } from './f1-2026-profile.ts';
 import { GT3_PROFILE } from './gt3-profile.ts';
-import { KART_PROTOTYPES } from './prototypes.ts';
+import { KART_PROTOTYPES, PROTOTYPE_HANDLING } from './prototypes.ts';
 import { STANDARD_GRAVITY } from './profiles.ts';
 
 const flatRoad = { heightAt: () => 0 };
@@ -108,29 +108,37 @@ test('GT3 has a progressive lift response between steady power and full braking'
 function heldTurn(kmh, profile = GT3_PROFILE) {
     const initialSpeed = kmh / 3.6;
     const kart = makeController(kmh, profile);
-    let initialLateral;
-    for (let tick = 0; tick < 2 / KART.step; tick++) {
+    const turnInTick = Math.round(.2 / KART.step);
+    const heldTicks = Math.round(2 / KART.step);
+    const totalTicks = heldTicks + Math.round(.3 / KART.step);
+    let initialLateral, handling;
+    for (let tick = 1; tick <= totalTicks; tick++) {
         // Keep the test at the selected speed using a light throttle correction.
         const error = initialSpeed - velocity(kart.state);
         const throttle = Math.max(.0001, Math.min(1, .07 + 1.5 * error));
-        const state = kart.advance(KART.step, { throttle, steer: 1 });
-        if (tick === 23) initialLateral = state.handling.lateralG;
+        const state = kart.advance(KART.step, { throttle, steer: tick <= heldTicks ? 1 : 0 });
+        if (tick === turnInTick) initialLateral = state.handling.lateralG;
+        if (tick === heldTicks) {
+            assert.ok(Math.abs(velocity(state) * 3.6 - kmh) < 3);
+            handling = state.handling;
+        }
     }
-    assert.ok(Math.abs(velocity(kart.state) * 3.6 - kmh) < 3);
-    return { handling: kart.state.handling, initialLateral };
+    return { handling, initialLateral, afterRelease: kart.state.handling.lateralG };
 }
 
-test('GT3 holds the dry grip envelope with progressive turn-in', () => {
-    for (const [kmh, minG, maxG] of [[50, 1.2, 1.4], [120, 1.6, 1.7], [240, 2.1, 2.4]]) {
+test('GT3 holds the dry grip envelope with a responsive turn-in and release', () => {
+    for (const [kmh, minG, maxG] of [[50, 1.36, 1.44], [120, 1.70, 1.78], [240, 2.15, 2.35]]) {
         const { handling } = heldTurn(kmh);
         inRange(handling.lateralG, minG, maxG, `${kmh} km/h lateral g`);
         assert.ok(Math.abs(handling.slipAngle) < 3 * Math.PI / 180);
     }
-    const gt = heldTurn(120);
     // Use the same geometry to isolate the handling tune from wheelbase.
+    const gt = heldTurn(120);
+    const firstDrive = heldTurn(120, PROTOTYPE_HANDLING.gt);
     const formula = heldTurn(120, F1_2026_PROFILE);
-    assert.ok(gt.initialLateral < formula.initialLateral * .85);
-    assert.ok(gt.initialLateral < gt.handling.lateralG * .55);
+    assert.ok(gt.initialLateral > firstDrive.initialLateral * 1.25, 'GT3 responds sooner than First-drive GT');
+    assert.ok(gt.initialLateral < formula.initialLateral * .95, 'F1 retains a faster turn-in');
+    assert.ok(gt.afterRelease < firstDrive.afterRelease * .85, 'GT3 unwinds promptly when steering is released');
 });
 
 test('GT3 trail braking transfers tire capacity from braking to steering', () => {

@@ -25,10 +25,11 @@ export const GT3_PROFILE = createHandlingProfile({
     braking: inMetresPerSecond([
         [0, 1.25], [70, 1.39], [120, 1.55], [170, 1.75], [210, 1.96], [250, 2.11], [286, 2.21],
     ]).map(([speed, decelerationG]) => [speed, decelerationG * STANDARD_GRAVITY]),
-    // Logged GT3 laps support 1.65 g at 120 km/h and stronger grip in fast turns.
+    // Bias the dry setup toward grip in tighter corners on this chassis.
+    // The 120 km/h target is 5% above the logged 1.65 g class reference.
     cornering: inMetresPerSecond([
-        [0, 1.32], [50, 1.32], [90, 1.49], [120, 1.65], [155, 1.77],
-        [190, 1.96], [240, 2.25], [286, 2.40],
+        [0, 1.32], [50, 1.40], [90, 1.58], [120, 1.74], [155, 1.91],
+        [190, 2.07], [240, 2.25], [286, 2.40],
     ]).map(([speed, gripG]) => [speed, gripG * STANDARD_GRAVITY]),
     liftOff: inMetresPerSecond([
         [0, 0], [15, .22], [50, .55], [100, 1.08], [150, 1.55], [200, 2.15],
@@ -39,12 +40,14 @@ export const GT3_PROFILE = createHandlingProfile({
     throttleRiseSeconds: .19, throttleReleaseSeconds: .12,
     brakeRiseSeconds: .13, brakeReleaseSeconds: .10,
     steeringLock: 29 * Math.PI / 180,
-    steeringResponse: { lowSpeedRiseSeconds: .31, lowSpeedExponent: 1.12, blendStart: 7, blendEnd: 23 },
-    steeringRiseSeconds: .26, steeringReleaseSeconds: .20,
+    // Shorten the input ramp and chassis response so brief digital
+    // steering commands start turning the kart sooner.
+    steeringResponse: { lowSpeedRiseSeconds: .26, lowSpeedExponent: 1.08, blendStart: 7, blendEnd: 23 },
+    steeringRiseSeconds: .21, steeringReleaseSeconds: .16,
     // Complete the speed-based limit before the 2.10 m chassis reaches the
     // dry tire limit under full steering lock.
     steeringBlendStart: 3, steeringBlendEnd: 6.9,
-    yawResponseSeconds: .17, yawAcceleration: 7, slipResponseSeconds: .20,
+    yawResponseSeconds: .135, yawAcceleration: 8.6, slipResponseSeconds: .17,
     tractionAssistance: .56, surfaceResponseSeconds: .15,
     // Recover gently when crossing onto a lower-speed surface.
     boostRecoveryDeceleration: 2.5, boostRecoverySeconds: .22,
