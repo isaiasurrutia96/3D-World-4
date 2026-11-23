@@ -11,6 +11,7 @@
 1. Fresh racing logic is in `racing-core/track/`, `kart/`, `contacts/` and `testing/`. Decisions and measured results are in [racing-core/PLAN.md](racing-core/PLAN.md). The approved Fast handling reference is [Driving Checkpoint 2](https://isaiasurrutia96.github.io/3D-World-4/checkpoints/driving-2/?drive=1&handling=fast). Earlier root-level racing modules and their NPC/lap/ghost results belong to the superseded prototype; they do not establish a finished race in the fresh rebuild.
 2. The original approved joint assembly is pinned in [avatar/official.json](avatar/official.json), with its [animation handoff](avatar/ANIMATION-HANDOFF.md). Skeleton has Detailed, Light and Game copies. New-avatar and Karts are separate ongoing studies; their presence is not approval to replace the driving model or handling.
 3. Current avatar movement status, ownership and the owner's latest decisions are in [docs/HANDOFF.md](docs/HANDOFF.md) and [docs/COLLABORATION.md](docs/COLLABORATION.md). Older walking/running pages do not represent the current approved movement work.
+4. The [kart design brief](docs/KART-DESIGN.md) records the stock kart measurements, cockpit positions, and dimensioned drawings.
 
 ## C. Build and regression checks
 
