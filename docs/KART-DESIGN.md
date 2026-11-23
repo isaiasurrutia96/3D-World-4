@@ -18,24 +18,24 @@ Wheelbase measures between the front and rear axle centers. Track measures betwe
 
 | Class and status | Overall L × W × H | Wheelbase | Track F / R | Tires F / R (diameter × width) | Drawing |
 | --- | ---: | ---: | ---: | --- | --- |
-| F1 GoKart **approved** | **4,315 × 1,500 × 1,170** | **2,650** | **1,200 / 1,150** | **565 × 225 / 570 × 300** | [Dimensioned sketch](karts/f1-kart-dimensioned-sketch.png) |
+| F1 GoKart **approved** | **4,315 × 1,500 × 1,170** | **2,650** | **1,200 / 1,150** | **565 × 225 / 570 × 300** | [Dimensioned sketch](karts/f1-kart-dimensioned-sketch.png) · [Full-size Mercedes comparison](karts/f1-kart-and-real-f1-comparison.png) |
 | GT GoKart **selected** | **3,650 × 1,680 × 1,385** | **1,980** | **1,340 / 1,350** | **535 × 240 / 560 × 245** | [Dimensioned sketch](karts/gt-kart-dimensioned-sketch.png) · [Full-size Porsche comparison](karts/gt-kart-and-real-porsche-comparison.png) |
 | GoKart (S Kart) **approved** | **2,450 × 1,450 × 1,050** | **1,490** | **1,120 / 1,230** | **400 × 155 / 420 × 200** | [Dimensioned sketch](karts/s-kart-dimensioned-sketch.png) · [Real Sodi RT10 comparison](karts/s-kart-and-real-kart-comparison.png) |
 
-#### A. GT and S Kart cockpit measurements
+#### A. Stock cockpit measurements
 
 Distances are in millimeters. Longitudinal positions start at the tail and increase toward the nose. Heights are measured from the ground. The drawings illustrate the same stock dimensions.
 
-| Measurement | GT GoKart | S Kart |
-| --- | ---: | ---: |
-| Rear / front axle from tail | 820 / 2,800 | 390 / 1,880 |
-| Hip center from tail / above ground | 1,445 / 400 | 880 / 450 |
-| Steering wheel center from tail / above ground | 1,815 / 645 | 1,330 / 735 |
-| Pedal face from tail / above ground | 2,385 / 280 | 1,840 / 290 |
-| Steering grip span | 360 | 360 |
-| Cockpit opening / clear footwell width | 1,020 / 650 | 980 / 660 |
-| Ground clearance | 75 | 70 |
-| Rear wing or spoiler height | 1,260 | 805 |
+| Measurement | F1 GoKart | GT GoKart | S Kart |
+| --- | ---: | ---: | ---: |
+| Rear / front axle from tail | 725 / 3,375 | 820 / 2,800 | 390 / 1,880 |
+| Hip center from tail / above ground | 1,900 / 290 | 1,445 / 400 | 880 / 450 |
+| Steering wheel center from tail / above ground | 2,160 / 460 | 1,815 / 645 | 1,330 / 735 |
+| Pedal face from tail / above ground | 2,860 / 245 | 2,385 / 280 | 1,840 / 290 |
+| Steering grip span | 360 | 360 | 360 |
+| Cockpit opening / clear footwell width | 1,040 / 650 | 1,020 / 650 | 980 / 660 |
+| Ground clearance | 70 | 75 | 70 |
+| Rear wing or spoiler height | 780 | 1,260 | 805 |
 
 The approved F1 baseline uses roughly 79% of the real 2026 Mercedes-AMG Formula 1 car's estimated wheelbase and published width. Its rear wing sits at 780 mm, and its roll hoop reaches 1,170 mm around the seated avatar. The model and simulation should read these dimensions from the same vehicle definition so later dimensional changes can use the same driving code. [Mercedes-AMG specifications](https://www.mercedesamgf1.com/f1-w17-2026-technical-specifications)
 
