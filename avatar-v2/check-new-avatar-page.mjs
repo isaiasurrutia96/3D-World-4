@@ -17,10 +17,11 @@ try{
   // The first tab: the torso with its shoulder sockets and both balls beside it, nothing else.
   const first=await page.evaluate(()=>{const L=window.newAvatarLab,names=g=>{const n=[];g.traverse(o=>{if(o.isMesh)n.push(o.name);});return n.sort();};
    const item=L.options[0],extra=item.group.children.find(o=>o.isMesh).clone();extra.name='head';item.group.add(extra);const withExtra=names(item.group);item.group.remove(extra);
-   return {group:L.getGroup(),ids:L.options.map(o=>o.id),names:names(item.group),withExtra,hipNames:names(L.options[1].group)};});
+   return {group:L.getGroup(),ids:L.options.map(o=>o.id),names:names(item.group),withExtra,hipNames:names(L.options[1].group),hipSocketNames:names(L.options[2].group)};});
   const want=['ball-shoulder.left','ball-shoulder.right','torso'];
-  assert.equal(first.group,'torso-sockets','the Torso sockets tab opens first');assert.deepEqual(first.ids,['torso-sockets-boy','torso-hips-apart']);assert.deepEqual(first.names,want,'only the torso and both shoulder balls');
+  assert.equal(first.group,'torso-sockets','the Torso sockets tab opens first');assert.deepEqual(first.ids,['torso-sockets-boy','torso-hips-apart','torso-hip-sockets']);assert.deepEqual(first.names,want,'only the torso and both shoulder balls');
   assert.deepEqual(first.hipNames,['ball-hip.left','ball-hip.right','ball-shoulder.left','ball-shoulder.right','torso'],'hips apart: the torso, both shoulder balls and both hip balls');
+  assert.deepEqual(first.hipSocketNames,['ball-hip.left','ball-hip.right','ball-shoulder.left','ball-shoulder.right','torso'],'hip sockets: the torso, both shoulder balls and both hip balls');
   assert.notDeepEqual(first.withExtra,want,'test of the test: an extra piece was not caught');
   await page.evaluate(()=>window.newAvatarLab.setGroup('together'));
   const loaded=await page.evaluate(()=>window.ourAvatarLoaded);

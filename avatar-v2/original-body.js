@@ -341,13 +341,28 @@ export function pressedPreviewBody(bodyId='boy',press=PREVIEW_PRESS){return sepa
 // Before the cut the torso gets the usual socket triangles (refineNear, SOCKET_EDGE 1.2 cm) near each ball. Then each
 // ball is pulled straight back out to where it started (the separated avatar's place). `inBalls`: where they were pushed to; `balls`: pulled out.
 // `kind` per point: 0 the torso's outside, 1 the rim, 2 the socket. `displaced`: clay cleared (m^3).
+// The hip balls brought closer together (owner, 22 November 2026: "bring the ball hips closer together, but not to
+// where they touch"; visuals only): the space between them divided by the golden ratio again (4.3 to 2.7 cm), leaving
+// about 1.5 cm of clay between their sockets. `outBalls`: below the torso, 2 cm clear (where they start and end);
+// `inBalls`: pushed straight up into the torso as when he is put together (HIP_TORSO_PRESS of the radius).
+export const HIP_BALL_GAP_CLOSER=HIP_BALL_GAP/GOLDEN;
+export function closerHipBalls(bodyId='boy',gap=HIP_BALL_GAP_CLOSER,{pressed=pressedPreviewBody(bodyId)}={}){
+ const whole=pressed.whole,shape=whole.torsoShape,rH=whole.ballR.hip,start=[gap/2+rH,HIP[1],HIP[2]];
+ const out=clearOfTorso(shape,start,rH,[0,-1,0],SHOULDER_TORSO_GAP),into=sinkIntoTorso(shape,out,rH,[0,-1,0],HIP_TORSO_PRESS*rH);
+ const pair=c=>[ballPart('ball-hip','left',rH,c),ballPart('ball-hip','right',rH,[-c[0],c[1],c[2]])];
+ return {gap,radius:rH,inBalls:pair(into),outBalls:pair(out)};
+}
 export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId),{apart=separatedOriginalBody(bodyId)}={}){
- const torso=pressed.parts.find(p=>p.name==='torso'),balls=pressed.parts.filter(p=>p.name==='ball-shoulder');
+ return pushBallsIn(pressed.parts.find(p=>p.name==='torso'),pressed.parts.filter(p=>p.name==='ball-shoulder'),apart.parts.filter(p=>p.name==='ball-shoulder'),bodyId);
+}
+// Any balls pushed into a torso and pulled back out (`balls`: where they are pushed to; `out`: where they start and
+// end, same sides). Each travels in a straight line from its start to where it is pushed to.
+export function pushBallsIn(torso,balls,out,bodyId='boy'){
  const r=balls[0].radius,R=r+SOCKET_GAP,centres=balls.map(b=>b.centre),dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
  const reach=R+6*SOCKET_EDGE,fade=6*SOCKET_EDGE;
  const weight=m=>Math.max(...centres.map(c=>{const d=dist(m,c),f=Math.min(1,Math.max(0,(reach-d)/fade));return f>0?f*f*(3-2*f):(d<reach?1e-9:0);}));
  const refined=refineNear(torso.normals?torso:{...torso,normals:pointNormals(torso)},centres[0],reach,SOCKET_EDGE,6,weight);
- const paths=centres.map(c=>socketPath(c,R));
+ const paths=balls.map(b=>{const o=out.find(x=>x.side===b.side).centre,v=b.centre.map((x,k)=>x-o[k]),l=Math.hypot(...v);return socketPath(b.centre,R,v.map(x=>x/l));});
  // The cut, with snap rounding; a point the snapping would make into a pinch (the rim passing through it twice) is
  // left unsnapped and the cut redone.
  const EPS=1e-9,key=(a,b)=>a<b?a+','+b:b+','+a,noSnap=new Set();let part,P,N,kind,pt,kept,next;
@@ -418,7 +433,6 @@ export function pushShoulderBalls(bodyId='boy',pressed=pressedPreviewBody(bodyId
  // on the rim, if the two share no neighbours but the two triangles on that edge (the link condition) and no triangle
  // around them turns over.
  carved=collapseShortRimEdges(carved,kinds,paths,.001);
- const out=apart.parts.filter(p=>p.name==='ball-shoulder');
  // For drawing, the rim is a hard edge: the socket's triangles get their own copies of the rim points, shaded like
  // the socket, while the outside's triangles keep the rim points shaded like the outside (the standard way to draw a
  // crease; a shared point would blend the two and shade the first row of the socket unevenly). `solid` keeps one
@@ -462,14 +476,18 @@ export function collapseShortRimEdges(part,kind,paths,minLen,types=null){
  * `fromFlat`: the edge drawn flat around the socket's bottom (distance along the edge from the bottom, and the angle
  * round the travel line), so a rim on it can be filled as a flat polygon and put back exactly on the edge.
  */
-export function socketPath(c,R){
- const d=-Math.sign(c[0]),quarter=R*Math.PI/2;
- return {c,R,d,
-  phi:p=>{const u=d*(p[0]-c[0]),rho=Math.hypot(p[1]-c[1],p[2]-c[2]);return u>0?Math.hypot(u,rho)-R:rho-R;},
-  inward:p=>{const v=[p[0]-c[0],p[1]-c[1],p[2]-c[2]];if(d*v[0]>0){const l=Math.hypot(...v);return v.map(x=>-x/l);}const rho=Math.hypot(v[1],v[2]);return [0,-v[1]/rho,-v[2]/rho];},
-  toFlat:p=>{const u=d*(p[0]-c[0]),y=p[1]-c[1],z=p[2]-c[2],rho=Math.hypot(y,z),th=Math.atan2(z,y),s=u>0?R*Math.atan2(rho,u):quarter-u;return [s*Math.cos(th),s*Math.sin(th)];},
-  fromFlat:([X,Y])=>{const s=Math.hypot(X,Y),th=Math.atan2(Y,X);let u,rho;if(s<=quarter){u=R*Math.cos(s/R);rho=R*Math.sin(s/R);}else{u=quarter-s;rho=R;}return [c[0]+d*u,c[1]+rho*Math.cos(th),c[2]+rho*Math.sin(th)];},
-  nearest:p=>{const v=[p[0]-c[0],p[1]-c[1],p[2]-c[2]];if(d*v[0]>0){const q=Math.hypot(...v);return v.map((x,k)=>c[k]+x*R/q);}const rho=Math.hypot(v[1],v[2]);return [p[0],c[1]+v[1]*R/rho,c[2]+v[2]*R/rho];}};
+export function socketPath(c,R,dir=[-Math.sign(c[0]),0,0]){
+ const quarter=R*Math.PI/2,dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+ // A frame across the travel line (for the flat drawing): for a sideways push the same as before (y, z).
+ const orth=(e,f=null)=>{let v=e.map((x,i)=>x-dot(e,dir)*dir[i]);if(f)v=v.map((x,i)=>x-dot(v,f)*f[i]);const l=Math.hypot(...v);return v.map(x=>x/l);};
+ const side=Math.abs(dir[0])>.9,E1=orth(side?[0,1,0]:[0,0,1]),E2=orth(side?[0,0,1]:[1,0,0],E1);
+ const split=p=>{const v=[p[0]-c[0],p[1]-c[1],p[2]-c[2]],u=dot(v,dir),perp=v.map((x,i)=>x-u*dir[i]);return {v,u,perp,rho:Math.hypot(...perp)};};
+ return {c,R,dir,d:dir[0],
+  phi:p=>{const {u,rho}=split(p);return u>0?Math.hypot(u,rho)-R:rho-R;},
+  inward:p=>{const {v,u,perp,rho}=split(p);if(u>0){const l=Math.hypot(...v);return v.map(x=>-x/l);}return perp.map(x=>-x/rho);},
+  toFlat:p=>{const {v,u,rho}=split(p),th=Math.atan2(dot(v,E2),dot(v,E1)),s=u>0?R*Math.atan2(rho,u):quarter-u;return [s*Math.cos(th),s*Math.sin(th)];},
+  fromFlat:([X,Y])=>{const s=Math.hypot(X,Y),th=Math.atan2(Y,X);let u,rho;if(s<=quarter){u=R*Math.cos(s/R);rho=R*Math.sin(s/R);}else{u=quarter-s;rho=R;}return [0,1,2].map(i=>c[i]+u*dir[i]+rho*(Math.cos(th)*E1[i]+Math.sin(th)*E2[i]));},
+  nearest:p=>{const {v,u,perp,rho}=split(p);if(u>0){const q=Math.hypot(...v);return v.map((x,k)=>c[k]+x*R/q);}return [0,1,2].map(i=>c[i]+u*dir[i]+perp[i]*R/rho);}};
 }
 // The sockets' rims chiselled and softened (owner, 22 November 2026, circling the thin sliver of clay that overhangs the
 // top of the socket: "can u chisel that away, then soften up the rim of the socket"). The proven way to do both at once
