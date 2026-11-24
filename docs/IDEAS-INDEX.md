@@ -13,6 +13,8 @@ suggested it, the date and its status. An alternative being discussed is not an 
 
 [LetsGo master plan notes](LETSGO-MASTER-PLAN-NOTES.md) gather the working game direction, current kart decisions, and the original six-island board. Skyline Crossing is the owner’s leading world reference.
 
+The [LetsGo plan folder](plan/README.md) (23 to 24 November 2026) holds the deep diagnostic, the miniature-island research, the movement plan check, the going-private decision and the decisions and open questions recorded by the "LetsGo Plan" chat.
+
 ## A. How we work
 
 1. `CLAUDE.md` and `AGENTS.md`: entry points for Claude and Codex.
