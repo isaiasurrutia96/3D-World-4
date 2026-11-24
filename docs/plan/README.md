@@ -18,6 +18,8 @@ in total. Nothing in the game code was changed.
    one world on a phone, time savers, planning method. Appendix A5.
 6. [06-DECISIONS-AND-OPEN-QUESTIONS.md](06-DECISIONS-AND-OPEN-QUESTIONS.md): what the owner decided and what is still open.
 7. [07-SIGN-UPS.md](07-SIGN-UPS.md): accounts and free tools that would save time (being finished).
+8. [08-CLAUDE-THOUGHTS-WHO-DOES-WHAT.md](08-CLAUDE-THOUGHTS-WHO-DOES-WHAT.md): Claude's own thoughts (not decisions) on who should do
+   what in a new game, and each assistant's strengths (24 Nov).
 
 ## B. What comes next
 
