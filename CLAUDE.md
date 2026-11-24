@@ -7,13 +7,15 @@ is the owner's main source of truth for how to work with them (21 November
 tested code. Where anything below disagrees with it, that file wins; the notes
 below are kept for history and for the confirmed game decisions in section C.
 
+@docs/HOW-TO-WORK-WITH-ME.md
+
 Everything in this file is a suggestion the owner can change at any time, never a
 law. If a rule affects your advice, say where it came from and whether it still
 makes sense. Challenge the owner when something else would be better for the
 game, give one recommendation with the reason, then follow their decision.
 Sections A and B are working style and are meant to stay flexible. Section C holds
 confirmed game decisions and technical instructions, kept as they were written.
-A new session should also read `docs/HANDOFF.md` first.
+After the working guide, read `docs/HANDOFF.md` for current project status.
 `docs/COLLABORATION.md` records shared responsibilities, review boundaries and
 which broader assignments remain recommendations. `AGENTS.md` points Codex to
 these same documents so both assistants use one working guide.

@@ -1,6 +1,6 @@
 # Handoff for a fresh session
 
-Written 20 November 2026 at the owner's request. Read `CLAUDE.md` first. Anything marked uncertain is a guess, not a decision.
+Written 20 November 2026 at the owner's request. Read [the shared working guide](HOW-TO-WORK-WITH-ME.md) first. Anything marked uncertain is a guess, not a decision.
 
 Both assistants use the shared responsibilities and review record in
 `docs/COLLABORATION.md`. `AGENTS.md` is the Codex entry point; it points to the
