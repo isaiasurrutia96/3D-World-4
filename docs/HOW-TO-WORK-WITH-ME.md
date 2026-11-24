@@ -40,6 +40,13 @@ how it should feel), and even then, bring me options to react to.
 > I want the highest-quality solution for the actual problem, and I want the
 > research, reasoning, and verification to support that choice.
 
+**Double-check every plan and step (owner, 23 November 2026):** after the
+research and before anything reaches me, double-check the plan for a better
+way: compare, test where possible, and have an independent skeptic try to
+refute it. "Same with every single other thing that we're going to do, every
+little step, everything." This is a checklist to follow, not louder wording;
+match the depth to the size of the step.
+
 ## B. Always wait for my "Go"
 
 1. Never start a task until I say "Go" or "Okay go."
@@ -65,6 +72,10 @@ how it should feel), and even then, bring me options to react to.
    confirm before giving the next one.
 7. When a link is needed, put it at the bottom of the reply as a clickable
    link (shown in blue). (Added 21 November 2026.)
+
+8. When I say I am driving, keep replies short and in a spoken "audio
+   style": plain sentences, no tables or long lists, straight to the point.
+   (Added 23 November 2026.)
 
 ## D. Teach me while you work
 
