@@ -62,8 +62,10 @@ suggested it, the date and its status. An alternative being discussed is not an 
 3. A phone test of the physics engine (Rapier 0.21 with JoltPhysics.js beside it), and hinge elbows and knees:
    from the research report, not decided (handoff item 86).
 4. A range-of-motion test after the spine: proposed (handoff item 88).
-5. Polish items 2, 3, 7 and 8 (`docs/AVATAR-POLISH-LIST.md`); whether to remove the older 6 ft 1 in build-step tabs
+5. The owner's simpler setup: turn at the hips, turn the whole shoulders at the upper torso, bend the torso forward,
+   with no belly piece: asked, not decided (handoff item 100).
+6. Polish items 2, 3, 7 and 8 (`docs/AVATAR-POLISH-LIST.md`); whether to remove the older 6 ft 1 in build-step tabs
    from the New avatar page (kept as history for now).
-6. Deferred: an elbow cut-out for 90-degree bends; players modifying karts.
-7. Later: a ground-up rebuild of the avatar in solid, lean code once the owner is fully satisfied, and near the end of
+7. Deferred: an elbow cut-out for 90-degree bends; players modifying karts.
+8. Later: a ground-up rebuild of the avatar in solid, lean code once the owner is fully satisfied, and near the end of
    the game, a recheck of every line of code.
