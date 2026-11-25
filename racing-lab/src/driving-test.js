@@ -108,7 +108,8 @@ export function createDrivingSimulation({ scene, stage, floor }) {
         else hud.removeAttribute('aria-live');
         revsDisplay.hidden = systemsDisplay.hidden = !is2026;
         gtRevsDisplay.hidden = gtAidsDisplay.hidden = !isGT3;
-        boost.hidden = boost.disabled = isGT3;
+        boost.disabled = isGT3;
+        updateDrivingLayout();
         boost.textContent = is2026 ? 'Overtake' : 'Boost';
         showText(help, isGT3 ? GT3_HELP : defaultHelp);
         if (id && !views.has(id)) {
@@ -138,6 +139,7 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     const debug = params.get('debug') === '1' ? document.createElement('output') : null;
     if (debug) { debug.className = 'drive-debug'; debug.setAttribute('aria-label','Driving diagnostics'); stage.append(debug); }
     const controls = document.createElement('div');
+    controls.id = 'race-touch-controls';
     controls.className = 'drive-controls';
     controls.innerHTML = '<div class="drive-steering" role="group" aria-label="Steering"><button id="race-left" aria-pressed="false">← Left</button><button id="race-right" aria-pressed="false">Right →</button></div><div class="drive-pedals" role="group" aria-label="Pedals"><button id="race-gas" aria-pressed="false">Gas</button><button id="race-reverse" aria-pressed="false">Brake / Reverse</button></div>';
     stage.append(controls);
@@ -154,6 +156,32 @@ export function createDrivingSimulation({ scene, stage, floor }) {
     stage.append(boost);
     const buttons = Object.fromEntries(['left', 'right', 'gas', 'reverse', 'boost'].map(name => [name, $('#race-' + name)]));
     let bindings = null, holds = null, view = null, line = null, drawn = null, pose = test.sample();
+
+    const touchPrimary = window.matchMedia('(pointer: coarse)');
+    const layoutToggle = document.createElement('button');
+    layoutToggle.id = 'race-mobile-layout';
+    layoutToggle.type = 'button';
+    layoutToggle.textContent = 'Mobile Layout';
+    layoutToggle.setAttribute('aria-controls', `${controls.id} ${boost.id}`);
+    let previewMobileLayout = false;
+
+    function updateDrivingLayout() {
+        const mobile = touchPrimary.matches || previewMobileLayout;
+        if (!mobile && !controls.hidden) holds?.clear();
+        controls.hidden = !mobile;
+        boost.hidden = !mobile || boost.disabled;
+        stage.classList.toggle('mobile-driving-layout', mobile);
+        layoutToggle.hidden = touchPrimary.matches;
+        layoutToggle.setAttribute('aria-pressed', String(mobile));
+    }
+
+    layoutToggle.addEventListener('click', () => {
+        previewMobileLayout = !previewMobileLayout;
+        updateDrivingLayout();
+    });
+    touchPrimary.addEventListener('change', updateDrivingLayout);
+    $('#reset').after(layoutToggle);
+
     function draw() {
         const track = test.track;
         if (drawn === track) return;

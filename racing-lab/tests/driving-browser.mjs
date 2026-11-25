@@ -31,6 +31,38 @@ try {
     assert.equal(await p.evaluate(() => drivingLab.getState().opponents), 0);
     assert.equal(await p.evaluate(() => drivingLab.kart.wheels.length), 4);
     assert(await p.locator('.input-stick').isHidden());
+    const layout = p.getByRole('button', { name: 'Mobile Layout', exact: true });
+    const pedals = p.locator('#race-touch-controls');
+    const boost = p.locator('#race-boost');
+    assert.equal(await layout.getAttribute('aria-pressed'), 'false');
+    assert(await pedals.isHidden());
+    assert(await boost.isHidden());
+    await p.setViewportSize({ width: 640, height: 600 });
+    assert(await pedals.isHidden());
+    await p.setViewportSize({ width: 1280, height: 800 });
+    await layout.click();
+    assert.equal(await layout.getAttribute('aria-pressed'), 'true');
+    assert(await pedals.isVisible());
+    assert(await boost.isVisible());
+    await p.locator('#race-track').selectOption('winding');
+    await p.locator('#driving-kart').selectOption('gt-gt3-v3');
+    assert(await pedals.isVisible());
+    assert(await boost.isHidden());
+    await p.locator('#driving-kart').selectOption('original');
+    assert(await boost.isVisible());
+    const gasPreview = await p.locator('#race-gas').boundingBox();
+    assert.equal(gasPreview.height, 74);
+    await p.mouse.move(gasPreview.x + gasPreview.width / 2, gasPreview.y + gasPreview.height / 2);
+    await p.mouse.down();
+    await p.waitForFunction(() => motionLab.input.actions.gas);
+    await layout.press('Enter');
+    await p.waitForFunction(() => !motionLab.input.actions.gas);
+    await p.mouse.up();
+    assert.equal(await layout.getAttribute('aria-pressed'), 'false');
+    assert(await pedals.isHidden());
+    assert(await boost.isHidden());
+    assert(await p.locator('#stage canvas').evaluate(canvas => document.activeElement === canvas));
+    results.push('Laptop: desktop default at both widths, phone preview works across track and kart changes, turning it off releases Gas.');
     for (const id of ['original', 'skyline', 'suzuka', 'winding']) {
         await p.locator('#race-track').selectOption(id);
         await p.waitForFunction(id => drivingLab.getState().trackId === id, id);
@@ -139,6 +171,9 @@ try {
     mobile.on('pageerror', e => errors.push(e.message));
     await mobile.goto(base + '&track=parked-karts');
     await mobile.waitForFunction(() => window.drivingLabReady && window.motionLabReady);
+    assert(await mobile.locator('#race-mobile-layout').isHidden());
+    assert(await mobile.locator('#race-touch-controls').isVisible());
+    assert(await mobile.locator('#race-boost').isVisible());
     const cdp = await mobile.context().newCDPSession(mobile);
     async function touch(name, id) { const b = await mobile.locator('#race-' + name).boundingBox(); return { id, x: b.x + b.width / 2, y: b.y + b.height / 2 }; }
     assert.equal(await mobile.locator('#race-track').inputValue(), 'parked-karts');
