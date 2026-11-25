@@ -28,6 +28,19 @@ Recorded 23 November 2026. These notes bring together the owner's decisions, ide
 
 4. **Garden and winter floating islands (proposed, 25 November 2026).** The owner asked for a hanging garden island and an alpine winter island built from the approved block cards. In both studies, a kart road follows the side of the cliffs at several elevations, with separate paths into small carnival and minigame areas. The garden concept combines a conservatory, waterfalls, skee-ball, mini golf and a basketball court. The winter concept pairs lit switchbacks and stone overpasses with a village fair, skating rink and ski slope. The images are for visual review. The island placement, circuit geometry and choice of attractions are open. [Garden island concept](world/floating-garden-island-concept.png) · [Winter island concept](world/floating-winter-island-concept.png)
 
+5. **All-activities floating island (proposed, 25 November 2026).** The owner asked for one voxel island with waterfalls, swimmable water and destinations for the existing 20 minigames. The concept has a small S-kart circuit at ground level across the garden terraces, with a staging area for races and ghost time trials. An independent wider F1 road travels around the island in open sky, enters a tunnel in a block-built mountain spur and comes back out to the sky circuit. Its foreground span passes outside the waterfall outlets. The lazy river has its own small swim-through tunnel, with a deep basin and diving board nearby. [All-activities island concept](world/floating-island-all-activities-concept.png)
+
+   | Area | Activities shown in the concept |
+   | --- | --- |
+   | Garden terraces and putting grounds | Full golf, mini golf, frisbee golf. |
+   | Carnival boardwalk | Bowling, skee-ball, billiards and darts in open-front pavilions. |
+   | Sports terraces | Basketball shooting, soccer penalties, baseball batting, football throwing, archery and paintball. |
+   | Adventure terrace | Obstacle course, long jump and high jump, and skate racing. |
+   | Snow ridge | Downhill skiing and a separate winding ice-skating race. |
+   | Roads and waterfront | Kart racing and time trials, the requested F1 sky route, plus swimming and recreational high diving. |
+
+   The concept records the owner's requested arrangement for review. Circuit gradients and tunnel clearances, activity sizes and routes between venues are open design questions. [Approved block cards](WORLD-RULES.md#e-blocks-26-approved-19-nov-2026-one-card-each) · [Minigame cards](MINIGAMES.md)
+
 ## C. Stock karts and the latest wheel measurements
 
 1. **Use these as the current wheel baselines.** Wheelbase is front axle to rear axle. Front and rear track are left tire center to right tire center on their respective axles. All numbers below are in millimeters. The detailed drawings, body and cockpit measurements live in the kart design brief. Earlier size boards, Test Lab prototypes, tier pictures and real vehicle dimensions are background references. Use the latest measurements below when planning or fitting a stock kart. [Stock dimensions and cockpit drawings](KART-DESIGN.md#stock-chassis-dimensions)
