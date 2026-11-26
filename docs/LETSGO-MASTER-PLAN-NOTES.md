@@ -41,6 +41,8 @@ Recorded 23 November 2026. These notes bring together the owner's decisions, ide
 
    The concept records the owner's requested arrangement for review. Circuit gradients and tunnel clearances, activity sizes and routes between venues are open design questions. [Approved block cards](WORLD-RULES.md#e-blocks-26-approved-19-nov-2026-one-card-each) · [Minigame cards](MINIGAMES.md)
 
+6. **Connected floating-island study (proposed, 26 November 2026).** Both views come from one voxel scene. The F1 circuit follows the Nürburgring Grand Prix centerline at island scale, with a 2.16 km sky lap and a 66 m mountain tunnel. The separate S-kart lap is 293 m. An 18 m swim tunnel connects two lagoons at one water level. The shared plan shows each route and the walking connections between activity terraces. [Front view](world/connected-island/front-view.png) · [Back view](world/connected-island/back-view.png) · [Shared plan and checks](world/connected-island/README.md)
+
 ## C. Stock karts and the latest wheel measurements
 
 1. **Use these as the current wheel baselines.** Wheelbase is front axle to rear axle. Front and rear track are left tire center to right tire center on their respective axles. All numbers below are in millimeters. The detailed drawings, body and cockpit measurements live in the kart design brief. Earlier size boards, Test Lab prototypes, tier pictures and real vehicle dimensions are background references. Use the latest measurements below when planning or fitting a stock kart. [Stock dimensions and cockpit drawings](KART-DESIGN.md#stock-chassis-dimensions)

@@ -1,0 +1,14 @@
+{
+  "f1_lap_m": 2155.15,
+  "s_lap_m": 293.16,
+  "f1_max_centerline_grade_percent": 2.91,
+  "s_max_centerline_grade_percent": 3.03,
+  "min_vertical_clearance_at_projected_road_overlap_m": null,
+  "swim_portal_span_m": 17.8,
+  "f1_portal_span_m": 65.92,
+  "shortest_road_centerline_plan_separation_m": 14.6,
+  "f1_external_sky_fraction": 0.458,
+  "terrain_grid_m": 4.3,
+  "connected_venue_gates": 13,
+  "continuous_open_bores": 2
+}
