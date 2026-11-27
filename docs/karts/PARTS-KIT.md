@@ -139,3 +139,10 @@ weapon parts, Codex builds how they work.
    [F1 Kart stock lineup](styles/f1-kart-stock-lineup-review.png)
 7. More models can be added later without changing anything already built,
    because they use the same class base.
+
+## I. Parts-kit review notes
+
+Owner notes recorded 27 November 2026.
+
+1. **Complete F1 off-road kit (proposal).** The owner proposed selling the full off-road setup as a kit that players could buy for any F1 kart.
+2. **S-kart upgrade art (verification pending).** Coverage of every requested parts-kit item across the 16 upgraded S karts is unverified. [S-kart concept sheets](https://github.com/isaiasurrutia96/3D-World-4/blob/e8e6ad6cf0258e611236e45bc351591bcd2d971e/docs/karts/concepts/README.md#a-current-s-class-sheets)

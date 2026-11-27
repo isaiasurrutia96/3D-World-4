@@ -73,6 +73,8 @@ Related approved cards: free-roam driving (3) and custom kart building (18) in
 1. Exact part list per mode, prices, rarity and how parts are unlocked are
    not decided.
 
+2. **GT production licensing (open, 27 November 2026).** The owner asked how closely an original GT kart can resemble a specific real car in the published game. [Legal reference](game-dev/19-legal.md#c-real-world-things-inside-games-very-relevant-to-sports-games)
+
 ## F. Build progress
 
 1. (21 November) **Chunk 1 built, waiting for owner review:** the kart parts
@@ -162,3 +164,14 @@ within each mode so only the shapes differ, with the grey avatar for scale.
    17 halo, 18 turbo, 19 open frame, 20 light show.
 3. Open: the owner's tier picks for GT and F1, the tier for GoKart style 13,
    and the planned part-variation pictures (proposed, not started).
+
+## J. Kart concept review notes
+
+Owner notes recorded 27 November 2026.
+
+1. **F1 Special Edition reference.** The owner picked options 2, 4, 6, 7, 8 and 9 from the original ten-kart board as styling references for new F1 Special Editions. The ten options are listed in the [project handoff](HANDOFF.md#confirmed-by-the-owner).
+2. **F1 rear-wheel experiment (proposed).** The owner asked to try one F1 concept with larger rear wheels while keeping the approved wheel-center spacing.
+3. **Earlier 32-design F1 proposal.** The owner sketched six groups of four, covering miniature F1 starters, upscale basics, faster-looking builds with neon throughout, rare or old-school looks, off-road builds, and a full parts-kit showcase with mudflaps. That breakdown left eight of the 32 slots unspecified.
+4. **GT recolor preference.** Keep each GT kart's existing body shape while varying the racing liveries across the lineup.
+5. **Personal Civic study (archive status unverified).** The owner requested an open-top GT kart with one center seat that closely matches the photos of their red four-door 2014 Civic Si, with a slight wheelbase stretch allowed for this study. [Roofed reference study](https://github.com/isaiasurrutia96/3D-World-4/blob/e8e6ad6cf0258e611236e45bc351591bcd2d971e/docs/karts/concepts/archive/gt/2014-civic-si-roofed-study.png)
+6. **Concept-sheet format.** The owner also accepts portrait layouts for kart concept sheets.
