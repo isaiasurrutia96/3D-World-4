@@ -1,0 +1,848 @@
+{
+  "section": 1,
+  "source": {
+    "repository": "isaiasurrutia96/3D-World-3",
+    "revision": "573664e824a04234240a24dfc2eae2273e30a4ca",
+    "threeVersion": "0.180.0",
+    "fileHashes": {
+      "track.js": "e0c02fb8f421f2f66cdd2d4382cfcde7caed4501bab104e5f48702a427edf47f",
+      "track-builder.js": "c2076c437f033a24c9960c8a9faa2b928a2501365cc206ff567eb96f0e27971e",
+      "skyline-track.js": "a90d40bfcca285c4598c1444d614becc514b3fd513cbc4ca6ac2b9cd61387365",
+      "suzuka-track.js": "16782c71de26116ab4f86c8894ede38bb8079cf85d78383fe8db8e09461abe5c",
+      "winding-track.js": "6913a256c4be5feddbd5d527e5839a643e8f5de417a46875b56b1e0329ff8d04",
+      "data/suzuka-layout.js": "9d5fb298fe429cc4edd6a550c0115f8e3b2cdda643f320d662e3e01f06fd885f",
+      "courses.js": "c03a6730af18d1ef9381f5842255d82df6ac1991106b3caf546ebe434a5eddea",
+      "race-course.js": "5d1a828813cbf59bce3a52500cd10b322543851630f239c485b6779d10bc9f74",
+      "world.js": "4392bed61d2c6318cacb444644df2a54e178b1320af1f76d8669fb2f4a5fad30",
+      "npc/race-progress.js": "58aac979b5077b2e07c6a03e2c2c34f2e311e7960a5e7add885d501f69d71352"
+    }
+  },
+  "referenceDataSHA256": "39176d0fcd7d6285667e17097cbd4f3f2945689ef9b8141c370ee255d0bc40a5",
+  "fps": [
+    30,
+    60,
+    120,
+    144
+  ],
+  "approval": "Owner approved section 1 and the Original Circuit seam repair on 18 November 2026.",
+  "summary": {
+    "passed": 50,
+    "failed": 0
+  },
+  "tracks": [
+    {
+      "id": "original",
+      "name": "Original Circuit",
+      "segments": 1200,
+      "rails": 2400,
+      "accessBridge": false,
+      "roadWidth": 26,
+      "curbWidth": 1.1,
+      "totalWidth": 28.2,
+      "physicalLength": 3682.701867102989,
+      "sourceLength": 3679.8329474240513,
+      "referenceEdgeGap": 0.04616350088989525,
+      "proposedEdgeGap": 0,
+      "bridgeCrossings": 1,
+      "referenceSeamStatus": "FAIL",
+      "proposedSeamStatus": "PASS"
+    },
+    {
+      "id": "skyline",
+      "name": "Skyline Circuit",
+      "segments": 1800,
+      "rails": 3600,
+      "accessBridge": false,
+      "roadWidth": 26,
+      "curbWidth": 1.1,
+      "totalWidth": 28.2,
+      "physicalLength": 4513.430721129031,
+      "sourceLength": 4510.258330488263,
+      "referenceEdgeGap": 0,
+      "proposedEdgeGap": 0,
+      "bridgeCrossings": 10,
+      "referenceSeamStatus": "PASS",
+      "proposedSeamStatus": "PASS"
+    },
+    {
+      "id": "suzuka",
+      "name": "Suzuka Circuit",
+      "segments": 2400,
+      "rails": 4800,
+      "accessBridge": false,
+      "roadWidth": 26,
+      "curbWidth": 1.1,
+      "totalWidth": 28.2,
+      "physicalLength": 5757.437844709434,
+      "sourceLength": 5757.526739054595,
+      "referenceEdgeGap": 0,
+      "proposedEdgeGap": 0,
+      "bridgeCrossings": 1,
+      "referenceSeamStatus": "PASS",
+      "proposedSeamStatus": "PASS"
+    },
+    {
+      "id": "winding",
+      "name": "Winding Circuit",
+      "segments": 2400,
+      "rails": 4800,
+      "accessBridge": false,
+      "roadWidth": 26,
+      "curbWidth": 1.1,
+      "totalWidth": 28.2,
+      "physicalLength": 6635.1474049966055,
+      "sourceLength": 6635.6002316296845,
+      "referenceEdgeGap": 0,
+      "proposedEdgeGap": 0,
+      "bridgeCrossings": 7,
+      "referenceSeamStatus": "PASS",
+      "proposedSeamStatus": "PASS"
+    }
+  ],
+  "checks": [
+    {
+      "track": "original",
+      "rule": "Road corners and wall endpoints exactly match the pinned source",
+      "input": "Hash every double-precision road corner and rail endpoint, without rounding.",
+      "expected": "Both SHA256 digests equal the independent source capture.",
+      "measured": {
+        "road": "9400e7f2543476de801ae7affcff3cee4b88b56b807ff9a2d3e29d4b64969570",
+        "walls": "9baa126fb03f40dfc6eae1b9602122b5f42ee042ab4b07f9d6c795ca29e3ee44"
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "Road width, height and triangle data are finite and nondegenerate",
+      "input": "Visit every road segment and its four corners.",
+      "expected": "Asphalt is 26 m wide, each curb is 1.1 m, total is 28.2 m; both triangle areas are positive.",
+      "measured": {
+        "asphaltWidth": 26,
+        "curbWidth": 1.1,
+        "maximumWidthError": 1.1013412404281553e-13,
+        "minTriangleArea": 3.833540464936746,
+        "nonFinite": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "Centerline joins close and distance sampling wraps consistently",
+      "input": "Compare every consecutive centerline endpoint and sample negative, zero and multi-lap distances.",
+      "expected": "Zero centerline gap; identical wrapped positions to 0.00000001 m; sample(0) is the original start.",
+      "measured": {
+        "maximumJoinGap": 0,
+        "maximumWrapError": 2.744571917763205e-12,
+        "startError": 5.684341886080802e-14
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "Every road segment supports interior probes along its length",
+      "input": "Probe each segment at t=0, 0.5 and 0.999 and at 2%, 50% and 98% across its four-corner strip.",
+      "expected": "Every one of the scripted strip-interior points has road support below its interpolated height + 0.65 m.",
+      "measured": {
+        "probes": 10800,
+        "missing": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "Road-height queries match independently captured source results",
+      "input": "Probe source segments every 19 samples at five lateral positions and a maximum height of road + 0.65 m.",
+      "expected": "Every supported height matches to 0.00000001 m; every empty result agrees.",
+      "measured": {
+        "probes": 320,
+        "maximumError": 0,
+        "mismatches": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "Bridge crossings keep their lower and upper road surfaces separate",
+      "input": "At every source centerline crossing separated by at least 4 m, query below and above the upper deck.",
+      "expected": "Both source heights match; the lower query never jumps to the upper deck.",
+      "measured": {
+        "crossings": 1,
+        "maximumError": 0,
+        "wrongDeck": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "All 13 gates retain their source positions, directions and order",
+      "input": "Read each source gate and map its source station onto the physical polyline.",
+      "expected": "13 gates; zero position/direction error; strictly increasing physical distances starting at 0.",
+      "measured": {
+        "count": 13,
+        "positionError": 0,
+        "directionError": 0,
+        "firstDistance": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "Directed gate sweeps agree at 30, 60, 120 and 144 FPS",
+      "input": "At each FPS, move a point at 180 mph straight through every gate for two seconds. Also sweep backward, too high and outside the gate. No vehicle simulation is used.",
+      "expected": "One forward crossing per gate at t=1 s, identical hit points and times at every FPS; zero invalid crossings.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 60,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 120,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 144,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          }
+        ],
+        "maximumTimeError": 0,
+        "maximumPositionError": 0,
+        "rejected": 156
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "Default tracks exclude the hub connector and close its rail and curb openings",
+      "input": "Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.",
+      "expected": "No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.",
+      "measured": {
+        "accessTriangles": 0,
+        "connectorPoint": {
+          "x": 133.2,
+          "y": 0,
+          "z": -140.4
+        },
+        "connectorSupport": null,
+        "rails": 2400,
+        "expectedRails": 2400,
+        "maximumRailJoinGap": 0,
+        "missingWalls": 0,
+        "mainLoopUnchanged": true
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "A translated and rotated island placement preserves road geometry",
+      "input": "Translate by (1234,70,-890) m and rotate by 0.7 radians; sample 60 locations around the loop.",
+      "expected": "Sample positions, road heights and projection distances agree after the same transform; no voxel-grid rounding.",
+      "measured": {
+        "positions": 60,
+        "maximumError": 6.821210263296962e-13
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "Projection can stay on the intended route at a crossing",
+      "input": "Project each crossing position with separate hints for its two source segments.",
+      "expected": "Both branch hints return their own segment and height; a tiny impossible progress window returns null.",
+      "measured": {
+        "branchChecks": 2
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "original",
+      "rule": "Approved seam weld closes only the source seam",
+      "input": "Compare reference mode against the approved default seam weld.",
+      "expected": "Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.",
+      "measured": {
+        "referenceEdgeGap": 0.04616350088989525,
+        "proposedEdgeGap": 0,
+        "changedCorners": 2,
+        "maximumRoadEdit": 0.04616350088989525,
+        "changedWallEnds": 2,
+        "maximumWallEdit": 0.04665460196316793,
+        "enabledByDefault": "weld"
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Road corners and wall endpoints exactly match the pinned source",
+      "input": "Hash every double-precision road corner and rail endpoint, without rounding.",
+      "expected": "Both SHA256 digests equal the independent source capture.",
+      "measured": {
+        "road": "ea0a59a9b867abea83859dd7d08499eee72d30df1d89299a58b0d7dc49359d26",
+        "walls": "6cfab832bc2be1b418cde51e269bd4e467f2d20add8a7124362d7913d7e1821d"
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Road width, height and triangle data are finite and nondegenerate",
+      "input": "Visit every road segment and its four corners.",
+      "expected": "Asphalt is 26 m wide, each curb is 1.1 m, total is 28.2 m; both triangle areas are positive.",
+      "measured": {
+        "asphaltWidth": 26,
+        "curbWidth": 1.1,
+        "maximumWidthError": 1.1723955140041653e-13,
+        "minTriangleArea": 13.62440443477525,
+        "nonFinite": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Centerline joins close and distance sampling wraps consistently",
+      "input": "Compare every consecutive centerline endpoint and sample negative, zero and multi-lap distances.",
+      "expected": "Zero centerline gap; identical wrapped positions to 0.00000001 m; sample(0) is the original start.",
+      "measured": {
+        "maximumJoinGap": 0,
+        "maximumWrapError": 1.8269655220124374e-12,
+        "startError": 5.542233338928781e-13
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Every road segment supports interior probes along its length",
+      "input": "Probe each segment at t=0, 0.5 and 0.999 and at 2%, 50% and 98% across its four-corner strip.",
+      "expected": "Every one of the scripted strip-interior points has road support below its interpolated height + 0.65 m.",
+      "measured": {
+        "probes": 16200,
+        "missing": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Road-height queries match independently captured source results",
+      "input": "Probe source segments every 19 samples at five lateral positions and a maximum height of road + 0.65 m.",
+      "expected": "Every supported height matches to 0.00000001 m; every empty result agrees.",
+      "measured": {
+        "probes": 475,
+        "maximumError": 0,
+        "mismatches": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Bridge crossings keep their lower and upper road surfaces separate",
+      "input": "At every source centerline crossing separated by at least 4 m, query below and above the upper deck.",
+      "expected": "Both source heights match; the lower query never jumps to the upper deck.",
+      "measured": {
+        "crossings": 10,
+        "maximumError": 0,
+        "wrongDeck": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "All 13 gates retain their source positions, directions and order",
+      "input": "Read each source gate and map its source station onto the physical polyline.",
+      "expected": "13 gates; zero position/direction error; strictly increasing physical distances starting at 0.",
+      "measured": {
+        "count": 13,
+        "positionError": 0,
+        "directionError": 0,
+        "firstDistance": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Directed gate sweeps agree at 30, 60, 120 and 144 FPS",
+      "input": "At each FPS, move a point at 180 mph straight through every gate for two seconds. Also sweep backward, too high and outside the gate. No vehicle simulation is used.",
+      "expected": "One forward crossing per gate at t=1 s, identical hit points and times at every FPS; zero invalid crossings.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 60,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 120,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 144,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          }
+        ],
+        "maximumTimeError": 0,
+        "maximumPositionError": 0,
+        "rejected": 156
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Default tracks exclude the hub connector and close its rail and curb openings",
+      "input": "Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.",
+      "expected": "No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.",
+      "measured": {
+        "accessTriangles": 0,
+        "connectorPoint": {
+          "x": -131.51,
+          "y": 0,
+          "z": 9.600000000000001
+        },
+        "connectorSupport": null,
+        "rails": 3600,
+        "expectedRails": 3600,
+        "maximumRailJoinGap": 0,
+        "missingWalls": 0,
+        "mainLoopUnchanged": true
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "A translated and rotated island placement preserves road geometry",
+      "input": "Translate by (1234,70,-890) m and rotate by 0.7 radians; sample 60 locations around the loop.",
+      "expected": "Sample positions, road heights and projection distances agree after the same transform; no voxel-grid rounding.",
+      "measured": {
+        "positions": 60,
+        "maximumError": 9.094947017729282e-13
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Projection can stay on the intended route at a crossing",
+      "input": "Project each crossing position with separate hints for its two source segments.",
+      "expected": "Both branch hints return their own segment and height; a tiny impossible progress window returns null.",
+      "measured": {
+        "branchChecks": 20
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "skyline",
+      "rule": "Approved seam weld closes only the source seam",
+      "input": "Compare reference mode against the approved default seam weld.",
+      "expected": "Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.",
+      "measured": {
+        "referenceEdgeGap": 0,
+        "proposedEdgeGap": 0,
+        "changedCorners": 0,
+        "maximumRoadEdit": 0,
+        "changedWallEnds": 0,
+        "maximumWallEdit": 0,
+        "enabledByDefault": "weld"
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Road corners and wall endpoints exactly match the pinned source",
+      "input": "Hash every double-precision road corner and rail endpoint, without rounding.",
+      "expected": "Both SHA256 digests equal the independent source capture.",
+      "measured": {
+        "road": "18a77fd08ba546a1242e1dc681ce5f70e7071f8d761a299782f2adb3bc491376",
+        "walls": "1bec50440758d7cb300a08c3877d5d14938ca1a7f6ebb36c7c22f9e4c2d16fe4"
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Road width, height and triangle data are finite and nondegenerate",
+      "input": "Visit every road segment and its four corners.",
+      "expected": "Asphalt is 26 m wide, each curb is 1.1 m, total is 28.2 m; both triangle areas are positive.",
+      "measured": {
+        "asphaltWidth": 26,
+        "curbWidth": 1.1,
+        "maximumWidthError": 2.877698079828406e-13,
+        "minTriangleArea": 6.136653573483595,
+        "nonFinite": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Centerline joins close and distance sampling wraps consistently",
+      "input": "Compare every consecutive centerline endpoint and sample negative, zero and multi-lap distances.",
+      "expected": "Zero centerline gap; identical wrapped positions to 0.00000001 m; sample(0) is the original start.",
+      "measured": {
+        "maximumJoinGap": 0,
+        "maximumWrapError": 3.6324800232117925e-12,
+        "startError": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Every road segment supports interior probes along its length",
+      "input": "Probe each segment at t=0, 0.5 and 0.999 and at 2%, 50% and 98% across its four-corner strip.",
+      "expected": "Every one of the scripted strip-interior points has road support below its interpolated height + 0.65 m.",
+      "measured": {
+        "probes": 21600,
+        "missing": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Road-height queries match independently captured source results",
+      "input": "Probe source segments every 19 samples at five lateral positions and a maximum height of road + 0.65 m.",
+      "expected": "Every supported height matches to 0.00000001 m; every empty result agrees.",
+      "measured": {
+        "probes": 635,
+        "maximumError": 0,
+        "mismatches": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Bridge crossings keep their lower and upper road surfaces separate",
+      "input": "At every source centerline crossing separated by at least 4 m, query below and above the upper deck.",
+      "expected": "Both source heights match; the lower query never jumps to the upper deck.",
+      "measured": {
+        "crossings": 1,
+        "maximumError": 0,
+        "wrongDeck": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "All 13 gates retain their source positions, directions and order",
+      "input": "Read each source gate and map its source station onto the physical polyline.",
+      "expected": "13 gates; zero position/direction error; strictly increasing physical distances starting at 0.",
+      "measured": {
+        "count": 13,
+        "positionError": 0,
+        "directionError": 0,
+        "firstDistance": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Directed gate sweeps agree at 30, 60, 120 and 144 FPS",
+      "input": "At each FPS, move a point at 180 mph straight through every gate for two seconds. Also sweep backward, too high and outside the gate. No vehicle simulation is used.",
+      "expected": "One forward crossing per gate at t=1 s, identical hit points and times at every FPS; zero invalid crossings.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 60,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 120,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 144,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          }
+        ],
+        "maximumTimeError": 0,
+        "maximumPositionError": 0,
+        "rejected": 156
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Default tracks exclude the hub connector and close its rail and curb openings",
+      "input": "Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.",
+      "expected": "No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.",
+      "measured": {
+        "accessTriangles": 0,
+        "connectorPoint": {
+          "x": 9.600000000000001,
+          "y": 0,
+          "z": -232.48000000000002
+        },
+        "connectorSupport": null,
+        "rails": 4800,
+        "expectedRails": 4800,
+        "maximumRailJoinGap": 0,
+        "missingWalls": 0,
+        "mainLoopUnchanged": true
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "A translated and rotated island placement preserves road geometry",
+      "input": "Translate by (1234,70,-890) m and rotate by 0.7 radians; sample 60 locations around the loop.",
+      "expected": "Sample positions, road heights and projection distances agree after the same transform; no voxel-grid rounding.",
+      "measured": {
+        "positions": 60,
+        "maximumError": 9.094947017729282e-13
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Projection can stay on the intended route at a crossing",
+      "input": "Project each crossing position with separate hints for its two source segments.",
+      "expected": "Both branch hints return their own segment and height; a tiny impossible progress window returns null.",
+      "measured": {
+        "branchChecks": 2
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "suzuka",
+      "rule": "Approved seam weld closes only the source seam",
+      "input": "Compare reference mode against the approved default seam weld.",
+      "expected": "Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.",
+      "measured": {
+        "referenceEdgeGap": 0,
+        "proposedEdgeGap": 0,
+        "changedCorners": 0,
+        "maximumRoadEdit": 0,
+        "changedWallEnds": 0,
+        "maximumWallEdit": 0,
+        "enabledByDefault": "weld"
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Road corners and wall endpoints exactly match the pinned source",
+      "input": "Hash every double-precision road corner and rail endpoint, without rounding.",
+      "expected": "Both SHA256 digests equal the independent source capture.",
+      "measured": {
+        "road": "3038c0cda30a1eea4e76741a0e586af4fd6b0ef42a2436b1aa4c6dc71652cf08",
+        "walls": "b0d93ee06fab50910ea33869e9006ae24444239b7a6c1cf842b5f78171c1614d"
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Road width, height and triangle data are finite and nondegenerate",
+      "input": "Visit every road segment and its four corners.",
+      "expected": "Asphalt is 26 m wide, each curb is 1.1 m, total is 28.2 m; both triangle areas are positive.",
+      "measured": {
+        "asphaltWidth": 26,
+        "curbWidth": 1.1,
+        "maximumWidthError": 2.3092638912203256e-13,
+        "minTriangleArea": 9.19875956901478,
+        "nonFinite": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Centerline joins close and distance sampling wraps consistently",
+      "input": "Compare every consecutive centerline endpoint and sample negative, zero and multi-lap distances.",
+      "expected": "Zero centerline gap; identical wrapped positions to 0.00000001 m; sample(0) is the original start.",
+      "measured": {
+        "maximumJoinGap": 0,
+        "maximumWrapError": 1.8198773652309366e-12,
+        "startError": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Every road segment supports interior probes along its length",
+      "input": "Probe each segment at t=0, 0.5 and 0.999 and at 2%, 50% and 98% across its four-corner strip.",
+      "expected": "Every one of the scripted strip-interior points has road support below its interpolated height + 0.65 m.",
+      "measured": {
+        "probes": 21600,
+        "missing": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Road-height queries match independently captured source results",
+      "input": "Probe source segments every 19 samples at five lateral positions and a maximum height of road + 0.65 m.",
+      "expected": "Every supported height matches to 0.00000001 m; every empty result agrees.",
+      "measured": {
+        "probes": 635,
+        "maximumError": 0,
+        "mismatches": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Bridge crossings keep their lower and upper road surfaces separate",
+      "input": "At every source centerline crossing separated by at least 4 m, query below and above the upper deck.",
+      "expected": "Both source heights match; the lower query never jumps to the upper deck.",
+      "measured": {
+        "crossings": 7,
+        "maximumError": 0,
+        "wrongDeck": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "All 13 gates retain their source positions, directions and order",
+      "input": "Read each source gate and map its source station onto the physical polyline.",
+      "expected": "13 gates; zero position/direction error; strictly increasing physical distances starting at 0.",
+      "measured": {
+        "count": 13,
+        "positionError": 0,
+        "directionError": 0,
+        "firstDistance": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Directed gate sweeps agree at 30, 60, 120 and 144 FPS",
+      "input": "At each FPS, move a point at 180 mph straight through every gate for two seconds. Also sweep backward, too high and outside the gate. No vehicle simulation is used.",
+      "expected": "One forward crossing per gate at t=1 s, identical hit points and times at every FPS; zero invalid crossings.",
+      "measured": {
+        "byRate": [
+          {
+            "fps": 30,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 60,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 120,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          },
+          {
+            "fps": 144,
+            "forwardCrossings": 13,
+            "earliest": 1,
+            "latest": 1
+          }
+        ],
+        "maximumTimeError": 0,
+        "maximumPositionError": 0,
+        "rejected": 156
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Default tracks exclude the hub connector and close its rail and curb openings",
+      "input": "Compare the default isolated circuit with the optional original connector profile. Probe a bridge-only point and walk both complete rail rings.",
+      "expected": "No access surface/entrance; bridge-only support is null; two closed rails per road segment; all curbs visible; route and gates unchanged.",
+      "measured": {
+        "accessTriangles": 0,
+        "connectorPoint": {
+          "x": 9.600000000000001,
+          "y": 0,
+          "z": 972.2293220831097
+        },
+        "connectorSupport": null,
+        "rails": 4800,
+        "expectedRails": 4800,
+        "maximumRailJoinGap": 0,
+        "missingWalls": 0,
+        "mainLoopUnchanged": true
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "A translated and rotated island placement preserves road geometry",
+      "input": "Translate by (1234,70,-890) m and rotate by 0.7 radians; sample 60 locations around the loop.",
+      "expected": "Sample positions, road heights and projection distances agree after the same transform; no voxel-grid rounding.",
+      "measured": {
+        "positions": 60,
+        "maximumError": 9.094947017729282e-13
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Projection can stay on the intended route at a crossing",
+      "input": "Project each crossing position with separate hints for its two source segments.",
+      "expected": "Both branch hints return their own segment and height; a tiny impossible progress window returns null.",
+      "measured": {
+        "branchChecks": 14
+      },
+      "status": "PASS"
+    },
+    {
+      "track": "winding",
+      "rule": "Approved seam weld closes only the source seam",
+      "input": "Compare reference mode against the approved default seam weld.",
+      "expected": "Welded edge gap is zero; route length, centerline and every gate stay unchanged. Maximum edit is under 5 cm.",
+      "measured": {
+        "referenceEdgeGap": 0,
+        "proposedEdgeGap": 0,
+        "changedCorners": 0,
+        "maximumRoadEdit": 0,
+        "changedWallEnds": 0,
+        "maximumWallEdit": 0,
+        "enabledByDefault": "weld"
+      },
+      "status": "PASS"
+    },
+    {
+      "track": null,
+      "rule": "Fresh track TypeScript passes strict checking without a browser library",
+      "input": "Run the TypeScript compiler on track/tsconfig.json with ES2022 libraries and strict checking.",
+      "expected": "Compiler exits successfully with zero diagnostics.",
+      "measured": {
+        "diagnostics": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "track": null,
+      "rule": "Invalid inputs fail explicitly and exposed geometry cannot be changed",
+      "input": "Try missing tracks, NaN/Infinity coordinates, invalid gate indexes, invalid placement, and negative search radii.",
+      "expected": "All invalid requests throw; public geometry is frozen.",
+      "measured": {
+        "rejected": 12
+      },
+      "status": "PASS"
+    }
+  ]
+}

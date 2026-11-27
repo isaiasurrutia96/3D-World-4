@@ -1,0 +1,224 @@
+{
+  "passed": true,
+  "engine": "chromium",
+  "baselineCompared": true,
+  "currentSHA256": "9b0f7f6046eeb7b3ce54daad6a711914d9161a74fd88100205c68b958b5d6d23",
+  "baselineSHA256": "3c55cffd851756971534c67068baaba134f9be2f4259da577dca0dc37655dc6f",
+  "checks": [
+    {
+      "rule": "Captured pre-fix page stays disabled after app return.",
+      "input": {
+        "version": "before",
+        "event": "pageshow"
+      },
+      "expected": {
+        "active": false,
+        "enabled": false
+      },
+      "measured": {
+        "active": false,
+        "enabled": false,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Captured pre-fix page stays disabled after app return.",
+      "input": {
+        "version": "before",
+        "event": "focus"
+      },
+      "expected": {
+        "active": false,
+        "enabled": false
+      },
+      "measured": {
+        "active": false,
+        "enabled": false,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Captured pre-fix page stays disabled after app return.",
+      "input": {
+        "version": "before",
+        "event": "resume"
+      },
+      "expected": {
+        "active": false,
+        "enabled": false
+      },
+      "measured": {
+        "active": false,
+        "enabled": false,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Captured pre-fix page remains disabled after transient foreground layout.",
+      "input": {
+        "version": "before",
+        "script": "Hide; restore visibility while stage bounds are temporarily zero; restore real bounds before next frame."
+      },
+      "expected": {
+        "enabled": false
+      },
+      "measured": {
+        "active": false,
+        "enabled": false,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Captured pre-fix page ignores the first real Gas touch after missed resume signals.",
+      "input": {
+        "version": "before",
+        "script": "Foreground without lifecycle notifications; native touchscreen Gas tap."
+      },
+      "expected": {
+        "gas": false,
+        "enabled": false
+      },
+      "measured": {
+        "id": 2,
+        "gas": false,
+        "enabled": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Returning to a visible installed page restores input without requiring another visibility event.",
+      "input": {
+        "version": "after",
+        "event": "pageshow"
+      },
+      "expected": {
+        "active": true,
+        "enabled": true
+      },
+      "measured": {
+        "active": true,
+        "enabled": true,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Returning to a visible installed page restores input without requiring another visibility event.",
+      "input": {
+        "version": "after",
+        "event": "focus"
+      },
+      "expected": {
+        "active": true,
+        "enabled": true
+      },
+      "measured": {
+        "active": true,
+        "enabled": true,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Returning to a visible installed page restores input without requiring another visibility event.",
+      "input": {
+        "version": "after",
+        "event": "resume"
+      },
+      "expected": {
+        "active": true,
+        "enabled": true
+      },
+      "measured": {
+        "active": true,
+        "enabled": true,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "A temporarily empty layout during foreground notification is rechecked after layout settles.",
+      "input": {
+        "version": "after",
+        "script": "Hide; restore visibility while stage bounds are temporarily zero; restore real bounds before next frame."
+      },
+      "expected": {
+        "enabled": true
+      },
+      "measured": {
+        "active": true,
+        "enabled": true,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "The first real Gas touch restores a visible stage before the button handler runs.",
+      "input": {
+        "version": "after",
+        "script": "Foreground without lifecycle notifications; native touchscreen Gas tap."
+      },
+      "expected": {
+        "gas": true,
+        "enabled": true
+      },
+      "measured": {
+        "id": 2,
+        "gas": true,
+        "enabled": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Leaving or freezing the app immediately pauses and releases every driving command.",
+      "input": "pagehide",
+      "measured": {
+        "active": false,
+        "enabled": false,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Leaving or freezing the app immediately pauses and releases every driving command.",
+      "input": "freeze",
+      "measured": {
+        "active": false,
+        "enabled": false,
+        "gas": false,
+        "right": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Hidden/offscreen stages stay paused; returning restores visible input.",
+      "input": {
+        "engine": "chromium",
+        "script": "Scroll to videos, restore/focus while offscreen, hide/focus, return; Chromium also holds Gas until speed exceeds 3 m/s."
+      },
+      "measured": {
+        "active": true,
+        "enabled": true,
+        "gas": false,
+        "right": false,
+        "heldGasSpeedVerified": true
+      },
+      "status": "PASS"
+    }
+  ],
+  "pageErrors": [],
+  "limitation": "Automates browser lifecycle ordering and native touch. Actual installed iOS app launch and OS task switching still require device verification."
+}

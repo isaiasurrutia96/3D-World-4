@@ -1,0 +1,15 @@
+{
+  "id": "./?drive=1",
+  "name": "Driving Test",
+  "short_name": "Driving Test",
+  "description": "The driving test, launched without browser tabs or an address bar.",
+  "start_url": "./?drive=1",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#405363",
+  "theme_color": "#405363",
+  "icons": [
+    { "src": "./icons/driving-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/driving-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

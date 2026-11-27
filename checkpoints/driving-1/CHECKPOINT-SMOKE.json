@@ -1,0 +1,58 @@
+{
+  "passed": true,
+  "viewer_sha256": "3c55cffd851756971534c67068baaba134f9be2f4259da577dca0dc37655dc6f",
+  "source": "0e488a2888268c702339e0ca1c054f092507933e",
+  "rule": "The exact frozen page works independently on desktop and both phone orientations, with all four tracks, inputs, reset, FPV, local manifest and no external application asset requests.",
+  "rows": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "input": "keyboard",
+      "fingerprint": "kart-v1-025c0e69a91e540a",
+      "topMPH": 180.00000000000003,
+      "boostMPH": 220,
+      "lowSpeedRise": 0.5,
+      "fpv": 76,
+      "zoom": false,
+      "webglLost": false,
+      "manifestStart": "./?drive=1",
+      "overflow": false
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "input": "native simultaneous touch and separate release",
+      "fingerprint": "kart-v1-025c0e69a91e540a",
+      "topMPH": 180.00000000000003,
+      "boostMPH": 220,
+      "lowSpeedRise": 0.5,
+      "fpv": 76,
+      "zoom": false,
+      "webglLost": false,
+      "manifestStart": "./?drive=1",
+      "overflow": false
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "input": "native simultaneous touch and separate release",
+      "fingerprint": "kart-v1-025c0e69a91e540a",
+      "topMPH": 180.00000000000003,
+      "boostMPH": 220,
+      "lowSpeedRise": 0.5,
+      "fpv": 76,
+      "zoom": false,
+      "webglLost": false,
+      "manifestStart": "./?drive=1",
+      "overflow": false
+    }
+  ],
+  "pageErrors": [],
+  "applicationRequestsOutsideCheckpoint": []
+}

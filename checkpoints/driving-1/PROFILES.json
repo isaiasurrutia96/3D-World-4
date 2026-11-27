@@ -1,0 +1,539 @@
+{
+  "original": {
+    "mode": "legacy",
+    "version": 1,
+    "id": "original",
+    "label": "Original",
+    "topSpeed": 53.6448,
+    "boostSpeed": 80.4672,
+    "fingerprint": "letsgo-573664e824a0"
+  },
+  "balanced": {
+    "id": "balanced",
+    "label": "Balanced",
+    "topSpeed": 67.056,
+    "boostSpeed": 89.408,
+    "reverseSpeed": 5.6,
+    "reverseAcceleration": 6,
+    "acceleration": [
+      [
+        0,
+        10.8
+      ],
+      [
+        28,
+        10.8
+      ],
+      [
+        55.5,
+        10.8
+      ],
+      [
+        56.5,
+        5.1
+      ],
+      [
+        83,
+        5.1
+      ],
+      [
+        95,
+        1.5
+      ],
+      [
+        98.3,
+        0
+      ]
+    ],
+    "boostAcceleration": [
+      [
+        0,
+        32
+      ],
+      [
+        56,
+        32
+      ],
+      [
+        83,
+        26
+      ],
+      [
+        95,
+        18
+      ],
+      [
+        110,
+        14
+      ]
+    ],
+    "brakeStrength": 0.8,
+    "braking": [
+      [
+        0,
+        15
+      ],
+      [
+        20,
+        15
+      ],
+      [
+        40,
+        25
+      ],
+      [
+        60,
+        38
+      ],
+      [
+        80,
+        49
+      ],
+      [
+        140,
+        49
+      ]
+    ],
+    "cornering": [
+      [
+        0,
+        28
+      ],
+      [
+        15,
+        28
+      ],
+      [
+        30,
+        40
+      ],
+      [
+        45,
+        56
+      ],
+      [
+        60,
+        76
+      ],
+      [
+        75,
+        98
+      ],
+      [
+        140,
+        98
+      ]
+    ],
+    "liftOff": [
+      [
+        0,
+        0
+      ],
+      [
+        3,
+        0.5
+      ],
+      [
+        15,
+        2
+      ],
+      [
+        30,
+        7
+      ],
+      [
+        60,
+        15
+      ],
+      [
+        80,
+        19
+      ],
+      [
+        110,
+        21
+      ]
+    ],
+    "liftStrength": 1,
+    "liftRiseSeconds": 0.24,
+    "liftReleaseSeconds": 0.12,
+    "coastConstant": 0.3,
+    "coastQuadratic": 0.0004,
+    "throttleRiseSeconds": 0.15,
+    "throttleReleaseSeconds": 0.1,
+    "brakeRiseSeconds": 0.1,
+    "brakeReleaseSeconds": 0.08,
+    "steeringResponse": {
+      "lowSpeedRiseSeconds": 0.5,
+      "lowSpeedExponent": 1.35,
+      "blendStart": 12,
+      "blendEnd": 45
+    },
+    "steeringLock": 0.5235987755982988,
+    "steeringRiseSeconds": 0.18,
+    "steeringReleaseSeconds": 0.14,
+    "steeringBlendStart": 10,
+    "steeringBlendEnd": 25,
+    "yawResponseSeconds": 0.1,
+    "yawAcceleration": 10,
+    "slipResponseSeconds": 0.14,
+    "tractionAssistance": 0.65,
+    "surfaceResponseSeconds": 0.15,
+    "boostRecoveryDeceleration": 8,
+    "boostRecoverySeconds": 0.2,
+    "driveJerk": 120,
+    "mode": "tuned",
+    "version": 1,
+    "fingerprint": "kart-v1-0ce874f9a2bb7df6"
+  },
+  "fast": {
+    "id": "fast",
+    "label": "Fast",
+    "topSpeed": 80.4672,
+    "boostSpeed": 98.3488,
+    "reverseSpeed": 5.6,
+    "reverseAcceleration": 6,
+    "acceleration": [
+      [
+        0,
+        10.8
+      ],
+      [
+        28,
+        10.8
+      ],
+      [
+        55.5,
+        10.8
+      ],
+      [
+        56.5,
+        5.1
+      ],
+      [
+        83,
+        5.1
+      ],
+      [
+        95,
+        1.5
+      ],
+      [
+        98.3,
+        0
+      ]
+    ],
+    "boostAcceleration": [
+      [
+        0,
+        32
+      ],
+      [
+        56,
+        32
+      ],
+      [
+        83,
+        26
+      ],
+      [
+        95,
+        18
+      ],
+      [
+        110,
+        14
+      ]
+    ],
+    "brakeStrength": 0.8,
+    "braking": [
+      [
+        0,
+        15
+      ],
+      [
+        20,
+        15
+      ],
+      [
+        40,
+        25
+      ],
+      [
+        60,
+        38
+      ],
+      [
+        80,
+        49
+      ],
+      [
+        140,
+        49
+      ]
+    ],
+    "cornering": [
+      [
+        0,
+        28
+      ],
+      [
+        15,
+        28
+      ],
+      [
+        30,
+        40
+      ],
+      [
+        45,
+        56
+      ],
+      [
+        60,
+        76
+      ],
+      [
+        75,
+        98
+      ],
+      [
+        140,
+        98
+      ]
+    ],
+    "liftOff": [
+      [
+        0,
+        0
+      ],
+      [
+        3,
+        0.5
+      ],
+      [
+        15,
+        2
+      ],
+      [
+        30,
+        7
+      ],
+      [
+        60,
+        15
+      ],
+      [
+        80,
+        19
+      ],
+      [
+        110,
+        21
+      ]
+    ],
+    "liftStrength": 1,
+    "liftRiseSeconds": 0.24,
+    "liftReleaseSeconds": 0.12,
+    "coastConstant": 0.3,
+    "coastQuadratic": 0.0004,
+    "throttleRiseSeconds": 0.15,
+    "throttleReleaseSeconds": 0.1,
+    "brakeRiseSeconds": 0.1,
+    "brakeReleaseSeconds": 0.08,
+    "steeringResponse": {
+      "lowSpeedRiseSeconds": 0.5,
+      "lowSpeedExponent": 1.35,
+      "blendStart": 12,
+      "blendEnd": 45
+    },
+    "steeringLock": 0.5235987755982988,
+    "steeringRiseSeconds": 0.18,
+    "steeringReleaseSeconds": 0.14,
+    "steeringBlendStart": 10,
+    "steeringBlendEnd": 25,
+    "yawResponseSeconds": 0.1,
+    "yawAcceleration": 10,
+    "slipResponseSeconds": 0.14,
+    "tractionAssistance": 0.65,
+    "surfaceResponseSeconds": 0.15,
+    "boostRecoveryDeceleration": 8,
+    "boostRecoverySeconds": 0.2,
+    "driveJerk": 120,
+    "mode": "tuned",
+    "version": 1,
+    "fingerprint": "kart-v1-025c0e69a91e540a"
+  },
+  "f1-targets": {
+    "id": "f1-targets",
+    "label": "F1 performance reference",
+    "topSpeed": 98.3,
+    "boostSpeed": 98.3,
+    "reverseSpeed": 5.6,
+    "reverseAcceleration": 6,
+    "acceleration": [
+      [
+        0,
+        10.8
+      ],
+      [
+        28,
+        10.8
+      ],
+      [
+        55.5,
+        10.8
+      ],
+      [
+        56.5,
+        5.1
+      ],
+      [
+        83,
+        5.1
+      ],
+      [
+        95,
+        1.5
+      ],
+      [
+        98.3,
+        0
+      ]
+    ],
+    "boostAcceleration": [
+      [
+        0,
+        32
+      ],
+      [
+        56,
+        32
+      ],
+      [
+        83,
+        26
+      ],
+      [
+        95,
+        18
+      ],
+      [
+        110,
+        14
+      ]
+    ],
+    "brakeStrength": 1,
+    "braking": [
+      [
+        0,
+        15
+      ],
+      [
+        20,
+        15
+      ],
+      [
+        40,
+        25
+      ],
+      [
+        60,
+        38
+      ],
+      [
+        80,
+        49
+      ],
+      [
+        140,
+        49
+      ]
+    ],
+    "cornering": [
+      [
+        0,
+        14
+      ],
+      [
+        15,
+        14
+      ],
+      [
+        30,
+        20
+      ],
+      [
+        45,
+        28
+      ],
+      [
+        60,
+        38
+      ],
+      [
+        75,
+        49
+      ],
+      [
+        140,
+        49
+      ]
+    ],
+    "liftOff": [
+      [
+        0,
+        0
+      ],
+      [
+        3,
+        0.5
+      ],
+      [
+        15,
+        2
+      ],
+      [
+        30,
+        7
+      ],
+      [
+        60,
+        15
+      ],
+      [
+        80,
+        19
+      ],
+      [
+        110,
+        21
+      ]
+    ],
+    "liftStrength": 1,
+    "liftRiseSeconds": 0.24,
+    "liftReleaseSeconds": 0.12,
+    "coastConstant": 0.3,
+    "coastQuadratic": 0.0004,
+    "throttleRiseSeconds": 0.15,
+    "throttleReleaseSeconds": 0.1,
+    "brakeRiseSeconds": 0.1,
+    "brakeReleaseSeconds": 0.08,
+    "steeringLock": 0.5235987755982988,
+    "steeringRiseSeconds": 0.25,
+    "steeringReleaseSeconds": 0.18,
+    "steeringBlendStart": 10,
+    "steeringBlendEnd": 25,
+    "yawResponseSeconds": 0.12,
+    "yawAcceleration": 8,
+    "slipResponseSeconds": 0.18,
+    "tractionAssistance": 0.65,
+    "surfaceResponseSeconds": 0.15,
+    "boostRecoveryDeceleration": 8,
+    "boostRecoverySeconds": 0.2,
+    "driveJerk": 120,
+    "mode": "tuned",
+    "version": 1,
+    "fingerprint": "kart-v1-b2666c008706e548"
+  }
+}

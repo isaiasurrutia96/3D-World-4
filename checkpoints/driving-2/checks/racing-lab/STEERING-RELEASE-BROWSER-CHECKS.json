@@ -1,0 +1,95 @@
+{
+  "passed": true,
+  "baselineCompared": false,
+  "baselineSHA256": null,
+  "currentSHA256": "9b0f7f6046eeb7b3ce54daad6a711914d9161a74fd88100205c68b958b5d6d23",
+  "checks": [
+    {
+      "rule": "The updated version clears Right while preserving the separate Gas finger.",
+      "input": {
+        "version": "after",
+        "track": "winding",
+        "mode": "early-pointer",
+        "script": "Interrupt pointer release/capture-loss before app handlers; let native touchend through."
+      },
+      "expected": {
+        "right": false,
+        "gas": true
+      },
+      "measured": {
+        "right": false,
+        "gas": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "The updated version clears Right while preserving the separate Gas finger.",
+      "input": {
+        "version": "after",
+        "track": "winding",
+        "mode": "late-all",
+        "script": "Interrupt target delivery after window capture handlers."
+      },
+      "expected": {
+        "right": false,
+        "gas": true
+      },
+      "measured": {
+        "right": false,
+        "gas": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "The updated stage pause clears private holds before the next tap.",
+      "input": {
+        "version": "after",
+        "script": "Hold Right, scroll stage out of view, interrupt its end events, return, tap/release Right again."
+      },
+      "expected": {
+        "right": false,
+        "active": true
+      },
+      "measured": {
+        "right": false,
+        "active": true
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Rapid repeated native touches never retain Right or lose the separate Gas finger.",
+      "input": {
+        "track": "winding",
+        "taps": 150,
+        "script": "Gas held;150 Right tap/release cycles through native CDP touch events."
+      },
+      "expected": {
+        "right": false,
+        "gas": false
+      },
+      "measured": {
+        "right": false,
+        "gas": false
+      },
+      "status": "PASS"
+    },
+    {
+      "rule": "Native button release reaches filtered steering without a stuck command.",
+      "input": "Hold Left for30manual60Hz frames and release60frames; isolated airborne pose keeps track contacts out of this input check.",
+      "expected": {
+        "left": false,
+        "steering": 0,
+        "filteredInput": 0,
+        "yawRate": 0
+      },
+      "measured": {
+        "left": false,
+        "steering": 0,
+        "filteredInput": 0,
+        "yawRate": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "pageErrors": []
+}

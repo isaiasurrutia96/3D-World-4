@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "asset": "light-33cc0f6789deec6f.bin.gz",
+  "bytes": 5167402,
+  "sha256": "33cc0f6789deec6f6014e05fff4b808f3de640746bb9e127b6d229f7654c35c3",
+  "sourceSHA256": "4d3988607a0d4159370a6e69844a10745bf1e2050023686706d079cae21c4245",
+  "triangles": 261300,
+  "sourceTriangles": 3586000,
+  "bodyShare": 0.07,
+  "ballShare": 0.2,
+  "maxError": 0.02
+}
